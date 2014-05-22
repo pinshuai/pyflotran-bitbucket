@@ -149,22 +149,21 @@ class ptimestepper(object):
 
 	"""
 
-	def __init__(self,parent):
-		self._ts_acceleration = 5.0
+	def __init__(self,ts_acceleration=5,num_steps_after_cut=0,max_steps=99999,max_ts_cuts=16,
+                          cfl_limiter=-999.0,initialize_to_steady_state=False,run_as_steady_state=False,
+                          max_pressure_change=1e5,max_temperature_change=5,max_concentration_change=1,
+                          max_saturation_change=1):
+		self._ts_acceleration = ts_acceleration
 		self._num_steps_after_cut = num_steps_after_cut
 		self._max_steps = max_steps
 		self._max_ts_cuts = max_ts_cuts
 		self._cfl_limiter = cfl_limiter
-		self._dt_factor = dt_factor
-		self._initialize_to_steady_state = False
-		self._run_as_steady_state = False
+		self._initialize_to_steady_state = initialize_to_steady_state 
+		self._run_as_steady_state = run_as_steady_state 
 		self._max_pressure_change = max_pressure_change
 		self._max_temperature_change = max_temperature_change
 		self._max_concentration_change = max_concentration_change
 		self._max_saturation_change = max_saturation_change
-		self._pressure_dampening_factor = pressure_dampening_factor
-		self._parent = parent
-		
 
 	def _get_ts_acceleration(self): return self._ts_acceleration
 	def _set_ts_acceleration(self,value): self._ts_acceleration = value
@@ -181,9 +180,6 @@ class ptimestepper(object):
 	def _get_cfl_limiter(self): return self._cfl_limiter
 	def _set_cfl_limiter(self,value): self._cfl_limiter = value
 	cfl_limiter = property(_get_cfl_limiter, _set_cfl_limiter)
-	def _get_dt_factor(self): return self._dt_factor
-	def _set_dt_factor(self,value): self._dt_factor = value
-	dt_factor = property(_get_dt_factor, _set_dt_factor)
 	def _get_initialize_to_steady_state(self): return self._initialize_to_steady_state
 	def _set_initialize_to_steady_state(self,value): self._initialize_to_steady_state = value
 	initialize_to_steady_state = property(_get_initialize_to_steady_state, _set_initialize_to_steady_state)
@@ -202,9 +198,6 @@ class ptimestepper(object):
 	def _get_max_saturation_change(self): return self._max_saturation_change
 	def _set_max_saturation_change(self,value): self._max_saturation_change = value
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
-	def _get_pressure_dampening_factor(self): return self._pressure_dampening_factor
-	def _set_pressure_dampening_factor(self,value): self._pressure_dampening_factor = value
-	pressure_dampening_factor = property(_get_pressure_dampening_factor, _set_pressure_dampening_factor)
 class pdata(object):
 	"""Class for pflotran data file
 	
@@ -216,8 +209,8 @@ class pdata(object):
 		self._proplist = []
 		self._time = ptime()
 		self._mode = ''
-		self._grid = ''
-		self._timestepper = ptimestepper(parent=self)
+		self._grid = pgrid() 
+		self._timestepper = ptimestepper()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	def __repr__(self): return self.filename 	# print to screen when called
@@ -226,8 +219,8 @@ class pdata(object):
 		self._filename = filename 				# assign filename attribute
 		read_fn = dict(zip(cards, 				# associate each card name with a read function, defined further below
 				[self._read_mode,
-        		 self._read_grid,
-        		 self._read_timestepper,
+				 self._read_grid,
+        			 self._read_timestepper,
 				 self._read_prop,
 				 self._read_time]
 				 ))
@@ -389,7 +382,7 @@ class pdata(object):
 			if key == 'ts_acceleration':
 				np_ts_acceleration = int(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
-		new_timestep = ptimestepper(np_ts_acceleration)  # update the timestepper
+	#	new_timestep = ptimestepper(np_ts_acceleration)  # update the timestepper
 		
 		self._timestepper = new_timestep
 	def _write_timestepper(self,outfile):

@@ -1,4 +1,4 @@
-"""Class for pflotran data"""
+""" Class for pflotran data """
 
 import numpy as np
 from copy import deepcopy
@@ -22,8 +22,9 @@ class pmaterial(object):
 
 	"""
 
-	def __init__(self,id,name,porosity=0.1,tortuosity=0.1,density=2.5e3,specific_heat=1.e3,cond_dry=0.5, cond_wet = 0.5,
-				 saturation='sf2',permeability = [1.e-15,1.e-15,1.e-15]):
+	def __init__(self,id,name,porosity=0.1,tortuosity=0.1,density=2.5e3,
+		     specific_heat=1.e3,cond_dry=0.5,cond_wet=0.5,
+		     saturation='sf2',permeability=[1.e-15,1.e-15,1.e-15]):
 		self._id = id
 		self._name = name
 		self._porosity = porosity
@@ -65,6 +66,8 @@ class pmaterial(object):
 	def _get_permeability(self): return self._permeability
 	def _set_permeability(self,value): self._permeability = value
 	permeability = property(_get_permeability, _set_permeability) #: (**)
+
+
 class ptime(object):
 	""" Class for time property
 
@@ -84,6 +87,8 @@ class ptime(object):
 	def _get_dtf(self): return self._dtf
 	def _set_dtf(self,value): self._dtf = value
 	dtf = property(_get_dtf, _set_dtf) #: (**)
+
+
 class pgrid(object):
 	""" Class for grid property
 
@@ -133,6 +138,8 @@ class pgrid(object):
 	def _get_gravity_bool(self): return self._gravity_bool
 	def _set_gravity_bool(self,value): self._gravity_bool = value
 	gravity_bool = property(_get_gravity_bool, _set_gravity_bool) #: (**)
+
+
 class pmode(object):
 	""" Class for mode
 
@@ -144,6 +151,8 @@ class pmode(object):
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
 	name = property(_get_name, _set_name)
+
+
 class ptimestepper(object):
 	""" Class for time stepper
 
@@ -198,6 +207,8 @@ class ptimestepper(object):
 	def _get_max_saturation_change(self): return self._max_saturation_change
 	def _set_max_saturation_change(self,value): self._max_saturation_change = value
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
+
+
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -213,17 +224,19 @@ class pdata(object):
 		self._timestepper = ptimestepper()
 
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
+	
 	def __repr__(self): return self.filename 	# print to screen when called
+	
 	def read(self, filename):
 		if not os.path.isfile(filename): print filename + ' not found...'
-		self._filename = filename 				# assign filename attribute
-		read_fn = dict(zip(cards, 				# associate each card name with a read function, defined further below
+		self._filename = filename 	# assign filename attribute
+		read_fn = dict(zip(cards, 	
 				[self._read_mode,
 				 self._read_grid,
 				 self._read_timestepper,
 				 self._read_prop,
 				 self._read_time]
-				 ))
+				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
 			while keepReading:
@@ -237,6 +250,7 @@ class pdata(object):
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
+	
 	def write(self, filename=None):
 		"""Write pdata object to pflotran input file.
 
@@ -251,14 +265,17 @@ class pdata(object):
 		if self.time: self._write_time(outfile)
 		if self.proplist: self._write_prop(outfile)
 		outfile.close()
+	
 	def _read_mode(self,infile,line):
 		mode_name = line.split()[-1]
 		new_mode = pmode(mode_name)
 		self._mode = new_mode
+	
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
 		outfile.write('MODE\t')
 		outfile.write(self.mode.name+'\n\n')
+	
 	def _read_grid(self,infile,line):
 		g = pgrid()				# assign defaults before reading in values
 		ng_type = g.type
@@ -325,6 +342,7 @@ class pdata(object):
 		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,bounds_key,ng_origin,ng_nxyz,
 						 ng_dxyz,gravity_key,ng_gravity,ng_filename) 		# create an empty grid
 		self._grid = new_grid
+	
 	def _write_grid(self,outfile):
 		self._header(outfile,headers['grid'])
 		grid = self.grid
@@ -362,6 +380,7 @@ class pdata(object):
 		if grid.type == 'unstructured':
 			outfile.write('\tFILENAME' + grid.filename + '\n')
 		outfile.write('END\n\n')
+	
 	def _read_timestepper(self,infile,line):
 		p = ptimestepper()
 		np_ts_acceleration = p.ts_acceleration
@@ -412,14 +431,36 @@ class pdata(object):
 		                            np_max_saturation_change)
 
 		self._timestepper = new_timestep
+	
 	def _write_timestepper(self,outfile):
 		self._header(outfile,headers['timestepper'])
 		outfile.write('TIMESTEPPER\n')
 		if self.timestepper.ts_acceleration:
                   outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
 		if self.timestepper.num_steps_after_cut:
-                  outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + str(self.timestepper.num_steps_after_cut) + '\n')
+                  outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
+                                str(self.timestepper.num_steps_after_cut) + '\n')
+		if self.timestepper.max_steps:
+                  outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
+		if self.timestepper.clf_limiter:
+                  outfile.write('\t' + 'CFL_LIMITER ' + str(self.timestepper.cfl_limiter) + '\n')
+		if self.timestepper.initialize_to_steady_state:
+                  outfile.write('\t' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
+		if self.timestepper.run_as_steady_state:
+                  outfile.write('\t' + 'RUN_AS_STEADY_STATE ' + '\n')
+		if self.timestepper.max_pressure_change:
+                  outfile.write('\t' + 'MAX_PRESSURE_CHANGE' + str(self.timestepper.max_pressure_change) + '\n')
+		if self.timestepper.max_temperature_change:
+                  outfile.write('\t' + 'MAX_TEMPERATURE_CHANGE' + 
+                                str(self.timestepper.max_temperature_change) + '\n')
+		if self.timestepper.max_concentration_change:
+                  outfile.write('\t' + 'MAX_CONCENTRATION_CHANGE' +
+                                str(self.timestepper.max_concentration_change) + '\n')
+		if self.timestepper.max_saturation_change:
+                  outfile.write('\t' + 'MAX_SATURATION_CHANGE' + 
+                                str(self.timestepper.max_saturation_change) + '\n')
 		outfile.write('END\n')
+	
 	def _read_prop(self,infile,line):
 		np_name = line.split()[-1] 		# property name
 		np_id = None
@@ -472,6 +513,7 @@ class pdata(object):
 				             np_saturation,np_permeability) 		# create an empty material property
 
 		self._proplist.append(new_prop)
+	
 	def _write_prop(self,outfile):
 		self._header(outfile,headers['material_property'])
 		for prop in self.proplist:
@@ -491,6 +533,7 @@ class pdata(object):
 			outfile.write('\t\tPERM_Z\t'+strD(prop.permeability[2])+'\n')
 			outfile.write('\tEND\n')
 			outfile.write('END\n\n')
+	
 	def _read_time(self,infile):
 		keepReading = True
 		while keepReading:
@@ -518,6 +561,7 @@ class pdata(object):
 				else:
 					self._dtf = floatD(tstring[0])
 			elif key in ['/','end']: keepReading = False
+	
 	def _write_time(self,outfile):
 		self._header(outfile,headers['time'])
 		outfile.write('TIME\n')
@@ -537,6 +581,7 @@ class pdata(object):
 		else:
 			outfile.write(str(self.time.dtf)+'\n')
 		outfile.write('END\n\n')
+	
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -546,6 +591,7 @@ class pdata(object):
 		for i in range(pad): ws+='='
 		ws+='\n'
 		outfile.write(ws)
+	
 	def _get_grid(self): return self._grid
 	grid = property(_get_grid) #: (**)
 	def _get_time(self): return self._time

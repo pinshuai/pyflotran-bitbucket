@@ -1,4 +1,4 @@
-"""Class for pflotran data"""
+""" Class for pflotran data """
 
 import numpy as np
 from copy import deepcopy
@@ -19,11 +19,12 @@ headers = dict(zip(cards,headers))
 
 class pmaterial(object):
 	""" Class for material property card
-	
+
 	"""
-	
-	def __init__(self,id,name,porosity=0.1,tortuosity=0.1,density=2.5e3,specific_heat=1.e3,cond_dry=0.5, cond_wet = 0.5,
-				 saturation='sf2',permeability = [1.e-15,1.e-15,1.e-15]):
+
+	def __init__(self,id,name,porosity=0.1,tortuosity=0.1,density=2.5e3,
+		     specific_heat=1.e3,cond_dry=0.5,cond_wet=0.5,
+		     saturation='sf2',permeability=[1.e-15,1.e-15,1.e-15]):
 		self._id = id
 		self._name = name
 		self._porosity = porosity
@@ -34,7 +35,7 @@ class pmaterial(object):
 		self._cond_wet = cond_wet
 		self._saturation = saturation
 		self._permeability = permeability
-		
+
 	def _get_id(self): return self._id
 	def _set_id(self,value): self._id = value
 	id = property(_get_id, _set_id) #: (**)
@@ -65,12 +66,13 @@ class pmaterial(object):
 	def _get_permeability(self): return self._permeability
 	def _set_permeability(self,value): self._permeability = value
 	permeability = property(_get_permeability, _set_permeability) #: (**)
-	
+
+
 class ptime(object):
 	""" Class for time property
-	
+
 	"""
-	
+
 	#def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv = [50.,200.,500.,1000.,5000.],dtf_li = [15.,50.,20000.,50000.,100000.]):
 	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=None,dtf_li=None,dtf_counter=0):
 		self._tf = tf
@@ -105,9 +107,9 @@ class ptime(object):
 	
 class pgrid(object):
 	""" Class for grid property
-	
+
 	"""
-	
+
 	def __init__(self,type='structured',lower_bounds=[0.0,0.0,0.0],upper_bounds=[50.0,50.0,50.0],
 				 bounds_bool=True,origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity_bool=False,
 				 gravity=[0.0,0.0,-9.8068],filename=''):
@@ -152,6 +154,8 @@ class pgrid(object):
 	def _get_gravity_bool(self): return self._gravity_bool
 	def _set_gravity_bool(self,value): self._gravity_bool = value
 	gravity_bool = property(_get_gravity_bool, _set_gravity_bool) #: (**)
+
+
 class pmode(object):
 	""" Class for mode
 
@@ -163,22 +167,24 @@ class pmode(object):
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
 	name = property(_get_name, _set_name)
+
+
 class ptimestepper(object):
 	""" Class for time stepper
 
 	"""
 
-	def __init__(self,ts_acceleration=5,num_steps_after_cut=0,max_steps=99999,max_ts_cuts=16,
-                          cfl_limiter=-999.0,initialize_to_steady_state=False,run_as_steady_state=False,
-                          max_pressure_change=1e5,max_temperature_change=5,max_concentration_change=1,
-                          max_saturation_change=1):
+	def __init__(self,ts_acceleration=None,num_steps_after_cut=None,max_steps=None,max_ts_cuts=None,
+                          cfl_limiter=None,initialize_to_steady_state=False,run_as_steady_state=False,
+                          max_pressure_change=None,max_temperature_change=None,max_concentration_change=None,
+                          max_saturation_change=None):
 		self._ts_acceleration = ts_acceleration
-		self._num_steps_after_cut = num_steps_after_cut
+		self._num_steps_after_cut = num_steps_after_cut 
 		self._max_steps = max_steps
 		self._max_ts_cuts = max_ts_cuts
 		self._cfl_limiter = cfl_limiter
-		self._initialize_to_steady_state = initialize_to_steady_state 
-		self._run_as_steady_state = run_as_steady_state 
+		self._initialize_to_steady_state = initialize_to_steady_state
+		self._run_as_steady_state = run_as_steady_state
 		self._max_pressure_change = max_pressure_change
 		self._max_temperature_change = max_temperature_change
 		self._max_concentration_change = max_concentration_change
@@ -217,32 +223,36 @@ class ptimestepper(object):
 	def _get_max_saturation_change(self): return self._max_saturation_change
 	def _set_max_saturation_change(self,value): self._max_saturation_change = value
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
+
+
 class pdata(object):
 	"""Class for pflotran data file
-	
+
 	"""
-	
+
 	def __init__(self, filename=None):
 		from copy import copy
-		self._filename = filename 		
+		self._filename = filename
 		self._proplist = []
 		self._time = ptime()
 		self._mode = ''
-		self._grid = pgrid() 
+		self._grid = pgrid()
 		self._timestepper = ptimestepper()
-		
+
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
+	
 	def __repr__(self): return self.filename 	# print to screen when called
+	
 	def read(self, filename):
 		if not os.path.isfile(filename): print filename + ' not found...'
-		self._filename = filename 				# assign filename attribute
-		read_fn = dict(zip(cards, 				# associate each card name with a read function, defined further below
+		self._filename = filename 	# assign filename attribute
+		read_fn = dict(zip(cards, 	
 				[self._read_mode,
 				 self._read_grid,
-        			 self._read_timestepper,
+				 self._read_timestepper,
 				 self._read_prop,
 				 self._read_time]
-				 ))
+				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
 			while keepReading:
@@ -256,9 +266,10 @@ class pdata(object):
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
+	
 	def write(self, filename=None):
 		"""Write pdata object to pflotran input file.
-		
+
 		:param filename: Name of pflotran input file.
 		:type filename: str
 		"""
@@ -270,14 +281,17 @@ class pdata(object):
 		if self.time: self._write_time(outfile)
 		if self.proplist: self._write_prop(outfile)
 		outfile.close()
+	
 	def _read_mode(self,infile,line):
 		mode_name = line.split()[-1]
 		new_mode = pmode(mode_name)
 		self._mode = new_mode
+	
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
 		outfile.write('MODE\t')
 		outfile.write(self.mode.name+'\n\n')
+	
 	def _read_grid(self,infile,line):
 		g = pgrid()				# assign defaults before reading in values
 		ng_type = g.type
@@ -288,14 +302,14 @@ class pdata(object):
 		ng_gravity = g.gravity
 		ng_filename = g.filename
 		ng_dxyz = g.dxyz
-		
+
 		keepReading = True
 		bounds_key = False
 		gravity_key = False
 		while keepReading:
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
-			if key in [':','#']:
+			if key in ['#']:
 				pass
 			if key == 'type':
 				ng_type = line.split()[-1]
@@ -303,7 +317,7 @@ class pdata(object):
 				bounds_key = True
 				keepReading2 = True
 				while keepReading2:
-					line1 = infile.readline()	
+					line1 = infile.readline()
 					ng_lower_bounds[0] = floatD(line1.split()[0])
 					ng_lower_bounds[1] = floatD(line1.split()[1])
 					ng_lower_bounds[2] = floatD(line1.split()[2])
@@ -335,8 +349,8 @@ class pdata(object):
 				count = 0
 				while keepReading2:
 					line = infile.readline()
-					if line.strip().split()[0].lower() in ['/','end']: 
-						keepReading2 = False 
+					if line.strip().split()[0].lower() in ['/','end']:
+						keepReading2 = False
 					else:
 						ng_dxyz[count] = floatD(line.strip().split()[0])
 						count = count + 1
@@ -344,6 +358,7 @@ class pdata(object):
 		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,bounds_key,ng_origin,ng_nxyz,
 						 ng_dxyz,gravity_key,ng_gravity,ng_filename) 		# create an empty grid
 		self._grid = new_grid
+	
 	def _write_grid(self,outfile):
 		self._header(outfile,headers['grid'])
 		grid = self.grid
@@ -381,36 +396,87 @@ class pdata(object):
 		if grid.type == 'unstructured':
 			outfile.write('\tFILENAME' + grid.filename + '\n')
 		outfile.write('END\n\n')
+	
 	def _read_timestepper(self,infile,line):
 		p = ptimestepper()
 		np_ts_acceleration = p.ts_acceleration
-		np_num_steps_after_cut = p.num_steps_after_cut
+		np_num_steps_after_cut = p.num_steps_after_cut 
 		np_max_steps = p.max_steps
 		np_max_ts_cuts = p.max_ts_cuts
 		np_cfl_limiter = p.cfl_limiter
-		np_dt_factor = p.dt_factor
 		np_initialize_to_steady_state = p.initialize_to_steady_state
 		np_run_as_steady_state = p.run_as_steady_state
-		np_max_pressure_change = p.np_max_pressure_change
-						
+		np_max_pressure_change = p.max_pressure_change
+		np_max_temperature_change = p.max_temperature_change
+		np_max_concentration_change = p.max_concentration_change
+		np_max_saturation_change = p.max_saturation_change
+
 		keepReading = True
-		
+
 		while keepReading: 			# read through all cards
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
 			if key == 'ts_acceleration':
 				np_ts_acceleration = int(line.split()[-1])
+			elif key == 'num_steps_after_cut':
+				np_num_steps_after_cut = int(line.split()[-1])
+			elif key == 'max_steps':
+				np_max_steps = int(line.split()[-1])
+			elif key == 'max_ts_cuts':
+				np_max_ts_cuts = int(line.split()[-1])
+			elif key == 'cfl_limiter':
+				np_clf_limiter = float(line.split()[-1])
+			elif key == 'initialize_to_steady_state':
+				np_initialize_to_steady_state = True 
+			elif key == 'run_as_steady_state':
+				np_run_as_steady_state = True 
+			elif key == 'max_pressure_change':
+				np_max_pressure_change = float(line.split()[-1])
+			elif key == 'max_temperature_change':
+				np_max_temperature_change = float(line.split()[-1]) 
+			elif key == 'max_concentration_change':
+				np_max_concentration_change = float(line.split()[-1])
+ 			elif key == 'max_saturation_change':
+				np_max_saturation_change = float(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
-	#	new_timestep = ptimestepper(np_ts_acceleration)  # update the timestepper
-		
+
+		new_timestep = ptimestepper(np_ts_acceleration,np_num_steps_after_cut,np_max_steps,
+					    np_max_ts_cuts,np_cfl_limiter,np_initialize_to_steady_state,
+					    np_run_as_steady_state,np_max_pressure_change,
+					    np_max_temperature_change,np_max_concentration_change,
+		                            np_max_saturation_change)
+
 		self._timestepper = new_timestep
+	
 	def _write_timestepper(self,outfile):
 		self._header(outfile,headers['timestepper'])
 		outfile.write('TIMESTEPPER\n')
 		if self.timestepper.ts_acceleration:
-			outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
+                  outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
+		if self.timestepper.num_steps_after_cut:
+                  outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
+                                str(self.timestepper.num_steps_after_cut) + '\n')
+		if self.timestepper.max_steps:
+                  outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
+		if self.timestepper.clf_limiter:
+                  outfile.write('\t' + 'CFL_LIMITER ' + str(self.timestepper.cfl_limiter) + '\n')
+		if self.timestepper.initialize_to_steady_state:
+                  outfile.write('\t' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
+		if self.timestepper.run_as_steady_state:
+                  outfile.write('\t' + 'RUN_AS_STEADY_STATE ' + '\n')
+		if self.timestepper.max_pressure_change:
+                  outfile.write('\t' + 'MAX_PRESSURE_CHANGE' + str(self.timestepper.max_pressure_change) + '\n')
+		if self.timestepper.max_temperature_change:
+                  outfile.write('\t' + 'MAX_TEMPERATURE_CHANGE' + 
+                                str(self.timestepper.max_temperature_change) + '\n')
+		if self.timestepper.max_concentration_change:
+                  outfile.write('\t' + 'MAX_CONCENTRATION_CHANGE' +
+                                str(self.timestepper.max_concentration_change) + '\n')
+		if self.timestepper.max_saturation_change:
+                  outfile.write('\t' + 'MAX_SATURATION_CHANGE' + 
+                                str(self.timestepper.max_saturation_change) + '\n')
 		outfile.write('END\n')
-	def _read_prop(self,infile,line):               # For reading in material properties
+	
 		np_name = line.split()[-1] 	        # property name
 		np_id = None
 		p = pmaterial(0,'')	                      # assign defaults before reading in values
@@ -422,9 +488,9 @@ class pdata(object):
 		np_cond_wet=p.cond_wet
 		np_saturation=p.saturation
 		np_permeability=p.permeability
-		
+
 		keepReading = True
-		
+
 		while keepReading: 			# read through all cards
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
@@ -461,8 +527,9 @@ class pdata(object):
 		new_prop = pmaterial(np_id,np_name,np_porosity,np_tortuosity,np_density,
 		                     np_specific_heat,np_cond_dry,np_cond_wet,
 				             np_saturation,np_permeability) 		# create an empty material property
-		
+
 		self._proplist.append(new_prop)
+	
 	def _write_prop(self,outfile):
 		self._header(outfile,headers['material_property'])
 		for prop in self.proplist:
@@ -482,6 +549,7 @@ class pdata(object):
 			outfile.write('\t\tPERM_Z\t'+strD(prop.permeability[2])+'\n')
 			outfile.write('\tEND\n')
 			outfile.write('END\n\n')
+	
 	def _read_time(self,infile):
 		p = ptime()
 		np_tf = p._tf
@@ -517,7 +585,7 @@ class pdata(object):
 					else:
 						self._dtf = floatD(tstring[0])
 			elif key in ['/','end']: keepReading = False
-
+	
 
 	def _write_time(self,outfile):
 		self._header(outfile,headers['time'])
@@ -545,15 +613,17 @@ class pdata(object):
 		#else:
 		#	outfile.write(str(self.time.dtf_lv[0])+'\n')					
 		outfile.write('END\n\n')
+	
 	def _header(self,outfile,header):
 		if not header: return
-		ws = ': '
+		ws = '# '
 		pad = int(np.floor((80 - len(header) - 4)/2))
 		for i in range(pad): ws+='='
 		ws+=' '+header+' '
 		for i in range(pad): ws+='='
 		ws+='\n'
 		outfile.write(ws)
+	
 	def _get_grid(self): return self._grid
 	grid = property(_get_grid) #: (**)
 	def _get_time(self): return self._time
@@ -564,8 +634,8 @@ class pdata(object):
 	prop = property(_get_prop) #: (**) dictionary of material properties, indexable by ID or name
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
-	filename = property(_get_filename, _set_filename) #: (**)	
+	filename = property(_get_filename, _set_filename) #: (**)
 	def _get_mode(self): return self._mode
 	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
-	timestepper = property(_get_timestepper) #: (**)	
+	timestepper = property(_get_timestepper) #: (**)

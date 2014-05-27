@@ -425,7 +425,7 @@ class pdata(object):
 			elif key == 'max_ts_cuts':
 				np_max_ts_cuts = int(line.split()[-1])
 			elif key == 'cfl_limiter':
-				np_clf_limiter = float(line.split()[-1])
+				np_cfl_limiter = float(line.split()[-1])
 			elif key == 'initialize_to_steady_state':
 				np_initialize_to_steady_state = True 
 			elif key == 'run_as_steady_state':
@@ -458,7 +458,7 @@ class pdata(object):
                                 str(self.timestepper.num_steps_after_cut) + '\n')
 		if self.timestepper.max_steps:
                   outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
-		if self.timestepper.clf_limiter:
+		if self.timestepper.cfl_limiter:
                   outfile.write('\t' + 'CFL_LIMITER ' + str(self.timestepper.cfl_limiter) + '\n')
 		if self.timestepper.initialize_to_steady_state:
                   outfile.write('\t' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
@@ -529,6 +529,59 @@ class pdata(object):
 				             np_saturation,np_permeability) 		# create an empty material property
 
 		self._proplist.append(new_prop)
+	
+	def _read_prop(self,infile,line):
+		np_name = line.split()[-1] 		# property name
+		np_id = None
+		p = pmaterial(0,'')				# assign defaults before reading in values
+		np_porosity=p.porosity
+		np_tortuosity=p.tortuosity
+		np_density=p.density
+		np_specific_heat=p.specific_heat
+		np_cond_dry=p.cond_dry
+		np_cond_wet=p.cond_wet
+		np_saturation=p.saturation
+		np_permeability=p.permeability
+
+		keepReading = True
+
+		while keepReading: 			# read through all cards
+			line = infile.readline() 			# get next line
+			key = line.strip().split()[0].lower() 		# take first keyword
+			if key == 'id':
+				np_id = int(line.split()[-1])
+			elif key == 'porosity':
+				np_porosity = floatD(line.split()[-1])
+			elif key == 'tortuosity':
+				np_tortuosity = floatD(line.split()[-1])
+			elif key == 'rock_density':
+				np_density = floatD(line.split()[-1])
+			elif key == 'specific_heat':
+				np_specific_heat = floatD(line.split()[-1])
+			elif key == 'thermal_conductivity_dry':
+				np_cond_dry = floatD(line.split()[-1])
+			elif key == 'thermal_conductivity_wet':
+				np_cond_wet = floatD(line.split()[-1])
+			elif key == 'saturation_function':
+				np_saturation = line.split()[-1]
+			elif key == 'permeability':
+				keepReading2 = True
+				while keepReading2:
+					line = infile.readline() 			# get next line
+					key = line.split()[0].lower() 		# take first keyword
+					if key == 'perm_x':
+						np_permeability[0] = floatD(line.split()[-1])
+					elif key == 'perm_y':
+						np_permeability[1] = floatD(line.split()[-1])
+					elif key == 'perm_z':
+						np_permeability[2] = floatD(line.split()[-1])
+					elif key in ['/','end']: keepReading2 = False
+			elif key in ['/','end']: keepReading = False
+		new_prop = pmaterial(np_id,np_name,np_porosity,np_tortuosity,np_density,
+		                     np_specific_heat,np_cond_dry,np_cond_wet,
+				             np_saturation,np_permeability) 		# create an empty material property
+
+		self._proplist.append(new_prop)	
 	
 	def _write_prop(self,outfile):
 		self._header(outfile,headers['material_property'])

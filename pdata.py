@@ -555,10 +555,9 @@ class pdata(object):
 		np_tf = p._tf
 		np_dti = p._dti
 		np_dtf = p._dtf
-		np_dtf_lv = p._dtf_lv # Also does not work - Why?
-		np_dtf_li = p._dtf_li # Also does not work
+		np_dtf_lv = p._dtf_lv
+		np_dtf_li = p._dtf_li
 		np_dtf_counter = p._dtf_counter
-		print np_dtf_lv # testing
 		keepReading = True
 		while keepReading:
 			line = infile.readline() 			# get next line
@@ -567,44 +566,78 @@ class pdata(object):
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
-						self._tf = floatD(tstring[0])*365.25*24*3600
+						np_tf = floatD(tstring[0])*365.25*24*3600
 				else:
-					self._tf = floatD(tstring[0])
+					np_tf = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
-						self._dti = floatD(tstring[0])*365.25*24*3600
+						np_dti = floatD(tstring[0])*365.25*24*3600
 				else:
-					self._dti = floatD(tstring[0])
+					np_dti = floatD(tstring[0])
 			elif key == 'maximum_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
-						self._dtf = floatD(tstring[0])*365.25*24*3600
+						np_dtf = floatD(tstring[0])*365.25*24*3600
+				else:
+					np_dtf = floatD(tstring[0])
+					
+				## Continue reading more maximum_timestep_size with AT keyword
+				line = infile.readline()	# get next line
+				key = line.split()[0].lower()	# take first keyword
+				last_pos = None
+				while(key == 'maximum_timestep_size'):
+					tstring = line.split()[1:]
+					if len(tstring) == 2:
+						if tstring[-1] == 'y':
+							np_dtf = floatD(tstring[0])*365.25*24*3600
 					else:
-						self._dtf = floatD(tstring[0])
+						np_dtf = floatD(tstring[0])
+						
+					# AT keyword is required after the first entry:
+					at_i = line.find('at')	#at_i = at_index
+					#print line[at_i:]
+					#print at_i
+					#key = line.split()[1:] # Read the next key word after AT
+					tstring = line.split('at')[-1]
+					print 'test ' + str(tstring)
+					
+					last_pos = infile.tell()	# Remember the previous line
+					line = infile.readline()	# get next line
+					key = line.split()[0].lower()	# take first keyword
+					
+					
+				# Go back one line when done reading in timestep_sizes	
+				if last_pos != None:
+					infile.seek(last_pos)
+				
 			elif key in ['/','end']: keepReading = False
-	
+			
+		# Craete new empty time object and assign values read in.	
+		new_time = ptime(np_tf,np_dti,np_dtf,np_dtf_lv,np_dtf_li,np_dtf_counter)
+		self._time = new_time
 
 	def _write_time(self,outfile):
 		self._header(outfile,headers['time'])
+		time = self.time
 		outfile.write('TIME\n')
 		outfile.write('\tFINAL_TIME\t')
-		if self.time.tf>365.25*3600*24*0.1:
-			outfile.write(str(self.time.tf/(365.25*24*3600))+' y\n')
+		if time.tf>365.25*3600*24*0.1:
+			outfile.write(str(time.tf/(365.25*24*3600))+' y\n')
 		else:
-			outfile.write(str(self.time.tf)+'\n')
+			outfile.write(str(time.tf)+'\n')
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
-		if self.time.dti>365.25*3600*24*0.1:
-			outfile.write(str(self.time.dti/(365.25*24*3600))+' y\n')
+		if time.dti>365.25*3600*24*0.1:
+			outfile.write(str(time.dti/(365.25*24*3600))+' y\n')
 		else:
-			outfile.write(str(self.time.dti)+'\n')
+			outfile.write(str(time.dti)+'\n')
 		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-		if self.time.dtf>365.25*3600*24*0.1:
-			outfile.write(str(self.time.dtf/(365.25*24*3600))+' y\n')
+		if time.dtf>365.25*3600*24*0.1:
+			outfile.write(str(time.dtf/(365.25*24*3600))+' y\n')
 		else:
-			outfile.write(str(self.time.dtf)+'\n')
+			outfile.write(str(time.dtf)+'\n')
 		
 		#   Write out more max time step sizes at select times
 		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')

@@ -476,60 +476,7 @@ class pdata(object):
                   outfile.write('\t' + 'MAX_SATURATION_CHANGE' + 
                                 str(self.timestepper.max_saturation_change) + '\n')
 		outfile.write('END\n')
-	
-		np_name = line.split()[-1] 	        # property name
-		np_id = None
-		p = pmaterial(0,'')	                      # assign defaults before reading in values
-		np_porosity=p.porosity
-		np_tortuosity=p.tortuosity
-		np_density=p.density
-		np_specific_heat=p.specific_heat
-		np_cond_dry=p.cond_dry
-		np_cond_wet=p.cond_wet
-		np_saturation=p.saturation
-		np_permeability=p.permeability
 
-		keepReading = True
-
-		while keepReading: 			# read through all cards
-			line = infile.readline() 			# get next line
-			key = line.strip().split()[0].lower() 		# take first keyword
-			
-			if key == 'id':
-				np_id = int(line.split()[-1])
-			elif key == 'porosity':
-				np_porosity = floatD(line.split()[-1])
-			elif key == 'tortuosity':
-				np_tortuosity = floatD(line.split()[-1])
-			elif key == 'rock_density':
-				np_density = floatD(line.split()[-1])
-			elif key == 'specific_heat':
-				np_specific_heat = floatD(line.split()[-1])
-			elif key == 'thermal_conductivity_dry':
-				np_cond_dry = floatD(line.split()[-1])
-			elif key == 'thermal_conductivity_wet':
-				np_cond_wet = floatD(line.split()[-1])
-			elif key == 'saturation_function':
-				np_saturation = line.split()[-1]
-			elif key == 'permeability':
-				keepReading2 = True
-				while keepReading2:
-					line = infile.readline() 			# get next line
-					key = line.split()[0].lower() 		# take first keyword
-					if key == 'perm_x':
-						np_permeability[0] = floatD(line.split()[-1])
-					elif key == 'perm_y':
-						np_permeability[1] = floatD(line.split()[-1])
-					elif key == 'perm_z':
-						np_permeability[2] = floatD(line.split()[-1])
-					elif key in ['/','end']: keepReading2 = False
-			elif key in ['/','end']: keepReading = False
-		new_prop = pmaterial(np_id,np_name,np_porosity,np_tortuosity,np_density,
-		                     np_specific_heat,np_cond_dry,np_cond_wet,
-				             np_saturation,np_permeability) 		# create an empty material property
-
-		self._proplist.append(new_prop)
-	
 	def _read_prop(self,infile,line):
 		np_name = line.split()[-1] 		# property name
 		np_id = None

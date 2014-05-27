@@ -65,25 +65,44 @@ class pmaterial(object):
 	def _get_permeability(self): return self._permeability
 	def _set_permeability(self,value): self._permeability = value
 	permeability = property(_get_permeability, _set_permeability) #: (**)
+	
 class ptime(object):
 	""" Class for time property
 	
 	"""
 	
-	def __init__(self,tf=10.,dti=1.e-2,dtf=50.):
+	#def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv = [50.,200.,500.,1000.,5000.],dtf_li = [15.,50.,20000.,50000.,100000.]):
+	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=None,dtf_li=None,dtf_counter=0):
 		self._tf = tf
 		self._dti = dti
 		self._dtf = dtf
-	
+		self._dtf_lv = dtf_lv
+		self._dtf_li = dtf_li
+		self._dtf_counter = dtf_counter
+		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
 	tf = property(_get_tf, _set_tf) #: (**)
 	def _get_dti(self): return self._dti
 	def _set_dti(self,value): self._dti = value
 	dti = property(_get_dti, _set_dti) #: (**)
+	
 	def _get_dtf(self): return self._dtf
 	def _set_dtf(self,value): self._dtf = value
 	dtf = property(_get_dtf, _set_dtf) #: (**)
+	
+	# The dtf lists are for multiple max time step entries at specified time intervals
+	#def _get_dtf_lv(self,i): return self._dtf_list_lv[i]       #lv = list value
+	#def _set_dtf_lv(self,value,i): self._dtf_list_lv[i]=value
+	def _get_dtf_lv(self): return self._dtf_lv
+	def _set_dtf_lv(self,value): self._dtf_lv = value
+	dtf_lv = property(_get_dtf_lv, _set_dtf_lv) #: (**)
+	#def _get_dtf_li(self,i): return self._dtf_list_li[i]       #li = list interval
+	#def _set_dtf_li(self,value,i): self._dtf_list_li[i]=value
+	def _get_dtf_li(self): return self._dtf_li
+	def _set_dtf_li(self,value): self._dtf_li = value
+	dtf_li = property(_get_dtf_li, _set_dtf_li) #: (**)
+	
 class pgrid(object):
 	""" Class for grid property
 	
@@ -391,10 +410,10 @@ class pdata(object):
 		if self.timestepper.ts_acceleration:
 			outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
 		outfile.write('END\n')
-	def _read_prop(self,infile,line):
-		np_name = line.split()[-1] 		# property name
+	def _read_prop(self,infile,line):               # For reading in material properties
+		np_name = line.split()[-1] 	        # property name
 		np_id = None
-		p = pmaterial(0,'')				# assign defaults before reading in values
+		p = pmaterial(0,'')	                      # assign defaults before reading in values
 		np_porosity=p.porosity
 		np_tortuosity=p.tortuosity
 		np_density=p.density
@@ -409,6 +428,7 @@ class pdata(object):
 		while keepReading: 			# read through all cards
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
+			
 			if key == 'id':
 				np_id = int(line.split()[-1])
 			elif key == 'porosity':
@@ -463,6 +483,14 @@ class pdata(object):
 			outfile.write('\tEND\n')
 			outfile.write('END\n\n')
 	def _read_time(self,infile):
+		p = ptime()
+		np_tf = p._tf
+		np_dti = p._dti
+		np_dtf = p._dtf
+		np_dtf_lv = p._dtf_lv # Also does not work - Why?
+		np_dtf_li = p._dtf_li # Also does not work
+		np_dtf_counter = p._dtf_counter
+		print np_dtf_lv # testing
 		keepReading = True
 		while keepReading:
 			line = infile.readline() 			# get next line
@@ -486,9 +514,11 @@ class pdata(object):
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
 						self._dtf = floatD(tstring[0])*365.25*24*3600
-				else:
-					self._dtf = floatD(tstring[0])
+					else:
+						self._dtf = floatD(tstring[0])
 			elif key in ['/','end']: keepReading = False
+
+
 	def _write_time(self,outfile):
 		self._header(outfile,headers['time'])
 		outfile.write('TIME\n')
@@ -507,6 +537,13 @@ class pdata(object):
 			outfile.write(str(self.time.dtf/(365.25*24*3600))+' y\n')
 		else:
 			outfile.write(str(self.time.dtf)+'\n')
+		
+		#   Write out more max time step sizes at select times
+		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+		#if self.time.dtf>365.25*3600*24*0.1:
+		#	outfile.write(str(self.time.dtf_lv[0]/(365.25*24*3600))+' y\n')
+		#else:
+		#	outfile.write(str(self.time.dtf_lv[0])+'\n')					
 		outfile.write('END\n\n')
 	def _header(self,outfile,header):
 		if not header: return
@@ -531,4 +568,4 @@ class pdata(object):
 	def _get_mode(self): return self._mode
 	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
-	timestepper = property(_get_timestepper) #: (**)		
+	timestepper = property(_get_timestepper) #: (**)	

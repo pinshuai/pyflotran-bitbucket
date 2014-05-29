@@ -108,7 +108,7 @@ class ptime(object):
 	def _set_dtf_i(self,value): self._dtf_i = value
 	dtf_i = property(_get_dtf_i, _set_dtf_i) #: (**)
 	
-class pgrid(object):
+class pgrid(object):		# discretization
 	""" Class for grid property
 
 	"""
@@ -227,7 +227,27 @@ class ptimestepper(object):
 	def _set_max_saturation_change(self,value): self._max_saturation_change = value
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
 
+class pnsolver(object):
+	""" Class for newton solver
 
+	"""
+
+	def __init__(self,type=None,atol=None,rtol=None,stol=None,dtol=None,itol=None,
+			max_it=None,max_f=None):
+
+		self._type = type	# Indicates Flow or Tran for Transport
+		self._atol = atol
+		self._rtol = rtol
+		self._stol = stol
+		self._dtol = dtol
+		self._itol = itol
+		self._max_it = max_it
+		self._max_f = max_f
+		
+	def _get_type(self): return self._type
+	def _set_type(self,value): self._type = value
+	type = property(_get_type, _set_type)
+		
 class pdata(object):
 	"""Class for pflotran data file
 

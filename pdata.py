@@ -74,13 +74,13 @@ class ptime(object):
 	"""
 
 	#def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv = [50.,200.,500.,1000.,5000.],dtf_li = [15.,50.,20000.,50000.,100000.]):
-	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=None,dtf_li=None,dtf_counter=0):
+	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=[None],dtf_li=[None],dtf_i=0):
 		self._tf = tf
 		self._dti = dti
 		self._dtf = dtf
 		self._dtf_lv = dtf_lv
 		self._dtf_li = dtf_li
-		self._dtf_counter = dtf_counter
+		self._dtf_i = dtf_i		# Index, also being used as a counter
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
@@ -104,6 +104,9 @@ class ptime(object):
 	def _get_dtf_li(self): return self._dtf_li
 	def _set_dtf_li(self,value): self._dtf_li = value
 	dtf_li = property(_get_dtf_li, _set_dtf_li) #: (**)
+	def _get_dtf_i(self): return self._dtf_i
+	def _set_dtf_i(self,value): self._dtf_i = value
+	dtf_i = property(_get_dtf_i, _set_dtf_i) #: (**)
 	
 class pgrid(object):
 	""" Class for grid property
@@ -557,7 +560,8 @@ class pdata(object):
 		np_dtf = p._dtf
 		np_dtf_lv = p._dtf_lv
 		np_dtf_li = p._dtf_li
-		np_dtf_counter = p._dtf_counter
+		np_dtf_i = p._dtf_i
+		
 		keepReading = True
 		while keepReading:
 			line = infile.readline() 			# get next line
@@ -577,18 +581,7 @@ class pdata(object):
 				else:
 					np_dti = floatD(tstring[0])
 			elif key == 'maximum_timestep_size':
-				tstring = line.split()[1:]
-				if len(tstring) == 2:
-					if tstring[-1] == 'y':
-						np_dtf = floatD(tstring[0])*365.25*24*3600
-				else:
-					np_dtf = floatD(tstring[0])
-					
-				## Continue reading more maximum_timestep_size with AT keyword
-				line = infile.readline()	# get next line
-				key = line.split()[0].lower()	# take first keyword
-				last_pos = None
-				while(key == 'maximum_timestep_size'):
+				if ('at' not in line):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
 						if tstring[-1] == 'y':
@@ -596,27 +589,36 @@ class pdata(object):
 					else:
 						np_dtf = floatD(tstring[0])
 						
-					# AT keyword is required after the first entry:
-					at_i = line.find('at')	#at_i = at_index
-					#print line[at_i:]
-					#print at_i
-					#key = line.split()[1:] # Read the next key word after AT
-					tstring = line.split('at')[-1]
-					print 'test ' + str(tstring)
-					
-					last_pos = infile.tell()	# Remember the previous line
-					line = infile.readline()	# get next line
-					key = line.split()[0].lower()	# take first keyword
-					
-					
-				# Go back one line when done reading in timestep_sizes	
-				if last_pos != None:
-					infile.seek(last_pos)
-				
+				elif ('at' in line):
+					## Read maximum_timestep_size with AT keyword 
+					if (key == 'maximum_timestep_size'):
+						
+						#Read before AT
+						tstring = line.split()[1:]
+						if len(tstring) >= 2:
+							if tstring[1] == 'y': # Detect the y after 1st #, not the last y on the line
+								np_dtf_lv.append(1)
+								np_dtf_lv[np_dtf_i] = floatD(tstring[0])*365.25*24*3600
+						else:
+							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+							
+						#Read after AT
+						at_i = tstring.index('at') # Find index # in list (Not string)
+						tstring = line.split()[at_i+2:] # Use string only after 'at'
+						
+						if len(tstring) == 2:
+							if tstring[-1] == 'y':
+								np_dtf_li.append(1)
+								np_dtf_li[np_dtf_i] = floatD(tstring[0])*365.25*24*3600
+						else:
+							np_dtf_li[np_dtf_i] = floatD(tstring[0])
+							
+						np_dtf_i = np_dtf_i + 1
+							
 			elif key in ['/','end']: keepReading = False
 			
 		# Craete new empty time object and assign values read in.	
-		new_time = ptime(np_tf,np_dti,np_dtf,np_dtf_lv,np_dtf_li,np_dtf_counter)
+		new_time = ptime(np_tf,np_dti,np_dtf,np_dtf_lv,np_dtf_li,np_dtf_i)
 		self._time = new_time
 
 	def _write_time(self,outfile):
@@ -624,23 +626,44 @@ class pdata(object):
 		time = self.time
 		outfile.write('TIME\n')
 		outfile.write('\tFINAL_TIME\t')
+		
+		# write FINAL_TIME statement
 		if time.tf>365.25*3600*24*0.1:
 			outfile.write(str(time.tf/(365.25*24*3600))+' y\n')
 		else:
 			outfile.write(str(time.tf)+'\n')
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
+		
+		# write INITIAL_TIMESTEP_SIZE statement
 		if time.dti>365.25*3600*24*0.1:
 			outfile.write(str(time.dti/(365.25*24*3600))+' y\n')
 		else:
 			outfile.write(str(time.dti)+'\n')
-		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-		if time.dtf>365.25*3600*24*0.1:
-			outfile.write(str(time.dtf/(365.25*24*3600))+' y\n')
-		else:
-			outfile.write(str(time.dtf)+'\n')
 		
+		# write MAXIMUM_TIMESTEP_SIZE statement	
+			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+			if time.dtf>365.25*3600*24*0.1:
+				outfile.write(str(time.dtf/(365.25*24*3600))+' y\n')
+			else:
+				outfile.write(str(time.dtf)+'\n')
+						
+		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
+		for i in range(0, time.dtf_i):
+			# write before AT
+			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+			if time.dtf_lv[i]>365.25*3600*24*0.1:
+				outfile.write(str(time.dtf_lv[i]/(365.25*24*3600))+' y')
+			else:
+				outfile.write(str(time.dtf_lv[i]))
+			# write after AT
+			outfile.write(' AT ')
+			if time.dtf_li[i]>365.25*3600*24*0.1:
+				outfile.write(str(time.dtf_li[i]/(365.25*24*3600))+' y\n')
+			else:
+				outfile.write(str(time.dtf_li[i])+'\n')			
+			
 		#   Write out more max time step sizes at select times
-		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+		#outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
 		#if self.time.dtf>365.25*3600*24*0.1:
 		#	outfile.write(str(self.time.dtf_lv[0]/(365.25*24*3600))+' y\n')
 		#else:

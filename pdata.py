@@ -12,9 +12,9 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['mode','grid','timestepper','material_property','time']
+cards = ['mode','grid','timestepper','material_property','time','newton_solver']
 headers = ['mode','grid','time stepping','material properties',
-		   'time']
+		   'time','newton solver']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -72,8 +72,7 @@ class ptime(object):
 	""" Class for time property
 
 	"""
-
-	#def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv = [50.,200.,500.,1000.,5000.],dtf_li = [15.,50.,20000.,50000.,100000.]):
+	
 	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=[None],dtf_li=[None],dtf_i=0):
 		self._tf = tf
 		self._dti = dti
@@ -94,13 +93,9 @@ class ptime(object):
 	dtf = property(_get_dtf, _set_dtf) #: (**)
 	
 	# The dtf lists are for multiple max time step entries at specified time intervals
-	#def _get_dtf_lv(self,i): return self._dtf_list_lv[i]       #lv = list value
-	#def _set_dtf_lv(self,value,i): self._dtf_list_lv[i]=value
 	def _get_dtf_lv(self): return self._dtf_lv
 	def _set_dtf_lv(self,value): self._dtf_lv = value
 	dtf_lv = property(_get_dtf_lv, _set_dtf_lv) #: (**)
-	#def _get_dtf_li(self,i): return self._dtf_list_li[i]       #li = list interval
-	#def _set_dtf_li(self,value,i): self._dtf_list_li[i]=value
 	def _get_dtf_li(self): return self._dtf_li
 	def _set_dtf_li(self,value): self._dtf_li = value
 	dtf_li = property(_get_dtf_li, _set_dtf_li) #: (**)
@@ -232,10 +227,10 @@ class pnsolver(object):
 
 	"""
 
-	def __init__(self,type=None,atol=None,rtol=None,stol=None,dtol=None,itol=None,
+	def __init__(self,name,atol=None,rtol=None,stol=None,dtol=None,itol=None,
 			max_it=None,max_f=None):
 
-		self._type = type	# Indicates Flow or Tran for Transport
+		self._name = name	# Indicates Flow or Tran for Transport
 		self._atol = atol
 		self._rtol = rtol
 		self._stol = stol
@@ -244,9 +239,30 @@ class pnsolver(object):
 		self._max_it = max_it
 		self._max_f = max_f
 		
-	def _get_type(self): return self._type
-	def _set_type(self,value): self._type = value
-	type = property(_get_type, _set_type)
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_atol(self): return self._atol
+	def _set_atol(self,value): self._atol = value
+	atol = property(_get_atol, _set_atol)
+	def _get_rtol(self): return self._rtol
+	def _set_rtol(self,value): self._rtol = value
+	rtol = property(_get_rtol, _set_rtol)
+	def _get_stol(self): return self._stol
+	def _set_stol(self,value): self._stol = value
+	stol = property(_get_stol, _set_stol)
+	def _get_dtol(self): return self._dtol
+	def _set_dtol(self,value): self._dtol = value
+	dtol = property(_get_dtol, _set_dtol)
+	def _get_itol(self): return self._itol
+	def _set_itol(self,value): self._itol = value
+	itol = property(_get_itol, _set_itol)
+	def _get_max_it(self): return self._max_it
+	def _set_max_it(self,value): self._max_it = value
+	max_it = property(_get_max_it, _set_max_it)
+	def _get_max_f(self): return self._max_f
+	def _set_max_f(self,value): self._max_f = value
+	max_f = property(_get_max_f, _set_max_f)					
 		
 class pdata(object):
 	"""Class for pflotran data file
@@ -261,6 +277,8 @@ class pdata(object):
 		self._mode = ''
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
+		self._nsolver = pnsolver('')
+		#self._nsolver = ''
 
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
@@ -274,7 +292,8 @@ class pdata(object):
 				 self._read_grid,
 				 self._read_timestepper,
 				 self._read_prop,
-				 self._read_time]
+				 self._read_time,
+				 self._read_nsolver]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -284,8 +303,9 @@ class pdata(object):
 				if not line: keepReading = False
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
-				if card in cards: 					# check if a valid cardname
-					if card in ['material_property','mode','grid','timestepper']:
+				if card in cards: 			# check if a valid cardname
+					if card in ['material_property','mode','grid','timestepper',
+							'newton_solver']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -303,8 +323,9 @@ class pdata(object):
 		if self.timestepper : self._write_timestepper(outfile)
 		if self.time: self._write_time(outfile)
 		if self.proplist: self._write_prop(outfile)
+		if self.nsolver: self._write_nsolver(outfile)
 		outfile.close()
-	
+		
 	def _read_mode(self,infile,line):
 		mode_name = line.split()[-1]
 		new_mode = pmode(mode_name)
@@ -676,20 +697,70 @@ class pdata(object):
 			else:
 				outfile.write(str(time.dtf_lv[i]))
 			# write after AT
-			outfile.write(' AT ')
+			outfile.write(' at ')
 			if time.dtf_li[i]>365.25*3600*24*0.1:
 				outfile.write(str(time.dtf_li[i]/(365.25*24*3600))+' y\n')
 			else:
-				outfile.write(str(time.dtf_li[i])+'\n')			
-			
-		#   Write out more max time step sizes at select times
-		#outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-		#if self.time.dtf>365.25*3600*24*0.1:
-		#	outfile.write(str(self.time.dtf_lv[0]/(365.25*24*3600))+' y\n')
-		#else:
-		#	outfile.write(str(self.time.dtf_lv[0])+'\n')					
+				outfile.write(str(time.dtf_li[i])+'\n')				
 		outfile.write('END\n\n')
-	
+		
+	def _read_nsolver(self,infile,line):
+		np_name = line.split()[-1].lower()	# newton solver type - tran_solver or flow_solver
+		p = pnsolver('')		# Assign Defaults
+		np_atol = p.atol
+		np_rtol = p.rtol
+		np_stol = p.stol
+		np_dtol = p.dtol
+		np_itol = p.itol
+		np_max_it = p.max_it
+		np_max_f = p.max_f
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
+			
+			if key == 'atol':
+				np_atol = floatD(line.split()[-1])
+			if key == 'rtol':
+				np_rtol = floatD(line.split()[-1])
+			if key == 'stol':
+				np_stol = floatD(line.split()[-1])
+			if key == 'dtol':
+				np_dtol = floatD(line.split()[-1])
+			if key == 'itol':
+				np_itol = floatD(line.split()[-1])
+			if key == 'maxit':
+				np_max_it = float(line.split()[-1])
+			if key == 'maxf':
+				np_max_f = float(line.split()[-1])
+			elif key in ['/','end']: keepReading = False
+		
+		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
+					np_max_it,np_max_f)	# Create an empty newton solver
+		self._nsolver = new_nsolver
+		
+	def _write_nsolver(self,outfile):
+		self._header(outfile,headers['newton_solver'])
+		nsolver = self.nsolver
+		outfile.write('NEWTON_SOLVER\n')
+		
+		# Writer Newton Solver Type - Not certain this is correct.
+		if nsolver.name == 'flow':	# default
+			outfile.write('\tTRAN,DEFAULT\n')
+		elif nsolver.name == 'tran':
+			outfile.write('\tTRAN,TRANSPORT\n')
+			
+		outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
+		outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
+		outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
+		outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
+		outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
+		outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
+		outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
+		outfile.write('END\n\n')		
+			
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -715,3 +786,5 @@ class pdata(object):
 	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
 	timestepper = property(_get_timestepper) #: (**)
+	def _get_nsolver(self): return self._nsolver
+	nsolver = property(_get_nsolver) #: (**)

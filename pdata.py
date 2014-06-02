@@ -12,9 +12,10 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['mode','grid','timestepper','material_property','time','newton_solver','output']
+cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
+		'fluid_property']
 headers = ['mode','grid','time stepping','material properties',
-		   'time','newton solver','output']
+		   'time','newton solver','output','fluid properties']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -264,7 +265,7 @@ class pnsolver(object):
 	max_f = property(_get_max_f, _set_max_f)
 	
 class poutput(object):
-	"""Class for output
+	"""Class for output options
 
 	"""
 	
@@ -291,8 +292,19 @@ class poutput(object):
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
 	velocities = property(_get_velocities, _set_velocities)	
-			
+	
+class pfluid(object):
+	"""Class for fluid properties
+
+	"""
+	
+	def __init__(self,diffusion_coefficient=None):
+		self._diffusion_coefficient = diffusion_coefficient
 		
+	def _get_diffusion_coefficient(self): return self._diffusion_coefficient
+	def _set_diffusion_coefficient(self,value): self._diffusion_coefficient = value
+	diffusion_coefficient = property(_get_diffusion_coefficient, _set_diffusion_coefficient)
+
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -301,13 +313,14 @@ class pdata(object):
 	def __init__(self, filename=None):
 		from copy import copy
 		self._filename = filename
-		self._proplist = []
+		self._proplist = []	# There are multiple material properties objects
 		self._time = ptime()
 		self._mode = ''
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._nsolver = pnsolver('')
 		self._output = poutput()
+		self._fluid = pfluid()
 		#self._nsolver = ''
 
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
@@ -324,7 +337,8 @@ class pdata(object):
 				 self._read_prop,
 				 self._read_time,
 				 self._read_nsolver,
-				 self._read_output]
+				 self._read_output,
+				 self._read_fluid]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -356,6 +370,7 @@ class pdata(object):
 		if self.proplist: self._write_prop(outfile)
 		if self.nsolver: self._write_nsolver(outfile)
 		if self.output: self._write_output(outfile)
+		if self.fluid: self._write_fluid(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -830,14 +845,14 @@ class pdata(object):
 			elif key == 'velocities':
 				np_velocities = 'VELOCITIES'
 			elif key == 'mass_balance':
-				np_mass_balance = 'MASS_BALANCE'	
+				np_mass_balance = 'MASS_BALANCE'
 			elif key in ['/','end']: keepReading = False
 			
 		# Create new empty output object and assign values read in.
 		new_output = poutput(np_mass_balance,np_print_column_ids,
 					np_periodic_observation_timestep,np_format,
 					np_velocities)	# Create an empty output
-		self._output = new_output	# Values read in are assigned now
+		self._output = new_output	# Values read in are assigned now'
 		
 	def _write_output(self,outfile):
 		self._header(outfile,headers['output'])
@@ -863,7 +878,36 @@ class pdata(object):
 		if output.mass_balance:
 			outfile.write('\t'+output.mass_balance+'\n')
 		outfile.write('END\n\n')
-
+		
+	def _read_fluid(self,infile):
+		p = pfluid()
+		np_diffusion_coefficient = p.diffusion_coefficient
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first
+				
+			if key == 'diffusion_coefficient':
+				np_diffusion_coefficient = floatD(line.split()[-1]) # Read last entry
+			elif key in ['/','end']: keepReading = False
+		
+		# Create new employ fluid properties object and assign read in values to it
+		new_fluid = pfluid(np_diffusion_coefficient)
+		self._fluid = new_fluid
+			
+	def _write_fluid(self,outfile):
+		self._header(outfile,headers['fluid_property'])
+		fluid = self.fluid
+		outfile.write('FLUID_PROPERTY\n')
+		
+		# Write out requested (not null) fluid properties
+		if fluid.diffusion_coefficient:
+			outfile.write('\tDIFFUSION_COEFFICIENT\t' + 
+					strD(fluid.diffusion_coefficient) + '\n') # Read last entry
+		outfile.write('END\n\n')
+		
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -893,4 +937,5 @@ class pdata(object):
 	nsolver = property(_get_nsolver) #: (**)
 	def _get_output(self): return self._output
 	output = property(_get_output) #: (**)	
-	
+	def _get_fluid(self): return self._fluid
+	fluid = property(_get_fluid) #: (**)	

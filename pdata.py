@@ -13,9 +13,9 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
-		'fluid_property']
+		'fluid_property','saturation_function']
 headers = ['mode','grid','time stepping','material properties',
-		   'time','newton solver','output','fluid properties']
+		   'time','newton solver','output','fluid properties','saturation functions']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -304,7 +304,58 @@ class pfluid(object):
 	def _get_diffusion_coefficient(self): return self._diffusion_coefficient
 	def _set_diffusion_coefficient(self,value): self._diffusion_coefficient = value
 	diffusion_coefficient = property(_get_diffusion_coefficient, _set_diffusion_coefficient)
+	
+class psaturation(object):
+	"""Class for saturation functions
 
+	"""
+	
+	def __init__(self,name,permeability_function_type=None,saturation_function_type=None,
+			residual_saturation_liquid=None,residual_saturation_gas=None,
+			a_lambda=None,alpha=None,max_capillary_pressure=None,
+			betac=None,power=None):
+		self._name = name
+		self._permeability_function_type = permeability_function_type
+		self._saturation_function_type = saturation_function_type
+		self._residual_saturation_liquid = residual_saturation_liquid
+		self._residual_saturation_gas = residual_saturation_gas
+		self._a_lambda = a_lambda
+		self._alpha = alpha
+		self._max_capillary_pressure = max_capillary_pressure
+		self._betac = betac
+		self._power = power
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_permeability_function_type(self): return self._permeability_function_type
+	def _set_permeability_function_type(self,value): self._permeability_function_type = value
+	permeability_function_type = property(_get_permeability_function_type, _set_permeability_function_type)
+	def _get_saturation_function_type(self): return self._saturation_function_type
+	def _set_saturation_function_type(self,value): self._saturation_function_type = value
+	saturation_function_type = property(_get_saturation_function_type, _set_saturation_function_type)	
+	def _get_residual_saturation_liquid(self): return self._residual_saturation_liquid
+	def _set_residual_saturation_liquid(self,value): self._residual_saturation_liquid = value
+	residual_saturation_liquid = property(_get_residual_saturation_liquid, _set_residual_saturation_liquid)
+	def _get_residual_saturation_gas(self): return self._residual_saturation_gas
+	def _set_residual_saturation_gas(self,value): self._residual_saturation_gas = value
+	residual_saturation_gas = property(_get_residual_saturation_gas, _set_residual_saturation_gas)
+	def _get_a_lambda(self): return self._a_lambda
+	def _set_a_lambda(self,value): self._a_lambda = value
+	a_lambda = property(_get_a_lambda, _set_a_lambda)
+	def _get_alpha(self): return self._alpha
+	def _set_alpha(self,value): self._alpha = value
+	alpha = property(_get_alpha, _set_alpha)
+	def _get_max_capillary_pressure(self): return self._max_capillary_pressure
+	def _set_max_capillary_pressure(self,value): self._max_capillary_pressure = value
+	max_capillary_pressure = property(_get_max_capillary_pressure, _set_max_capillary_pressure)
+	def _get_betac(self): return self._betac
+	def _set_betac(self,value): self._betac = value
+	betac = property(_get_betac, _set_betac)
+	def _get_power(self): return self._power
+	def _set_power(self,value): self._power = value
+	power = property(_get_power, _set_power)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -321,8 +372,8 @@ class pdata(object):
 		self._nsolver = pnsolver('')
 		self._output = poutput()
 		self._fluid = pfluid()
-		#self._nsolver = ''
-
+		self._saturation = psaturation('')
+		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
 	def __repr__(self): return self.filename 	# print to screen when called
@@ -338,7 +389,8 @@ class pdata(object):
 				 self._read_time,
 				 self._read_nsolver,
 				 self._read_output,
-				 self._read_fluid]
+				 self._read_fluid,
+				 self._read_saturation]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -350,7 +402,7 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
-							'newton_solver']:
+							'newton_solver','saturation_function']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -371,6 +423,7 @@ class pdata(object):
 		if self.nsolver: self._write_nsolver(outfile)
 		if self.output: self._write_output(outfile)
 		if self.fluid: self._write_fluid(outfile)
+		if self.saturation: self._write_saturation(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -908,6 +961,40 @@ class pdata(object):
 					strD(fluid.diffusion_coefficient) + '\n') # Read last entry
 		outfile.write('END\n\n')
 		
+	def _read_saturation(self,infile,line):
+		np_name = line.split()[-1].lower()	# saturation function name, passed in.
+		p = psaturation('')	# assign defaults before reading in values
+		np_permeability_function_type = p.permeability_function_type
+		np_saturation_function_type = p.saturation_function_type
+		np_residual_saturation_liquid = p.residual_saturation_liquid
+		np_residual_saturation_gas = p.residual_saturation_gas
+		np_a_lambda = p.a_lambda
+		np_alpha = p.alpha
+		np_max_capillary_pressure = p.max_capillary_pressure
+		np_betac = p.betac
+		np_power = p.power
+		
+		'''
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			
+		'''
+		# Create an empty saturation function and assign the values read in
+		new_saturation = psaturation(np_name,np_permeability_function_type,
+						np_saturation_function_type,
+						np_residual_saturation_liquid,
+						np_residual_saturation_gas,np_a_lambda,
+						np_alpha,np_max_capillary_pressure,
+						np_betac,np_power)
+		self._saturation = new_saturation
+		
+	def _write_saturation(self,outfile):
+		self._header(outfile,headers['saturation_function'])
+		saturation = self.saturation
+		outfile.write('SATURATION_FUNCTION\n')
+		print 'test write'
+		
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -938,4 +1025,6 @@ class pdata(object):
 	def _get_output(self): return self._output
 	output = property(_get_output) #: (**)	
 	def _get_fluid(self): return self._fluid
-	fluid = property(_get_fluid) #: (**)	
+	fluid = property(_get_fluid) #: (**)
+	def _get_saturation(self): return self._saturation
+	saturation = property(_get_saturation) #: (**)

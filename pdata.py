@@ -12,9 +12,9 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['mode','grid','timestepper','material_property','time','newton_solver']
+cards = ['mode','grid','timestepper','material_property','time','newton_solver','output']
 headers = ['mode','grid','time stepping','material properties',
-		   'time','newton solver']
+		   'time','newton solver','output']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -229,7 +229,6 @@ class pnsolver(object):
 
 	def __init__(self,name,atol=None,rtol=None,stol=None,dtol=None,itol=None,
 			max_it=None,max_f=None):
-
 		self._name = name	# Indicates Flow or Tran for Transport
 		self._atol = atol
 		self._rtol = rtol
@@ -262,7 +261,37 @@ class pnsolver(object):
 	max_it = property(_get_max_it, _set_max_it)
 	def _get_max_f(self): return self._max_f
 	def _set_max_f(self,value): self._max_f = value
-	max_f = property(_get_max_f, _set_max_f)					
+	max_f = property(_get_max_f, _set_max_f)
+	
+class poutput(object):
+	"""Class for output
+
+	"""
+	
+	def __init__(self,mass_balance=None,print_column_ids=None,periodic_observation_timestep=None,
+			format=[],velocities=None):
+		self._mass_balance = mass_balance
+		self._print_column_ids = print_column_ids
+		self._periodic_observation_timestep = periodic_observation_timestep
+		self._format = format
+		self._velocities = velocities
+		
+	def _get_mass_balance(self): return self._mass_balance
+	def _set_mass_balance(self,value): self._mass_balance = value
+	mass_balance = property(_get_mass_balance, _set_mass_balance)	
+	def _get_print_column_ids(self): return self._print_column_ids
+	def _set_print_column_ids(self,value): self._print_column_ids = value
+	print_column_ids = property(_get_print_column_ids, _set_print_column_ids)
+	def _get_periodic_observation_timestep(self): return self._periodic_observation_timestep
+	def _set_periodic_observation_timestep(self,value): self._periodic_observation_timestep = value
+	periodic_observation_timestep = property(_get_periodic_observation_timestep, _set_periodic_observation_timestep)
+	def _get_format(self): return self._format
+	def _set_format(self,value): self._format = value
+	format = property(_get_format, _set_format)
+	def _get_velocities(self): return self._velocities
+	def _set_velocities(self,value): self._velocities = value
+	velocities = property(_get_velocities, _set_velocities)	
+			
 		
 class pdata(object):
 	"""Class for pflotran data file
@@ -278,6 +307,7 @@ class pdata(object):
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._nsolver = pnsolver('')
+		self._output = poutput()
 		#self._nsolver = ''
 
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
@@ -293,7 +323,8 @@ class pdata(object):
 				 self._read_timestepper,
 				 self._read_prop,
 				 self._read_time,
-				 self._read_nsolver]
+				 self._read_nsolver,
+				 self._read_output]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -324,6 +355,7 @@ class pdata(object):
 		if self.time: self._write_time(outfile)
 		if self.proplist: self._write_prop(outfile)
 		if self.nsolver: self._write_nsolver(outfile)
+		if self.output: self._write_output(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -746,7 +778,7 @@ class pdata(object):
 		nsolver = self.nsolver
 		outfile.write('NEWTON_SOLVER\n')
 		
-		# Writer Newton Solver Type - Not certain this is correct.
+		# Write Newton Solver Type - Not certain this is correct.
 		if nsolver.name == 'flow':	# default
 			outfile.write('\tTRAN,DEFAULT\n')
 		elif nsolver.name == 'tran':
@@ -759,8 +791,79 @@ class pdata(object):
 		outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
 		outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
 		outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
-		outfile.write('END\n\n')		
+		outfile.write('END\n\n')
+	
+	def _read_output(self,infile):
+		p = poutput()
+		np_mass_balance = p.mass_balance
+		np_print_column_ids = p.print_column_ids
+		np_periodic_observation_timestep = p.periodic_observation_timestep
+		np_format = p.format
+		np_velocities = p.velocities
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
 			
+			if key == 'periodic_observation':
+				tstring = line.strip().split()[1].lower()	# Read the 2nd word
+				if tstring == 'timestep':
+					np_periodic_observation_timestep = int(line.split()[-1])
+# Needed later			#elif tstring == 'time':
+					#np_periodic_observation_time = float(line.split()[-1])	
+			elif key == 'print_column_ids':
+				np_print_column_ids = 'PRINT_COLUMN_IDS'
+			elif key == 'format':
+				tstring = (line.strip().split()[1:])
+				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
+				#tstring.lower()
+				if tstring == 'tecplot block':
+					np_format.append('TECPLOT BLOCK')
+				elif tstring == 'tecplot point':
+					np_format.append('TECPLOT POINT')
+				elif tstring == 'hdf5':
+					np_format.append('HDF5')
+				elif tstring == 'vtk':
+					np_format.append('VTK')
+			elif key == 'velocities':
+				np_velocities = 'VELOCITIES'
+			elif key == 'mass_balance':
+				np_mass_balance = 'MASS_BALANCE'	
+			elif key in ['/','end']: keepReading = False
+			
+		# Create new empty output object and assign values read in.
+		new_output = poutput(np_mass_balance,np_print_column_ids,
+					np_periodic_observation_timestep,np_format,
+					np_velocities)	# Create an empty output
+		self._output = new_output	# Values read in are assigned now
+		
+	def _write_output(self,outfile):
+		self._header(outfile,headers['output'])
+		output = self.output
+		
+		# Write Output - if used so null/None entries are not written
+		outfile.write('OUTPUT\n')
+# This is here on purpose - Needed later
+		#if output.periodic_observation_time:
+			#outfile.write('\tPERIODIC_OBSERVATION TIME\t'+
+					#str(output.periodic_observation_time)+'\n')		
+		if output.periodic_observation_timestep:
+			outfile.write('\tPERIODIC_OBSERVATION TIMESTEP\t'+
+					str(output.periodic_observation_timestep)+'\n')
+		if output.print_column_ids:
+			outfile.write('\t'+output.print_column_ids+'\n')
+		if output.format:
+			outfile.write('\tFORMAT\n')
+			for i in range(0, len(output.format)):
+				outfile.write('\t\t' + str(output.format[i]) + '\n')
+		if output.velocities:
+			outfile.write('\t'+output.velocities+'\n')
+		if output.mass_balance:
+			outfile.write('\t'+output.mass_balance+'\n')
+		outfile.write('END\n\n')
+
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -788,3 +891,6 @@ class pdata(object):
 	timestepper = property(_get_timestepper) #: (**)
 	def _get_nsolver(self): return self._nsolver
 	nsolver = property(_get_nsolver) #: (**)
+	def _get_output(self): return self._output
+	output = property(_get_output) #: (**)	
+	

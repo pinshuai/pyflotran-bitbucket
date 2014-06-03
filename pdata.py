@@ -974,12 +974,38 @@ class pdata(object):
 		np_betac = p.betac
 		np_power = p.power
 		
-		'''
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first  key word
 			
-		'''
+			if key == 'permeability_function_type':
+				np_permeability_function_type = line.split()[-1]
+			elif key == 'saturation_function_type':
+				np_saturation_function_type = line.split()[-1]
+			elif key == 'residual_saturation_liquid':
+				np_residual_saturation_liquid = float(line.split()[-1])
+			elif key == 'residual_saturation_gas':
+				np_residual_saturation_gas = float(line.split()[-1])
+			elif key == 'residual_saturation':	# Alternative to check
+				tstring = line.strip().split()[1].lower()	# take 2nd key word
+				if tstring == 'liquid_phase':
+					np_residual_saturation_liquid = float(line.split()[-1])
+				elif tstring == 'gas_phase':
+					np_residual_saturation_gas = float(line.split()[-1])
+			elif key == 'lambda':
+				np_a_lambda = floatD(line.split()[-1])
+			elif key == 'alpha':
+				np_alpha = floatD(line.split()[-1])
+			elif key == 'max_capillary_pressure':
+				np_max_capillary_pressure = floatD(line.split()[-1])
+			elif key == 'betac':
+				np_betac = floatD(line.split()[-1])
+			elif key == 'power':
+				np_power = floatD(line.split()[-1])
+			elif key in ['/','end']: keepReading = False
+			
 		# Create an empty saturation function and assign the values read in
 		new_saturation = psaturation(np_name,np_permeability_function_type,
 						np_saturation_function_type,
@@ -992,8 +1018,37 @@ class pdata(object):
 	def _write_saturation(self,outfile):
 		self._header(outfile,headers['saturation_function'])
 		saturation = self.saturation
-		outfile.write('SATURATION_FUNCTION\n')
-		print 'test write'
+		
+		# Write out saturation properties that exist
+		outfile.write('SATURATION_FUNCTION')
+		if saturation.name:
+			outfile.write('\t' + saturation.name + '\n')
+		else:
+			outfile.write('n')
+		if saturation.permeability_function_type:
+			outfile.write('\tPERMEABILITY_FUNCTION_TYPE\t' +
+					saturation.permeability_function_type + '\n')
+		if saturation.saturation_function_type:
+			outfile.write('\tSATURATION_FUNCTION_TYPE\t' + 
+					saturation.saturation_function_type + '\n')
+		if saturation.residual_saturation_liquid or saturation.residual_saturation_liquid ==0:
+			outfile.write('\tRESIDUAL_SATURATION LIQUID_PHASE\t' + 
+					str(saturation.residual_saturation_liquid) + '\n')
+		if saturation.residual_saturation_gas or saturation.residual_saturation_gas == 0:
+			outfile.write('\tRESIDUAL_SATURATION GAS_PHASE\t' +
+					str(saturation.residual_saturation_gas) + '\n')
+		if saturation.a_lambda:
+			outfile.write('\tLAMBDA\t' + strD(saturation.a_lambda) + '\n')
+		if saturation.alpha:
+			outfile.write('\tALPHA\t' + strD(saturation.alpha) + '\n')
+		if saturation.max_capillary_pressure:
+			outfile.write('\tMAX_CAPILLARY_PRESSURE\t' + 
+					strD(saturation.max_capillary_pressure) + '\n')
+		if saturation.betac:
+			outfile.write('\tBETAC\t' + strD(saturation.betac) + '\n')
+		if saturation.power:
+			outfile.write('\tPOWER\t' + strD(saturation.power) + '\n')
+		outfile.write('END\n\n')
 		
 	def _header(self,outfile,header):
 		if not header: return

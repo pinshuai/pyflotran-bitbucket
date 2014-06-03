@@ -13,9 +13,10 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
-		'fluid_property','saturation_function']
+		'fluid_property','saturation_function','region']
 headers = ['mode','grid','time stepping','material properties',
-		   'time','newton solver','output','fluid properties','saturation functions']
+		   'time','newton solver','output','fluid properties','saturation functions',
+		   'regions']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -67,7 +68,6 @@ class pmaterial(object):
 	def _get_permeability(self): return self._permeability
 	def _set_permeability(self,value): self._permeability = value
 	permeability = property(_get_permeability, _set_permeability) #: (**)
-
 
 class ptime(object):
 	""" Class for time property
@@ -356,6 +356,35 @@ class psaturation(object):
 	def _set_power(self,value): self._power = value
 	power = property(_get_power, _set_power)
 	
+class pregion(object):
+	"""Class for regions
+
+	"""
+	
+	def __init__(self,name,coordinates_lower=[None]*3,coordinates_upper=[None]*3,face=None,
+			coordinates_bool=False):
+		self._name = name
+		self._coordinates_lower = coordinates_lower
+		self._coordinates_upper = coordinates_upper
+		self._face = face
+		self._coordinates_bool = coordinates_bool
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_coordinates_lower(self): return self._coordinates_lower
+	def _set_coordinates_lower(self,value): self._coordinates_lower = value
+	coordinates_lower = property(_get_coordinates_lower, _set_coordinates_lower)
+	def _get_coordinates_upper(self): return self._coordinates_upper
+	def _set_coordinates_upper(self,value): self._coordinates_upper = value
+	coordinates_upper = property(_get_coordinates_upper, _set_coordinates_upper)
+	def _get_face(self): return self._face
+	def _set_face(self,value): self._face = value
+	face = property(_get_face, _set_face)
+	def _get_coordinates_bool(self): return self._coordinates_bool
+	def _set_coordinates_bool(self,value): self._coordinates_bool = value
+	coordinates_bool = property(_get_coordinates_bool, _set_coordinates_bool)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -373,6 +402,8 @@ class pdata(object):
 		self._output = poutput()
 		self._fluid = pfluid()
 		self._saturation = psaturation('')
+		self._region = []
+		#self._region = pregion()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
@@ -390,7 +421,8 @@ class pdata(object):
 				 self._read_nsolver,
 				 self._read_output,
 				 self._read_fluid,
-				 self._read_saturation]
+				 self._read_saturation,
+				 self._read_region]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -402,7 +434,8 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
-							'newton_solver','saturation_function']:
+							'newton_solver','saturation_function',
+							'region']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -424,6 +457,7 @@ class pdata(object):
 		if self.output: self._write_output(outfile)
 		if self.fluid: self._write_fluid(outfile)
 		if self.saturation: self._write_saturation(outfile)
+		if self.region: self._write_region(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -1050,6 +1084,59 @@ class pdata(object):
 			outfile.write('\tPOWER\t' + strD(saturation.power) + '\n')
 		outfile.write('END\n\n')
 		
+	def _read_region(self,infile,line):
+#		region_name = line.split()[-1].lower()	# saturation function name, passed in.
+		ng_name = line.split()[-1].lower()	# saturation function name, passed in.
+		
+		p = pregion('')		# Assign defaults before reading in value
+		ng_coordinates_lower = p.coordinates_lower
+		ng_coordinates_upper = p.coordinates_upper
+		ng_face = p.face
+		ng_coordinates_bool = p.coordinates_bool# Should only be false with code written as of 6/3/14 
+		
+		keepReading = True
+		coordinates_key = False
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first keyword
+			if key == 'coordinates':
+				coordinates_key = True
+				keepReading2 = True
+				while keepReading2:
+					line1 = infile.readline()
+					ng_coordinates_lower[0] = floatD(line1.split()[0])
+					ng_coordinates_lower[1] = floatD(line1.split()[1])
+					ng_coordinates_lower[2] = floatD(line1.split()[2])
+					line2 = infile.readline()
+					ng_coordinates_upper[0] = floatD(line2.split()[0])
+					ng_coordinates_upper[1] = floatD(line2.split()[1])
+					ng_coordinates_upper[2] = floatD(line2.split()[2])
+					line3 = infile.readline()
+					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False	
+			elif key == 'face':
+				ng_face = line.strip().split()[-1].lower()
+			elif key in ['/','end']: keepReading = False
+			
+		new_region = pregion(ng_name,ng_coordinates_lower,ng_coordinates_upper,
+					ng_face,ng_coordinates_bool)
+		self._region.append(new_region)
+				
+			
+			# Use a count?
+#			remember_me = infile.tell()	# mighty words of bender
+#			# Checks to see if the key word 'coordinates' occur in the next 5 lines
+#			for i in range(5):
+			
+			#if is_region_bool:
+				# go back to remember_me
+#				line = infile.readline()	# get next line
+#				key = line.strip().split()[0].lower()
+			#else
+				# go back to remember_me
+				
+	def _write_region(self,outfile):
+		print 'test write'
+		
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -1083,3 +1170,5 @@ class pdata(object):
 	fluid = property(_get_fluid) #: (**)
 	def _get_saturation(self): return self._saturation
 	saturation = property(_get_saturation) #: (**)
+	def _get_region(self): return self._region
+	region = property(_get_region) #: (**)

@@ -1117,25 +1117,29 @@ class pdata(object):
 				ng_face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
+		ng_coordinates_bool = coordinates_key	# I don't know why I did it this way, was copying pgrid
+			
 		new_region = pregion(ng_name,ng_coordinates_lower,ng_coordinates_upper,
 					ng_face,ng_coordinates_bool)
 		self._region.append(new_region)
 				
-			
-			# Use a count?
-#			remember_me = infile.tell()	# mighty words of bender
-#			# Checks to see if the key word 'coordinates' occur in the next 5 lines
-#			for i in range(5):
-			
-			#if is_region_bool:
-				# go back to remember_me
-#				line = infile.readline()	# get next line
-#				key = line.strip().split()[0].lower()
-			#else
-				# go back to remember_me
-				
 	def _write_region(self,outfile):
-		print 'test write'
+		self._header(outfile,headers['region'])
+#		region = self.region
+		# Write out all region object entries within regions keyword block
+		for region in self.region:
+			if region.coordinates_bool:
+				outfile.write('REGION\t')
+				outfile.write(region.name + '\n')
+				if region.face:
+					outfile.write('\tFACE\t' + region.face + '\n')
+				# no if statement below to ensure 0's are accepted for coordinates
+				outfile.write('\tCOORDINATES\n')
+				outfile.write('\t\t')
+				for i in range(3):
+					outfile.write(strD(region.coordinates_lower[i]) + ' ')
+				outfile.write('\n')
+				outfile.write('END\n')
 		
 	def _header(self,outfile,header):
 		if not header: return

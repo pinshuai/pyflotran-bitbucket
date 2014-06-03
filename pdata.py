@@ -1125,7 +1125,6 @@ class pdata(object):
 				
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
-#		region = self.region
 		# Write out all region object entries within regions keyword block
 		for region in self.region:
 			if region.coordinates_bool:
@@ -1138,6 +1137,9 @@ class pdata(object):
 				outfile.write('\t\t')
 				for i in range(3):
 					outfile.write(strD(region.coordinates_lower[i]) + ' ')
+				outfile.write('\n\t\t')
+				for i in range(3):
+					outfile.write(strD(region.coordinates_upper[i]) + ' ')
 				outfile.write('\n')
 				outfile.write('END\n')
 		

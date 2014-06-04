@@ -358,10 +358,13 @@ class psaturation(object):
 	
 class pregion(object):
 	"""Class for regions
+	
+	There are currently unresolved issues with the initializer not working correctly.
+	This has caused problems with reading in list attributes from list objects.
 
 	"""
 	
-	def __init__(self,name,coordinates_lower=[0.e0,0.e0,0.e0],coordinates_upper=[0.e0,0.e0,0.e0],
+	def __init__(self,name='',coordinates_lower=[0.0,0.0,0.0],coordinates_upper=[0.0,0.0,0.0],
 			face=None,coordinates_bool=False):
 		self._name = name
 		self._coordinates_lower = coordinates_lower	# 3D coordinates
@@ -405,10 +408,10 @@ class pflow(object):
 		self._type_temperature = type_temperature
 		self._type_concentration = type_concentration
 		self._type_enthalpy = type_enthalpy
-		self._pressure = pressure		# Holds 2 floats
+		self._pressure = pressure		# Holds 2 floats - 2nd is optional
 		self._temperature = temperature		# 1st is float, 2nd is temperature unit (char)
 		self._concentration = concentration	# 1st is float, 2nd is order of magnitude, M = Million, etc. (char)
-		self._enthalpy = enthalpy		# Holds 2 floats
+		self._enthalpy = enthalpy		# Holds 2 floats - 2nd is optional
 		self._iphase = iphase			# Holds 1 int
 		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
 		self._rate_type = rate_type	# Specify rate by mass, volume, or scaled volume
@@ -489,11 +492,11 @@ class pdata(object):
 		self._mode = ''
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
-		self._nsolver = pnsolver('')
+		self._nsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
 		self._output = poutput()
 		self._fluid = pfluid()
 		self._saturation = psaturation('')
-		self._region = []	# There are multiple regions
+		self._regionlist = []	# There are multiple regions
 		#self._region = pregion()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
@@ -544,11 +547,11 @@ class pdata(object):
 		if self.timestepper : self._write_timestepper(outfile)
 		if self.time: self._write_time(outfile)
 		if self.proplist: self._write_prop(outfile)
-		if self.nsolver: self._write_nsolver(outfile)
+		if self.nsolverlist: self._write_nsolver(outfile)
 		if self.output: self._write_output(outfile)
 		if self.fluid: self._write_fluid(outfile)
 		if self.saturation: self._write_saturation(outfile)
-		if self.region: self._write_region(outfile)
+		if self.regionlist: self._write_region(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -964,27 +967,28 @@ class pdata(object):
 		
 		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
 					np_max_it,np_max_f)	# Create an empty newton solver
-		self._nsolver = new_nsolver
+		self._nsolverlist.append(new_nsolver)
+#		self._nsolver = new_nsolver
 		
 	def _write_nsolver(self,outfile):
 		self._header(outfile,headers['newton_solver'])
-		nsolver = self.nsolver
-		outfile.write('NEWTON_SOLVER\n')
+#		nsolver = self.nsolver
 		
-		# Write Newton Solver Type - Not certain this is correct.
-		if nsolver.name == 'flow':	# default
-			outfile.write('\tTRAN,DEFAULT\n')
-		elif nsolver.name == 'tran':
-			outfile.write('\tTRAN,TRANSPORT\n')
+		for nsolver in self.nsolverlist:
+			# Write Newton Solver Type - Not certain this is correct.
+			if nsolver.name == 'flow':	# default
+				outfile.write('NEWTON_SOLVER\t' + nsolver.name + '\n')
+			elif nsolver.name == 'tran':
+				outfile.write('NEWTON_SOLVER\t' + nsolver.name + '\n')
 			
-		outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
-		outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
-		outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
-		outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
-		outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
-		outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
-		outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
-		outfile.write('END\n\n')
+			outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
+			outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
+			outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
+			outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
+			outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
+			outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
+			outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
+			outfile.write('END\n\n')
 	
 	def _read_output(self,infile):
 		p = poutput()
@@ -1048,9 +1052,9 @@ class pdata(object):
 		if output.print_column_ids:
 			outfile.write('\t'+output.print_column_ids+'\n')
 		if output.format:
-			outfile.write('\tFORMAT\n')
 			for i in range(0, len(output.format)):
-				outfile.write('\t\t' + str(output.format[i]) + '\n')
+				outfile.write('\tFORMAT\t')
+				outfile.write(str(output.format[i]) + '\n')
 		if output.velocities:
 			outfile.write('\t'+output.velocities+'\n')
 		if output.mass_balance:
@@ -1179,19 +1183,20 @@ class pdata(object):
 #		region_name = line.split()[-1].lower()	# saturation function name, passed in.
 		ng_name = line.split()[-1].lower()	# saturation function name, passed in.
 		
-		p = pregion('')		# Assign defaults before reading in value
-		ng_coordinates_lower = p.coordinates_lower
-		ng_coordinates_upper = p.coordinates_upper
-		ng_face = p.face
-		ng_coordinates_bool = p.coordinates_bool# Should only be false with code written as of 6/3/14 
+		p = pregion()		# Assign defaults before reading in value
+		ng_coordinates_lower = [None]*3
+		ng_coordinates_upper = [None]*3
+		ng_face = None
+		ng_coordinates_bool = None
+#		print 'default:', ng_coordinates_lower
+
 		
 		keepReading = True
-		coordinates_key = False
 		while keepReading:	# Read through all cards
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'coordinates':
-				coordinates_key = True
+				ng_coordinates_bool = True
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
@@ -1205,26 +1210,20 @@ class pdata(object):
 					line3 = infile.readline()
 					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False	
 			elif key == 'face':
-				ng_face = line.strip().split()[-1].lower()
+				ngface = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
-			
-#		print ng_name
-#		print ng_coordinates_lower
-#		print ng_coordinates_upper
-			
-		ng_coordinates_bool = coordinates_key	# I don't know why I did it this way, was copying pgrid
 			
 		new_region = pregion(ng_name,ng_coordinates_lower,ng_coordinates_upper,
 					ng_face,ng_coordinates_bool)
-		self._region.append(new_region)
+		self._regionlist.append(new_region)
 				
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
 		
 		# Write out all valid region object entries with Region as Key word
-		for region in self.region:
+		for region in self.regionlist:
 			if region.coordinates_bool: #  Commented out for testing
-				outfile.write('REGION\t')
+				outfile.write('\nREGION\t')
 				outfile.write(region.name + '\n')
 				if region.face:
 					outfile.write('\tFACE\t' + region.face + '\n')
@@ -1237,8 +1236,9 @@ class pdata(object):
 				for i in range(3):
 					outfile.write(strD(region.coordinates_upper[i]) + ' ')
 				outfile.write('\n')
-				outfile.write('END\n')
-		
+				outfile.write('\tEND\n')	
+				outfile.write('END\n')	
+	
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -1265,13 +1265,13 @@ class pdata(object):
 	def _get_timestepper(self): return self._timestepper
 	timestepper = property(_get_timestepper) #: (**)
 #	def _get_nsolver(self): return self._nsolvercoordinates_lower # Satish Comment?
-	def _get_nsolver(self): return self._nsolver
-	nsolver = property(_get_nsolver) #: (**)
+	def _get_nsolverlist(self): return self._nsolverlist
+	nsolverlist = property(_get_nsolverlist) #: (**)
 	def _get_output(self): return self._output
 	output = property(_get_output) #: (**)	
 	def _get_fluid(self): return self._fluid
 	fluid = property(_get_fluid) #: (**)
 	def _get_saturation(self): return self._saturation
 	saturation = property(_get_saturation) #: (**)
-	def _get_region(self): return self._region
-	region = property(_get_region) #: (**)
+	def _get_regionlist(self): return self._regionlist
+	regionlist = property(_get_regionlist) #: (**)

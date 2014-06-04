@@ -361,11 +361,11 @@ class pregion(object):
 
 	"""
 	
-	def __init__(self,name,coordinates_lower=[None]*3,coordinates_upper=[None]*3,face=None,
-			coordinates_bool=False):
+	def __init__(self,name,coordinates_lower=[0.e0,0.e0,0.e0],coordinates_upper=[0.e0,0.e0,0.e0],
+			face=None,coordinates_bool=False):
 		self._name = name
-		self._coordinates_lower = coordinates_lower
-		self._coordinates_upper = coordinates_upper
+		self._coordinates_lower = coordinates_lower	# 3D coordinates
+		self._coordinates_upper = coordinates_upper	# 3D coordinates
 		self._face = face
 		self._coordinates_bool = coordinates_bool
 		
@@ -385,6 +385,97 @@ class pregion(object):
 	def _set_coordinates_bool(self,value): self._coordinates_bool = value
 	coordinates_bool = property(_get_coordinates_bool, _set_coordinates_bool)
 	
+class pflow(object):
+	"""Class for flow conditions - There can be multiple flow condition objects
+
+	"""
+	
+	def __init__(self,name,units=None,type=False,type_pressure=None,type_temperature=None,
+			type_concentration=None,type_enthalpy=None,pressure=[None]*2,
+			temperature=[None]*2,concentration=[None]*2,enthalpy=[None]*2,
+			iphase=None,sync_timestep_with_update=False,rate_type=None,
+			rate_list=False,rate_time_units=None,rate_data_units=None,
+			rate_time_values=[None]*3,rate_data_values=[None]*3):
+		self._name = name	# Include initial, top, source
+		self._units = units	# Specify type of units to display such as
+					# time,length,rate,pressurevelocity, temperature,
+					# concentration, and enthalpy.
+		self._type = type	# Used to detect whether this key word exist - Boolean
+		self._type_pressure = type_pressure
+		self._type_temperature = type_temperature
+		self._type_concentration = type_concentration
+		self._type_enthalpy = type_enthalpy
+		self._pressure = pressure		# Holds 2 floats
+		self._temperature = temperature		# 1st is float, 2nd is temperature unit (char)
+		self._concentration = concentration	# 1st is float, 2nd is order of magnitude, M = Million, etc. (char)
+		self._enthalpy = enthalpy		# Holds 2 floats
+		self._iphase = iphase			# Holds 1 int
+		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
+		self._rate_type = rate_type	# Specify rate by mass, volume, or scaled volume
+		self._rate_list	= rate_list	# Boolean - used to detect 'RATE LIST'
+		self._rate_time_units = rate_time_units		# String, time measurement
+		self._rate_data_units = rate_data_units		# String, data measurement (eg. mass)
+		self._rate_time_values = rate_time_values	# 3 floats
+		self._rate_data_values = rate_data_values	# 3 floats
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_units(self): return self._units
+	def _set_units(self,value): self._units = value
+	units = property(_get_units, _set_units)
+	def _get_type(self): return self._type
+	def _set_type(self,value): self._type = value
+	type = property(_get_type, _set_type)
+	def _get_type_pressure(self): return self._type_pressure
+	def _set_type_pressure(self,value): self._type_pressure = value
+	type_pressure = property(_get_type_pressure, _set_type_pressure)
+	def _get_type_temperature(self): return self._type_temperature
+	def _set_type_temperature(self,value): self._type_temperature = value
+	type_temperature = property(_get_type_temperature, _set_type_temperature)
+	def _get_type_concentration(self): return self._type_concentration
+	def _set_type_concentration(self,value): self._type_concentration = value
+	type_concentration = property(_get_type_concentration, _set_type_concentration)
+	def _get_type_enthalpy(self): return self._type_enthalpy
+	def _set_type_enthalpy(self,value): self._type_enthalpy = value
+	type_enthalpy = property(_get_type_enthalpy, _set_type_enthalpy)
+	def _get_pressure(self): return self._pressure
+	def _set_pressure(self,value): self._pressure = value
+	pressure = property(_get_pressure, _set_pressure)
+	def _get_temperature(self): return self._temperature
+	def _set_temperature(self,value): self._temperature = value
+	temperature = property(_get_temperature, _set_temperature)
+	def _get_concentration(self): return self._concentration
+	def _set_concentration(self,value): self._concentration = value
+	concentration = property(_get_concentration, _set_concentration)
+	def _get_enthalpy(self): return self._enthalpy
+	def _set_enthalpy(self,value): self._enthalpy = value
+	enthalpy = property(_get_enthalpy, _set_enthalpy)
+	def _get_iphase(self): return self._iphase
+	def _set_iphase(self,value): self._iphase = value
+	iphase = property(_get_iphase, _set_iphase)
+	def _get_sync_timestep_with_update(self): return self._sync_timestep_with_update
+	def _set_sync_timestep_with_update(self,value): self._sync_timestep_with_update = value
+	sync_timestep_with_update = property(_get_sync_timestep_with_update, _set_sync_timestep_with_update)
+	def _get_rate_type(self): return self._rate_type
+	def _set_rate_type(self,value): self._rate_type = value
+	rate_type = property(_get_rate_type, _set_rate_type)
+	def _get_rate_list(self): return self._rate_list
+	def _set_rate_list(self,value): self._rate_list = value
+	rate_list = property(_get_rate_list, _set_rate_list)
+	def _get_rate_time_units(self): return self._rate_time_units
+	def _set_rate_time_units(self,value): self._rate_time_units = value
+	rate_time_units = property(_get_rate_time_units, _set_rate_time_units)
+	def _get_rate_data_units(self): return self._rate_data_units
+	def _set_rate_data_units(self,value): self._rate_data_units = value
+	rate_data_units = property(_get_rate_data_units, _set_rate_data_units)
+	def _get_rate_time_values(self): return self._rate_time_values
+	def _set_rate_time_values(self,value): self._rate_time_values = value
+	rate_time_values = property(_get_rate_time_values, _set_rate_time_values)
+	def _get_rate_data_values(self): return self._rate_data_values
+	def _set_rate_data_values(self,value): self._rate_data_values = value
+	rate_data_values = property(_get_rate_data_values, _set_rate_data_values)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -402,7 +493,7 @@ class pdata(object):
 		self._output = poutput()
 		self._fluid = pfluid()
 		self._saturation = psaturation('')
-		self._region = []
+		self._region = []	# There are multiple regions
 		#self._region = pregion()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
@@ -1117,6 +1208,10 @@ class pdata(object):
 				ng_face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
+#		print ng_name
+#		print ng_coordinates_lower
+#		print ng_coordinates_upper
+			
 		ng_coordinates_bool = coordinates_key	# I don't know why I did it this way, was copying pgrid
 			
 		new_region = pregion(ng_name,ng_coordinates_lower,ng_coordinates_upper,
@@ -1125,9 +1220,10 @@ class pdata(object):
 				
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
-		# Write out all region object entries within regions keyword block
+		
+		# Write out all valid region object entries with Region as Key word
 		for region in self.region:
-			if region.coordinates_bool:
+			if region.coordinates_bool: #  Commented out for testing
 				outfile.write('REGION\t')
 				outfile.write(region.name + '\n')
 				if region.face:
@@ -1151,7 +1247,7 @@ class pdata(object):
 		ws+=' '+header+' '
 		for i in range(pad): ws+='='
 		ws+='\n'
-		outfile.write(ws)
+#		outfile.write(ws)coordinates_lower	# Satish comment
 	
 	def _get_grid(self): return self._grid
 	grid = property(_get_grid) #: (**)
@@ -1168,6 +1264,7 @@ class pdata(object):
 	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
 	timestepper = property(_get_timestepper) #: (**)
+#	def _get_nsolver(self): return self._nsolvercoordinates_lower # Satish Comment?
 	def _get_nsolver(self): return self._nsolver
 	nsolver = property(_get_nsolver) #: (**)
 	def _get_output(self): return self._output

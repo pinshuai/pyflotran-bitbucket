@@ -393,9 +393,7 @@ class pflow(object):
 
 	"""
 	
-	def __init__(self,name,units=None,type=False,type_pressure=None,type_temperature=None,
-			type_concentration=None,type_enthalpy=None,pressure=[None]*2,
-			temperature=[None]*2,concentration=[None]*2,enthalpy=[None]*2,
+	def __init__(self,name,units=None,type=False,
 			iphase=None,sync_timestep_with_update=False,rate_type=None,
 			rate_list=False,rate_time_units=None,rate_data_units=None,
 			rate_time_values=[None]*3,rate_data_values=[None]*3):
@@ -404,14 +402,6 @@ class pflow(object):
 					# time,length,rate,pressurevelocity, temperature,
 					# concentration, and enthalpy.
 		self._type = type	# Used to detect whether this key word exist - Boolean
-		self._type_pressure = type_pressure
-		self._type_temperature = type_temperature
-		self._type_concentration = type_concentration
-		self._type_enthalpy = type_enthalpy
-		self._pressure = pressure		# Holds 2 floats - 2nd is optional
-		self._temperature = temperature		# 1st is float, 2nd is temperature unit (char)
-		self._concentration = concentration	# 1st is float, 2nd is order of magnitude, M = Million, etc. (char)
-		self._enthalpy = enthalpy		# Holds 2 floats - 2nd is optional
 		self._iphase = iphase			# Holds 1 int
 		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
 		self._rate_type = rate_type	# Specify rate by mass, volume, or scaled volume
@@ -430,30 +420,6 @@ class pflow(object):
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
 	type = property(_get_type, _set_type)
-	def _get_type_pressure(self): return self._type_pressure
-	def _set_type_pressure(self,value): self._type_pressure = value
-	type_pressure = property(_get_type_pressure, _set_type_pressure)
-	def _get_type_temperature(self): return self._type_temperature
-	def _set_type_temperature(self,value): self._type_temperature = value
-	type_temperature = property(_get_type_temperature, _set_type_temperature)
-	def _get_type_concentration(self): return self._type_concentration
-	def _set_type_concentration(self,value): self._type_concentration = value
-	type_concentration = property(_get_type_concentration, _set_type_concentration)
-	def _get_type_enthalpy(self): return self._type_enthalpy
-	def _set_type_enthalpy(self,value): self._type_enthalpy = value
-	type_enthalpy = property(_get_type_enthalpy, _set_type_enthalpy)
-	def _get_pressure(self): return self._pressure
-	def _set_pressure(self,value): self._pressure = value
-	pressure = property(_get_pressure, _set_pressure)
-	def _get_temperature(self): return self._temperature
-	def _set_temperature(self,value): self._temperature = value
-	temperature = property(_get_temperature, _set_temperature)
-	def _get_concentration(self): return self._concentration
-	def _set_concentration(self,value): self._concentration = value
-	concentration = property(_get_concentration, _set_concentration)
-	def _get_enthalpy(self): return self._enthalpy
-	def _set_enthalpy(self,value): self._enthalpy = value
-	enthalpy = property(_get_enthalpy, _set_enthalpy)
 	def _get_iphase(self): return self._iphase
 	def _set_iphase(self,value): self._iphase = value
 	iphase = property(_get_iphase, _set_iphase)
@@ -478,7 +444,58 @@ class pflow(object):
 	def _get_rate_data_values(self): return self._rate_data_values
 	def _set_rate_data_values(self,value): self._rate_data_values = value
 	rate_data_values = property(_get_rate_data_values, _set_rate_data_values)
+
+class pflow_type(pflow):
+	"""Class for flow conditions types
+
+	"""
 	
+	def __init__(self,type_pressure=None,type_temperature=None,
+					type_concentration=None,type_enthalpy=None):
+		self._type_pressure = type_pressure
+		self._type_temperature = type_temperature
+		self._type_concentration = type_concentration
+		self._type_enthalpy = type_enthalpy
+		
+	def _get_type_pressure(self): return self._type_pressure
+	def _set_type_pressure(self,value): self._type_pressure = value
+	type_pressure = property(_get_type_pressure, _set_type_pressure)
+	def _get_type_temperature(self): return self._type_temperature
+	def _set_type_temperature(self,value): self._type_temperature = value
+	type_temperature = property(_get_type_temperature, _set_type_temperature)
+	def _get_type_concentration(self): return self._type_concentration
+	def _set_type_concentration(self,value): self._type_concentration = value
+	type_concentration = property(_get_type_concentration, _set_type_concentration)
+	def _get_type_enthalpy(self): return self._type_enthalpy
+	def _set_type_enthalpy(self,value): self._type_enthalpy = value
+	type_enthalpy = property(_get_type_enthalpy, _set_type_enthalpy)
+	
+class pflow_value(pflow):
+	"""Class for flow conditions values
+
+	"""
+	
+	def __init__(self,pressure=[None]*2,temperature=[None]*2,
+					concentration=[None]*2,enthalpy=[None]*2):
+		self._pressure = pressure		# Holds 2 floats - 2nd is optional
+		self._temperature = temperature		# 1st is float, 2nd is temperature unit (char)
+		self._concentration = concentration	# 1st is float, 2nd is order of magnitude, M = Million, etc. (char)
+		self._enthalpy = enthalpy		# Holds 2 floats - 2nd is optional
+		
+	def _get_pressure(self): return self._pressure
+	def _set_pressure(self,value): self._pressure = value
+	pressure = property(_get_pressure, _set_pressure)
+	def _get_temperature(self): return self._temperature
+	def _set_temperature(self,value): self._temperature = value
+	temperature = property(_get_temperature, _set_temperature)
+	def _get_concentration(self): return self._concentration
+	def _set_concentration(self,value): self._concentration = value
+	concentration = property(_get_concentration, _set_concentration)
+	def _get_enthalpy(self): return self._enthalpy
+	def _set_enthalpy(self,value): self._enthalpy = value
+	enthalpy = property(_get_enthalpy, _set_enthalpy)
+		
+		
 class pdata(object):
 	"""Class for pflotran data file
 

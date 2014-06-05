@@ -399,7 +399,7 @@ class pflow(object):
 			rate_time_values=[None]*3,rate_data_values=[None]*3):
 		self._name = name	# Include initial, top, source
 		self._units = units	# Specify type of units to display such as
-					# time,length,rate,pressurevelocity, temperature,
+					# time,length,rate,pressure,velocity, temperature,
 					# concentration, and enthalpy.
 		self._type = type	# Used to detect whether this key word exist - Boolean
 		self._iphase = iphase			# Holds 1 int
@@ -464,6 +464,41 @@ class pflow_variable(pflow):
 	def _get_value(self): return self._value
 	def _set_value(self,value): self._value = value
 	value = property(_get_value, _set_value)
+	
+class pflow_rate(pflow):
+	"""Sub-class of pflow for Rate - Duplicate of pflow attributes because I am
+	not certain if it is needed yet.
+
+	"""
+	
+	def __init__(self,rate_type=None,rate_list=False,rate_time_units=None,
+			rate_data_units=None,rate_time_values=[None]*3,rate_data_values=[None]*3):
+		self._rate_type = rate_type	# Specify rate by mass, volume, or scaled volume
+		self._rate_list	= rate_list	# Boolean - used to detect 'RATE LIST'
+		self._rate_time_units = rate_time_units		# String, time measurement
+		self._rate_data_units = rate_data_units		# String, data measurement (eg. mass)
+		self._rate_time_values = rate_time_values	# 3 floats
+		self._rate_data_values = rate_data_values	# 3 floats
+
+		
+	def _get_rate_type(self): return self._rate_type
+	def _set_rate_type(self,value): self._rate_type = value
+	rate_type = property(_get_rate_type, _set_rate_type)
+	def _get_rate_list(self): return self._rate_list
+	def _set_rate_list(self,value): self._rate_list = value
+	rate_list = property(_get_rate_list, _set_rate_list)
+	def _get_rate_time_units(self): return self._rate_time_units
+	def _set_rate_time_units(self,value): self._rate_time_units = value
+	rate_time_units = property(_get_rate_time_units, _set_rate_time_units)
+	def _get_rate_data_units(self): return self._rate_data_units
+	def _set_rate_data_units(self,value): self._rate_data_units = value
+	rate_data_units = property(_get_rate_data_units, _set_rate_data_units)
+	def _get_rate_time_values(self): return self._rate_time_values
+	def _set_rate_time_values(self,value): self._rate_time_values = value
+	rate_time_values = property(_get_rate_time_values, _set_rate_time_values)
+	def _get_rate_data_values(self): return self._rate_data_values
+	def _set_rate_data_values(self,value): self._rate_data_values = value
+	rate_data_values = property(_get_rate_data_values, _set_rate_data_values)
 		
 		
 class pdata(object):

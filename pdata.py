@@ -444,56 +444,26 @@ class pflow(object):
 	def _get_rate_data_values(self): return self._rate_data_values
 	def _set_rate_data_values(self,value): self._rate_data_values = value
 	rate_data_values = property(_get_rate_data_values, _set_rate_data_values)
-
-class pflow_type(pflow):
-	"""Class for flow conditions types
-
-	"""
 	
-	def __init__(self,type_pressure=None,type_temperature=None,
-					type_concentration=None,type_enthalpy=None):
-		self._type_pressure = type_pressure
-		self._type_temperature = type_temperature
-		self._type_concentration = type_concentration
-		self._type_enthalpy = type_enthalpy
-		
-	def _get_type_pressure(self): return self._type_pressure
-	def _set_type_pressure(self,value): self._type_pressure = value
-	type_pressure = property(_get_type_pressure, _set_type_pressure)
-	def _get_type_temperature(self): return self._type_temperature
-	def _set_type_temperature(self,value): self._type_temperature = value
-	type_temperature = property(_get_type_temperature, _set_type_temperature)
-	def _get_type_concentration(self): return self._type_concentration
-	def _set_type_concentration(self,value): self._type_concentration = value
-	type_concentration = property(_get_type_concentration, _set_type_concentration)
-	def _get_type_enthalpy(self): return self._type_enthalpy
-	def _set_type_enthalpy(self,value): self._type_enthalpy = value
-	type_enthalpy = property(_get_type_enthalpy, _set_type_enthalpy)
-	
-class pflow_value(pflow):
-	"""Class for flow conditions values
+class pflow_variable(pflow):
+	"""Sub-class of pflow for each kind of variable (Includes type and value)
 
 	"""
 	
-	def __init__(self,pressure=[None]*2,temperature=[None]*2,
-					concentration=[None]*2,enthalpy=[None]*2):
-		self._pressure = pressure		# Holds 2 floats - 2nd is optional
-		self._temperature = temperature		# 1st is float, 2nd is temperature unit (char)
-		self._concentration = concentration	# 1st is float, 2nd is order of magnitude, M = Million, etc. (char)
-		self._enthalpy = enthalpy		# Holds 2 floats - 2nd is optional
+	def __init__(self,name,type=None,value=[None]*2):
+		self._name = name	# Pressure,temp., concen.,enthalpy...(String)
+		self._type = type	# String
+		self._value = value	# Holds 2 floats - 2nd is optional
 		
-	def _get_pressure(self): return self._pressure
-	def _set_pressure(self,value): self._pressure = value
-	pressure = property(_get_pressure, _set_pressure)
-	def _get_temperature(self): return self._temperature
-	def _set_temperature(self,value): self._temperature = value
-	temperature = property(_get_temperature, _set_temperature)
-	def _get_concentration(self): return self._concentration
-	def _set_concentration(self,value): self._concentration = value
-	concentration = property(_get_concentration, _set_concentration)
-	def _get_enthalpy(self): return self._enthalpy
-	def _set_enthalpy(self,value): self._enthalpy = value
-	enthalpy = property(_get_enthalpy, _set_enthalpy)
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_type(self): return self._type
+	def _set_type(self,value): self._type = value
+	type = property(_get_type, _set_type)
+	def _get_value(self): return self._value
+	def _set_value(self,value): self._value = value
+	value = property(_get_value, _set_value)
 		
 		
 class pdata(object):

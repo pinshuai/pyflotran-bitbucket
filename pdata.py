@@ -389,118 +389,62 @@ class pflow(object):
 
 	"""
 	
-	def __init__(self,name,units=None,type=False,
-			iphase=None,sync_timestep_with_update=False,rate_type=None,
-			rate_list=False,rate_time_units=None,rate_data_units=None,
-			rate_time_values=[None]*3,rate_data_values=[None]*3):
-		self._name = name	# Include initial, top, source
-		self._units = units	# Specify type of units to display such as
-					# time,length,rate,pressure,velocity, temperature,
-					# concentration, and enthalpy.
-					# May be used to determine each variable unit
-		self._type = type	# Used to detect whether this key word exist - Boolean
+	def __init__(self,name,units_list=None,type=False,
+			iphase=None,sync_timestep_with_update=False,
+			varlist=[]):
+		self._name = name		# Include initial, top, source
+		self._units_list = units_list	# Specify type of units to display such as
+						# time,length,rate,pressure,velocity, temperature,
+						# concentration, and enthalpy.
+						# May be used to determine each variable unit
 		self._iphase = iphase			# Holds 1 int
 		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
-		self._rate_type = rate_type	# Specify rate by mass, volume, or scaled volume
-		self._rate_list	= rate_list	# Boolean - used to detect 'RATE LIST'
-		self._rate_time_units = rate_time_units		# String, time measurement
-		self._rate_data_units = rate_data_units		# String, data measurement (eg. mass)
-		self._rate_time_values = rate_time_values	# 3 floats
-		self._rate_data_values = rate_data_values	# 3 floats
+		self._varlist = varlist
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
 	name = property(_get_name, _set_name)
-	def _get_units(self): return self._units
-	def _set_units(self,value): self._units = value
-	units = property(_get_units, _set_units)
-	def _get_type(self): return self._type
-	def _set_type(self,value): self._type = value
-	type = property(_get_type, _set_type)
+	def _get_units_list(self): return self._units_list
+	def _set_units_list(self,value): self._units_list = value
+	units_list = property(_get_units_list, _set_units_list)
 	def _get_iphase(self): return self._iphase
 	def _set_iphase(self,value): self._iphase = value
 	iphase = property(_get_iphase, _set_iphase)
 	def _get_sync_timestep_with_update(self): return self._sync_timestep_with_update
 	def _set_sync_timestep_with_update(self,value): self._sync_timestep_with_update = value
 	sync_timestep_with_update = property(_get_sync_timestep_with_update, _set_sync_timestep_with_update)
-	def _get_rate_type(self): return self._rate_type
-	def _set_rate_type(self,value): self._rate_type = value
-	rate_type = property(_get_rate_type, _set_rate_type)
-	def _get_rate_list(self): return self._rate_list
-	def _set_rate_list(self,value): self._rate_list = value
-	rate_list = property(_get_rate_list, _set_rate_list)
-	def _get_rate_time_units(self): return self._rate_time_units
-	def _set_rate_time_units(self,value): self._rate_time_units = value
-	rate_time_units = property(_get_rate_time_units, _set_rate_time_units)
-	def _get_rate_data_units(self): return self._rate_data_units
-	def _set_rate_data_units(self,value): self._rate_data_units = value
-	rate_data_units = property(_get_rate_data_units, _set_rate_data_units)
-	def _get_rate_time_values(self): return self._rate_time_values
-	def _set_rate_time_values(self,value): self._rate_time_values = value
-	rate_time_values = property(_get_rate_time_values, _set_rate_time_values)
-	def _get_rate_data_values(self): return self._rate_data_values
-	def _set_rate_data_values(self,value): self._rate_data_values = value
-	rate_data_values = property(_get_rate_data_values, _set_rate_data_values)
+	def _get_varlist(self): return self._varlist
+	def _set_varlist(self,value): self._varlist = value
+	varlist = property(_get_varlist, _set_varlist)
 	
-class pflow_variable(pflow):
+class pflow_variable(object):
 	"""Sub-class of pflow for each kind of variable (Includes type and value)
 
 	"""
 	
-	def __init__(self,type=None,value=[None],unit=None):
-		self._type = type	# Pressure,temp., concen.,enthalpy...(String)
+	def __init__(self,name,type=None,value=[None],list=[None],unit=None):
+		self._name = name	# Pressure,temp., concen.,enthalpy...(String)
+		self._type = type	# hydrostatic, zero_gradient, dirichlet ...(String)
 		self._value = value	# Holds 2 floats - 2nd is optional
 		self._list = list	# Intended for Rate Lists
 		self._unit = unit	# Possible to overide Parent class - sorda
-		
+	
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)		
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
 	type = property(_get_type, _set_type)
 	def _get_value(self): return self._value
 	def _set_value(self,value): self._value = value
 	value = property(_get_value, _set_value)
-	def _get_list(self): return self._list
-	def _set_list(self,list): self._list = list
-	list = property(_get_list, _set_list)
-	def _get_unit(self): return self._unit
-	def _set_unit(self,unit): self._unit = unit
-	unit = property(_get_unit, _set_unit)
-	
-class pflow_rate(pflow):
-	"""Sub-class of pflow for Rate - Duplicate of pflow attributes because I am
-	not certain if it is needed yet.
 
-	"""
-	
-	def __init__(self,type=None,list=False,time_units=None,
-			data_units=None,time_values=[None],data_values=[None]):
-		self._type = type	# Specify rate by mass, volume, or scaled volume
-		self._list = list	# Boolean - used to detect 'RATE LIST'
-		self._time_units = time_units		# String, time measurement
-		self._data_units = data_units		# String, data measurement (eg. mass)
-		self._time_values = time_values	# 3 floats
-		self._data_values = data_values	# 3 floats
-
-		
-	def _get_type(self): return self._type
-	def _set_type(self,value): self._type = value
-	type = property(_get_type, _set_type)
 	def _get_list(self): return self._list
 	def _set_list(self,value): self._list = value
 	list = property(_get_list, _set_list)
-	def _get_time_units(self): return self._time_units
-	def _set_time_units(self,value): self._time_units = value
-	time_units = property(_get_time_units, _set_time_units)
-	def _get_data_units(self): return self._data_units
-	def _set_data_units(self,value): self._data_units = value
-	data_units = property(_get_data_units, _set_data_units)
-	def _get_time_values(self): return self._time_values
-	def _set_time_values(self,value): self._time_values = value
-	time_values = property(_get_time_values, _set_time_values)
-	def _get_data_values(self): return self._data_values
-	def _set_data_values(self,value): self._data_values = value
-	data_values = property(_get_data_values, _set_data_values)
-		
+	def _get_unit(self): return self._unit
+	def _set_unit(self,value): self._unit = value
+	unit = property(_get_unit, _set_unit)
 		
 class pdata(object):
 	"""Class for pflotran data file
@@ -1259,7 +1203,7 @@ class pdata(object):
 				outfile.write('\tFACE\t' + region.face + '\n')
 			# no if statement below to ensure 0's are accepted for coordinates
 			outfile.write('\tCOORDINATES\n')
-			outfile.write('\t\at')
+			outfile.write('\t\t')
 			for i in range(3):
 				outfile.write(strD(region.coordinates_lower[i]) + ' ')
 			outfile.write('\n\t\t')
@@ -1273,16 +1217,11 @@ class pdata(object):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
 		
 		p = pflow('')
-		np_units = p.units
-		np_type = p.type
+		np_units_list = p.units_list
 		np_iphase = p.iphase
 		np_sync_timestep_with_update = p.sync_timestep_with_update
+		np_varlist = p.varlist
 		
-		fvar = pflow_variable('')	# Sub-class
-		np_fvar_type = fvar.type
-		np_fvar_value = fvar.value
-		np_fvar_list = fvar.list
-		np_fvar_unit = fvar.unit
 		
 		# Probably won't use
 #		frate = pflow_rate()		# Sub-class
@@ -1292,72 +1231,127 @@ class pdata(object):
 #		np_frate_data_units = frate.data_units
 #		np_frate_time_values = frate.time_values
 #		np_frate_data_values = frate.data_values
+
 		
 		keepReading = True
 		isValid = False # Used so that entries outside flow conditions are ignored
 		readBool = True	# Used so that readline() is not performed twice.
 				# 2nd readline() is used to see if there is an 
 				# empty line after '/' or 'end'.
-
+		end_count = 0
+		total_end_count = 1
 		while keepReading:	# Read through all cards
 			
-			if readBool:
-				line = infile.readline()	# get next line
+			line = infile.readline()	# get next line
 			
-			readBool = True
-						
-#			if line.strip():
-#				line = infile.readline()
-#			print line
-
+#			print line # Satish
+#			print line.strip().split()[0].lower() # Satish
 			key = line.strip().split()[0].lower()	# take first keyword
-			
 			# Note to self - don't read units for now
-			if key == 'units':
-				isValid = True
-#				np_units = line.strip().split()[-1].lower()
-			if key == 'type': # variables will only print if it has key word TYPE
-				np_type = True
-			elif key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
-#				tstring = line.strip().split()[0:] # Convert string into list
-				tstring = line.split()[0:] # Convert string into list
-				
-				# Assign type if last string is a type
-				if tstring[-1] == 'hydrostatic' or tstring[-1] == 'dirichlet' or tstring[-1] ==  'zero_gradient' or tstring[-1] == 'conductance' or tstring[-1] == 'seepage':
-					np_fvar_type = line.strip().split()[-1].lower()
-#					print tstring[1]
-
+			if key == 'type':
+				total_end_count = 2
+		
+			if key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
+				if end_count == 0:
+					np_fvar_type = None
+					np_fvar_value = []
+					np_fvar_list = []
+					np_fvar_unit = ''
+					np_fvar_name = ''
+					np_fvar_name = key 	# variable name is assigned here
+					isValid = True
+#					tstring = line.strip().split()[0:] # Convert string into list
+					tstring = line.split()[0:] # Convert string into list
+					# Assign type if last string is a type
+					if tstring[-1] == 'hydrostatic' or tstring[-1] == 'dirichlet' or tstring[-1] ==  'zero_gradient' or tstring[-1] == 'conductance' or tstring[-1] == 'seepage':
+						np_fvar_type = line.strip().split()[-1].lower()
+					
+					# Appending and instantiation of new flow_variables
+					# occur here. Only two entries are filled, the rest
+					# are assigned in the later elif code block
+					new_fvar = pflow_variable(np_fvar_name,np_fvar_type,
+								  np_fvar_value,
+								  np_fvar_list,
+								  np_fvar_unit)
+							  
+					np_varlist.append(new_fvar)
+					
 				# Script assumes later use of keywords are values and not types
 				# Values are assigned here - More work needed here
-				elif key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
-					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry.
+				
+				# Note to self - need a way of referencing right object in list
+				# not just the last one 'ENTHALPY'
+				elif end_count == 1:
+					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry				
+					count = 0
 					for i in tstring2:
-						np_fvar_value.append(i)		
+						try:
+#							np_fvar_value.append(floatD(i))
+							
+							# Get last index of np_varlist
+							l = len(np_varlist) - 1
+							
+
+							for j in range(0,4):
+								if key == np_varlist[l-j].name:
+									np_varlist[l-j].value = floatD(i)
+#									print str(np_varlist[l-j].name) + '\t' + str(np_varlist[l-j].value)
+
+#							print np_varlist[l-4].name
+#							print np_fvar_value
+						except:	# Can append default unit to end here
+							for j in range(0,4):
+								if key == np_varlist[l-j].name:
+									np_varlist[l-j].unit = i
+#									print i
+					
+					# Determines which fvar objects to use by its name
+#					for i in np_varlist:
+#						if key == i.name:
+#						if i.name == 'pressure':
+#							print i.name
+
+#					if key in np_varlist[1].name
+#						print np_varlist[1].name
+
+#					print new_fvar.name, new_fvar.type, new_fvar.value, isValid	# Satish
+								
 			elif key == 'iphase':
 				np_iphase = int(line.split()[-1])
 			elif key == 'sync_timestep_with_update':
 				np_sync_timestep_with_update = True
-#			elif key == 'rate':
-				
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
 			elif key in ['/','end']:
-				line = infile.readline()
-				if line.strip() == '': 
+				end_count = end_count + 1
+#				print end_count # Satish
+				if end_count == total_end_count:
 					keepReading = False
-				else :
-					readBool = False # Ensure a line is not skipped
-					
+				
+#		print np_varlist[1].name
 		if isValid:
-			new_flow = pflow(np_name,np_units,np_type,np_iphase,
-						np_sync_timestep_with_update)
+			new_pflow = pflow(np_name,np_units_list,np_iphase,
+						np_sync_timestep_with_update,np_varlist)
+						
+
+#			print new_pflow.varlist[2].value
+
+#			print new_pflow.name, new_pflow.units_list, new_pflow.varlist
+#			for var in new_pflow.varlist:
+#				print var.name
+
+#			print new_pflow.varlist[0].name
+
+#			new_flow = ???
+#			self._flowlist.append(new_pflow)
 								
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
 		
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-			print 'test'
+			outfile.write('\nFLOW CONDITION\t')
+			outfile.write(flow.name + '\n')
 	
 	def _header(self,outfile,header):
 		if not header: return

@@ -389,7 +389,7 @@ class pflow(object):
 
 	"""
 	
-	def __init__(self,name,units_list=None,type=False,
+	def __init__(self,name,units_list=None,
 			iphase=None,sync_timestep_with_update=False,
 			varlist=[]):
 		self._name = name		# Include initial, top, source
@@ -422,10 +422,10 @@ class pflow_variable(object):
 
 	"""
 	
-	def __init__(self,name,type=None,value=[None],list=[None],unit=None):
+	def __init__(self,name,type=None,valuelist=[],list=[],unit=None):
 		self._name = name	# Pressure,temp., concen.,enthalpy...(String)
 		self._type = type	# hydrostatic, zero_gradient, dirichlet ...(String)
-		self._value = value	# Holds 2 floats - 2nd is optional
+		self._valuelist = valuelist	# Holds 2 floats - 2nd is optional
 		self._list = list	# Intended for Rate Lists
 		self._unit = unit	# Possible to overide Parent class - sorda
 	
@@ -435,9 +435,9 @@ class pflow_variable(object):
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
 	type = property(_get_type, _set_type)
-	def _get_value(self): return self._value
-	def _set_value(self,value): self._value = value
-	value = property(_get_value, _set_value)
+	def _get_valuelist(self): return self._valuelist
+	def _set_valuelist(self,value): self._valuelist = value
+	valuelist = property(_get_valuelist, _set_valuelist)
 
 	def _get_list(self): return self._list
 	def _set_list(self,value): self._list = value
@@ -1215,13 +1215,11 @@ class pdata(object):
 				
 	def _read_flow(self,infile,line):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
-		
 		p = pflow('')
 		np_units_list = p.units_list
 		np_iphase = p.iphase
 		np_sync_timestep_with_update = p.sync_timestep_with_update
 		np_varlist = p.varlist
-		
 		
 		# Probably won't use
 #		frate = pflow_rate()		# Sub-class
@@ -1231,7 +1229,6 @@ class pdata(object):
 #		np_frate_data_units = frate.data_units
 #		np_frate_time_values = frate.time_values
 #		np_frate_data_values = frate.data_values
-
 		
 		keepReading = True
 		isValid = False # Used so that entries outside flow conditions are ignored
@@ -1240,27 +1237,24 @@ class pdata(object):
 				# empty line after '/' or 'end'.
 		end_count = 0
 		total_end_count = 1
+#		testCount = 0
 		while keepReading:	# Read through all cards
 			
 			line = infile.readline()	# get next line
-			
-#			print line # Satish
-#			print line.strip().split()[0].lower() # Satish
 			key = line.strip().split()[0].lower()	# take first keyword
 			# Note to self - don't read units for now
 			if key == 'type':
 				total_end_count = 2
-		
-			if key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
+				
+			elif key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
 				if end_count == 0:
+					np_fvar_name = ''
+					np_fvar_name = key 	# variable name is assigned here
 					np_fvar_type = None
 					np_fvar_value = []
 					np_fvar_list = []
 					np_fvar_unit = ''
-					np_fvar_name = ''
-					np_fvar_name = key 	# variable name is assigned here
 					isValid = True
-#					tstring = line.strip().split()[0:] # Convert string into list
 					tstring = line.split()[0:] # Convert string into list
 					# Assign type if last string is a type
 					if tstring[-1] == 'hydrostatic' or tstring[-1] == 'dirichlet' or tstring[-1] ==  'zero_gradient' or tstring[-1] == 'conductance' or tstring[-1] == 'seepage':
@@ -1279,80 +1273,87 @@ class pdata(object):
 				# Script assumes later use of keywords are values and not types
 				# Values are assigned here - More work needed here
 				
-				# Note to self - need a way of referencing right object in list
-				# not just the last one 'ENTHALPY'
+				# Problem exists with np_varlist being one list 3x too large
+				# instead of 3 different lists.
 				elif end_count == 1:
 					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry				
 					count = 0
-					for i in tstring2:
+#					print len(tstring2)
+					for var in tstring2:
 						try:
-#							np_fvar_value.append(floatD(i))
-							
 							# Get last index of np_varlist
+							# Assign flow variable values
 							l = len(np_varlist) - 1
-							
-
-							for j in range(0,4):
-								if key == np_varlist[l-j].name:
-									np_varlist[l-j].value = floatD(i)
-#									print str(np_varlist[l-j].name) + '\t' + str(np_varlist[l-j].value)
-
-#							print np_varlist[l-4].name
-#							print np_fvar_value
+#							for j in range(0,len(tstring2)):
+							for i in range(0,4):
+								if key == np_varlist[l-i].name:
+									#np_varlist[l-j].valuelist = floatD(i)
+									np_varlist[l-i].valuelist.append(floatD(var))
+#									print l
+#									print (l-i)
 						except:	# Can append default unit to end here
-							for j in range(0,4):
-								if key == np_varlist[l-j].name:
-									np_varlist[l-j].unit = i
-#									print i
-					
-					# Determines which fvar objects to use by its name
-#					for i in np_varlist:
-#						if key == i.name:
-#						if i.name == 'pressure':
-#							print i.name
-
-#					if key in np_varlist[1].name
-#						print np_varlist[1].name
-
-#					print new_fvar.name, new_fvar.type, new_fvar.value, isValid	# Satish
-								
+							# Assign variable value unit (C, M, etc.)
+							# Occurs because try fails to convert a
+							# string into a float.
+#							for j in range(0,4):
+							if key == np_varlist[l-i].name:
+								np_varlist[l-i].unit = var
+#								print 's' + str(l-i)
+									
 			elif key == 'iphase':
 				np_iphase = int(line.split()[-1])
 			elif key == 'sync_timestep_with_update':
 				np_sync_timestep_with_update = True
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
+			# Alternative method of count implemented by Satish
 			elif key in ['/','end']:
 				end_count = end_count + 1
-#				print end_count # Satish
 				if end_count == total_end_count:
 					keepReading = False
-				
-#		print np_varlist[1].name
+					
 		if isValid:
 			new_pflow = pflow(np_name,np_units_list,np_iphase,
 						np_sync_timestep_with_update,np_varlist)
 						
-
-#			print new_pflow.varlist[2].value
-
-#			print new_pflow.name, new_pflow.units_list, new_pflow.varlist
-#			for var in new_pflow.varlist:
-#				print var.name
-
-#			print new_pflow.varlist[0].name
-
-#			new_flow = ???
-#			self._flowlist.append(new_pflow)
-								
+			self._flowlist.append(new_pflow)
+			
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
 		
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-			outfile.write('\nFLOW CONDITION\t')
-			outfile.write(flow.name + '\n')
-	
+			outfile.write('\nFLOW CONDITION\t' + flow.name + '\n')
+			outfile.write('\tTYPE\n')
+			
+			# variable name and type from lists go here
+			i = 0
+			while i< 4:
+				outfile.write('\t\t' + flow.varlist[i].name.upper() + '\t' +
+							  flow.varlist[i].type + '\n')
+				i += 1
+				
+			outfile.write('\t/\n')
+			if flow.iphase:
+				outfile.write('\tIPHASE\t'+str(flow.iphase)+'\n')
+				
+			# variable name and values from lists along with units go here
+			i = 0
+			while i< 4:
+				outfile.write('\t\t' + flow.varlist[i].name.upper())
+				j = 0
+				while j < len(flow.varlist[i].valuelist):
+#					print str(flow.varlist[i].valuelist[j])
+					outfile.write('\t' + str(flow.varlist[i].valuelist[j]))
+					j += 1
+				# Write out possible unit here
+				if flow.varlist[i].unit:
+					outfile.write('\t' + flow.varlist[i].unit)
+				outfile.write('\n')
+				i += 1
+			
+			outfile.write('\t/\n/')
+			
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '

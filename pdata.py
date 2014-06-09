@@ -14,11 +14,11 @@ else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
 		'fluid_property','saturation_function','region','flow_condition','initial_condition',
-		'boundary_condition','source_sink']
+		'boundary_condition','source_sink','strata']
 headers = ['mode','grid','time stepping','material properties',
 		   'time','newton solver','output','fluid properties','saturation functions',
 		   'regions','flow conditions','initial condition','boundary conditions',
-		   'source sink']
+		   'source sink','stratigraphy couplers']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -499,7 +499,23 @@ class psource_sink:
 	def _get_region(self): return self._region
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
+	
+class pstrata:
+	"""Class for stratigraphy couplers
+
+	"""
+	
+	def __init__(self,region=None,material=None):
+		self._region = region
+		self._material = material
 		
+	def _get_region(self): return self._region
+	def _set_region(self,value): self._region = value
+	region = property(_get_region, _set_region)
+	def _get_material(self): return self._material
+	def _set_material(self,value): self._material = value
+	material = property(_get_material, _set_material)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -522,6 +538,7 @@ class pdata(object):
 		self._initial_condition = pinitial_condition()
 		self._boundary_condition_list = []
 		self._source_sink = psource_sink()
+		self._strata = pstrata()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
@@ -544,7 +561,8 @@ class pdata(object):
 				 self._read_flow,
 				 self._read_initial_condition,
 				 self._read_boundary_condition,
-				 self._read_source_sink]
+				 self._read_source_sink,
+				 self._read_strata]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -584,6 +602,7 @@ class pdata(object):
 		if self.initial_condition: self._write_initial_condition(outfile)
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		if self.source_sink: self._write_source_sink(outfile)
+		if self.strata: self._write_strata(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -1510,6 +1529,37 @@ class pdata(object):
 		outfile.write('\tFLOW_CONDITION\t' + ss.flow + '\n')
 		outfile.write('\tREGION\t' + ss.region + '\n')
 		outfile.write('END\n\n')
+		
+	def _read_strata(self,infile):
+		p = pstrata()
+		np_region = p.region
+		np_material = p.material
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
+			
+			if key == 'region':
+				np_region = line.split()[-1]	# take last word
+			elif key == 'material':
+				np_material = line.split()[-1]	# take last word
+			elif key in ['/','end']: keepReading = False
+			
+		# Create an empty source sink and assign the values read in
+		new_strata = pstrata(np_region,np_material)
+		self._strata = new_strata
+		
+	def _write_strata(self,outfile):
+		self._header(outfile,headers['strata'])
+		s = self.strata
+		outfile.write('STRATA\n')
+		
+		# Write out initial_condition variables
+		outfile.write('\tREGION\t' + s.region + '\n')
+		outfile.write('\tMATERIAL\t' + s.material + '\n')
+		outfile.write('END\n\n')
 			
 	def _header(self,outfile,header):
 		if not header: return
@@ -1555,3 +1605,5 @@ class pdata(object):
 	boundary_condition_list = property(_get_boundary_condition_list) #: (**)
 	def _get_source_sink(self): return self._source_sink
 	source_sink = property(_get_source_sink) #: (**)
+	def _get_strata(self): return self._strata
+	strata = property(_get_strata) #: (**)

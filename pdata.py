@@ -748,19 +748,19 @@ class pdata(object):
 			elif key == 'max_ts_cuts':
 				np_max_ts_cuts = int(line.split()[-1])
 			elif key == 'cfl_limiter':
-				np_cfl_limiter = float(line.split()[-1])
+				np_cfl_limiter = floatD(line.split()[-1])
 			elif key == 'initialize_to_steady_state':
 				np_initialize_to_steady_state = True 
 			elif key == 'run_as_steady_state':
 				np_run_as_steady_state = True 
 			elif key == 'max_pressure_change':
-				np_max_pressure_change = float(line.split()[-1])
+				np_max_pressure_change = floatD(line.split()[-1])
 			elif key == 'max_temperature_change':
-				np_max_temperature_change = float(line.split()[-1]) 
+				np_max_temperature_change = floatD(line.split()[-1]) 
 			elif key == 'max_concentration_change':
-				np_max_concentration_change = float(line.split()[-1])
+				np_max_concentration_change = floatD(line.split()[-1])
  			elif key == 'max_saturation_change':
-				np_max_saturation_change = float(line.split()[-1])
+				np_max_saturation_change = floatD(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
 
 		new_timestep = ptimestepper(np_ts_acceleration,np_num_steps_after_cut,np_max_steps,
@@ -1011,9 +1011,9 @@ class pdata(object):
 			if key == 'itol':
 				np_itol = floatD(line.split()[-1])
 			if key == 'maxit':
-				np_max_it = float(line.split()[-1])
+				np_max_it = int(line.split()[-1])
 			if key == 'maxf':
-				np_max_f = float(line.split()[-1])
+				np_max_f = int(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
 		
 		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
@@ -1165,15 +1165,15 @@ class pdata(object):
 			elif key == 'saturation_function_type':
 				np_saturation_function_type = line.split()[-1]
 			elif key == 'residual_saturation_liquid':
-				np_residual_saturation_liquid = float(line.split()[-1])
+				np_residual_saturation_liquid = floatD(line.split()[-1])
 			elif key == 'residual_saturation_gas':
-				np_residual_saturation_gas = float(line.split()[-1])
+				np_residual_saturation_gas = floatD(line.split()[-1])
 			elif key == 'residual_saturation':	# Alternative to check
 				tstring = line.strip().split()[1].lower()	# take 2nd key word
 				if tstring == 'liquid_phase':
-					np_residual_saturation_liquid = float(line.split()[-1])
+					np_residual_saturation_liquid = floatD(line.split()[-1])
 				elif tstring == 'gas_phase':
-					np_residual_saturation_gas = float(line.split()[-1])
+					np_residual_saturation_gas = floatD(line.split()[-1])
 			elif key == 'lambda':
 				np_a_lambda = floatD(line.split()[-1])
 			elif key == 'alpha':
@@ -1296,20 +1296,10 @@ class pdata(object):
 				
 	def _read_flow(self,infile,line):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
-		p = pflow('')
-		np_units_list = p.units_list
-		np_iphase = p.iphase
-		np_sync_timestep_with_update = p.sync_timestep_with_update
-		np_varlist = p.varlist
-		
-		# Probably won't use
-#		frate = pflow_rate()		# Sub-class
-#		np_frate_type = frate.type
-#		np_frate_list = frate.list
-#		np_frate_time_units = frate.time_units
-#		np_frate_data_units = frate.data_units
-#		np_frate_time_values = frate.time_values
-#		np_frate_data_values = frate.data_values
+		np_units_list = []
+		np_iphase = None
+		np_sync_timestep_with_update = None
+		np_varlist = []
 		
 		keepReading = True
 		isValid = False # Used so that entries outside flow conditions are ignored
@@ -1351,11 +1341,12 @@ class pdata(object):
 							  
 					np_varlist.append(new_fvar)
 					
+					# Should not exceed 4 per pflow object
+					
 				# Script assumes later use of keywords are values and not types
 				# Values are assigned here - More work needed here
 				
 				# Problem exists with np_varlist being one list 3x too large
-				# instead of 3 different lists.
 				elif end_count == 1:
 					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry				
 					count = 0
@@ -1365,6 +1356,7 @@ class pdata(object):
 							# Get last index of np_varlist
 							# Assign flow variable values
 							l = len(np_varlist) - 1
+#							print l
 #							for j in range(0,len(tstring2)):
 							for i in range(0,4):
 								if key == np_varlist[l-i].name:
@@ -1372,6 +1364,7 @@ class pdata(object):
 									np_varlist[l-i].valuelist.append(floatD(var))
 #									print l
 #									print (l-i)
+#							print len(np_varlist[1].valuelist)
 						except:	# Can append default unit to end here
 							# Assign variable value unit (C, M, etc.)
 							# Occurs because try fails to convert a
@@ -1398,6 +1391,7 @@ class pdata(object):
 						np_sync_timestep_with_update,np_varlist)
 						
 			self._flowlist.append(new_pflow)
+		
 			
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
@@ -1432,7 +1426,7 @@ class pdata(object):
 					outfile.write('\t' + flow.varlist[i].unit)
 				outfile.write('\n')
 				i += 1
-			
+#				print flow.varlist[5].valuelist[0]
 			outfile.write('\tEND\nEND\n')
 #		outfile.write('\n')
 			

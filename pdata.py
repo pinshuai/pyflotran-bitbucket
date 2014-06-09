@@ -13,10 +13,12 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
-		'fluid_property','saturation_function','region','flow_condition']
+		'fluid_property','saturation_function','region','flow_condition','initial_condition',
+		'boundary_condition','source_sink']
 headers = ['mode','grid','time stepping','material properties',
 		   'time','newton solver','output','fluid properties','saturation functions',
-		   'regions','flow conditions']
+		   'regions','flow conditions','initial condition','boundary conditions',
+		   'source sink']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -445,6 +447,58 @@ class pflow_variable(object):
 	def _get_unit(self): return self._unit
 	def _set_unit(self,value): self._unit = value
 	unit = property(_get_unit, _set_unit)
+
+class pinitial_condition:
+	"""Class for initial condition - a condition coupler
+
+	"""
+	
+	def __init__(self,flow=None,region=None):
+		self._flow = flow	# Flow Condition (e.g. initial)
+		self._region = region	# Define region (e.g. west, east, well)
+		
+	def _get_flow(self): return self._flow
+	def _set_flow(self,value): self._flow = value
+	flow = property(_get_flow, _set_flow)
+	def _get_region(self): return self._region
+	def _set_region(self,value): self._region = value
+	region = property(_get_region, _set_region)
+	
+class pboundary_condition:
+	"""Class for boundary conditions - a condition coupler
+
+	"""
+	
+	def __init__(self,name,flow=None,region=None):
+		self._name = name	# Name of boundary condition. (e.g. west, east)
+		self._flow = flow	# Flow Condition (e.g. initial)
+		self._region = region	# Define region (e.g. west, east, well)
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_flow(self): return self._flow
+	def _set_flow(self,value): self._flow = value
+	flow = property(_get_flow, _set_flow)
+	def _get_region(self): return self._region
+	def _set_region(self,value): self._region = value
+	region = property(_get_region, _set_region)
+
+class psource_sink:
+	"""Class for source sink - a condition coupler
+
+	"""
+	
+	def __init__(self,flow=None,region=None):
+		self._flow = flow	# Flow Condition (e.g. initial)
+		self._region = region	# Define region (e.g. west, east, well)
+		
+	def _get_flow(self): return self._flow
+	def _set_flow(self,value): self._flow = value
+	flow = property(_get_flow, _set_flow)
+	def _get_region(self): return self._region
+	def _set_region(self,value): self._region = value
+	region = property(_get_region, _set_region)
 		
 class pdata(object):
 	"""Class for pflotran data file
@@ -465,7 +519,9 @@ class pdata(object):
 		self._saturation = psaturation('')
 		self._regionlist = []	# There are multiple regions
 		self._flowlist = []
-		#self._region = pregion()
+		self._initial_condition = pinitial_condition()
+		self._boundary_condition_list = []
+		self._source_sink = psource_sink()
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
@@ -485,7 +541,10 @@ class pdata(object):
 				 self._read_fluid,
 				 self._read_saturation,
 				 self._read_region,
-				 self._read_flow]
+				 self._read_flow,
+				 self._read_initial_condition,
+				 self._read_boundary_condition,
+				 self._read_source_sink]
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -498,7 +557,7 @@ class pdata(object):
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
 							'newton_solver','saturation_function',
-							'region','flow_condition']:
+							'region','flow_condition','boundary_condition']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -522,6 +581,9 @@ class pdata(object):
 		if self.saturation: self._write_saturation(outfile)
 		if self.regionlist: self._write_region(outfile)
 		if self.flowlist: self._write_flow(outfile)
+		if self.initial_condition: self._write_initial_condition(outfile)
+		if self.boundary_condition_list: self._write_boundary_condition(outfile)
+		if self.source_sink: self._write_source_sink(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -1333,7 +1395,7 @@ class pdata(object):
 							  flow.varlist[i].type + '\n')
 				i += 1
 				
-			outfile.write('\t/\n')
+			outfile.write('\tEND\n')
 			if flow.iphase:
 				outfile.write('\tIPHASE\t'+str(flow.iphase)+'\n')
 				
@@ -1352,7 +1414,102 @@ class pdata(object):
 				outfile.write('\n')
 				i += 1
 			
-			outfile.write('\t/\n/')
+			outfile.write('\tEND\nEND\n')
+#		outfile.write('\n')
+			
+	def _read_initial_condition(self,infile):
+		p = pinitial_condition()
+		np_flow = p.flow
+		np_region = p.region
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first  key word
+			
+			if key == 'flow_condition':
+				np_flow = line.split()[-1]
+			elif key == 'region':
+				np_region = line.split()[-1]
+			elif key in ['/','end']: keepReading = False
+			
+		# Create an empty initial condition and assign the values read in
+		new_initial_condition = pinitial_condition(np_flow,np_region)
+		self._initial_condition = new_initial_condition
+		
+	def _write_initial_condition(self,outfile):
+		self._header(outfile,headers['initial_condition'])
+		initial_condition = self.initial_condition
+		outfile.write('\nINITIAL_CONDITION\n')
+		
+		# Write out initial_condition variables
+		outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow + '\n')
+		outfile.write('\tREGION\t' + initial_condition.region + '\n')
+		outfile.write('END\n\n')
+		
+	def _read_boundary_condition(self,infile,line):
+		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
+		p = pboundary_condition('')
+		np_flow = p.flow
+		np_region = p.region
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
+			
+			if key == 'flow_condition':
+				np_flow = line.split()[-1]	# take last word
+			elif key == 'region':
+				np_region = line.split()[-1]
+			elif key in ['/','end']: keepReading = False
+		
+		# Create an empty boundary condition and assign the values read in
+		new_boundary_condition = pboundary_condition(np_name,np_flow,np_region)
+		self._boundary_condition_list.append(new_boundary_condition)
+		
+	def _write_boundary_condition(self,outfile):
+		self._header(outfile,headers['boundary_condition'])
+
+		# Write all boundary conditions to file
+		for b in self.boundary_condition_list:	# b = boundary_condition
+			outfile.write('BOUNDARY_CONDITION\t' + b.name + '\n')
+			outfile.write('\tFLOW_CONDITION\t' + b.flow + '\n')
+			outfile.write('\tREGION\t' + b.region + '\n')
+			outfile.write('END\n\n')
+		
+	def _read_source_sink(self,infile):
+		p = psource_sink()
+		np_flow = p.flow
+		np_region = p.region
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
+			
+			if key == 'flow_condition':
+				np_flow = line.split()[-1]	# take last word
+			elif key == 'region':
+				np_region = line.split()[-1]
+			elif key in ['/','end']: keepReading = False
+			
+		# Create an empty source sink and assign the values read in
+		new_source_sink = psource_sink(np_flow,np_region)
+		self._source_sink = new_source_sink
+		
+	def _write_source_sink(self,outfile):
+		self._header(outfile,headers['source_sink'])
+		ss = self.source_sink
+		outfile.write('SOURCE_SINK\n')
+		
+		# Write out initial_condition variables
+		outfile.write('\tFLOW_CONDITION\t' + ss.flow + '\n')
+		outfile.write('\tREGION\t' + ss.region + '\n')
+		outfile.write('END\n\n')
 			
 	def _header(self,outfile,header):
 		if not header: return
@@ -1392,3 +1549,9 @@ class pdata(object):
 	regionlist = property(_get_regionlist) #: (**)
 	def _get_flowlist(self): return self._flowlist
 	flowlist = property(_get_flowlist) #: (**)
+	def _get_initial_condition(self): return self._initial_condition
+	initial_condition = property(_get_initial_condition) #: (**)
+	def _get_boundary_condition_list(self): return self._boundary_condition_list
+	boundary_condition_list = property(_get_boundary_condition_list) #: (**)
+	def _get_source_sink(self): return self._source_sink
+	source_sink = property(_get_source_sink) #: (**)

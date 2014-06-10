@@ -76,13 +76,25 @@ class ptime(object):
 
 	"""
 	
-	def __init__(self,tf=10.,dti=1.e-2,dtf=50.,dtf_lv=[None],dtf_li=[None],dtf_i=0):
-		self._tf = tf
-		self._dti = dti
-		self._dtf = dtf
-		self._dtf_lv = dtf_lv
-		self._dtf_li = dtf_li
+	def __init__(self,tf=[10.],dti=1.e-2,dtf=50.,dtf_lv=[None],dtf_li=[None],dtf_i=0):
+		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
+					# variables except dtf_i
+		self._dti = dti		# Initial Timestep Size
+		self._dtf = dtf		# Maximum Timestep Size
+		self._dtf_lv = dtf_lv	# Maximum Timestep Size list - # before 'y' - 
+					# goes after 1st entry (dtf)
+		self._dtf_li = dtf_li	# Maximum Timestep Size list - # after 'y' - 
+					# goes after 1st entry (dtf)
 		self._dtf_i = dtf_i		# Index, also being used as a counter
+	
+		# Multiplies number read based on units specified (e.g. years)
+		# Done to replicate what is being done in read_time
+		try:	# Try used to ignore errors when tf is None
+			if len(tf) == 2:
+				if tf[-1] == 'y':
+					tf[0] = tf[0]*365.25*24*3600
+		except:
+			pass
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
@@ -521,14 +533,14 @@ class pdata(object):
 
 	"""
 
+#	def __init__(self, filename=None):
 	def __init__(self, filename=None):
 		from copy import copy
-		self._filename = filename
-		self._proplist = []	# There are multiple material properties objects
-		self._time = ptime()
-		self._mode = ''
+		self._mode = pmode()
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
+		self._proplist = []
+		self._time = ptime()
 		self._nsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
 		self._output = poutput()
 		self._fluid = pfluid()
@@ -539,6 +551,7 @@ class pdata(object):
 		self._boundary_condition_list = []
 		self._source_sink = psource_sink()
 		self._strata = pstrata()
+		self._filename = filename
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
 	
@@ -655,9 +668,9 @@ class pdata(object):
 				ng_origin[1] = floatD(line.strip().split()[2])
 				ng_origin[2] = floatD(line.strip().split()[3])
 			elif key == 'nxyz':
-				ng_nxyz[0] = floatD(line.split()[1])
-				ng_nxyz[1] = floatD(line.split()[2])
-				ng_nxyz[2] = floatD(line.split()[3])
+				ng_nxyz[0] = int(line.split()[1])
+				ng_nxyz[1] = int(line.split()[2])
+				ng_nxyz[2] = int(line.split()[3])
 			elif key == 'gravity':
 				gravity_key = True
 				ng_gravity[0] = floatD(line.split()[1])
@@ -691,21 +704,21 @@ class pdata(object):
 			outfile.write('\tBOUNDS\n')
 			outfile.write('\t\t')
 			for i in range(3):
-				outfile.write(str(grid.lower_bounds[i]) + ' ')
+				outfile.write(strD(grid.lower_bounds[i]) + ' ')
 			outfile.write('\n')
 			outfile.write('\t\t')
 			for i in range(3):
-				outfile.write(str(grid.upper_bounds[i]) + ' ')
+				outfile.write(strD(grid.upper_bounds[i]) + ' ')
 			outfile.write('\n')
 			outfile.write('\tEND\n')
 		else:
 			outfile.write('\tDXYZ\n')
 			for i in range(3):
-				outfile.write('\t\t' + str(grid.dxyz[i]) + '\n')
+				outfile.write('\t\t' + strD(grid.dxyz[i]) + '\n')
 			outfile.write('\tEND\n')
 		outfile.write('\tORIGIN' + ' ')
 		for i in range(3):
-			outfile.write(str(grid.origin[i]) + ' ')
+			outfile.write(strD(grid.origin[i]) + ' ')
 		outfile.write('\n')
 		outfile.write('\tNXYZ' + ' ')
 		for i in range(3):
@@ -714,7 +727,7 @@ class pdata(object):
 		if grid.gravity_bool:
 			outfile.write('\tGRAVITY' + ' ')
 			for i in range(3):
-				outfile.write(str(grid.gravity[i]) + ' ')
+				outfile.write(strD(grid.gravity[i]) + ' ')
 			outfile.write('\n')
 		if grid.type == 'unstructured':
 			outfile.write('\tFILENAME' + grid.filename + '\n')
@@ -782,23 +795,23 @@ class pdata(object):
 		if self.timestepper.max_steps:
                   outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
 		if self.timestepper.cfl_limiter:
-                  outfile.write('\t' + 'CFL_LIMITER ' + str(self.timestepper.cfl_limiter) + '\n')
+                  outfile.write('\t' + 'CFL_LIMITER ' + strD(self.timestepper.cfl_limiter) + '\n')
 		if self.timestepper.initialize_to_steady_state:
                   outfile.write('\t' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
 		if self.timestepper.run_as_steady_state:
                   outfile.write('\t' + 'RUN_AS_STEADY_STATE ' + '\n')
 		if self.timestepper.max_pressure_change:
-                  outfile.write('\t' + 'MAX_PRESSURE_CHANGE' + str(self.timestepper.max_pressure_change) + '\n')
+                  outfile.write('\t' + 'MAX_PRESSURE_CHANGE' + strD(self.timestepper.max_pressure_change) + '\n')
 		if self.timestepper.max_temperature_change:
                   outfile.write('\t' + 'MAX_TEMPERATURE_CHANGE' + 
-                                str(self.timestepper.max_temperature_change) + '\n')
+                                strD(self.timestepper.max_temperature_change) + '\n')
 		if self.timestepper.max_concentration_change:
                   outfile.write('\t' + 'MAX_CONCENTRATION_CHANGE' +
-                                str(self.timestepper.max_concentration_change) + '\n')
+                                strD(self.timestepper.max_concentration_change) + '\n')
 		if self.timestepper.max_saturation_change:
                   outfile.write('\t' + 'MAX_SATURATION_CHANGE' + 
-                                str(self.timestepper.max_saturation_change) + '\n')
-		outfile.write('END\n')
+                                strD(self.timestepper.max_saturation_change) + '\n')
+		outfile.write('END\n\n')
 
 	def _read_prop(self,infile,line):
 		np_name = line.split()[-1] 		# property name
@@ -859,12 +872,12 @@ class pdata(object):
 			outfile.write('MATERIAL_PROPERTY\t')
 			outfile.write(prop.name+'\n')
 			outfile.write('\tID\t'+str(prop.id)+'\n')
-			outfile.write('\tPOROSITY\t'+str(prop.porosity)+'\n')
-			outfile.write('\tTORTUOSITY\t'+str(prop.tortuosity)+'\n')
-			outfile.write('\tROCK_DENSITY\t'+str(prop.density)+'\n')
-			outfile.write('\tSPECIFIC_HEAT\t'+str(prop.specific_heat)+'\n')
-			outfile.write('\tTHERMAL_CONDUCTIVITY_DRY\t'+str(prop.cond_dry)+'\n')
-			outfile.write('\tTHERMAL_CONDUCTIVITY_WET\t'+str(prop.cond_wet)+'\n')
+			outfile.write('\tPOROSITY\t'+strD(prop.porosity)+'\n')
+			outfile.write('\tTORTUOSITY\t'+strD(prop.tortuosity)+'\n')
+			outfile.write('\tROCK_DENSITY\t'+strD(prop.density)+'\n')
+			outfile.write('\tSPECIFIC_HEAT\t'+strD(prop.specific_heat)+'\n')
+			outfile.write('\tTHERMAL_CONDUCTIVITY_DRY\t'+strD(prop.cond_dry)+'\n')
+			outfile.write('\tTHERMAL_CONDUCTIVITY_WET\t'+strD(prop.cond_wet)+'\n')
 			outfile.write('\tSATURATION_FUNCTION\t'+prop.saturation+'\n')
 			outfile.write('\tPERMEABILITY\n')
 			outfile.write('\t\tPERM_X\t'+strD(prop.permeability[0])+'\n')
@@ -875,7 +888,8 @@ class pdata(object):
 	
 	def _read_time(self,infile):
 		p = ptime()
-		np_tf = p._tf
+#		np_tf = p._tf
+		np_tf = []
 		np_dti = p._dti
 		np_dtf = p._dtf
 		np_dtf_lv = p._dtf_lv
@@ -889,9 +903,12 @@ class pdata(object):
 			if key == 'final_time':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
+					np_tf.append(tstring[-1])
 					if tstring[-1] == 'y':
-						np_tf = floatD(tstring[0])*365.25*24*3600
-				else:
+						np_tf[0] = floatD(tstring[0])*365.25*24*3600
+						np_tf.append('y')
+						np_tf[1] = 'y'
+#				else:
 					np_tf = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
@@ -948,39 +965,46 @@ class pdata(object):
 		outfile.write('\tFINAL_TIME\t')
 		
 		# write FINAL_TIME statement
-		if time.tf>365.25*3600*24*0.1:
-			outfile.write(str(time.tf/(365.25*24*3600))+' y\n')
-		else:
-			outfile.write(str(time.tf)+'\n')
+#		if time.tf>365.25*3600*24*0.1:
+		
+#		print time.tf[1]
+#		if len(time.tf) == 2: pass
+		try:
+			if time.tf[1]:
+				if time.tf[1] == 'y':
+					outfile.write(strD(time.tf[0]/(365.25*24*3600))+' y\n')
+		except:
+#		else:
+			outfile.write(strD(time.tf)+'\n')
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
 		# write INITIAL_TIMESTEP_SIZE statement
 		if time.dti>365.25*3600*24*0.1:
-			outfile.write(str(time.dti/(365.25*24*3600))+' y\n')
+			outfile.write(strD(time.dti/(365.25*24*3600))+' y\n')
 		else:
-			outfile.write(str(time.dti)+'\n')
+			outfile.write(strD(time.dti)+'\n')
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
 			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
 			if time.dtf>365.25*3600*24*0.1:
-				outfile.write(str(time.dtf/(365.25*24*3600))+' y\n')
+				outfile.write(strD(time.dtf/(365.25*24*3600))+' y\n')
 			else:
-				outfile.write(str(time.dtf)+'\n')
+				outfile.write(strD(time.dtf)+'\n')
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
 			# write before AT
 			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
 			if time.dtf_lv[i]>365.25*3600*24*0.1:
-				outfile.write(str(time.dtf_lv[i]/(365.25*24*3600))+' y')
+				outfile.write(strD(time.dtf_lv[i]/(365.25*24*3600))+' y')
 			else:
-				outfile.write(str(time.dtf_lv[i]))
+				outfile.write(strD(time.dtf_lv[i]))
 			# write after AT
 			outfile.write(' at ')
 			if time.dtf_li[i]>365.25*3600*24*0.1:
-				outfile.write(str(time.dtf_li[i]/(365.25*24*3600))+' y\n')
+				outfile.write(strD(time.dtf_li[i]/(365.25*24*3600))+' y\n')
 			else:
-				outfile.write(str(time.dtf_li[i])+'\n')				
+				outfile.write(strD(time.dtf_li[i])+'\n')				
 		outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):
@@ -1059,7 +1083,7 @@ class pdata(object):
 				tstring = line.strip().split()[1].lower()	# Read the 2nd word
 				if tstring == 'timestep':
 					np_periodic_observation_timestep = int(line.split()[-1])
-# Needed later			#elif tstring == 'time':
+# Usable later			#elif tstring == 'time':
 					#np_periodic_observation_time = float(line.split()[-1])	
 			elif key == 'print_column_ids':
 				np_print_column_ids = 'PRINT_COLUMN_IDS'
@@ -1213,10 +1237,10 @@ class pdata(object):
 					saturation.saturation_function_type + '\n')
 		if saturation.residual_saturation_liquid or saturation.residual_saturation_liquid ==0:
 			outfile.write('\tRESIDUAL_SATURATION LIQUID_PHASE\t' + 
-					str(saturation.residual_saturation_liquid) + '\n')
+					strD(saturation.residual_saturation_liquid) + '\n')
 		if saturation.residual_saturation_gas or saturation.residual_saturation_gas == 0:
 			outfile.write('\tRESIDUAL_SATURATION GAS_PHASE\t' +
-					str(saturation.residual_saturation_gas) + '\n')
+					strD(saturation.residual_saturation_gas) + '\n')
 		if saturation.a_lambda:
 			outfile.write('\tLAMBDA\t' + strD(saturation.a_lambda) + '\n')
 		if saturation.alpha:
@@ -1264,7 +1288,7 @@ class pdata(object):
 					line3 = infile.readline()
 					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False	
 			elif key == 'face':
-				npface = line.strip().split()[-1].lower()
+				np_face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
 		if coordinates_bool:
@@ -1399,6 +1423,8 @@ class pdata(object):
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
 			outfile.write('\nFLOW CONDITION\t' + flow.name + '\n')
+			if flow.sync_timestep_with_update:
+				outfile.write('\tSYNC_TIMESTEP_WITH_UPDATE\n')
 			outfile.write('\tTYPE\n')
 			
 			# variable name and type from lists go here
@@ -1419,7 +1445,7 @@ class pdata(object):
 				j = 0
 				while j < len(flow.varlist[i].valuelist):
 #					print str(flow.varlist[i].valuelist[j])
-					outfile.write('\t' + str(flow.varlist[i].valuelist[j]))
+					outfile.write('\t' + strD(flow.varlist[i].valuelist[j]))
 					j += 1
 				# Write out possible unit here
 				if flow.varlist[i].unit:
@@ -1427,7 +1453,7 @@ class pdata(object):
 				outfile.write('\n')
 				i += 1
 #				print flow.varlist[5].valuelist[0]
-			outfile.write('\tEND\nEND\n')
+			outfile.write('\tEND\nEND\n\n')
 #		outfile.write('\n')
 			
 	def _read_initial_condition(self,infile):
@@ -1454,7 +1480,7 @@ class pdata(object):
 	def _write_initial_condition(self,outfile):
 		self._header(outfile,headers['initial_condition'])
 		initial_condition = self.initial_condition
-		outfile.write('\nINITIAL_CONDITION\n')
+		outfile.write('INITIAL_CONDITION\n')
 		
 		# Write out initial_condition variables
 		outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow + '\n')

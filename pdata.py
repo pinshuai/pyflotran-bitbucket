@@ -89,12 +89,12 @@ class ptime(object):
 	
 		# Multiplies number read based on units specified (e.g. years)
 		# Done to replicate what is being done in read_time
-		try:	# Try used to ignore errors when tf is None
-			if len(tf) == 2:
-				if tf[-1] == 'y':
-					tf[0] = tf[0]*365.25*24*3600
-		except:
-			pass
+#		try:	# Try used to ignore errors when tf is None
+#			if len(tf) == 2:
+#				if tf[-1] == 'y':
+#					tf[0] = tf[0]*365.25*24*3600
+#		except:
+#			pass
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
@@ -533,7 +533,6 @@ class pdata(object):
 
 	"""
 
-#	def __init__(self, filename=None):
 	def __init__(self, filename=None):
 		from copy import copy
 		self._mode = pmode()
@@ -626,7 +625,10 @@ class pdata(object):
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
 		outfile.write('MODE\t')
-		outfile.write(self.mode.name+'\n\n')
+		if self.mode.name:
+			outfile.write(self.mode.name+'\n\n')
+		else:
+			print 'error: mode.name is required'
 	
 	def _read_grid(self,infile,line):
 		g = pgrid()				# assign defaults before reading in values
@@ -699,7 +701,10 @@ class pdata(object):
 		self._header(outfile,headers['grid'])
 		grid = self.grid
 		outfile.write('GRID\n')
-		outfile.write('\tTYPE\t' + grid.type + '\n')
+		if grid.type:
+			outfile.write('\tTYPE\t' + grid.type + '\n')
+		else:
+			print 'error: grid.type is required'
 		if grid.bounds_bool:
 			outfile.write('\tBOUNDS\n')
 			outfile.write('\t\t')
@@ -788,7 +793,9 @@ class pdata(object):
 		self._header(outfile,headers['timestepper'])
 		outfile.write('TIMESTEPPER\n')
 		if self.timestepper.ts_acceleration:
-                  outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
+                	outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
+		else:
+			print 'error: timestepper.ts_acceleration is required\n'
 		if self.timestepper.num_steps_after_cut:
                   outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
                                 str(self.timestepper.num_steps_after_cut) + '\n')
@@ -908,7 +915,7 @@ class pdata(object):
 						np_tf[0] = floatD(tstring[0])*365.25*24*3600
 						np_tf.append('y')
 						np_tf[1] = 'y'
-#				else:
+				else:
 					np_tf = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
@@ -964,20 +971,47 @@ class pdata(object):
 		outfile.write('TIME\n')
 		outfile.write('\tFINAL_TIME\t')
 		
+		
+	# Function unique to time for data writing validation - Convert seconds to years, etc.
+	# var can be either a float value or a list[float,string]
+	# name is provided optionally for error reporting purposes
+	def validate_time(var, name='undefined'):
+		
+		
+	# Try statements are written so that the script can handle either 1 float,
+	# or a list with len 2.
+	# Done to handle the option of specifying a time unit
+		# write FINAL_TIME statement 
 		try:
 			if time.tf[1]:
 				if time.tf[1] == 'y':
 					outfile.write(strD(time.tf[0]/(365.25*24*3600))+' y\n')
+			else:
+				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\' if time.tf is a list'
 		except:
-			if time.tf:
-				outfile.write(strD(time.tf[0])+'\n')	# needs further testing
+			try:
+				if time.tf:
+					outfile.write(strD(time.tf)+'\n')
+				else:
+					print 'error: time.tf (final time) is required.'
+			except:
+				print 'error: time.tf (final time) should either be a float or a list of length 2 (float, string)'
+
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
 		# write INITIAL_TIMESTEP_SIZE statement
-		if time.dti>365.25*3600*24*0.1:
-			outfile.write(strD(time.dti/(365.25*24*3600))+' y\n')
-		else:
-			outfile.write(strD(time.dti)+'\n')
+		try:
+			if time.dti[1]:
+				if time.dti[1] == 'y':
+					outfile.write(strD(time.dti[0]/(365.25*24*3600))+' y\n')
+			else:
+				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\' if time.dti is a list'
+		except:
+			try:
+				if time.dti:
+					outfile.write(strD(time.dti)+'\n')
+			except:
+				print 'error: time.dti (initial timestep size) should either be a float or a list of length 2.'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
 			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
@@ -1516,13 +1550,14 @@ class pdata(object):
 		self._header(outfile,headers['boundary_condition'])
 
 		# Write all boundary conditions to file
-		if boundary_condition_list:
+#		if boundary_condition_list:
+		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
 				outfile.write('BOUNDARY_CONDITION\t' + b.name + '\n')
 				outfile.write('\tFLOW_CONDITION\t' + b.flow + '\n')
 				outfile.write('\tREGION\t' + b.region + '\n')
 				outfile.write('END\n\n')
-		else:
+		except:
 			print 'error: at least one boundary_condition_list is required\n'
 		
 	def _read_source_sink(self,infile):

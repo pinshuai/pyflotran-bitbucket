@@ -964,18 +964,13 @@ class pdata(object):
 		outfile.write('TIME\n')
 		outfile.write('\tFINAL_TIME\t')
 		
-		# write FINAL_TIME statement
-#		if time.tf>365.25*3600*24*0.1:
-		
-#		print time.tf[1]
-#		if len(time.tf) == 2: pass
 		try:
 			if time.tf[1]:
 				if time.tf[1] == 'y':
 					outfile.write(strD(time.tf[0]/(365.25*24*3600))+' y\n')
 		except:
-#		else:
-			outfile.write(strD(time.tf)+'\n')
+			if time.tf:
+				outfile.write(strD(time.tf[0])+'\n')	# needs further testing
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
 		# write INITIAL_TIMESTEP_SIZE statement
@@ -1483,8 +1478,16 @@ class pdata(object):
 		outfile.write('INITIAL_CONDITION\n')
 		
 		# Write out initial_condition variables
-		outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow + '\n')
-		outfile.write('\tREGION\t' + initial_condition.region + '\n')
+		if initial_condition.flow:
+			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow + '\n')
+		else:
+			print 'error: initial_condition.flow (flow_condition) is required\n'
+		# Error checking needed
+		if initial_condition.region:
+			outfile.write('\tREGION\t' + initial_condition.region + '\n')
+		else:
+			print 'error: initial_condition.region is required\n'
+		# Error checking needed here
 		outfile.write('END\n\n')
 		
 	def _read_boundary_condition(self,infile,line):
@@ -1513,11 +1516,14 @@ class pdata(object):
 		self._header(outfile,headers['boundary_condition'])
 
 		# Write all boundary conditions to file
-		for b in self.boundary_condition_list:	# b = boundary_condition
-			outfile.write('BOUNDARY_CONDITION\t' + b.name + '\n')
-			outfile.write('\tFLOW_CONDITION\t' + b.flow + '\n')
-			outfile.write('\tREGION\t' + b.region + '\n')
-			outfile.write('END\n\n')
+		if boundary_condition_list:
+			for b in self.boundary_condition_list:	# b = boundary_condition
+				outfile.write('BOUNDARY_CONDITION\t' + b.name + '\n')
+				outfile.write('\tFLOW_CONDITION\t' + b.flow + '\n')
+				outfile.write('\tREGION\t' + b.region + '\n')
+				outfile.write('END\n\n')
+		else:
+			print 'error: at least one boundary_condition_list is required\n'
 		
 	def _read_source_sink(self,infile):
 		p = psource_sink()
@@ -1546,10 +1552,16 @@ class pdata(object):
 		outfile.write('SOURCE_SINK\n')
 		
 		# Write out initial_condition variables
-		outfile.write('\tFLOW_CONDITION\t' + ss.flow + '\n')
-		outfile.write('\tREGION\t' + ss.region + '\n')
+		if ss.flow:
+			outfile.write('\tFLOW_CONDITION\t' + ss.flow + '\n')
+		else:
+			print 'error: source_sink.flow (flow_condition) is required\n'
+		if ss.region:
+			outfile.write('\tREGION\t' + ss.region + '\n')
+		else:
+			print 'error: source_sink.region is required\n'
 		outfile.write('END\n\n')
-		
+			
 	def _read_strata(self,infile):
 		p = pstrata()
 		np_region = p.region
@@ -1577,8 +1589,14 @@ class pdata(object):
 		outfile.write('STRATA\n')
 		
 		# Write out initial_condition variables
-		outfile.write('\tREGION\t' + s.region + '\n')
-		outfile.write('\tMATERIAL\t' + s.material + '\n')
+		if s.region:
+			outfile.write('\tREGION\t' + s.region + '\n')
+		else:
+			print 'error: strata.region is required\n'
+		if s.material:
+			outfile.write('\tMATERIAL\t' + s.material + '\n')
+		else:
+			print 'error: strata.material is required\n'
 		outfile.write('END\n\n')
 			
 	def _header(self,outfile,header):

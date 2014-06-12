@@ -283,8 +283,8 @@ class poutput(object):
 
 	"""
 	
-	def __init__(self,mass_balance=None,print_column_ids=None,periodic_observation_timestep=None,
-			format=[],velocities=None):
+	def __init__(self,mass_balance=False,print_column_ids=False,periodic_observation_timestep=None,
+			format=[],velocities=False):
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
 		self._periodic_observation_timestep = periodic_observation_timestep
@@ -975,7 +975,7 @@ class pdata(object):
 	# Function unique to time for data writing validation - Convert seconds to years, etc.
 	# var can be either a float value or a list[float,string]
 	# name is provided optionally for error reporting purposes
-	def validate_time(var, name='undefined'):
+#	def validate_time(var, name='undefined'):
 		
 		
 	# Try statements are written so that the script can handle either 1 float,
@@ -1080,10 +1080,13 @@ class pdata(object):
 		
 		for nsolver in self.nsolverlist:
 			# Write Newton Solver Type - Not certain this is correct.
-			if nsolver.name == 'flow':	# default
-				outfile.write('NEWTON_SOLVER\t' + nsolver.name + '\n')
-			elif nsolver.name == 'tran':
-				outfile.write('NEWTON_SOLVER\t' + nsolver.name + '\n')
+			
+			if nsolver.name.lower() == 'flow':	# default
+				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')
+			elif nsolver.name.lower() == 'tran':
+				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')
+			else:
+				print 'error: nsolver_name (newton solver name) is invalid, unrecognized, or missing.\n'
 			
 			outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
 			outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
@@ -1115,7 +1118,7 @@ class pdata(object):
 # Usable later			#elif tstring == 'time':
 					#np_periodic_observation_time = float(line.split()[-1])	
 			elif key == 'print_column_ids':
-				np_print_column_ids = 'PRINT_COLUMN_IDS'
+				np_print_column_ids = True
 			elif key == 'format':
 				tstring = (line.strip().split()[1:])
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
@@ -1129,9 +1132,9 @@ class pdata(object):
 				elif tstring == 'vtk':
 					np_format.append('VTK')
 			elif key == 'velocities':
-				np_velocities = 'VELOCITIES'
+				np_velocities = True
 			elif key == 'mass_balance':
-				np_mass_balance = 'MASS_BALANCE'
+				np_mass_balance = True
 			elif key in ['/','end']: keepReading = False
 			
 		# Create new empty output object and assign values read in.
@@ -1154,15 +1157,15 @@ class pdata(object):
 			outfile.write('\tPERIODIC_OBSERVATION TIMESTEP\t'+
 					str(output.periodic_observation_timestep)+'\n')
 		if output.print_column_ids:
-			outfile.write('\t'+output.print_column_ids+'\n')
+			outfile.write('\t'+'PRINT_COLUMN_IDS'+'\n')
 		if output.format:
 			for i in range(0, len(output.format)):
 				outfile.write('\tFORMAT\t')
 				outfile.write(str(output.format[i]) + '\n')
 		if output.velocities:
-			outfile.write('\t'+output.velocities+'\n')
+			outfile.write('\t'+'VELOCITIES'+'\n')
 		if output.mass_balance:
-			outfile.write('\t'+output.mass_balance+'\n')
+			outfile.write('\t'+'MASS_BALANCE'+'\n')
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):
@@ -1331,10 +1334,10 @@ class pdata(object):
 		# Write out all valid region object entries with Region as Key word
 		for region in self.regionlist:
 #			if region.coordinates_bool: # Not needed anymore due to check in read
-			outfile.write('\nREGION\t')
-			outfile.write(region.name + '\n')
+			outfile.write('REGION\t')
+			outfile.write(region.name.lower() + '\n')
 			if region.face:
-				outfile.write('\tFACE\t' + region.face + '\n')
+				outfile.write('\tFACE\t' + region.face.lower() + '\n')
 			# no if statement below to ensure 0's are accepted for coordinates
 			outfile.write('\tCOORDINATES\n')
 			outfile.write('\t\t')
@@ -1344,8 +1347,8 @@ class pdata(object):
 			for i in range(3):
 				outfile.write(strD(region.coordinates_upper[i]) + ' ')
 			outfile.write('\n')
-			outfile.write('\tEND\n')	
-			outfile.write('END\n')	
+			outfile.write('\tEND\n')
+			outfile.write('END\n\n')
 				
 	def _read_flow(self,infile,line):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
@@ -1451,16 +1454,16 @@ class pdata(object):
 		
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-			outfile.write('\nFLOW CONDITION\t' + flow.name + '\n')
+			outfile.write('FLOW CONDITION\t' + flow.name.lower() + '\n')
 			if flow.sync_timestep_with_update:
 				outfile.write('\tSYNC_TIMESTEP_WITH_UPDATE\n')
 			outfile.write('\tTYPE\n')
 			
 			# variable name and type from lists go here
 			i = 0
-			while i< 4:
+			while i< len(flow.varlist):
 				outfile.write('\t\t' + flow.varlist[i].name.upper() + '\t' +
-							  flow.varlist[i].type + '\n')
+							  flow.varlist[i].type.lower() + '\n')
 				i += 1
 				
 			outfile.write('\tEND\n')
@@ -1469,16 +1472,18 @@ class pdata(object):
 				
 			# variable name and values from lists along with units go here
 			i = 0
-			while i< 4:
+			while i< len(flow.varlist):
 				outfile.write('\t\t' + flow.varlist[i].name.upper())
 				j = 0
 				while j < len(flow.varlist[i].valuelist):
-#					print str(flow.varlist[i].valuelist[j])
-					outfile.write('\t' + strD(flow.varlist[i].valuelist[j]))
+					try:
+						outfile.write('\t' + strD(flow.varlist[i].valuelist[j]))
+					except:
+						print 'error: writing flow.varlist should only contain floats, not strings'
 					j += 1
 				# Write out possible unit here
 				if flow.varlist[i].unit:
-					outfile.write('\t' + flow.varlist[i].unit)
+					outfile.write('\t' + flow.varlist[i].unit.upper())
 				outfile.write('\n')
 				i += 1
 #				print flow.varlist[5].valuelist[0]
@@ -1513,12 +1518,12 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if initial_condition.flow:
-			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow + '\n')
+			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow.lower() + '\n')
 		else:
 			print 'error: initial_condition.flow (flow_condition) is required\n'
 		# Error checking needed
 		if initial_condition.region:
-			outfile.write('\tREGION\t' + initial_condition.region + '\n')
+			outfile.write('\tREGION\t' + initial_condition.region.lower() + '\n')
 		else:
 			print 'error: initial_condition.region is required\n'
 		# Error checking needed here
@@ -1553,9 +1558,9 @@ class pdata(object):
 #		if boundary_condition_list:
 		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
-				outfile.write('BOUNDARY_CONDITION\t' + b.name + '\n')
-				outfile.write('\tFLOW_CONDITION\t' + b.flow + '\n')
-				outfile.write('\tREGION\t' + b.region + '\n')
+				outfile.write('BOUNDARY_CONDITION\t' + b.name.lower() + '\n')
+				outfile.write('\tFLOW_CONDITION\t' + b.flow.lower() + '\n')
+				outfile.write('\tREGION\t' + b.region.lower() + '\n')
 				outfile.write('END\n\n')
 		except:
 			print 'error: at least one boundary_condition_list is required\n'
@@ -1588,11 +1593,11 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if ss.flow:
-			outfile.write('\tFLOW_CONDITION\t' + ss.flow + '\n')
+			outfile.write('\tFLOW_CONDITION\t' + ss.flow.lower() + '\n')
 		else:
 			print 'error: source_sink.flow (flow_condition) is required\n'
 		if ss.region:
-			outfile.write('\tREGION\t' + ss.region + '\n')
+			outfile.write('\tREGION\t' + ss.region.lower() + '\n')
 		else:
 			print 'error: source_sink.region is required\n'
 		outfile.write('END\n\n')
@@ -1625,11 +1630,11 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if s.region:
-			outfile.write('\tREGION\t' + s.region + '\n')
+			outfile.write('\tREGION\t' + s.region.lower() + '\n')
 		else:
 			print 'error: strata.region is required\n'
 		if s.material:
-			outfile.write('\tMATERIAL\t' + s.material + '\n')
+			outfile.write('\tMATERIAL\t' + s.material.lower() + '\n')
 		else:
 			print 'error: strata.material is required\n'
 		outfile.write('END\n\n')

@@ -85,7 +85,9 @@ class ptime(object):
 					# goes after 1st entry (dtf)
 		self._dtf_li = dtf_li	# Maximum Timestep Size list - # after 'y' - 
 					# goes after 1st entry (dtf)
-		self._dtf_i = dtf_i		# Index, also being used as a counter
+		self._dtf_i = dtf_i	# Index, also being used as a counter
+					# 2nd and 3rd paramenter can be a string to specify time 
+					# unit for a dtf list
 	
 		# Multiplies number read based on units specified (e.g. years)
 		# Done to replicate what is being done in read_time
@@ -912,16 +914,16 @@ class pdata(object):
 				if len(tstring) == 2:
 					np_tf.append(tstring[-1])
 					if tstring[-1] == 'y':
-						np_tf[0] = floatD(tstring[0])*365.25*24*3600
+						np_tf[0] = floatD(tstring[0])
 						np_tf.append('y')
-						np_tf[1] = 'y'
 				else:
 					np_tf = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
-						np_dti = floatD(tstring[0])*365.25*24*3600
+						np_dti[0] = floatD(tstring[0])
+						np_dti.append('y')
 				else:
 					np_dti = floatD(tstring[0])
 			elif key == 'maximum_timestep_size':
@@ -929,10 +931,10 @@ class pdata(object):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
 						if tstring[-1] == 'y':
-							np_dtf = floatD(tstring[0])*365.25*24*3600
+							np_dtf[0] = floatD(tstring[0])
+							np_dtf.append('y')
 					else:
 						np_dtf = floatD(tstring[0])
-						
 				elif ('at' in line):
 					## Read maximum_timestep_size with AT keyword 
 					if (key == 'maximum_timestep_size'):
@@ -942,7 +944,7 @@ class pdata(object):
 						if len(tstring) >= 2:
 							if tstring[1] == 'y': # Detect the y after 1st #, not the last y on the line
 								np_dtf_lv.append(1)
-								np_dtf_lv[np_dtf_i] = floatD(tstring[0])*365.25*24*3600
+								np_dtf_lv[np_dtf_i] = floatD(tstring[0])
 						else:
 							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
 							
@@ -952,8 +954,8 @@ class pdata(object):
 						
 						if len(tstring) == 2:
 							if tstring[-1] == 'y':
-								np_dtf_li.append(1)
-								np_dtf_li[np_dtf_i] = floatD(tstring[0])*365.25*24*3600
+								np_dtf_li.append(1)				
+								np_dtf_li[np_dtf_i] = floatD(tstring[0])
 						else:
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
@@ -969,14 +971,7 @@ class pdata(object):
 		self._header(outfile,headers['time'])
 		time = self.time
 		outfile.write('TIME\n')
-		outfile.write('\tFINAL_TIME\t')
-		
-		
-	# Function unique to time for data writing validation - Convert seconds to years, etc.
-	# var can be either a float value or a list[float,string]
-	# name is provided optionally for error reporting purposes
-#	def validate_time(var, name='undefined'):
-		
+		outfile.write('\tFINAL_TIME\t')	
 		
 	# Try statements are written so that the script can handle either 1 float,
 	# or a list with len 2.
@@ -985,7 +980,7 @@ class pdata(object):
 		try:
 			if time.tf[1]:
 				if time.tf[1] == 'y':
-					outfile.write(strD(time.tf[0]/(365.25*24*3600))+' y\n')
+					outfile.write(strD(time.tf[0])+' y\n')
 			else:
 				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\' if time.tf is a list'
 		except:
@@ -1003,7 +998,7 @@ class pdata(object):
 		try:
 			if time.dti[1]:
 				if time.dti[1] == 'y':
-					outfile.write(strD(time.dti[0]/(365.25*24*3600))+' y\n')
+					outfile.write(strD(time.dti[0])+' y\n')
 			else:
 				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\' if time.dti is a list'
 		except:
@@ -1014,17 +1009,25 @@ class pdata(object):
 				print 'error: time.dti (initial timestep size) should either be a float or a list of length 2.'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
-			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-			if time.dtf>365.25*3600*24*0.1:
-				outfile.write(strD(time.dtf/(365.25*24*3600))+' y\n')
+		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+		try:
+			if time.dtf[1]:
+				outfile.write(strD(time.dtf[0])+' y\n')
 			else:
-				outfile.write(strD(time.dtf)+'\n')
+				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\' if time.dti is a list'
+		except:
+			try:
+				if time.dtf:
+					outfile.write(strD(time.dtf)+'\n')
+			except:
+				print 'error: time.dtf (initial timestep size) should either be a float or a list of length 2.'
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
+			
 			# write before AT
 			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-			if time.dtf_lv[i]>365.25*3600*24*0.1:
+			if time.dtf_lv[i]>365.25*3600*24*0.1:	# Need replacement if condition here
 				outfile.write(strD(time.dtf_lv[i]/(365.25*24*3600))+' y')
 			else:
 				outfile.write(strD(time.dtf_lv[i]))

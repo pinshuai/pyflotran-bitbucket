@@ -76,18 +76,21 @@ class ptime(object):
 
 	"""
 	
-	def __init__(self,tf=[10.],dti=1.e-2,dtf=50.,dtf_lv=[None],dtf_li=[None],dtf_i=0):
+	def __init__(self,tf=[10.,None],dti=[1.e-2,None],dtf=[50.,None],dtf_lv=[None],
+		     dtf_li=[None],dtf_i=0,dtf_lv_unit=[], dtf_li_unit=[]):
 		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
 					# variables except dtf_i
 		self._dti = dti		# Initial Timestep Size
 		self._dtf = dtf		# Maximum Timestep Size
 		self._dtf_lv = dtf_lv	# Maximum Timestep Size list - # before 'y' - 
-					# goes after 1st entry (dtf)
+					# goes after 1st entry (dtf) - lv = list value
 		self._dtf_li = dtf_li	# Maximum Timestep Size list - # after 'y' - 
-					# goes after 1st entry (dtf)
+					# goes after 1st entry (dtf) - li = list increment
 		self._dtf_i = dtf_i	# Index, also being used as a counter
 					# 2nd and 3rd paramenter can be a string to specify time 
 					# unit for a dtf list
+		self._dtf_lv_unit = dtf_lv_unit	# time unit list for lv (s,m,h,d,mo,y)	- Needed for hardcoding and a user interface - not needed for reading test files
+		self._dtf_li_unit = dtf_li_unit # time unit list for li (s,m,h,d,mo,y) - Needed for hardcoding and a user interface - not needed for reading test files
 	
 		# Multiplies number read based on units specified (e.g. years)
 		# Done to replicate what is being done in read_time
@@ -119,6 +122,12 @@ class ptime(object):
 	def _get_dtf_i(self): return self._dtf_i
 	def _set_dtf_i(self,value): self._dtf_i = value
 	dtf_i = property(_get_dtf_i, _set_dtf_i) #: (**)
+	def _get_dtf_lv_unit(self): return self._dtf_lv_unit
+	def _set_dtf_lv_unit(self,value): self._dtf_lv_unit = value
+	dtf_lv_unit = property(_get_dtf_lv_unit, _set_dtf_lv_unit) #: (**)
+	def _get_dtf_li_unit(self): return self._dtf_li_unit
+	def _set_dtf_li_unit(self,value): self._dtf_li_unit = value
+	dtf_li_unit = property(_get_dtf_li_unit, _set_dtf_li_unit) #: (**)
 	
 class pgrid(object):		# discretization
 	""" Class for grid property
@@ -603,20 +612,35 @@ class pdata(object):
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
 		if self.mode: self._write_mode(outfile)
+		else: print 'error: mode is required, it is currently reading as empty'
 		if self.grid: self._write_grid(outfile)
+		else: print 'error: grid is required, it is currently reading as empty'
 		if self.timestepper : self._write_timestepper(outfile)
+		else: print 'error: timestepper is required, it is currently reading as empty'
 		if self.time: self._write_time(outfile)
+		else: print 'error: time is required, it is currently reading as empty'
 		if self.proplist: self._write_prop(outfile)
+		else: print 'error: proplist is required, it is currently reading as empty'
 		if self.nsolverlist: self._write_nsolver(outfile)
+		else: print 'error: nsolverlist is required, it is currently reading as empty'
 		if self.output: self._write_output(outfile)
+		else: print 'error: output is required, it is currently reading as empty'
 		if self.fluid: self._write_fluid(outfile)
+		else: print 'error: fluid is required, it is currently reading as empty'
 		if self.saturation: self._write_saturation(outfile)
+		else: print 'error: saturation is required, it is currently reading as empty'
 		if self.regionlist: self._write_region(outfile)
+		else: print 'error: regionlist is required, it is currently reading as empty'
 		if self.flowlist: self._write_flow(outfile)
+		else: print 'error: flowlist is required, it is currently reading as empty'
 		if self.initial_condition: self._write_initial_condition(outfile)
+		else: print 'error: initial_condition is required, it is currently reading as empty'
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
+		else: print 'error: boundary_condition_list is required, it is currently reading as empty'
 		if self.source_sink: self._write_source_sink(outfile)
+		else: print 'error: source_sink is required, it is currently reading as empty'
 		if self.strata: self._write_strata(outfile)
+		else: print 'error: strata is required, it is currently reading as empty'
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -897,13 +921,15 @@ class pdata(object):
 	
 	def _read_time(self,infile):
 		p = ptime()
-#		np_tf = p._tf
-		np_tf = []
+		np_tf = p._tf
+#		np_tf = []
 		np_dti = p._dti
 		np_dtf = p._dtf
 		np_dtf_lv = p._dtf_lv
 		np_dtf_li = p._dtf_li
 		np_dtf_i = p._dtf_i
+		np_dtf_lv_unit = p._dtf_lv_unit
+		np_dtf_li_unit = p._dtf_li_unit
 		
 		keepReading = True
 		while keepReading:
@@ -915,26 +941,26 @@ class pdata(object):
 					np_tf.append(tstring[-1])
 					if tstring[-1] == 'y':
 						np_tf[0] = floatD(tstring[0])
-						np_tf.append('y')
+						np_tf[1] = 'y'
 				else:
-					np_tf = floatD(tstring[0])
+					np_tf[0] = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
 					if tstring[-1] == 'y':
 						np_dti[0] = floatD(tstring[0])
-						np_dti.append('y')
+						np_dti[1] = 'y'
 				else:
-					np_dti = floatD(tstring[0])
+					np_dti[0] = floatD(tstring[0])
 			elif key == 'maximum_timestep_size':
 				if ('at' not in line):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
 						if tstring[-1] == 'y':
 							np_dtf[0] = floatD(tstring[0])
-							np_dtf.append('y')
+							np_dtf[1] = 'y'
 					else:
-						np_dtf = floatD(tstring[0])
+						np_dtf[0] = floatD(tstring[0])
 				elif ('at' in line):
 					## Read maximum_timestep_size with AT keyword 
 					if (key == 'maximum_timestep_size'):
@@ -945,6 +971,7 @@ class pdata(object):
 							if tstring[1] == 'y': # Detect the y after 1st #, not the last y on the line
 								np_dtf_lv.append(1)
 								np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+								np_dtf_lv_unit.append('y')
 						else:
 							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
 							
@@ -956,6 +983,7 @@ class pdata(object):
 							if tstring[-1] == 'y':
 								np_dtf_li.append(1)				
 								np_dtf_li[np_dtf_i] = floatD(tstring[0])
+								np_dtf_li_unit.append('y')
 						else:
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
@@ -982,7 +1010,7 @@ class pdata(object):
 				if time.tf[1] == 'y':
 					outfile.write(strD(time.tf[0])+' y\n')
 			else:
-				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\' if time.tf is a list'
+				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\', list length needs to be == 2'
 		except:
 			try:
 				if time.tf:
@@ -990,7 +1018,7 @@ class pdata(object):
 				else:
 					print 'error: time.tf (final time) is required.'
 			except:
-				print 'error: time.tf (final time) should either be a float or a list of length 2 (float, string)'
+				print 'error: time.tf (final time) should be a list of length 2 (float, string)'
 
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
@@ -1000,13 +1028,13 @@ class pdata(object):
 				if time.dti[1] == 'y':
 					outfile.write(strD(time.dti[0])+' y\n')
 			else:
-				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\' if time.dti is a list'
+				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2'
 		except:
 			try:
 				if time.dti:
 					outfile.write(strD(time.dti)+'\n')
 			except:
-				print 'error: time.dti (initial timestep size) should either be a float or a list of length 2.'
+				print 'error: time.dti (initial timestep size) should be a list of length 2 (float, string)'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
 		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
@@ -1014,27 +1042,27 @@ class pdata(object):
 			if time.dtf[1]:
 				outfile.write(strD(time.dtf[0])+' y\n')
 			else:
-				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\' if time.dti is a list'
+				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2'
 		except:
 			try:
 				if time.dtf:
 					outfile.write(strD(time.dtf)+'\n')
 			except:
-				print 'error: time.dtf (initial timestep size) should either be a float or a list of length 2.'
+				print 'error: time.dtf (initial timestep size) should be a list of length 2 (float, string)'
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
 			
 			# write before AT
 			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-			if time.dtf_lv[i]>365.25*3600*24*0.1:	# Need replacement if condition here
-				outfile.write(strD(time.dtf_lv[i]/(365.25*24*3600))+' y')
+			if time.dtf_lv_unit[i]:
+				outfile.write(strD(time.dtf_lv[i])+' y')
 			else:
 				outfile.write(strD(time.dtf_lv[i]))
 			# write after AT
 			outfile.write(' at ')
-			if time.dtf_li[i]>365.25*3600*24*0.1:
-				outfile.write(strD(time.dtf_li[i]/(365.25*24*3600))+' y\n')
+			if time.dtf_li_unit[i]:
+				outfile.write(strD(time.dtf_li[i])+' y\n')
 			else:
 				outfile.write(strD(time.dtf_li[i])+'\n')				
 		outfile.write('END\n\n')

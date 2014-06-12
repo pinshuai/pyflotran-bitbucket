@@ -49,10 +49,6 @@ dat.timestepper.max_saturation_change = None
 			   
 # set material properities aka prop_list
 #--------------------------------------------------------------
-#for prop in dat.proplist:
-#for prop in dat.prop:
-
-#for prop in material:
 id = 1
 name = 'soil1'
 porosity = 0.15e0
@@ -71,36 +67,14 @@ dat.proplist.append(material)
 
 # set time - work in progress
 #--------------------------------------------------------------
-# Multiplies number read based on units specified (e.g. years)
-# try-if is done to replicate what is being done in read_time
-
-# Function unique to time for data entry validation - Convert years to seconds, etc.
-# var can be either a float value or a list[float,string] - string used for time unit
-# name is provided optionally for error reporting purposes
-#def validate_time(var,name='undefined'):	# Used for one float value
-#	try:
-#		if len(var) == 2:
-#			if var[-1] == 'y':
-#				var[0] = var[0]*365.25*24*3600
-#				return var
-#			else:
-#				print 'warning: dat.time.' + name + ' has an unrecognized time #unit\n default time unit (seconds) is being used instead.'
-#				var = var[0]
-#				return var[0]
-#	except:
-#		return var	# Don't manipulate the number
-		
-#def validate_time_list(var=[], name='undefined'):	# Used for two float values
-	
-#dat.time.tf = validate_time([0.25e0, 'y'], 'tf')
 dat.time.tf = [0.25e0, 'y']
 dat.time.dti = [1.e-6, 'y']
 dat.time.dtf = [50.e0,'y']
-dat.time.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0,'y']
+dat.time.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]
 dat.time.dtf_li = [15., 50., 20000., 50000., 100000.]
 dat.time.dtf_i = 4	# Needs to be the length of dtf_lv or dtf_li
-
-#time = ptime(tf, dti, dtf, dtf_lv, dtf_li, dtf_i)
+dat.time.dtf_lv_unit = ['y', 'y', 'y', 'y']
+dat.time.dtf_li_unit = ['y', 'y', 'y', 'y']
 #--------------------------------------------------------------
 
 # set newton solvers
@@ -384,7 +358,8 @@ print '(initial_timestep_size) dti', dat.time.dti
 print '(maximum_timestep_size) dtf', dat.time.dtf
 print '(maximum_time_step_list_value) dtf_lv', dat.time.dtf_lv
 print '(maximum_time_step_list_increment) dtf_li', dat.time.dtf_li
-#print '(maximum_time_step_index)', dat.time.dtf_i
+print '(maximum_time_step_size_list_value_unit) dtf_lv_unit', dat.time.dtf_lv_unit
+print '(maximum_time_step_size_list_increment_unit) dtf_li_unit', dat.time.dtf_li_unit
 
 print
 print 'proplist', dat.proplist

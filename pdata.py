@@ -1162,7 +1162,7 @@ class pdata(object):
 		for nsolver in self.nsolverlist:
 			# Write Newton Solver Type - Not certain this is correct.
 			
-			if nsolver.name.lower() == 'flow':	# default
+			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
 				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')
 			elif nsolver.name.lower() == 'tran':
 				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')

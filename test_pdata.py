@@ -1,13 +1,15 @@
 
 from pdata import*
 
+print '\nTEST EXECUTED\n'	# console header
+
 ###############################################################
 
 # Read Test Data
 #dat = pdata('pflotran.in')
-
+dat = pdata('tracer_1D_SC.in')
 ###############################################################
-
+'''
 # initialize without reading in test data
 #--------------------------------------------------------------
 dat = pdata('')
@@ -16,6 +18,13 @@ dat = pdata('')
 # set mode
 #--------------------------------------------------------------
 dat.mode.name = 'MPHASE'
+#--------------------------------------------------------------
+
+# set chemistry
+#--------------------------------------------------------------
+dat.chemistry.pspecies = 'A(aq)'
+dat.chemistry.molal = True
+dat.chemistry.output = 'ALL'
 #--------------------------------------------------------------
 
 # set grid
@@ -28,7 +37,7 @@ dat.grid.orign = [0.e0, 0.e0, 0.e0]
 dat.grid.nxyz = [107, 1, 51]
 dat.grid.dxyz = [5, 5, 5]	# Should not write
 dat.grid.gravity_bool = False
-dat.grid.gravity =  [0.0, 0.0, -9.8068]	# Should not write
+dat.grid.gravity =  [0.0, 0.0, -9.8068]	# Should not write?
 dat.grid.filename =  ''
 #--------------------------------------------------------------
 
@@ -39,6 +48,7 @@ dat.timestepper.num_steps_after_cut = None
 dat.timestepper.max_steps = None
 dat.timestepper.max_ts_cuts = None
 dat.timestepper.cfl_limiter = None
+
 dat.timestepper.initialize_to_steady_state = None
 dat.timestepper.run_as_steady_state = None
 dat.timestepper.max_pressure_change = None
@@ -46,7 +56,7 @@ dat.timestepper.max_temperature_change = None
 dat.timestepper.max_concentration_change = None
 dat.timestepper.max_saturation_change = None
 #--------------------------------------------------------------
-			   
+
 # set material properities aka prop_list
 #--------------------------------------------------------------
 id = 1
@@ -65,7 +75,7 @@ material = pmaterial(id, name, porosity, tortuosity, density, specific_heat,
 dat.proplist.append(material)
 #--------------------------------------------------------------
 
-# set time - work in progress
+# set time
 #--------------------------------------------------------------
 dat.time.tf = [0.25e0, 'y']
 dat.time.dti = [1.e-6, 'y']
@@ -335,7 +345,6 @@ dat.strata.material = 'SOIL1'
 
 #--------------------------------------------------------------
 
-
 ###############################################################
 
 # Print to console the data attributes
@@ -459,7 +468,7 @@ print 'region', dat.strata.region
 print 'material', dat.strata.material
 
 print
-
+'''
 ###############################################################
 
 #print 'filename',dat.filename

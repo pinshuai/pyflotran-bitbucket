@@ -12,13 +12,16 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['mode','grid','timestepper','material_property','time','newton_solver','output',
-		'fluid_property','saturation_function','region','flow_condition','initial_condition',
-		'boundary_condition','source_sink','strata']
-headers = ['mode','grid','time stepping','material properties',
-		   'time','newton solver','output','fluid properties','saturation functions',
-		   'regions','flow conditions','initial condition','boundary conditions',
-		   'source sink','stratigraphy couplers']
+cards = ['mode','chemistry','grid','timestepper','material_property','time',
+		'newton_solver','output','fluid_property',
+		'saturation_function','region','flow_condition',
+		'initial_condition','boundary_condition','source_sink',
+		'strata']
+headers = ['mode','chemistry','grid','time stepping','material properties',
+		   'time','newton solver','output','fluid properties',
+		   'saturation functions','regions','flow conditions',
+		   'initial condition','boundary conditions','source sink',
+		   'stratigraphy couplers']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -539,6 +542,26 @@ class pstrata:
 	def _set_material(self,value): self._material = value
 	material = property(_get_material, _set_material)
 	
+class pchemistry(object):
+	"""Class for chemistry
+
+	"""
+	
+	def __init__(self, pspecies=None, molal=False, output=None):
+		self._pspecies = pspecies	# primary_species (eg. 'A(aq') - string
+		self._molal = molal		# boolean
+		self._output = output		# incl. molarity/all, species and mineral names - string
+		
+	def _get_pspecies(self): return self._pspecies
+	def _set_pspecies(self,value): self._pspecies = value
+	pspecies = property(_get_pspecies, _set_pspecies)
+	def _get_molal(self): return self._molal
+	def _set_molal(self,value): self._molal = value
+	molal = property(_get_molal, _set_molal)
+	def _get_output(self): return self._output
+	def _set_output(self,value): self._output = value
+	output = property(_get_output, _set_output)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -547,6 +570,7 @@ class pdata(object):
 	def __init__(self, filename=None):
 		from copy import copy
 		self._mode = pmode()
+		self._chemistry = pchemistry()
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._proplist = []
@@ -572,6 +596,7 @@ class pdata(object):
 		self._filename = filename 	# assign filename attribute
 		read_fn = dict(zip(cards, 	
 				[self._read_mode,
+				 self._read_chemistry,
 				 self._read_grid,
 				 self._read_timestepper,
 				 self._read_prop,
@@ -612,35 +637,37 @@ class pdata(object):
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
 		if self.mode: self._write_mode(outfile)
-		else: print 'error: mode is required, it is currently reading as empty'
+		else: print 'error: mode is required, it is currently reading as empty\n'
+		if self.chemistry: self._write_chemistry(outfile)
+		else: print 'error: chemistry is required, it is currently reading as empty\n'
 		if self.grid: self._write_grid(outfile)
-		else: print 'error: grid is required, it is currently reading as empty'
+		else: print 'error: grid is required, it is currently reading as empty\n'
 		if self.timestepper : self._write_timestepper(outfile)
-		else: print 'error: timestepper is required, it is currently reading as empty'
+		else: print 'error: timestepper is required, it is currently reading as empty\n'
 		if self.time: self._write_time(outfile)
-		else: print 'error: time is required, it is currently reading as empty'
+		else: print 'error: time is required, it is currently reading as empty\n'
 		if self.proplist: self._write_prop(outfile)
-		else: print 'error: proplist is required, it is currently reading as empty'
+		else: print 'error: proplist is required, it is currently reading as empty\n'
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'error: nsolverlist is required, it is currently reading as empty'
+		else: print 'error: nsolverlist is required, it is currently reading as empty\n'
 		if self.output: self._write_output(outfile)
-		else: print 'error: output is required, it is currently reading as empty'
+		else: print 'error: output is required, it is currently reading as empty\n'
 		if self.fluid: self._write_fluid(outfile)
-		else: print 'error: fluid is required, it is currently reading as empty'
+		else: print 'error: fluid is required, it is currently reading as empty\n'
 		if self.saturation: self._write_saturation(outfile)
-		else: print 'error: saturation is required, it is currently reading as empty'
+		else: print 'error: saturation is required, it is currently reading as empty\n'
 		if self.regionlist: self._write_region(outfile)
-		else: print 'error: regionlist is required, it is currently reading as empty'
+		else: print 'error: regionlist is required, it is currently reading as empty\n'
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'error: flowlist is required, it is currently reading as empty'
+		else: print 'error: flowlist is required, it is currently reading as empty\n'
 		if self.initial_condition: self._write_initial_condition(outfile)
-		else: print 'error: initial_condition is required, it is currently reading as empty'
+		else: print 'error: initial_condition is required, it is currently reading as empty\n'
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
-		else: print 'error: boundary_condition_list is required, it is currently reading as empty'
+		else: print 'error: boundary_condition_list is required, it is currently reading as empty\n'
 		if self.source_sink: self._write_source_sink(outfile)
-		else: print 'error: source_sink is required, it is currently reading as empty'
+		else: print 'error: source_sink is required, it is currently reading as empty\n'
 		if self.strata: self._write_strata(outfile)
-		else: print 'error: strata is required, it is currently reading as empty'
+		else: print 'error: strata is required, it is currently reading as empty\n'
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -922,7 +949,6 @@ class pdata(object):
 	def _read_time(self,infile):
 		p = ptime()
 		np_tf = p._tf
-#		np_tf = []
 		np_dti = p._dti
 		np_dtf = p._dtf
 		np_dtf_lv = p._dtf_lv
@@ -1010,15 +1036,15 @@ class pdata(object):
 				if time.tf[1] == 'y':
 					outfile.write(strD(time.tf[0])+' y\n')
 			else:
-				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\', list length needs to be == 2'
+				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
 		except:
 			try:
 				if time.tf:
 					outfile.write(strD(time.tf)+'\n')
 				else:
-					print 'error: time.tf (final time) is required.'
+					print 'error: time.tf (final time) is required.\n'
 			except:
-				print 'error: time.tf (final time) should be a list of length 2 (float, string)'
+				print 'error: time.tf (final time) should be a list of length 2 (float, string)\n'
 
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
@@ -1028,13 +1054,13 @@ class pdata(object):
 				if time.dti[1] == 'y':
 					outfile.write(strD(time.dti[0])+' y\n')
 			else:
-				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2'
+				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
 		except:
 			try:
 				if time.dti:
 					outfile.write(strD(time.dti)+'\n')
 			except:
-				print 'error: time.dti (initial timestep size) should be a list of length 2 (float, string)'
+				print 'error: time.dti (initial timestep size) should be a list of length 2 (float, string)\n'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
 		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
@@ -1042,29 +1068,32 @@ class pdata(object):
 			if time.dtf[1]:
 				outfile.write(strD(time.dtf[0])+' y\n')
 			else:
-				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2'
+				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
 		except:
 			try:
 				if time.dtf:
 					outfile.write(strD(time.dtf)+'\n')
 			except:
-				print 'error: time.dtf (initial timestep size) should be a list of length 2 (float, string)'
+				print 'error: time.dtf (initial timestep size) should be a list of length 2 (float, string)\n'
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
 			
 			# write before AT
-			outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-			if time.dtf_lv_unit[i]:
-				outfile.write(strD(time.dtf_lv[i])+' y')
-			else:
-				outfile.write(strD(time.dtf_lv[i]))
-			# write after AT
-			outfile.write(' at ')
-			if time.dtf_li_unit[i]:
-				outfile.write(strD(time.dtf_li[i])+' y\n')
-			else:
-				outfile.write(strD(time.dtf_li[i])+'\n')				
+			try:
+				outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
+				if time.dtf_lv_unit[i]:
+					outfile.write(strD(time.dtf_lv[i])+' y')
+				else:
+					outfile.write(strD(time.dtf_lv[i]))
+				# write after AT
+				outfile.write(' at ')
+				if time.dtf_li_unit[i]:
+					outfile.write(strD(time.dtf_li[i])+' y\n')
+				else:
+					outfile.write(strD(time.dtf_li[i])+'\n')
+			except:
+				print 'no extra maximum_timestep_sizes detected, with \'at\'\n'		
 		outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):
@@ -1103,11 +1132,9 @@ class pdata(object):
 		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
 					np_max_it,np_max_f)	# Create an empty newton solver
 		self._nsolverlist.append(new_nsolver)
-#		self._nsolver = new_nsolver
 		
 	def _write_nsolver(self,outfile):
 		self._header(outfile,headers['newton_solver'])
-#		nsolver = self.nsolver
 		
 		for nsolver in self.nsolverlist:
 			# Write Newton Solver Type - Not certain this is correct.
@@ -1119,13 +1146,20 @@ class pdata(object):
 			else:
 				print 'error: nsolver_name (newton solver name) is invalid, unrecognized, or missing.\n'
 			
-			outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
-			outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
-			outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
-			outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
-			outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
-			outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
-			outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
+			if nsolver.atol:
+				outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
+			if nsolver.rtol:
+				outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
+			if nsolver.stol:
+				outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
+			if nsolver.dtol:
+				outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
+			if nsolver.itol:
+				outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
+			if nsolver.max_it:
+				outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
+			if nsolver.max_f:
+				outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
 			outfile.write('END\n\n')
 	
 	def _read_output(self,infile):
@@ -1402,7 +1436,10 @@ class pdata(object):
 			key = line.strip().split()[0].lower()	# take first keyword
 			# Note to self - don't read units for now
 			if key == 'type':
-				total_end_count = 2
+				total_end_count = 2 # Basically ensures that both read ifs for
+						    # the varlist will execute 
+						    # This # indicates how many time a / or 'end' 
+						    # can be read before loop terminates.
 				
 			elif key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
 				if end_count == 0:
@@ -1669,6 +1706,76 @@ class pdata(object):
 		else:
 			print 'error: strata.material is required\n'
 		outfile.write('END\n\n')
+		
+	def _read_chemistry(self, infile):
+		c = pchemistry()
+		np_pspecies = c.pspecies
+		np_molal = c.molal
+		np_output = c.output
+		
+		keepReading = True
+		
+		end_count = 0	# Counting for determining which / or 'END' is final
+				# Can also be used to limit when a if key condition will execute.
+		total_end_count = 1	# Determines when to finally stop reading by
+					# limiting total amount of / or 'END' that can be read
+					# before loop terminates.
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().lower()	# take first key word
+			if key == 'primary_species':
+				total_end_count += 1	# Accomodate for the / or 'end'
+				line = infile.readline()	# get next line
+				np_pspecies = line.strip()	
+			elif key == 'molal':
+				np_molal = True
+			elif key == 'output':
+				total_end_count += 1	# Accomodate for the / or 'end'
+				line = infile.readline()	# get next line
+				np_output = line.strip()
+			elif key in ['/','end']: 
+				end_count += 1
+				if end_count == total_end_count:
+					keepReading = False
+			
+		# Create an empty chemistry object and assign the values read in
+		new_chemistry = pchemistry(np_pspecies,np_molal,np_output)
+		self._chemistry = new_chemistry
+		
+	def _write_chemistry(self,outfile):
+		self._header(outfile,headers['chemistry'])
+		c = self.chemistry
+		outfile.write('CHEMISTRY\n')
+		
+		# Write out chemistry variables
+		if c.pspecies:
+			if c.pspecies.lower() == 'a(aq)': # Change to lower case for checking only
+				outfile.write('\tPRIMARY_SPECIES\n')
+				outfile.write('\t\t' + c.pspecies + '\n')
+				outfile.write('\t/\n\n')
+			else:
+				outfile.write('\tPRIMARY_SPECIES\n')
+				print 'error: chemistry.primary_species has an unrecognized entry\n'
+				outfile.write('\t/\n\n')
+		else:
+			print 'error: chemistry.pspecies (primary species) is required\n'
+			outfile.write('\t/\n\n')
+		if c.molal:
+			outfile.write('\tMOLAL\n')
+
+		else:
+			print 'error: chemistry.molal is required\n'
+		if c.output:
+			outfile.write('\tOUTPUT\n')
+			if c.output.lower() == 'all' or c.output.lower() == 'molality' or c.output.lower() == 'molarity':
+				outfile.write('\t\t' + c.output.upper() + '\n')
+			outfile.write('\t/\n')
+			outfile.write('/\n\n')
+		else:
+			print 'error: chemistry.output is required\n'
+			outfile.write('\t/\n')
+			outfile.write('/\n\n')
 			
 	def _header(self,outfile,header):
 		if not header: return
@@ -1716,3 +1823,5 @@ class pdata(object):
 	source_sink = property(_get_source_sink) #: (**)
 	def _get_strata(self): return self._strata
 	strata = property(_get_strata) #: (**)
+	def _get_chemistry(self): return self._chemistry
+	chemistry = property(_get_chemistry) #: (**)

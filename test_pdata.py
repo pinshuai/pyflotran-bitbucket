@@ -344,23 +344,30 @@ dat.strata.region = 'ALL'
 dat.strata.material = 'SOIL1'
 
 #--------------------------------------------------------------
-
+'''
 ###############################################################
 
 # Print to console the data attributes
-print 
+
+print 'chemistry', dat.chemistry
+print '(primary species) pspecies:', dat.chemistry.pspecies
+print 'molal:', dat.chemistry.molal
+print 'output:', dat.chemistry.output
+print
+ 
 print 'grid', dat.grid
 print 'nxyz', dat.grid.nxyz
 print 'origin', dat.grid.origin
 print 'dxyz', dat.grid.dxyz
 print 'upper_bounds', dat.grid.upper_bounds
 print 'gravity', dat.grid.gravity
-
-print 
+print
+ 
 print 'timestepper', dat.timestepper
 print 'ts_acceleration', dat.timestepper.ts_acceleration
+print
 
-print 
+ 
 print 'time', dat.time
 print '(final_time) tf', dat.time.tf
 print '(initial_timestep_size) dti', dat.time.dti
@@ -369,8 +376,8 @@ print '(maximum_time_step_list_value) dtf_lv', dat.time.dtf_lv
 print '(maximum_time_step_list_increment) dtf_li', dat.time.dtf_li
 print '(maximum_time_step_size_list_value_unit) dtf_lv_unit', dat.time.dtf_lv_unit
 print '(maximum_time_step_size_list_increment_unit) dtf_li_unit', dat.time.dtf_li_unit
-
 print
+
 print 'proplist', dat.proplist
 for prop in dat.proplist:
 	print 'name',prop.name
@@ -404,12 +411,12 @@ print 'print_column_ids', dat.output.print_column_ids
 print 'format', dat.output.format
 print 'velocities', dat.output.velocities
 print 'mass_balance', dat.output.mass_balance
-
 print
+
 print 'fluid', dat.fluid
 print 'diffusion_coefficient', dat.fluid.diffusion_coefficient
-
 print
+
 print 'saturation', dat.saturation
 print 'name', dat.saturation.name
 print 'permeability_function_type', dat.saturation.permeability_function_type
@@ -421,8 +428,8 @@ print 'alpha', dat.saturation.alpha
 print 'max_capillary_pressure', dat.saturation.max_capillary_pressure
 print 'betac', dat.saturation.betac
 print 'power', dat.saturation.power
-
 print
+
 print 'region', dat.regionlist
 for region in dat.regionlist:
 	print 'name', region.name
@@ -449,8 +456,8 @@ for flow in dat.flowlist:
 print 'initial_condition', dat.initial_condition
 print 'flow', dat.initial_condition.flow
 print 'region', dat.initial_condition.region
-
 print
+
 print 'boundary_condition_list', dat.boundary_condition_list
 for bcon in dat.boundary_condition_list:
 	print 'name', bcon.name
@@ -461,14 +468,13 @@ for bcon in dat.boundary_condition_list:
 print 'source_sink', dat.source_sink
 print 'flow', dat.source_sink.flow
 print 'region', dat.source_sink.region
-
 print
+
 print '(stratigraphy couplers) strata', dat.strata
 print 'region', dat.strata.region
 print 'material', dat.strata.material
-
 print
-'''
+
 ###############################################################
 
 #print 'filename',dat.filename

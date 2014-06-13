@@ -964,27 +964,23 @@ class pdata(object):
 			if key == 'final_time':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
-					np_tf.append(tstring[-1])
-					if tstring[-1] == 'y':
-						np_tf[0] = floatD(tstring[0])
-						np_tf[1] = 'y'
+					np_tf[0] = floatD(tstring[0])
+					np_tf[1] = tstring[-1]
 				else:
 					np_tf[0] = floatD(tstring[0])
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
-					if tstring[-1] == 'y':
-						np_dti[0] = floatD(tstring[0])
-						np_dti[1] = 'y'
+					np_dti[0] = floatD(tstring[0])
+					np_dti[1] = tstring[-1]					
 				else:
 					np_dti[0] = floatD(tstring[0])
 			elif key == 'maximum_timestep_size':
 				if ('at' not in line):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
-						if tstring[-1] == 'y':
-							np_dtf[0] = floatD(tstring[0])
-							np_dtf[1] = 'y'
+						np_dtf[0] = floatD(tstring[0])
+						np_dtf[1] = tstring[-1]	
 					else:
 						np_dtf[0] = floatD(tstring[0])
 				elif ('at' in line):
@@ -994,10 +990,9 @@ class pdata(object):
 						#Read before AT
 						tstring = line.split()[1:]
 						if len(tstring) >= 2:
-							if tstring[1] == 'y': # Detect the y after 1st #, not the last y on the line
-								np_dtf_lv.append(1)
-								np_dtf_lv[np_dtf_i] = floatD(tstring[0])
-								np_dtf_lv_unit.append('y')
+							np_dtf_lv.append(1)
+							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+							np_dtf_lv_unit.append(tstring[1])
 						else:
 							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
 							
@@ -1006,18 +1001,18 @@ class pdata(object):
 						tstring = line.split()[at_i+2:] # Use string only after 'at'
 						
 						if len(tstring) == 2:
-							if tstring[-1] == 'y':
-								np_dtf_li.append(1)				
-								np_dtf_li[np_dtf_i] = floatD(tstring[0])
-								np_dtf_li_unit.append('y')
+							np_dtf_li.append(1)
+							np_dtf_li[np_dtf_i] = floatD(tstring[0])
+							np_dtf_li_unit.append(tstring[-1])
 						else:
+							np_dtf_li.append(1)
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
 						np_dtf_i = np_dtf_i + 1
 							
 			elif key in ['/','end']: keepReading = False
 			
-		# Craete new empty time object and assign values read in.	
+		# Create new empty time object and assign values read in.	
 		new_time = ptime(np_tf,np_dti,np_dtf,np_dtf_lv,np_dtf_li,np_dtf_i)
 		self._time = new_time
 
@@ -1032,68 +1027,96 @@ class pdata(object):
 	# Done to handle the option of specifying a time unit
 		# write FINAL_TIME statement 
 		try:
-			if time.tf[1]:
-				if time.tf[1] == 'y':
-					outfile.write(strD(time.tf[0])+' y\n')
+			time.tf[1] = time.tf[1].lower()	# Correct capitalization
+			if time.tf[1] == 's' or time.tf[1] == 'm' or time.tf[1] == 'h' or time.tf[1] == 'd' or time.tf[1] == 'mo' or time.tf[1] == 'y':
+				outfile.write(strD(time.tf[0])+' '+time.tf[1]+'\n')
+			elif time.tf[1] != None:
+				outfile.write(strD(time.tf[0])+' s\n')
+				print 'Warning: time.tf[1] (final time) has an unrecognized time unit. Default of seconds is being used.\n'
 			else:
-				print 'error: time.tf[1] (final time) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
-		except:
+				print 'Warning: time.tf[1] (final time) has an unspecified time unit. Default of seconds is being used.\n'
+				outfile.write(strD(time.tf[0])+' s\n')
+		except:	# Used when var is not a list
 			try:
 				if time.tf:
-					outfile.write(strD(time.tf)+'\n')
+					print 'Warning: time.tf (final time) has an unspecified time unit. Default of seconds is being used.\n'
+					outfile.write(strD(time.tf)+' s\n')
 				else:
 					print 'error: time.tf (final time) is required.\n'
 			except:
-				print 'error: time.tf (final time) should be a list of length 2 (float, string)\n'
+				print 'error: time.tf (final time) should be a list of length 2 (float, string) or a single float\n'
 
 		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
 		
 		# write INITIAL_TIMESTEP_SIZE statement
 		try:
-			if time.dti[1]:
-				if time.dti[1] == 'y':
-					outfile.write(strD(time.dti[0])+' y\n')
+			time.dti[1] = time.dti[1].lower()	# Correct capitalization
+			if time.dti[1] == 's' or time.dti[1] == 'm' or time.dti[1] == 'h' or time.dti[1] == 'd' or time.dti[1] == 'mo' or time.dti[1] == 'y':
+				outfile.write(strD(time.dti[0])+' '+time.dti[1]+'\n')
+			elif time.dti[1] != None:
+				outfile.write(strD(time.dti[0])+' s\n')
+				print 'Warning: time.dti[1] (initial_timestep_size) has an unrecognized time unit. Default of seconds is being used.\n'
 			else:
-				print 'error: time.dti[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
+				print 'Warning: time.dti[1] (initial_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
+				outfile.write(strD(time.dti[0])+' s\n')
 		except:
 			try:
 				if time.dti:
-					outfile.write(strD(time.dti)+'\n')
+					print 'Warning: time.dti (initial_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
+					outfile.write(strD(time.dti)+' s\n')
+				else:
+					print 'error: time.dti (initial_timestep_size) is required.\n'
 			except:
 				print 'error: time.dti (initial timestep size) should be a list of length 2 (float, string)\n'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	
 		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
 		try:
-			if time.dtf[1]:
-				outfile.write(strD(time.dtf[0])+' y\n')
+			time.dtf[1] = time.dtf[1].lower()	# Correct capitalization
+			if time.dtf[1] == 's' or time.dtf[1] == 'm' or time.dtf[1] == 'h' or time.dtf[1] == 'd' or time.dtf[1] == 'mo' or time.dtf[1] == 'y':
+				outfile.write(strD(time.dtf[0])+' '+time.dtf[1]+'\n')
+			elif time.dtf[1] != None:
+				outfile.write(strD(time.dtf[0])+' s\n')
+				print 'Warning: time.dtf[1] (maximum_timestep_size) has an unrecognized time unit. Default of seconds is being used.\n'
 			else:
-				print 'error: time.dtf[1] (initial timestep size) requires a valid time unit e.g. \'y\', list length needs to be == 2\n'
-		except:
+				print 'Warning: time.dtf[1] (maximum_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
+		except:	# Used when var is not a list
 			try:
 				if time.dtf:
-					outfile.write(strD(time.dtf)+'\n')
+					print 'Warning: time.dtf (maximum_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
+					oudtfile.write(strD(time.dtf)+' s\n')
+				else:
+					print 'error: time.dtf (maximum_timestep_size) is required.\n'
 			except:
-				print 'error: time.dtf (initial timestep size) should be a list of length 2 (float, string)\n'
+				print 'error: time.dtf (maximum_timestep_size) should be a list of length 2 (float, string) or a single float\n'
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
 			
-			# write before AT
+			
 			try:
+				# write before AT
+				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()	# Correct capitalization
 				outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-				if time.dtf_lv_unit[i]:
-					outfile.write(strD(time.dtf_lv[i])+' y')
+				if time.dtf_lv_unit[i] == 's' or time.dtf_lv_unit[i] == 'm' or time.dtf_lv_unit[i] == 'h' or time.dtf_lv_unit[i] == 'd' or time.dtf_lv_unit[i] == 'mo' or time.dtf_lv_unit[i] == 'y' :
+					outfile.write(strD(time.dtf_lv[i])+' '+
+					time.dtf_lv_unit[i]+' ')
+				elif time.dtf_lv_unit[i] != None:
+					outfile.write(strD(time.dtf_lv[i])+' s\n')
+					print 'Warning: time.dtf_lv['+i+'] (maximum_time_step size list value with \'AT\') has an unrecognized time unit. Default of seconds is being used.\n'
 				else:
-					outfile.write(strD(time.dtf_lv[i]))
+					print 'Warning: time.dtf_lv['+i+'] (maximum_time_step size list value with \'AT\') has an unspecified time unit. Default of seconds is being used.\n'
+					outfile.write(strD(time.dtf_lv[i])+' s\n')
 				# write after AT
+				time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()	# Correct capitalization
 				outfile.write(' at ')
 				if time.dtf_li_unit[i]:
 					outfile.write(strD(time.dtf_li[i])+' y\n')
 				else:
 					outfile.write(strD(time.dtf_li[i])+'\n')
 			except:
-				print 'no extra maximum_timestep_sizes detected, with \'at\'\n'		
+				print 'error: time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list with either strings or nothing assigned. All lists should be of equal length with that number assigned to dtf_i\n'
+#				print 'no extra maximum_timestep_sizes detected, with \'at\'\n'		
 		outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):

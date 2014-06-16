@@ -495,9 +495,10 @@ class pboundary_condition:
 
 	"""
 	
-	def __init__(self,name,flow=None,region=None):
+	def __init__(self,name,flow=None,transport=None,region=None):
 		self._name = name	# Name of boundary condition. (e.g. west, east)
 		self._flow = flow	# Flow Condition (e.g. initial)
+		self._transport = transport	# Transport Condition (e.g. river_chemistry)
 		self._region = region	# Define region (e.g. west, east, well)
 		
 	def _get_name(self): return self._name
@@ -506,6 +507,9 @@ class pboundary_condition:
 	def _get_flow(self): return self._flow
 	def _set_flow(self,value): self._flow = value
 	flow = property(_get_flow, _set_flow)
+	def _get_transport(self): return self._transport
+	def _set_transport(self,value): self._transport = value
+	transport = property(_get_transport, _set_transport)
 	def _get_region(self): return self._region
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
@@ -515,6 +519,7 @@ class psource_sink:
 
 	"""
 	
+#	def __init__(self,flow=None,region=None):
 	def __init__(self,flow=None,region=None):
 		self._flow = flow	# Flow Condition (e.g. initial)
 		self._region = region	# Define region (e.g. west, east, well)
@@ -1624,16 +1629,19 @@ class pdata(object):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
 		p = pboundary_condition('')
 		np_flow = p.flow
+		np_transport = p.transport
 		np_region = p.region
 		
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
 			line = infile.readline()	# get next line
-			key = line.strip().split()[0].lower()	# take first key word
+			key = line.split()[0].lower()	# take first key word
 			
 			if key == 'flow_condition':
 				np_flow = line.split()[-1]	# take last word
+			elif key == 'transport_condition':
+				np_transport = line.split()[-1]
 			elif key == 'region':
 				np_region = line.split()[-1]
 			elif key in ['/','end']: keepReading = False
@@ -1650,11 +1658,15 @@ class pdata(object):
 		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
 				outfile.write('BOUNDARY_CONDITION\t' + b.name.lower() + '\n')
-				outfile.write('\tFLOW_CONDITION\t' + b.flow.lower() + '\n')
-				outfile.write('\tREGION\t' + b.region.lower() + '\n')
+				if b.flow:
+					outfile.write('\tFLOW_CONDITION\t' + b.flow.lower() + '\n')
+				if b.transport:
+					outfile.write('\tTRANSPORT_CONDITION\t'+b.transport.lower()+'\n')
+				if b.region:
+					outfile.write('\tREGION\t' + b.region.lower() + '\n')
 				outfile.write('END\n\n')
 		except:
-			print 'error: at least one boundary_condition_list is required\n'
+			print 'Error: At least one boundary_condition with valid attributes is required\n'
 		
 	def _read_source_sink(self,infile):
 		p = psource_sink()

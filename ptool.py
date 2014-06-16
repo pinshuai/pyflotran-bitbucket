@@ -16,5 +16,31 @@ def strD(number):
 	:param number: Number to be converted.
 	:type number: str
 	"""
+	tstring = str(number)
+	if 'e' in tstring:
+		return ('%8.7e'%number).replace('e','d')
+	else:
+		return tstring
+
+def exist(object):
+	"""
+	Proposed function to check if an object exists by seeing if all attributes are != None
 	
-	return ('%8.7e'%number).replace('e','d')
+	Not working as intended - Trying to solve problem with SOURCE_SINK writing when it should not.
+	"""
+	
+	for attr, value in object.__dict__.iteritems():
+		if attr != None:
+			print attr
+			print 'test\n'
+			return True
+		
+	return False
+		
+	
+#	for i in object:
+#		if not hasattr(i,None):
+#		if i:
+#			return True
+		
+#	return False

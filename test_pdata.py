@@ -7,9 +7,9 @@ print '\nTEST EXECUTED\n'	# console header
 
 # Read Test Data
 #dat = pdata('pflotran.in')
-dat = pdata('tracer_1D_SC.in')
+#dat = pdata('tracer_1D_SC.in')
 ###############################################################
-'''
+
 # initialize without reading in test data
 #--------------------------------------------------------------
 dat = pdata('')
@@ -81,10 +81,10 @@ dat.time.tf = [0.25e0, 'y']
 dat.time.dti = [1.e-6, 'y']
 dat.time.dtf = [50.e0,'y']
 dat.time.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]
-dat.time.dtf_li = [15., 50., 20000., 50000., 100000.]
-dat.time.dtf_i = 4	# Needs to be the length of dtf_lv or dtf_li
 dat.time.dtf_lv_unit = ['y', 'y', 'y', 'y']
+dat.time.dtf_li = [15., 50., 20000., 50000., 100000.]
 dat.time.dtf_li_unit = ['y', 'y', 'y', 'y']
+dat.time.dtf_i = 4	# Needs to be the length of dtf_lv or dtf_li
 #--------------------------------------------------------------
 
 # set newton solvers
@@ -322,6 +322,19 @@ dat.initial_condition.flow = 'INITIAL'
 dat.initial_condition.region = 'all'
 #--------------------------------------------------------------
 
+# set transport conditions
+#--------------------------------------------------------------
+name = 'initial'
+type = 'dirichlet'
+constraint_list_value = [0.e0]
+constraint_list_type = [None]
+#constraint_list_value = [0.e0]
+#constraint_list_type = ['initial']
+
+t = ptransport(name,type,constraint_list_value,constraint_list_type)
+dat.transportlist.append(t)
+#--------------------------------------------------------------
+
 # set boundary conditions
 #--------------------------------------------------------------
 name = 'WEST'
@@ -344,7 +357,7 @@ dat.strata.region = 'ALL'
 dat.strata.material = 'SOIL1'
 
 #--------------------------------------------------------------
-'''
+
 ###############################################################
 
 # Print to console the data attributes
@@ -390,6 +403,7 @@ for prop in dat.proplist:
 	print 'cond_wet',prop.cond_wet
 	print 'permeability',prop.permeability
 	print
+print	# May double print an empty line - Done just in case a list is empty
 
 
 
@@ -404,6 +418,7 @@ for nsolver in dat.nsolverlist:
 	print 'max_it', nsolver.max_it
 	print 'max_f', nsolver.max_f
 	print
+print
 	
 print 'output', dat.output
 print 'periodic_observation_timestep', dat.output.periodic_observation_timestep
@@ -437,6 +452,7 @@ for region in dat.regionlist:
 	print 'coordinates_lower', region.coordinates_lower
 	print 'coordinates_upper', region.coordinates_upper
 	print
+print
 
 print 'flow', dat.flowlist
 for flow in dat.flowlist:
@@ -452,11 +468,31 @@ for flow in dat.flowlist:
 		print '\tlist', varlist.list
 		print '\tunit', varlist.unit
 		print
+print
 		
 print 'initial_condition', dat.initial_condition
 print 'flow', dat.initial_condition.flow
 print 'region', dat.initial_condition.region
 print
+
+print'(transport conditions) transportlist'
+for t in dat.transportlist:
+	print 'transport', dat.transportlist.index(t), t
+	print 'name', t.name
+	print 'type', t.type
+	print 'constraint_list_value', t.constraint_list_value
+	print 'constraint_list_type', t.constraint_list_type
+	print
+print
+
+
+#for t in dat.transportlist:
+#	print 'name', t.name
+#	print 'type', t.type
+#	for v in t.constraint_list_value:
+#		print 'constraint_list_value', v
+#	for t in t.constraint_list_type:
+#		print 'constraint_list_value', v
 
 print 'boundary_condition_list', dat.boundary_condition_list
 for bcon in dat.boundary_condition_list:
@@ -464,6 +500,7 @@ for bcon in dat.boundary_condition_list:
 	print 'flow', bcon.flow
 	print 'region', bcon.region
 	print
+print
 
 print 'source_sink', dat.source_sink
 print 'flow', dat.source_sink.flow

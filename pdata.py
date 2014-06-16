@@ -15,12 +15,12 @@ else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 cards = ['mode','chemistry','grid','timestepper','material_property','time',
 		'newton_solver','output','fluid_property',
 		'saturation_function','region','flow_condition',
-		'initial_condition','boundary_condition','source_sink',
+		'initial_condition','transport_condition','boundary_condition','source_sink',
 		'strata']
 headers = ['mode','chemistry','grid','time stepping','material properties',
 		   'time','newton solver','output','fluid properties',
 		   'saturation functions','regions','flow conditions',
-		   'initial condition','boundary conditions','source sink',
+		   'initial condition','transport conditions','boundary conditions','source sink',
 		   'stratigraphy couplers']
 headers = dict(zip(cards,headers))
 
@@ -474,7 +474,7 @@ class pflow_variable(object):
 	def _set_unit(self,value): self._unit = value
 	unit = property(_get_unit, _set_unit)
 
-class pinitial_condition:
+class pinitial_condition(object):
 	"""Class for initial condition - a condition coupler
 
 	"""
@@ -490,7 +490,7 @@ class pinitial_condition:
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
 	
-class pboundary_condition:
+class pboundary_condition(object):
 	"""Class for boundary conditions - a condition coupler
 
 	"""
@@ -514,7 +514,7 @@ class pboundary_condition:
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
 
-class psource_sink:
+class psource_sink(object):
 	"""Class for source sink - a condition coupler
 
 	"""
@@ -531,7 +531,7 @@ class psource_sink:
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
 	
-class pstrata:
+class pstrata(object):
 	"""Class for stratigraphy couplers
 
 	"""
@@ -567,6 +567,31 @@ class pchemistry(object):
 	def _set_output(self,value): self._output = value
 	output = property(_get_output, _set_output)
 	
+class ptransport(object):
+	"""Class for transport conditions
+
+	"""
+	
+	def __init__(self, name, type=None, constraint_list_value=[],
+		     constraint_list_type=[]):
+		self._name = name	# e.g. initial, west, east
+		self._type = type	# e.g. dirichlet, zero_gradient
+		self._constraint_list_value = constraint_list_value
+		self._constraint_list_type = constraint_list_type
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_type(self): return self._type
+	def _set_type(self,value): self._type = value
+	type = property(_get_type, _set_type)
+	def _get_constraint_list_value(self): return self._constraint_list_value
+	def _set_constraint_list_value(self,value): self._constraint_list_value = value
+	constraint_list_value = property(_get_constraint_list_value, _set_constraint_list_value)
+	def _get_constraint_list_type(self): return self._constraint_list_type
+	def _set_constraint_list_type(self,value): self._constraint_list_type = value
+	constraint_list_type = property(_get_constraint_list_type, _set_constraint_list_type)
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -587,8 +612,9 @@ class pdata(object):
 		self._regionlist = []	# There are multiple regions
 		self._flowlist = []
 		self._initial_condition = pinitial_condition()
+		self._transportlist = []
 		self._boundary_condition_list = []
-		self._source_sink = psource_sink()
+		self._source_sink = psource_sink() 
 		self._strata = pstrata()
 		self._filename = filename
 		
@@ -613,9 +639,11 @@ class pdata(object):
 				 self._read_region,
 				 self._read_flow,
 				 self._read_initial_condition,
+				 self._read_transport,
 				 self._read_boundary_condition,
 				 self._read_source_sink,
 				 self._read_strata]
+				 
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
 			keepReading = True
@@ -628,7 +656,7 @@ class pdata(object):
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
 							'newton_solver','saturation_function',
-							'region','flow_condition','boundary_condition']:
+							'region','flow_condition','boundary_condition','transport_condition']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -667,10 +695,18 @@ class pdata(object):
 		else: print 'error: flowlist is required, it is currently reading as empty\n'
 		if self.initial_condition: self._write_initial_condition(outfile)
 		else: print 'error: initial_condition is required, it is currently reading as empty\n'
+		if self.transportlist: self._write_transport(outfile)
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'error: boundary_condition_list is required, it is currently reading as empty\n'
 		if self.source_sink: self._write_source_sink(outfile)
 		else: print 'error: source_sink is required, it is currently reading as empty\n'
+#	Troubleshooting below for addressing concerns with source_sink being written without attributes
+#	Not sure if it is needed.
+#		if exist(self.source_sink): self._write_source_sink(outfile)
+#		else: print 'error: source_sink is required, it is currently reading as empty\n'
+#
+#		if not hasattr(self.source_sink.exist, True):
+#			self._write_source_sink(outfile)
 		if self.strata: self._write_strata(outfile)
 		else: print 'error: strata is required, it is currently reading as empty\n'
 		outfile.close()
@@ -1812,6 +1848,73 @@ class pdata(object):
 			outfile.write('\t/\n')
 			outfile.write('/\n\n')
 			
+	def _read_transport(self,infile,line):
+		
+		p = ptransport('')
+		np_name = line.split()[-1].lower()	# Transport Condition name passed in.
+		np_type = p.type
+		np_constraint_list_value = []
+		np_constraint_list_type = []
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.split()[0].lower()	# take first key word
+			
+			if key == 'type':
+				if len(line.split()) == 2: # Only Assign if 2 words are on the line
+					np_type = line.split()[-1]	# take last word
+			elif key == 'constraint_list':
+				keepReading2 = True
+				line = infile.readline()
+				while keepReading2:
+					try:
+						np_constraint_list_value.append(line.split()[0].lower()) # Read 1st word online
+						np_constraint_list_type.append(line.split()[1].lower()) # Read 2nd word on line
+					except:
+						print 'Error: constraint_list_value and constraint_list_type requires at least one value.\n'
+					
+					line = infile.readline()	# get next line
+					key = line.split()[0].lower()	# Used to stop loop when / or end is read
+					if key in ['/','end']: keepReading2 = False
+			elif key in ['/','end']: keepReading = False
+		
+		# Create an empty transport condition and assign the values read in
+		new_transport = ptransport(np_name,np_type,np_constraint_list_value,
+					   np_constraint_list_type)
+		self._transportlist.append(new_transport)
+		
+	def _write_transport(self,outfile):
+		self._header(outfile,headers['transport_condition'])
+		tl = self.transportlist
+		for t in tl: # t for transport
+			if t.name:
+				outfile.write('TRANSPORT_CONDITION\t'+t.name+'\n')
+			if t.type:
+				outfile.write('\tTYPE\t'+t.type+'\n')
+			else:
+				print 'Error: transport.type['+str(tl.index(t))+'] is required'
+			try :
+				outfile.write('\tCONSTRAINT_LIST\n')
+
+				clv = t.constraint_list_value
+				clt = t.constraint_list_type
+	
+				i=0 # index for constraint_list_value and constraint_list_type
+				for i in range(0, len(clv)):
+					if clv[i] != None:
+						outfile.write('\t\t'+str(clv[i]))
+					print clt[i]
+					if clt[i] != None:
+						outfile.write('\t'+str(clt[i]))
+					else:
+						'Error: transport.constraint_list_type is required to have a value when transport.constraint_list_value does.'
+			except:
+				print 'Error: transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n'
+			outfile.write('\n\tEND\n')
+		outfile.write('END\n\n')
+			
 	def _header(self,outfile,header):
 		if not header: return
 		ws = '# '
@@ -1860,3 +1963,5 @@ class pdata(object):
 	strata = property(_get_strata) #: (**)
 	def _get_chemistry(self): return self._chemistry
 	chemistry = property(_get_chemistry) #: (**)
+	def _get_transportlist(self): return self._transportlist
+	transportlist = property(_get_transportlist) #: (**)

@@ -31,8 +31,8 @@ def exist(object):
 	
 	for attr, value in object.__dict__.iteritems():
 		if attr != None:
-			print attr
-			print 'test\n'
+#			print attr
+#			print 'test\n'
 			return True
 		
 	return False

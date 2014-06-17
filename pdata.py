@@ -592,6 +592,8 @@ class ptransport(object):
 	def _set_constraint_list_type(self,value): self._constraint_list_type = value
 	constraint_list_type = property(_get_constraint_list_type, _set_constraint_list_type)
 	
+class pconstraint(object):
+	
 class pdata(object):
 	"""Class for pflotran data file
 
@@ -1894,7 +1896,7 @@ class pdata(object):
 			if t.type:
 				outfile.write('\tTYPE\t'+t.type+'\n')
 			else:
-				print 'Error: transport.type['+str(tl.index(t))+'] is required'
+				print 'Error: transport.type['+str(tl.index(t))+'] is required\n'
 			try :
 				outfile.write('\tCONSTRAINT_LIST\n')
 
@@ -1905,15 +1907,14 @@ class pdata(object):
 				for i in range(0, len(clv)):
 					if clv[i] != None:
 						outfile.write('\t\t'+str(clv[i]))
-					print clt[i]
 					if clt[i] != None:
 						outfile.write('\t'+str(clt[i]))
 					else:
-						'Error: transport.constraint_list_type is required to have a value when transport.constraint_list_value does.'
+						print 'Error: transport.constraint_list_type is required to have a value when transport.constraint_list_value does.\n'
 			except:
 				print 'Error: transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n'
 			outfile.write('\n\tEND\n')
-		outfile.write('END\n\n')
+			outfile.write('END\n\n')
 			
 	def _header(self,outfile,header):
 		if not header: return

@@ -7,9 +7,9 @@ print '\nTEST EXECUTED\n'	# console header
 
 # Read Test Data
 #dat = pdata('pflotran.in')
-#dat = pdata('tracer_1D_SC.in')
+dat = pdata('tracer_1D_SC.in')
 ###############################################################
-
+'''
 # initialize without reading in test data
 #--------------------------------------------------------------
 dat = pdata('')
@@ -327,9 +327,7 @@ dat.initial_condition.region = 'all'
 name = 'initial'
 type = 'dirichlet'
 constraint_list_value = [0.e0]
-constraint_list_type = [None]
-#constraint_list_value = [0.e0]
-#constraint_list_type = ['initial']
+constraint_list_type = ['initial']
 
 t = ptransport(name,type,constraint_list_value,constraint_list_type)
 dat.transportlist.append(t)
@@ -357,7 +355,7 @@ dat.strata.region = 'ALL'
 dat.strata.material = 'SOIL1'
 
 #--------------------------------------------------------------
-
+'''
 ###############################################################
 
 # Print to console the data attributes
@@ -484,15 +482,6 @@ for t in dat.transportlist:
 	print 'constraint_list_type', t.constraint_list_type
 	print
 print
-
-
-#for t in dat.transportlist:
-#	print 'name', t.name
-#	print 'type', t.type
-#	for v in t.constraint_list_value:
-#		print 'constraint_list_value', v
-#	for t in t.constraint_list_type:
-#		print 'constraint_list_value', v
 
 print 'boundary_condition_list', dat.boundary_condition_list
 for bcon in dat.boundary_condition_list:

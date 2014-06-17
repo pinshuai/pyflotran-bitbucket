@@ -1702,7 +1702,10 @@ class pdata(object):
 		outfile.write('END\n\n')
 		
 	def _read_boundary_condition(self,infile,line):
-		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
+		if len(line.split()) > 1: 
+			np_name = line.split()[-1].lower()	# Flow Condition name passed in.
+		else:
+			np_name = None
 		p = pboundary_condition('')
 		np_flow = p.flow
 		np_transport = p.transport
@@ -1720,10 +1723,11 @@ class pdata(object):
 				np_transport = line.split()[-1]
 			elif key == 'region':
 				np_region = line.split()[-1]
+				print np_region
 			elif key in ['/','end']: keepReading = False
 		
 		# Create an empty boundary condition and assign the values read in
-		new_boundary_condition = pboundary_condition(np_name,np_flow,np_region)
+		new_boundary_condition = pboundary_condition(np_name,np_flow,np_transport,np_region)
 		self._boundary_condition_list.append(new_boundary_condition)
 		
 	def _write_boundary_condition(self,outfile):
@@ -1733,7 +1737,10 @@ class pdata(object):
 #		if boundary_condition_list:
 		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
-				outfile.write('BOUNDARY_CONDITION\t' + b.name.lower() + '\n')
+				if b.name:
+					outfile.write('BOUNDARY_CONDITION\t' + b.name.lower() + '\n')
+				else:
+					outfile.write('BOUNDARY_CONDITION\n')
 				if b.flow:
 					outfile.write('\tFLOW_CONDITION\t' + b.flow.lower() + '\n')
 				if b.transport:
@@ -1992,12 +1999,6 @@ class pdata(object):
 			
 		new_constraint = pconstraint(np_name, np_concentration_list)
 		
-		print new_constraint.name
-		print new_constraint.concentration_list[0].pspecies
-		print new_constraint.concentration_list[0].value
-		print new_constraint.concentration_list[0].constraint
-		print
-
 		self._constraint_list.append(new_constraint)
 		
 	def _write_constraint(self, outfile):

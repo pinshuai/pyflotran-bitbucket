@@ -16,12 +16,12 @@ cards = ['mode','chemistry','grid','timestepper','material_property','time',
 		'newton_solver','output','fluid_property',
 		'saturation_function','region','flow_condition',
 		'initial_condition','transport_condition','boundary_condition','source_sink',
-		'strata']
+		'strata','constraint']
 headers = ['mode','chemistry','grid','time stepping','material properties',
 		   'time','newton solver','output','fluid properties',
 		   'saturation functions','regions','flow conditions',
 		   'initial condition','transport conditions','boundary conditions','source sink',
-		   'stratigraphy couplers']
+		   'stratigraphy couplers','constraints']
 headers = dict(zip(cards,headers))
 
 class pmaterial(object):
@@ -593,6 +593,41 @@ class ptransport(object):
 	constraint_list_type = property(_get_constraint_list_type, _set_constraint_list_type)
 	
 class pconstraint(object):
+	"""Class for constraints
+
+	"""
+	
+	def __init__(self, name, concentration_list=[]):
+		self._name = name
+		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_concentration_list(self): return self._concentration_list
+	def _set_concentration_list(self,value): self._concentration_list = value
+	concentration_list = property(_get_concentration_list, _set_concentration_list)
+		
+class pconstraint_concentration(object):
+	"""Concentration unit
+	Sub-class for constraints
+
+	"""
+	
+	def __init__(self, pspecies=None, value=None, constraint=None):
+		self._pspecies = pspecies	# Primary Species Name (H+, O2(aq), etc.)
+		self.value = value
+		self._constraint = constraint	# (F, T, TOTAL_SORB, SC, etc.)
+		
+	def _get_pspecies(self): return self._pspecies
+	def _set_pspecies(self,value): self._pspecies = value
+	pspecies = property(_get_pspecies, _set_pspecies)
+	def _get_value(self): return self._value
+	def _set_value(self,value): self._value = value
+	value = property(_get_value, _set_value)
+	def _get_constraint(self): return self._constraint
+	def _set_constraint(self,value): self._constraint = value
+	constraint = property(_get_constraint, _set_constraint)
 	
 class pdata(object):
 	"""Class for pflotran data file
@@ -618,6 +653,7 @@ class pdata(object):
 		self._boundary_condition_list = []
 		self._source_sink = psource_sink() 
 		self._strata = pstrata()
+		self._constraint_list = []
 		self._filename = filename
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
@@ -644,7 +680,8 @@ class pdata(object):
 				 self._read_transport,
 				 self._read_boundary_condition,
 				 self._read_source_sink,
-				 self._read_strata]
+				 self._read_strata,
+				 self._read_constraint]
 				 
 				 ))  # associate each card name with a read function, defined further below
 		with open(self._filename,'r') as infile:
@@ -658,7 +695,7 @@ class pdata(object):
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
 							'newton_solver','saturation_function',
-							'region','flow_condition','boundary_condition','transport_condition']:
+							'region','flow_condition','boundary_condition','transport_condition','constraint']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -672,36 +709,36 @@ class pdata(object):
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
 		if self.mode: self._write_mode(outfile)
-		else: print 'error: mode is required, it is currently reading as empty\n'
+		else: print 'Error: mode is required, it is currently reading as empty\n'
 		if self.chemistry: self._write_chemistry(outfile)
-		else: print 'error: chemistry is required, it is currently reading as empty\n'
+		else: print 'Error: chemistry is required, it is currently reading as empty\n'
 		if self.grid: self._write_grid(outfile)
-		else: print 'error: grid is required, it is currently reading as empty\n'
+		else: print 'Error: grid is required, it is currently reading as empty\n'
 		if self.timestepper : self._write_timestepper(outfile)
-		else: print 'error: timestepper is required, it is currently reading as empty\n'
+		else: print 'Error: timestepper is required, it is currently reading as empty\n'
 		if self.time: self._write_time(outfile)
-		else: print 'error: time is required, it is currently reading as empty\n'
+		else: print 'Error: time is required, it is currently reading as empty\n'
 		if self.proplist: self._write_prop(outfile)
-		else: print 'error: proplist is required, it is currently reading as empty\n'
+		else: print 'Error: proplist is required, it is currently reading as empty\n'
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'error: nsolverlist is required, it is currently reading as empty\n'
+		else: print 'Error: nsolverlist is required, it is currently reading as empty\n'
 		if self.output: self._write_output(outfile)
-		else: print 'error: output is required, it is currently reading as empty\n'
+		else: print 'Error: output is required, it is currently reading as empty\n'
 		if self.fluid: self._write_fluid(outfile)
-		else: print 'error: fluid is required, it is currently reading as empty\n'
+		else: print 'Error: fluid is required, it is currently reading as empty\n'
 		if self.saturation: self._write_saturation(outfile)
-		else: print 'error: saturation is required, it is currently reading as empty\n'
+		else: print 'Error: saturation is required, it is currently reading as empty\n'
 		if self.regionlist: self._write_region(outfile)
-		else: print 'error: regionlist is required, it is currently reading as empty\n'
+		else: print 'Error: regionlist is required, it is currently reading as empty\n'
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'error: flowlist is required, it is currently reading as empty\n'
+		else: print 'Error: flowlist is required, it is currently reading as empty\n'
 		if self.initial_condition: self._write_initial_condition(outfile)
-		else: print 'error: initial_condition is required, it is currently reading as empty\n'
+		else: print 'Error: initial_condition is required, it is currently reading as empty\n'
 		if self.transportlist: self._write_transport(outfile)
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
-		else: print 'error: boundary_condition_list is required, it is currently reading as empty\n'
+		else: print 'Error: boundary_condition_list is required, it is currently reading as empty\n'
 		if self.source_sink: self._write_source_sink(outfile)
-		else: print 'error: source_sink is required, it is currently reading as empty\n'
+		else: print 'Error: source_sink is required, it is currently reading as empty\n'
 #	Troubleshooting below for addressing concerns with source_sink being written without attributes
 #	Not sure if it is needed.
 #		if exist(self.source_sink): self._write_source_sink(outfile)
@@ -710,7 +747,8 @@ class pdata(object):
 #		if not hasattr(self.source_sink.exist, True):
 #			self._write_source_sink(outfile)
 		if self.strata: self._write_strata(outfile)
-		else: print 'error: strata is required, it is currently reading as empty\n'
+		else: print 'Error: strata is required, it is currently reading as empty\n'
+		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
 		
 	def _read_mode(self,infile,line):
@@ -1893,10 +1931,12 @@ class pdata(object):
 		for t in tl: # t for transport
 			if t.name:
 				outfile.write('TRANSPORT_CONDITION\t'+t.name+'\n')
+			else:
+				print 'Error: transport_condition['+str(tl.index(t))+'].name is required.\n'
 			if t.type:
 				outfile.write('\tTYPE\t'+t.type+'\n')
 			else:
-				print 'Error: transport.type['+str(tl.index(t))+'] is required\n'
+				print 'Error: transport['+str(tl.index(t))+'].type is required\n'
 			try :
 				outfile.write('\tCONSTRAINT_LIST\n')
 
@@ -1906,15 +1946,81 @@ class pdata(object):
 				i=0 # index for constraint_list_value and constraint_list_type
 				for i in range(0, len(clv)):
 					if clv[i] != None:
-						outfile.write('\t\t'+str(clv[i]))
+						outfile.write('\t\t'+strD(clv[i]))
 					if clt[i] != None:
 						outfile.write('\t'+str(clt[i]))
 					else:
-						print 'Error: transport.constraint_list_type is required to have a value when transport.constraint_list_value does.\n'
+						print 'Error: transport['+str(tl.index(t))+'].constraint_list_type['+str(clt.index(i))+'] is required to have a value when transport.constraint_list_value does.\n'
 			except:
 				print 'Error: transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n'
-			outfile.write('\n\tEND\n')
-			outfile.write('END\n\n')
+			outfile.write('\n\tEND\n')	# END FOR CONSTRAINT_LIST
+			outfile.write('END\n\n')	# END FOR TRANSPORT_CONDITION
+			
+	def _read_constraint(self, infile, line):
+		p = pconstraint('')
+		np_name = line.split()[-1].lower()	# constraint name passed in.
+		np_concentration_list = []
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.split()[0].lower()	# take first key word
+			
+			if key == 'concentrations':
+				np_pspecies = None
+				np_value = None
+				np_constraint = None
+				
+				line = infile.readline()
+				tstring = line.split()	# Convert to list
+				i=0	# index
+				c=0	# count
+				while c < len(tstring):	# Determines # of execution times by # of words on line
+					i = 0
+					np_pspecies = tstring[i] ; i+=1		# 1st word
+					np_value = floatD(tstring[i]) ; i+=1	# 2nd word, etc.
+					np_constraint = tstring[i]
+					c += 1
+					
+				new_concentration = pconstraint_concentration(np_pspecies, np_value, np_constraint)
+				np_concentration_list.append(new_concentration)
+					
+#					concentration_list.append(concentration)
+					
+			elif key in ['/','end']: keepReading = False
+			
+		new_constraint = pconstraint(np_name, np_concentration_list)
+		
+		print new_constraint.name
+		print new_constraint.concentration_list[0].pspecies
+		print new_constraint.concentration_list[0].value
+		print new_constraint.concentration_list[0].constraint
+		print
+
+		self._constraint_list.append(new_constraint)
+		
+	def _write_constraint(self, outfile):
+		self._header(outfile,headers['constraint'])
+		cl = self.constraint_list
+		
+		for c in cl:	# c = constraint, cl = constraint_list
+			if c.name:
+				outfile.write('CONSTRAINT\t'+c.name.lower()+'\n')
+			else:
+				print 'Error: constraint_list['+str(cl.index(c))+'].name is required.\n'
+
+			outfile.write('\tCONCENTRATIONS\n')
+			
+			for concn in c.concentration_list: # concn = concentration, c = constraint
+				outfile.write('\t\t'+concn.pspecies)
+				outfile.write('\t'+strD(concn.value))
+				outfile.write('\t'+concn.constraint)
+				outfile.write('\n')
+				
+			outfile.write('\tEND\n') 	# END for concentrations
+			outfile.write('END\n\n')	# END for constraint	
+				
 			
 	def _header(self,outfile,header):
 		if not header: return
@@ -1966,3 +2072,5 @@ class pdata(object):
 	chemistry = property(_get_chemistry) #: (**)
 	def _get_transportlist(self): return self._transportlist
 	transportlist = property(_get_transportlist) #: (**)
+	def _get_constraint_list(self): return self._constraint_list
+	constraint_list = property(_get_constraint_list) #: (**)

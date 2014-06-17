@@ -231,7 +231,7 @@ varlist.append(var)
 flow = pflow(name, units_list, iphase, sync_timestep_with_update, varlist)
 dat.flowlist.append(flow)	# Assigning done here
 
-# top flow condition goes here
+# top flow condition
 name = 'top'
 units_list = None
 iphase = 1
@@ -355,9 +355,49 @@ dat.strata.region = 'ALL'
 dat.strata.material = 'SOIL1'
 
 #--------------------------------------------------------------
-'''
-###############################################################
 
+# set constraints
+#--------------------------------------------------------------
+# initial condition - 1st condition
+name = 'initial'
+concentration_list = [] # Assigning for this done below
+
+
+
+constraint = pconstraint(name, concentration_list)
+dat.constraint_list.append(constraint)	# Assigning done here
+
+# west condition - 2nd condition
+name = 'west'
+concentration_list = [] # Assigning for this done below
+
+# concentration
+pspecies = 'A(aq)'
+value = 1.e-8
+constraint = 'T'
+concentration = pconstraint_concentration(pspecies, value, constraint)
+concentration_list.append(concentration)
+
+constraint = pconstraint(name, concentration_list)
+dat.constraint_list.append(constraint)	# Assigning done here
+
+# east condition - 2nd condition
+name = 'east'
+concentration_list = [] # Assigning for this done below
+
+# concentration
+pspecies = 'A(aq)'
+value = 1.E-02
+constraint = 'T'
+concentration = pconstraint_concentration(pspecies, value, constraint)
+concentration_list.append(concentration)
+
+constraint = pconstraint(name, concentration_list)
+dat.constraint_list.append(constraint)	# Assigning done here
+#--------------------------------------------------------------
+
+###############################################################
+'''
 # Print to console the data attributes
 
 print 'chemistry', dat.chemistry
@@ -459,12 +499,12 @@ for flow in dat.flowlist:
 	print 'iphase', flow.iphase
 	print 'sync_timestep_with_update', flow.sync_timestep_with_update
 	print 'varlist'
-	for varlist in flow.varlist:
-		print '\tname', varlist.name
-		print '\ttype', varlist.type
-		print '\tvaluelist', varlist.valuelist
-		print '\tlist', varlist.list
-		print '\tunit', varlist.unit
+	for variable in flow.varlist:
+		print '\tname', variable.name
+		print '\ttype', variable.type
+		print '\tvaluelist', variable.valuelist
+		print '\tlist', variable.list
+		print '\tunit', variable.unit
 		print
 print
 		
@@ -500,6 +540,18 @@ print '(stratigraphy couplers) strata', dat.strata
 print 'region', dat.strata.region
 print 'material', dat.strata.material
 print
+
+print 'constraint_list:'
+for constraint in dat.constraint_list:
+	print 'constraint:', dat.constraint_list.index(constraint),constraint
+	print 'name:', constraint.name
+	print 'concentration_list:'
+	for concentration in constraint.concentration_list:
+		print '\t(primary species) pspecies:', concentration.pspecies
+		print '\tvalue:', concentration.value
+		print '\tconstraint:', concentration.constraint
+		print
+print	
 
 ###############################################################
 

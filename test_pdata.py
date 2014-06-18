@@ -6,8 +6,8 @@ print '\nTEST EXECUTED\n'	# console header
 ###############################################################
 
 # Read Test Data
-#dat = pdata('pflotran.in')
-dat = pdata('tracer_1D_SC.in')
+dat = pdata('pflotran.in')
+#dat = pdata('tracer_1D_SC.in')
 ###############################################################
 '''
 # initialize without reading in test data
@@ -400,11 +400,12 @@ dat.constraint_list.append(constraint)	# Assigning done here
 '''
 # Print to console the data attributes
 
-print 'chemistry:', dat.chemistry
-print '(primary species) pspecies:', dat.chemistry.pspecies
-print 'molal:', dat.chemistry.molal
-print 'output:', dat.chemistry.output
-print
+if dat.chemistry:
+	print 'chemistry:', dat.chemistry
+	print '(primary species) pspecies:', dat.chemistry.pspecies
+	print 'molal:', dat.chemistry.molal
+	print 'output:', dat.chemistry.output
+	print
  
 print 'grid:', dat.grid
 print 'nxyz:', dat.grid.nxyz
@@ -461,6 +462,7 @@ for nsolver in dat.nsolverlist:
 print
 	
 print 'output:', dat.output
+print '',
 print 'periodic_observation_timestep:', dat.output.periodic_observation_timestep
 print 'print_column_ids:', dat.output.print_column_ids
 print 'format:', dat.output.format
@@ -536,10 +538,11 @@ for bcon in dat.boundary_condition_list:
 	print
 print
 
-print 'source_sink:', dat.source_sink
-print 'flow:', dat.source_sink.flow
-print 'region:', dat.source_sink.region
-print
+if dat.source_sink:
+	print 'source_sink:', dat.source_sink
+	print 'flow:', dat.source_sink.flow
+	print 'region:', dat.source_sink.region
+	print
 
 print '(stratigraphy couplers) strata:', dat.strata
 print 'region:', dat.strata.region

@@ -297,14 +297,19 @@ class poutput(object):
 
 	"""
 	
-	def __init__(self,mass_balance=False,print_column_ids=False,periodic_observation_timestep=None,
-			format=[],velocities=False):
+	# Remember to add time_list=[] back in, temporarily removed
+	def __init__(self, mass_balance=False, print_column_ids=False,
+		     periodic_observation_timestep=None, format=[],velocities=False):
+#		self._time_list = time_list
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
 		self._periodic_observation_timestep = periodic_observation_timestep
 		self._format = format
 		self._velocities = velocities
 		
+	def _get_time_list(self): return self._time_list
+	def _set_time_list(self,value): self._time_list = value
+	time_list = property(_get_time_list, _set_time_list)
 	def _get_mass_balance(self): return self._mass_balance
 	def _set_mass_balance(self,value): self._mass_balance = value
 	mass_balance = property(_get_mass_balance, _set_mass_balance)	
@@ -637,7 +642,7 @@ class pdata(object):
 	def __init__(self, filename=None):
 		from copy import copy
 		self._mode = pmode()
-		self._chemistry = pchemistry()
+		self._chemistry = None #pchemistry()
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._proplist = []
@@ -651,7 +656,7 @@ class pdata(object):
 		self._initial_condition = pinitial_condition()
 		self._transportlist = []
 		self._boundary_condition_list = []
-		self._source_sink = psource_sink() 
+		self._source_sink = None #psource_sink() 
 		self._strata = pstrata()
 		self._constraint_list = []
 		self._filename = filename
@@ -711,7 +716,8 @@ class pdata(object):
 		if self.mode: self._write_mode(outfile)
 		else: print 'Error: mode is required, it is currently reading as empty\n'
 		if self.chemistry: self._write_chemistry(outfile)
-		else: print 'Error: chemistry is required, it is currently reading as empty\n'
+		else: 'Info: chemistry not detected\n'
+#		else: print 'Error: chemistry is required, it is currently reading as empty\n'
 		if self.grid: self._write_grid(outfile)
 		else: print 'Error: grid is required, it is currently reading as empty\n'
 		if self.timestepper : self._write_timestepper(outfile)
@@ -731,14 +737,16 @@ class pdata(object):
 		if self.regionlist: self._write_region(outfile)
 		else: print 'Error: regionlist is required, it is currently reading as empty\n'
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'Error: flowlist is required, it is currently reading as empty\n'
+		else: print 'Info: flowlist not detected\n'
+#		else: print 'Error: flowlist is required, it is currently reading as empty\n'
 		if self.initial_condition: self._write_initial_condition(outfile)
 		else: print 'Error: initial_condition is required, it is currently reading as empty\n'
 		if self.transportlist: self._write_transport(outfile)
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'Error: boundary_condition_list is required, it is currently reading as empty\n'
 		if self.source_sink: self._write_source_sink(outfile)
-		else: print 'Error: source_sink is required, it is currently reading as empty\n'
+		else: print 'Info: source_sink not detected\n'
+#		else: print 'Error: source_sink is required, it is currently reading as empty\n'
 #	Troubleshooting below for addressing concerns with source_sink being written without attributes
 #	Not sure if it is needed.
 #		if exist(self.source_sink): self._write_source_sink(outfile)
@@ -1197,7 +1205,7 @@ class pdata(object):
 					outfile.write(strD(time.dtf_li[i])+'\n')
 			except:
 				print 'error: time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list with either strings or nothing assigned. All lists should be of equal length with that number assigned to dtf_i\n'
-#				print 'no extra maximum_timestep_sizes detected, with \'at\'\n'		
+					
 		outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):
@@ -1280,6 +1288,17 @@ class pdata(object):
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first key word
 			
+# Will come back to this later
+#			if key == 'times':
+#				tstring = line.strip()[1:] # Turn into list, exempt 1st word
+#				c=0	# count
+#				i=0	# index
+#				while i < len(tstring):
+#					print 'c', c
+#					print 'i', i
+#					c += 1
+#					i += 1
+					
 			if key == 'periodic_observation':
 				tstring = line.strip().split()[1].lower()	# Read the 2nd word
 				if tstring == 'timestep':
@@ -1467,8 +1486,6 @@ class pdata(object):
 		np_coordinates_upper = [None]*3
 		np_face = None
 		coordinates_bool = False
-#		print 'default:', ng_coordinates_lower
-
 		
 		keepReading = True
 		while keepReading:	# Read through all cards
@@ -1578,21 +1595,15 @@ class pdata(object):
 				elif end_count == 1:
 					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry				
 					count = 0
-#					print len(tstring2)
 					for var in tstring2:
 						try:
 							# Get last index of np_varlist
 							# Assign flow variable values
 							l = len(np_varlist) - 1
-#							print l
-#							for j in range(0,len(tstring2)):
 							for i in range(0,4):
 								if key == np_varlist[l-i].name:
 									#np_varlist[l-j].valuelist = floatD(i)
 									np_varlist[l-i].valuelist.append(floatD(var))
-#									print l
-#									print (l-i)
-#							print len(np_varlist[1].valuelist)
 						except:	# Can append default unit to end here
 							# Assign variable value unit (C, M, etc.)
 							# Occurs because try fails to convert a
@@ -1600,7 +1611,6 @@ class pdata(object):
 #							for j in range(0,4):
 							if key == np_varlist[l-i].name:
 								np_varlist[l-i].unit = var
-#								print 's' + str(l-i)
 									
 			elif key == 'iphase':
 				np_iphase = int(line.split()[-1])
@@ -1658,9 +1668,7 @@ class pdata(object):
 					outfile.write('\t' + flow.varlist[i].unit.upper())
 				outfile.write('\n')
 				i += 1
-#				print flow.varlist[5].valuelist[0]
 			outfile.write('\tEND\nEND\n\n')
-#		outfile.write('\n')
 			
 	def _read_initial_condition(self,infile):
 		p = pinitial_condition()
@@ -1723,7 +1731,6 @@ class pdata(object):
 				np_transport = line.split()[-1]
 			elif key == 'region':
 				np_region = line.split()[-1]
-				print np_region
 			elif key in ['/','end']: keepReading = False
 		
 		# Create an empty boundary condition and assign the values read in
@@ -1868,26 +1875,22 @@ class pdata(object):
 		
 		# Write out chemistry variables
 		if c.pspecies:
-			if c.pspecies.lower() == 'a(aq)': # Change to lower case for checking only
-				outfile.write('\tPRIMARY_SPECIES\n')
-				outfile.write('\t\t' + c.pspecies + '\n')
-				outfile.write('\t/\n\n')
-			else:
-				outfile.write('\tPRIMARY_SPECIES\n')
-				print 'error: chemistry.primary_species has an unrecognized entry\n'
-				outfile.write('\t/\n\n')
+		# Database entry check needed
+			outfile.write('\tPRIMARY_SPECIES\n')
+			outfile.write('\t\t' + c.pspecies + '\n')
+			outfile.write('\t/\n\n')
+
 		else:
 			print 'error: chemistry.pspecies (primary species) is required\n'
 			outfile.write('\t/\n\n')
 		if c.molal:
 			outfile.write('\tMOLAL\n')
-
 		else:
 			print 'error: chemistry.molal is required\n'
 		if c.output:
 			outfile.write('\tOUTPUT\n')
-			if c.output.lower() == 'all' or c.output.lower() == 'molality' or c.output.lower() == 'molarity':
-				outfile.write('\t\t' + c.output.upper() + '\n')
+# Database entry check needed
+			outfile.write('\t\t' + c.output.upper() + '\n')
 			outfile.write('\t/\n')
 			outfile.write('/\n\n')
 		else:
@@ -1896,7 +1899,6 @@ class pdata(object):
 			outfile.write('/\n\n')
 			
 	def _read_transport(self,infile,line):
-		
 		p = ptransport('')
 		np_name = line.split()[-1].lower()	# Transport Condition name passed in.
 		np_type = p.type
@@ -1989,11 +1991,11 @@ class pdata(object):
 					np_value = floatD(tstring[i]) ; i+=1	# 2nd word, etc.
 					np_constraint = tstring[i]
 					c += 1
+#					print 'i', i
+#					print 'c', c
 					
 				new_concentration = pconstraint_concentration(np_pspecies, np_value, np_constraint)
 				np_concentration_list.append(new_concentration)
-					
-#					concentration_list.append(concentration)
 					
 			elif key in ['/','end']: keepReading = False
 			

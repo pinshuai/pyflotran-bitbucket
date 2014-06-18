@@ -67,7 +67,7 @@ density = 2.65E3
 specific_heat = 1E3
 cond_dry = 0.5
 cond_wet = 0.5
-saturation = 'sf2'
+saturation = 'sf2
 permeability = [1.e-15,1.e-15,1.e-17]
 	
 material = pmaterial(id, name, porosity, tortuosity, density, specific_heat,

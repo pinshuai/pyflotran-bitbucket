@@ -194,6 +194,12 @@ class pmode(object):
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
 	name = property(_get_name, _set_name)
+	
+#	def _is_default(self):
+#		for attr in self._mode: # Attributes in this pmode object
+#			if name == 'richards':
+#				return True
+#		return False
 
 
 class ptimestepper(object):
@@ -298,9 +304,9 @@ class poutput(object):
 	"""
 	
 	# Remember to add time_list=[] back in, temporarily removed
-	def __init__(self, mass_balance=False, print_column_ids=False,
+	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False,
 		     periodic_observation_timestep=None, format=[],velocities=False):
-#		self._time_list = time_list
+		self._time_list = time_list
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
 		self._periodic_observation_timestep = periodic_observation_timestep
@@ -641,8 +647,8 @@ class pdata(object):
 
 	def __init__(self, filename=None):
 		from copy import copy
-		self._mode = pmode()
-		self._chemistry = None #pchemistry()
+		self._mode = None #= pmode()
+		self._chemistry = pchemistry()
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._proplist = []
@@ -656,13 +662,13 @@ class pdata(object):
 		self._initial_condition = pinitial_condition()
 		self._transportlist = []
 		self._boundary_condition_list = []
-		self._source_sink = None #psource_sink() 
+		self._source_sink = psource_sink() 
 		self._strata = pstrata()
 		self._constraint_list = []
 		self._filename = filename
 		
 		if filename: self.read(filename) 		# read in file if requested upon initialisation
-	
+		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
 	def read(self, filename):
@@ -713,49 +719,67 @@ class pdata(object):
 		"""
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
-		if self.mode: self._write_mode(outfile)
-		else: print 'Error: mode is required, it is currently reading as empty\n'
+
+#		if self.mode._is_default():
+#			print 'test true'
+#		else:
+#			print 'test false'
+			
+		if self.mode: 
+			self._write_mode(outfile)
+		else: 
+			print 'Warning: mode is required but not detected, default mode of richards is being used.\n'
+			self._mode = pmode()
+			self._write_mode(outfile)
+
 		if self.chemistry: self._write_chemistry(outfile)
 		else: 'Info: chemistry not detected\n'
-#		else: print 'Error: chemistry is required, it is currently reading as empty\n'
+		
 		if self.grid: self._write_grid(outfile)
 		else: print 'Error: grid is required, it is currently reading as empty\n'
+		
 		if self.timestepper : self._write_timestepper(outfile)
 		else: print 'Error: timestepper is required, it is currently reading as empty\n'
+		
 		if self.time: self._write_time(outfile)
 		else: print 'Error: time is required, it is currently reading as empty\n'
+		
 		if self.proplist: self._write_prop(outfile)
 		else: print 'Error: proplist is required, it is currently reading as empty\n'
+		
 		if self.nsolverlist: self._write_nsolver(outfile)
 		else: print 'Error: nsolverlist is required, it is currently reading as empty\n'
+		
 		if self.output: self._write_output(outfile)
 		else: print 'Error: output is required, it is currently reading as empty\n'
+		
 		if self.fluid: self._write_fluid(outfile)
 		else: print 'Error: fluid is required, it is currently reading as empty\n'
+		
 		if self.saturation: self._write_saturation(outfile)
 		else: print 'Error: saturation is required, it is currently reading as empty\n'
+		
 		if self.regionlist: self._write_region(outfile)
 		else: print 'Error: regionlist is required, it is currently reading as empty\n'
+		
 		if self.flowlist: self._write_flow(outfile)
 		else: print 'Info: flowlist not detected\n'
+		
 #		else: print 'Error: flowlist is required, it is currently reading as empty\n'
 		if self.initial_condition: self._write_initial_condition(outfile)
 		else: print 'Error: initial_condition is required, it is currently reading as empty\n'
+		
 		if self.transportlist: self._write_transport(outfile)
+		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'Error: boundary_condition_list is required, it is currently reading as empty\n'
+		
 		if self.source_sink: self._write_source_sink(outfile)
 		else: print 'Info: source_sink not detected\n'
-#		else: print 'Error: source_sink is required, it is currently reading as empty\n'
-#	Troubleshooting below for addressing concerns with source_sink being written without attributes
-#	Not sure if it is needed.
-#		if exist(self.source_sink): self._write_source_sink(outfile)
-#		else: print 'error: source_sink is required, it is currently reading as empty\n'
-#
-#		if not hasattr(self.source_sink.exist, True):
-#			self._write_source_sink(outfile)
+
 		if self.strata: self._write_strata(outfile)
 		else: print 'Error: strata is required, it is currently reading as empty\n'
+		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
 		
@@ -1276,6 +1300,7 @@ class pdata(object):
 	
 	def _read_output(self,infile):
 		p = poutput()
+		np_time_list = []
 		np_mass_balance = p.mass_balance
 		np_print_column_ids = p.print_column_ids
 		np_periodic_observation_timestep = p.periodic_observation_timestep
@@ -1288,17 +1313,18 @@ class pdata(object):
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first key word
 			
-# Will come back to this later
-#			if key == 'times':
-#				tstring = line.strip()[1:] # Turn into list, exempt 1st word
-#				c=0	# count
-#				i=0	# index
-#				while i < len(tstring):
-#					print 'c', c
-#					print 'i', i
-#					c += 1
-#					i += 1
-					
+			if key == 'times':
+				tstring = line.split()[1:] # Turn into list, exempt 1st word
+				i=0
+				while i < len(tstring):
+					try:
+						np_time_list.append(floatD(tstring[i]))
+					except:
+						np_time_list.append(tstring[i])
+					i += 1
+#				for i in tstring:
+#					np_time_list.append(floatD(tstring[i]))
+#				np_time_list = tstring
 			if key == 'periodic_observation':
 				tstring = line.strip().split()[1].lower()	# Read the 2nd word
 				if tstring == 'timestep':
@@ -1326,7 +1352,7 @@ class pdata(object):
 			elif key in ['/','end']: keepReading = False
 			
 		# Create new empty output object and assign values read in.
-		new_output = poutput(np_mass_balance,np_print_column_ids,
+		new_output = poutput(np_time_list, np_mass_balance,np_print_column_ids,
 					np_periodic_observation_timestep,np_format,
 					np_velocities)	# Create an empty output
 		self._output = new_output	# Values read in are assigned now'
@@ -1337,6 +1363,13 @@ class pdata(object):
 		
 		# Write Output - if used so null/None entries are not written
 		outfile.write('OUTPUT\n')
+# Further improvements can be made here in time_list for verifying 1st element is a time unit
+		if output.time_list:
+			outfile.write('\tTIME\t')
+			for i in output.time_list:
+				outfile.write('  '+strD(i))
+			outfile.write('\n')
+					
 # This is here on purpose - Needed later
 		#if output.periodic_observation_time:
 			#outfile.write('\tPERIODIC_OBSERVATION TIME\t'+
@@ -2035,6 +2068,9 @@ class pdata(object):
 		ws+='\n'
 #		outfile.write(ws)coordinates_lower	# Satish comment
 	
+	def _get_mode(self): return self._mode
+	def _set_mode(self, object): self._mode = object
+	mode = property(_get_mode, _set_mode) #: (**)	
 	def _get_grid(self): return self._grid
 	grid = property(_get_grid) #: (**)
 	def _get_time(self): return self._time
@@ -2046,8 +2082,8 @@ class pdata(object):
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
-	def _get_mode(self): return self._mode
-	mode = property(_get_mode) #: (**)
+#	def _get_mode(self): return self._mode
+#	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
 	timestepper = property(_get_timestepper) #: (**)
 #	def _get_nsolver(self): return self._nsolvercoordinates_lower # Satish Comment?

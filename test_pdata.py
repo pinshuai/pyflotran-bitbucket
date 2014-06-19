@@ -6,10 +6,10 @@ print '\nTEST EXECUTED\n'	# console header
 ###############################################################
 
 # Read Test Data
-dat = pdata('pflotran.in')
+#dat = pdata('pflotran.in')
 #dat = pdata('tracer_1D_SC.in')
 ###############################################################
-'''
+
 # initialize without reading in test data
 #--------------------------------------------------------------
 dat = pdata('')
@@ -17,6 +17,8 @@ dat = pdata('')
 
 # set mode
 #--------------------------------------------------------------
+dat.mode = pmode('')
+
 dat.mode.name = 'MPHASE'
 #--------------------------------------------------------------
 
@@ -67,7 +69,7 @@ density = 2.65E3
 specific_heat = 1E3
 cond_dry = 0.5
 cond_wet = 0.5
-saturation = 'sf2
+saturation = 'sf2'
 permeability = [1.e-15,1.e-15,1.e-17]
 	
 material = pmaterial(id, name, porosity, tortuosity, density, specific_heat,
@@ -397,7 +399,7 @@ dat.constraint_list.append(constraint)	# Assigning done here
 #--------------------------------------------------------------
 
 ###############################################################
-'''
+
 # Print to console the data attributes
 
 if dat.chemistry:
@@ -462,7 +464,7 @@ for nsolver in dat.nsolverlist:
 print
 	
 print 'output:', dat.output
-print '',
+print 'times:', dat.output.time_list
 print 'periodic_observation_timestep:', dat.output.periodic_observation_timestep
 print 'print_column_ids:', dat.output.print_column_ids
 print 'format:', dat.output.format
@@ -549,17 +551,18 @@ print 'region:', dat.strata.region
 print 'material:', dat.strata.material
 print
 
-print 'constraint_list:'
-for constraint in dat.constraint_list:
-	print 'constraint:', dat.constraint_list.index(constraint),constraint
-	print 'name:', constraint.name
-	print 'concentration_list:'
-	for concentration in constraint.concentration_list:
-		print '\t(primary species) pspecies:', concentration.pspecies
-		print '\tvalue:', concentration.value
-		print '\tconstraint:', concentration.constraint
-		print
-print	
+if dat.constraint_list:
+	print 'constraint_list:'
+	for constraint in dat.constraint_list:
+		print 'constraint:', dat.constraint_list.index(constraint),constraint
+		print 'name:', constraint.name
+		print 'concentration_list:'
+		for concentration in constraint.concentration_list:
+			print '\t(primary species) pspecies:', concentration.pspecies
+			print '\tvalue:', concentration.value
+			print '\tconstraint:', concentration.constraint
+			print
+	print	
 
 ###############################################################
 

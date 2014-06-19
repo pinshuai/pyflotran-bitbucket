@@ -94,15 +94,6 @@ class ptime(object):
 					# unit for a dtf list
 		self._dtf_lv_unit = dtf_lv_unit	# time unit list for lv (s,m,h,d,mo,y)	- Needed for hardcoding and a user interface - not needed for reading test files
 		self._dtf_li_unit = dtf_li_unit # time unit list for li (s,m,h,d,mo,y) - Needed for hardcoding and a user interface - not needed for reading test files
-	
-		# Multiplies number read based on units specified (e.g. years)
-		# Done to replicate what is being done in read_time
-#		try:	# Try used to ignore errors when tf is None
-#			if len(tf) == 2:
-#				if tf[-1] == 'y':
-#					tf[0] = tf[0]*365.25*24*3600
-#		except:
-#			pass
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
@@ -640,7 +631,7 @@ class pdata(object):
 
 	def __init__(self, filename=None):
 		from copy import copy
-		self._mode = None
+		self._mode = pmode()
 		self._chemistry = None
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
@@ -713,11 +704,8 @@ class pdata(object):
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
 			
-		if self.mode: self._write_mode(outfile)
-		else: 
-			print 'Warning: mode is required but not detected, default mode of richards is being used.\n'
-			self._mode = pmode()
-			self._write_mode(outfile)
+		if self.mode.name: self._write_mode(outfile)
+
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'Info: chemistry not detected\n'
@@ -880,7 +868,7 @@ class pdata(object):
 		outfile.write('\n')
 		outfile.write('\tNXYZ' + ' ')
 		for i in range(3):
-			outfile.write(str(grid.nxyz[i]) + ' ')
+			outfile.write(strD(grid.nxyz[i]) + ' ')
 		outfile.write('\n')
 		if grid.gravity_bool:
 			outfile.write('\tGRAVITY' + ' ')
@@ -1051,8 +1039,8 @@ class pdata(object):
 		np_tf = p._tf
 		np_dti = p._dti
 		np_dtf = p._dtf
-		np_dtf_lv = p._dtf_lv
-		np_dtf_li = p._dtf_li
+		np_dtf_lv = [] #p._dtf_lv
+		np_dtf_li = [] #p._dtf_li
 		np_dtf_i = p._dtf_i
 		np_dtf_lv_unit = p._dtf_lv_unit
 		np_dtf_li_unit = p._dtf_li_unit
@@ -1090,8 +1078,10 @@ class pdata(object):
 						#Read before AT
 						tstring = line.split()[1:]
 						if len(tstring) >= 2:
-							np_dtf_lv.append(1)
-							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+#							np_dtf_lv.append(1)
+#							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+#							np_dtf_lv_unit.append(tstring[1])
+							np_dtf_lv.append(floatD(tstring[0]))
 							np_dtf_lv_unit.append(tstring[1])
 						else:
 							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
@@ -1101,11 +1091,13 @@ class pdata(object):
 						tstring = line.split()[at_i+2:] # Use string only after 'at'
 						
 						if len(tstring) == 2:
-							np_dtf_li.append(1)
-							np_dtf_li[np_dtf_i] = floatD(tstring[0])
-							np_dtf_li_unit.append(tstring[-1])
+#							np_dtf_li.append(1)
+#							np_dtf_li[np_dtf_i] = floatD(tstring[0])
+#							np_dtf_li_unit.append(tstring[1])
+							np_dtf_li.append(floatD(tstring[0]))
+							np_dtf_li_unit.append(tstring[1])
 						else:
-							np_dtf_li.append(1)
+#							np_dtf_li.append(1)
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
 						np_dtf_i = np_dtf_i + 1

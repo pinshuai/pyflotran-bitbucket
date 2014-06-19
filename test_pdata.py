@@ -6,10 +6,10 @@ print '\nTEST EXECUTED\n'	# console header
 ###############################################################
 
 # Read Test Data
-dat = pdata('pflotran.in')
+#dat = pdata('pflotran.in')
 #dat = pdata('tracer_1D_SC.in')
 ###############################################################
-'''
+
 # initialize without reading in test data
 #--------------------------------------------------------------
 dat = pdata('')
@@ -399,7 +399,7 @@ concentration_list.append(concentration)
 constraint = pconstraint(name, concentration_list)
 dat.constraint_list.append(constraint)	# Assigning done here
 #--------------------------------------------------------------
-'''
+
 ###############################################################
 
 # Print to console the data attributes
@@ -565,16 +565,6 @@ if dat.constraint_list:
 			print '\tconstraint:', concentration.constraint
 			print
 	print	
-
-###############################################################
-
-#print 'filename',dat.filename
-#
-#print	
-#print 'mode', dat.mode
-#print 'name', dat.mode.name
-
-###############################################################
 
 # Write to File
 dat.write('pflotran2.in')

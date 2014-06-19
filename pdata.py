@@ -194,13 +194,6 @@ class pmode(object):
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
 	name = property(_get_name, _set_name)
-	
-#	def _is_default(self):
-#		for attr in self._mode: # Attributes in this pmode object
-#			if name == 'richards':
-#				return True
-#		return False
-
 
 class ptimestepper(object):
 	""" Class for time stepper
@@ -647,8 +640,8 @@ class pdata(object):
 
 	def __init__(self, filename=None):
 		from copy import copy
-		self._mode = None #= pmode()
-		self._chemistry = pchemistry()
+		self._mode = None
+		self._chemistry = None
 		self._grid = pgrid()
 		self._timestepper = ptimestepper()
 		self._proplist = []
@@ -719,21 +712,15 @@ class pdata(object):
 		"""
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
-
-#		if self.mode._is_default():
-#			print 'test true'
-#		else:
-#			print 'test false'
 			
-		if self.mode: 
-			self._write_mode(outfile)
+		if self.mode: self._write_mode(outfile)
 		else: 
 			print 'Warning: mode is required but not detected, default mode of richards is being used.\n'
 			self._mode = pmode()
 			self._write_mode(outfile)
 
 		if self.chemistry: self._write_chemistry(outfile)
-		else: 'Info: chemistry not detected\n'
+		else: print 'Info: chemistry not detected\n'
 		
 		if self.grid: self._write_grid(outfile)
 		else: print 'Error: grid is required, it is currently reading as empty\n'
@@ -2082,11 +2069,8 @@ class pdata(object):
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
-#	def _get_mode(self): return self._mode
-#	mode = property(_get_mode) #: (**)
 	def _get_timestepper(self): return self._timestepper
 	timestepper = property(_get_timestepper) #: (**)
-#	def _get_nsolver(self): return self._nsolvercoordinates_lower # Satish Comment?
 	def _get_nsolverlist(self): return self._nsolverlist
 	nsolverlist = property(_get_nsolverlist) #: (**)
 	def _get_output(self): return self._output
@@ -2108,7 +2092,8 @@ class pdata(object):
 	def _get_strata(self): return self._strata
 	strata = property(_get_strata) #: (**)
 	def _get_chemistry(self): return self._chemistry
-	chemistry = property(_get_chemistry) #: (**)
+	def _set_chemistry(self, object): self._chemistry = object
+	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
 	def _get_transportlist(self): return self._transportlist
 	transportlist = property(_get_transportlist) #: (**)
 	def _get_constraint_list(self): return self._constraint_list

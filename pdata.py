@@ -12,17 +12,30 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['mode','chemistry','grid','timestepper','material_property','time',
-		'newton_solver','output','fluid_property',
-		'saturation_function','region','flow_condition',
-		'initial_condition','transport_condition','boundary_condition','source_sink',
+cards = ['uniform_velocity','mode','chemistry','grid','timestepper','material_property',
+		'time','newton_solver','output','fluid_property',
+		'saturation_function','region','observation','flow_condition',
+		'transport_condition','initial_condition','boundary_condition','source_sink',
 		'strata','constraint']
-headers = ['mode','chemistry','grid','time stepping','material properties',
+headers = ['uniform_velocity','mode','chemistry','grid','time stepping','material properties',
 		   'time','newton solver','output','fluid properties',
-		   'saturation functions','regions','flow conditions',
-		   'initial condition','transport conditions','boundary conditions','source sink',
+		   'saturation functions','regions','observation','flow conditions',
+		   'transport conditions','initial condition','boundary conditions','source sink',
 		   'stratigraphy couplers','constraints']
 headers = dict(zip(cards,headers))
+
+class puniform_velocity(object):
+	""" Class for uniform velcity for transport observation.
+	Example:
+	UNIFORM_VELOCITY 3.84259d-6 0.d0 0.d0 ! 1.38333 cm/h
+	"""
+	
+	def __init__(self,value_list=[]):
+		self._value_list = value_list
+		
+	def _get_value_list(self): return self._value_list
+	def _set_value_list(self,value): self._value_list = value
+	value_list = property(_get_value_list, _set_value_list) #: (**)
 
 class pmaterial(object):
 	""" Class for material property card
@@ -407,6 +420,15 @@ class pregion(object):
 	def _set_face(self,value): self._face = value
 	face = property(_get_face, _set_face)
 	
+class pobservation(object):
+	
+	def __init__(self,region=None):
+		self._region = region
+		
+	def _get_region(self): return self._region
+	def _set_region(self,value): self._region = value
+	region = property(_get_region, _set_region) 
+	
 class pflow(object):
 	"""Class for flow conditions - There can be multiple flow condition objects
 
@@ -474,13 +496,17 @@ class pinitial_condition(object):
 
 	"""
 	
-	def __init__(self,flow=None,region=None):
+	def __init__(self,flow=None,transport=None,region=None):
 		self._flow = flow	# Flow Condition (e.g. initial)
+		self._transport = transport
 		self._region = region	# Define region (e.g. west, east, well)
 		
 	def _get_flow(self): return self._flow
 	def _set_flow(self,value): self._flow = value
 	flow = property(_get_flow, _set_flow)
+	def _get_transport(self): return self._transport
+	def _set_transport(self,value): self._transport = value
+	transport = property(_get_transport, _set_transport)
 	def _get_region(self): return self._region
 	def _set_region(self,value): self._region = value
 	region = property(_get_region, _set_region)
@@ -631,6 +657,9 @@ class pdata(object):
 
 	def __init__(self, filename=None):
 		from copy import copy
+		# Note that objects need to be instantiated when hard-coded when it's set to
+		# None here.
+		self._uniform_velocity = puniform_velocity()
 		self._mode = pmode()
 		self._chemistry = None
 		self._grid = pgrid()
@@ -642,11 +671,12 @@ class pdata(object):
 		self._fluid = pfluid()
 		self._saturation = psaturation('')
 		self._regionlist = []	# There are multiple regions
+		self._observation = None
 		self._flowlist = []
-		self._initial_condition = pinitial_condition()
 		self._transportlist = []
+		self._initial_condition = pinitial_condition()
 		self._boundary_condition_list = []
-		self._source_sink = psource_sink() 
+		self._source_sink = None
 		self._strata = pstrata()
 		self._constraint_list = []
 		self._filename = filename
@@ -659,7 +689,8 @@ class pdata(object):
 		if not os.path.isfile(filename): print filename + ' not found...'
 		self._filename = filename 	# assign filename attribute
 		read_fn = dict(zip(cards, 	
-				[self._read_mode,
+				[self._read_uniform_velocity,
+				 self._read_mode,
 				 self._read_chemistry,
 				 self._read_grid,
 				 self._read_timestepper,
@@ -670,9 +701,10 @@ class pdata(object):
 				 self._read_fluid,
 				 self._read_saturation,
 				 self._read_region,
+				 self._read_observation,
 				 self._read_flow,
-				 self._read_initial_condition,
 				 self._read_transport,
+				 self._read_initial_condition,
 				 self._read_boundary_condition,
 				 self._read_source_sink,
 				 self._read_strata,
@@ -690,7 +722,9 @@ class pdata(object):
 				if card in cards: 			# check if a valid cardname
 					if card in ['material_property','mode','grid','timestepper',
 							'newton_solver','saturation_function',
-							'region','flow_condition','boundary_condition','transport_condition','constraint']:
+							'region','flow_condition','boundary_condition',
+							'transport_condition','constraint',
+							'uniform_velocity']:
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -703,9 +737,12 @@ class pdata(object):
 		"""
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
+		
+		# Presumes uniform_velocity.value_list is required
+		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 			
+		# Presumes mode.name is required
 		if self.mode.name: self._write_mode(outfile)
-
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'Info: chemistry not detected\n'
@@ -737,14 +774,15 @@ class pdata(object):
 		if self.regionlist: self._write_region(outfile)
 		else: print 'Error: regionlist is required, it is currently reading as empty\n'
 		
+		if self.observation: self._write_observation(outfile)
+		
 		if self.flowlist: self._write_flow(outfile)
 		else: print 'Info: flowlist not detected\n'
 		
-#		else: print 'Error: flowlist is required, it is currently reading as empty\n'
+		if self.transportlist: self._write_transport(outfile)
+		
 		if self.initial_condition: self._write_initial_condition(outfile)
 		else: print 'Error: initial_condition is required, it is currently reading as empty\n'
-		
-		if self.transportlist: self._write_transport(outfile)
 		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'Error: boundary_condition_list is required, it is currently reading as empty\n'
@@ -757,6 +795,28 @@ class pdata(object):
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
+		
+	def _read_uniform_velocity(self,infile,line):
+		np_value_list = []
+		tstring = line.split()[1:]	# Convert to list, ignore 1st word
+		
+		i=0	# index/count
+		while i < len(tstring):
+			try :
+				np_value_list.append(floatD(tstring[i]))
+			except ValueError, e:
+				np_value_list.append(tstring[i])
+			i += 1
+		
+		new_uniform_velocity = puniform_velocity(np_value_list)
+		self._uniform_velocity = new_uniform_velocity
+		
+	def _write_uniform_velocity(self,outfile):
+		self._header(outfile,headers['uniform_velocity'])
+		outfile.write('UNIFORM_VELOCITY\t')
+		for v in self.uniform_velocity.value_list:	# value in value_list
+			outfile.write(strD(v) + '\t')
+		outfile.write('\n\n')
 		
 	def _read_mode(self,infile,line):
 		mode_name = line.split()[-1]
@@ -940,6 +1000,8 @@ class pdata(object):
 		if self.timestepper.num_steps_after_cut:
                   outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
                                 str(self.timestepper.num_steps_after_cut) + '\n')
+		if self.timestepper.max_ts_cuts:
+			outfile.write('\t' + 'MAX_TS_CUTS ' + str(self.timestepper.max_ts_cuts) + '\n')
 		if self.timestepper.max_steps:
                   outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
 		if self.timestepper.cfl_limiter:
@@ -1547,6 +1609,32 @@ class pdata(object):
 			outfile.write('\n')
 			outfile.write('\tEND\n')
 			outfile.write('END\n\n')
+			
+	def _read_observation(self,infile):
+		p = pobservation()
+		np_region = p.region
+		 
+		keepReading = True
+		
+		while keepReading:
+			line = infile.readline() 			# get next line
+			key = line.strip().split()[0].lower() 		# take first keyword
+			if key == 'region':
+				np_region = line.split()[-1]
+			elif key in ['/','end']: keepReading = False
+			
+		new_observation = pobservation(np_region)
+		
+		self._observation = new_observation
+		
+	def _write_observation(self,outfile):
+		self._header(outfile,headers['observation'])
+		observation = self.observation
+		
+		outfile.write('OBSERVATION\n')
+		if observation.region:
+			outfile.write('\tREGION\t'+observation.region.lower()+'\n')
+		outfile.write('END\n\n')
 				
 	def _read_flow(self,infile,line):
 		np_name = line.split()[-1].lower()	# Flow Condition name passed in.
@@ -1685,6 +1773,7 @@ class pdata(object):
 	def _read_initial_condition(self,infile):
 		p = pinitial_condition()
 		np_flow = p.flow
+		np_transport = p.transport
 		np_region = p.region
 		
 		keepReading = True
@@ -1695,12 +1784,14 @@ class pdata(object):
 			
 			if key == 'flow_condition':
 				np_flow = line.split()[-1]
+			elif key == 'transport_condition':
+				np_transport = line.split()[-1]
 			elif key == 'region':
 				np_region = line.split()[-1]
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty initial condition and assign the values read in
-		new_initial_condition = pinitial_condition(np_flow,np_region)
+		new_initial_condition = pinitial_condition(np_flow,np_transport,np_region)
 		self._initial_condition = new_initial_condition
 		
 	def _write_initial_condition(self,outfile):
@@ -1713,12 +1804,15 @@ class pdata(object):
 			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow.lower() + '\n')
 		else:
 			print 'error: initial_condition.flow (flow_condition) is required\n'
-		# Error checking needed
+			
+		if initial_condition.transport:
+			outfile.write('\tTRANSPORT_CONDITION\t'+initial_condition.transport.lower()+'\n')
+			
 		if initial_condition.region:
 			outfile.write('\tREGION\t' + initial_condition.region.lower() + '\n')
 		else:
 			print 'error: initial_condition.region is required\n'
-		# Error checking needed here
+		
 		outfile.write('END\n\n')
 		
 	def _read_boundary_condition(self,infile,line):
@@ -1931,10 +2025,10 @@ class pdata(object):
 				line = infile.readline()
 				while keepReading2:
 					try:
-						np_constraint_list_value.append(line.split()[0].lower()) # Read 1st word online
+						np_constraint_list_value.append(floatD(line.split()[0].lower())) # Read 1st word online
 						np_constraint_list_type.append(line.split()[1].lower()) # Read 2nd word on line
 					except:
-						print 'Error: constraint_list_value and constraint_list_type requires at least one value.\n'
+						print 'Error: constraint_list_value and constraint_list_type requires at least one value. Value should = Number and type should = String\n'
 					
 					line = infile.readline()	# get next line
 					key = line.split()[0].lower()	# Used to stop loop when / or end is read
@@ -1951,11 +2045,11 @@ class pdata(object):
 		tl = self.transportlist
 		for t in tl: # t for transport
 			if t.name:
-				outfile.write('TRANSPORT_CONDITION\t'+t.name+'\n')
+				outfile.write('TRANSPORT_CONDITION\t'+t.name.lower()+'\n')
 			else:
 				print 'Error: transport_condition['+str(tl.index(t))+'].name is required.\n'
 			if t.type:
-				outfile.write('\tTYPE\t'+t.type+'\n')
+				outfile.write('\tTYPE\t'+t.type.lower()+'\n')
 			else:
 				print 'Error: transport['+str(tl.index(t))+'].type is required\n'
 			try :
@@ -1969,7 +2063,7 @@ class pdata(object):
 					if clv[i] != None:
 						outfile.write('\t\t'+strD(clv[i]))
 					if clt[i] != None:
-						outfile.write('\t'+str(clt[i]))
+						outfile.write('\t'+str(clt[i]).lower())
 					else:
 						print 'Error: transport['+str(tl.index(t))+'].constraint_list_type['+str(clt.index(i))+'] is required to have a value when transport.constraint_list_value does.\n'
 			except:
@@ -2047,6 +2141,8 @@ class pdata(object):
 		ws+='\n'
 #		outfile.write(ws)coordinates_lower	# Satish comment
 	
+	def _get_uniform_velocity(self): return self._uniform_velocity
+	uniform_velocity = property(_get_uniform_velocity) #: (**)
 	def _get_mode(self): return self._mode
 	def _set_mode(self, object): self._mode = object
 	mode = property(_get_mode, _set_mode) #: (**)	
@@ -2073,6 +2169,9 @@ class pdata(object):
 	saturation = property(_get_saturation) #: (**)
 	def _get_regionlist(self): return self._regionlist
 	regionlist = property(_get_regionlist) #: (**)
+	def _get_observation(self): return self._observation
+	def _set_observation(self, object): self._observation = object
+	observation = property(_get_observation, _set_observation) #: (**)
 	def _get_flowlist(self): return self._flowlist
 	flowlist = property(_get_flowlist) #: (**)
 	def _get_initial_condition(self): return self._initial_condition

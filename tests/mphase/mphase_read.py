@@ -2,7 +2,7 @@ import sys
 from pdata import*
 
 sys.path.append('../.')
-dat = pdata('pflotran.in')
+dat = pdata('mphase.in')
 
 ###############################################################
 
@@ -174,4 +174,4 @@ if dat.constraint_list:
 
 # Write to File
 
-dat.write('pflotran2.in')
+dat.write('mphase_2.in')

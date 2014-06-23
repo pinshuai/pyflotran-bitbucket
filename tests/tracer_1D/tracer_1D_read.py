@@ -201,7 +201,9 @@ if dat.constraint_list:
 			print '\tvalue:', concentration.value
 			print '\tconstraint:', concentration.constraint
 			print
-	print	
+	print
+	
+###############################################################
 	
 # Write to File
 dat.write('tracer_1D_SC_2.in')

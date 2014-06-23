@@ -8,6 +8,15 @@ dat = pdata('mphase.in')
 
 # Print to console the data attributes
 
+if dat.uniform_velocity:
+	print 'uniform_velocity:', dat.uniform_velocity
+	print 'value_list:', dat.uniform_velocity.value_list
+	print
+	
+print 'mode:', dat.mode
+print 'name:', dat.mode.name
+print
+
 if dat.chemistry:
 	print 'chemistry:', dat.chemistry
 	print '(primary species) pspecies:', dat.chemistry.pspecies
@@ -16,17 +25,31 @@ if dat.chemistry:
 	print
  
 print 'grid:', dat.grid
-print 'nxyz:', dat.grid.nxyz
-print 'origin:', dat.grid.origin
-print 'dxyz:', dat.grid.dxyz
+print 'type:', dat.grid.type
+print 'bounds_bool:', dat.grid.bounds_bool
+print 'lower_bounds:', dat.grid.lower_bounds
 print 'upper_bounds:', dat.grid.upper_bounds
+print 'origin:', dat.grid.origin
+print 'nxyz:', dat.grid.nxyz
+print 'dxyz:', dat.grid.dxyz
+print 'gravity_bool:', dat.grid.gravity_bool
 print 'gravity:', dat.grid.gravity
+print 'filename:', dat.grid.filename
 print
  
 print 'timestepper:', dat.timestepper
 print 'ts_acceleration:', dat.timestepper.ts_acceleration
+print 'num_steps_after_cut:', dat.timestepper.num_steps_after_cut
+print 'max_steps', dat.timestepper.max_steps
+print 'max_ts_cuts', dat.timestepper.max_ts_cuts
+print 'cfl_limiter', dat.timestepper.cfl_limiter
+print 'initialize_to_steady_state', dat.timestepper.initialize_to_steady_state
+print 'run_as_steady_state', dat.timestepper.run_as_steady_state
+print 'max_pressure_change', dat.timestepper.max_pressure_change
+print 'max_temperature_change', dat.timestepper.max_temperature_change
+print 'max_concentration_change', dat.timestepper.max_concentration_change
+print 'max_saturation_change', dat.timestepper.max_saturation_change
 print
-
  
 print 'time:', dat.time
 print '(final_time) tf:', dat.time.tf
@@ -52,8 +75,6 @@ for prop in dat.proplist:
 	print 'permeability:',prop.permeability
 	print
 print	# May double print an empty line - Done just in case a list is empty
-
-
 
 print '(newton_solver) nsolverlist:'
 for nsolver in dat.nsolverlist:
@@ -168,7 +189,7 @@ if dat.constraint_list:
 			print '\tvalue:', concentration.value
 			print '\tconstraint:', concentration.constraint
 			print
-	print	
+	print
 	
 ###############################################################
 

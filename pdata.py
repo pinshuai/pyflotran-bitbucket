@@ -2097,8 +2097,6 @@ class pdata(object):
 					np_value = floatD(tstring[i]) ; i+=1	# 2nd word, etc.
 					np_constraint = tstring[i]
 					c += 1
-#					print 'i', i
-#					print 'c', c
 					
 				new_concentration = pconstraint_concentration(np_pspecies, np_value, np_constraint)
 				np_concentration_list.append(new_concentration)
@@ -2139,7 +2137,6 @@ class pdata(object):
 		ws+=' '+header+' '
 		for i in range(pad): ws+='='
 		ws+='\n'
-#		outfile.write(ws)coordinates_lower	# Satish comment
 	
 	def _get_uniform_velocity(self): return self._uniform_velocity
 	uniform_velocity = property(_get_uniform_velocity) #: (**)
@@ -2179,7 +2176,8 @@ class pdata(object):
 	def _get_boundary_condition_list(self): return self._boundary_condition_list
 	boundary_condition_list = property(_get_boundary_condition_list) #: (**)
 	def _get_source_sink(self): return self._source_sink
-	source_sink = property(_get_source_sink) #: (**)
+	def _set_source_sink(self, object): self._mode = object
+	source_sink = property(_get_source_sink, _set_source_sink) #: (**)
 	def _get_strata(self): return self._strata
 	strata = property(_get_strata) #: (**)
 	def _get_chemistry(self): return self._chemistry

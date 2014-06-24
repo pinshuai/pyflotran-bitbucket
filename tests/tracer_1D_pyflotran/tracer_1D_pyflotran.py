@@ -1,5 +1,7 @@
-
+import sys
 from pdata import*
+
+sys.path.append('../.')
 
 print '\nTEST EXECUTED\n'	# console header
 

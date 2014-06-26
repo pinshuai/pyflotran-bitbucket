@@ -177,29 +177,29 @@ CONCENTRATION 1d-6
 ENTHALPY 0.d0 0.d0
 /
 
-:FLOW_CONDITION source
-:UNITS Pa,C,M,yr
-:SYNC_TIMESTEP_WITH_UPDATE
-:TYPE
-:RATE mass_rate
-:PRESSURE dirichlet
-:TEMPERATURE dirichlet
-:CONCENTRATION dirichlet
-:ENTHALPY dirichlet
-:/
+FLOW_CONDITION source
+UNITS Pa,C,M,yr
+SYNC_TIMESTEP_WITH_UPDATE
+TYPE
+RATE mass_rate
+PRESSURE dirichlet
+TEMPERATURE dirichlet
+CONCENTRATION dirichlet
+ENTHALPY dirichlet
+/
 :RATE LIST
 :  TIME_UNITS y
 :  DATA_UNITS kg/s
 :0.  0. 1.d-4
+: time rate1 rate2
 :10. 0. 0.
 :/
-:RATE 0. 1.d-4 
-:/
-:PRESSURE 4.d7 2.d7
-:TEMPERATURE 70.d0
-:CONCENTRATION 0.D0
-:ENTHALPY 0.d0 0.d0
-:/
+RATE 0. 1.d-4 
+PRESSURE 4.d7 2.d7
+TEMPERATURE 70.d0
+CONCENTRATION 0.D0
+ENTHALPY 0.d0 0.d0
+/
 
 :=========================== condition couplers ===============================
 : initial condition
@@ -218,11 +218,11 @@ FLOW_CONDITION initial
 REGION east
 END
 
-:SOURCE_SINK
-:FLOW_CONDITION source
-:REGION well
-:END
-:
+SOURCE_SINK
+FLOW_CONDITION source
+REGION well
+END
+
 
 :=========================== stratigraphy couplers ============================
 STRATA

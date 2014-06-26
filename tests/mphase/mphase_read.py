@@ -9,6 +9,9 @@ dat = pdata('mphase.in')
 # Print to console the data attributes
 
 print '\n\nEXECUTING\n\n'
+'''
+print 'co2_database:', dat.co2_database
+print
 
 if dat.uniform_velocity.value_list:
 	print 'uniform_velocity:', dat.uniform_velocity
@@ -127,7 +130,7 @@ for region in dat.regionlist:
 	print 'coordinates_upper:', region.coordinates_upper
 	print
 print
-
+'''
 print 'flowlist:'
 for flow in dat.flowlist:
 	print 'flow:', dat.flowlist.index(flow), flow
@@ -144,7 +147,7 @@ for flow in dat.flowlist:
 		print '\tunit:', variable.unit
 		print
 print
-		
+'''		
 print 'initial_condition:', dat.initial_condition
 print 'flow:', dat.initial_condition.flow
 print 'region:', dat.initial_condition.region
@@ -192,7 +195,7 @@ if dat.constraint_list:
 			print '\tconstraint:', concentration.constraint
 			print
 	print
-	
+'''	
 ###############################################################
 
 # Write to File

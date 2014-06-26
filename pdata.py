@@ -687,8 +687,7 @@ class pdata(object):
 		self._constraint_list = []
 		self._filename = filename
 		
-#		if filename: self.read(filename) 		# read in file if requested upon initialisation
-
+#		if filename: self.read(filename) # read in file if requested upon initialisation
 		# run object
 		self._path = ppath(parent=self)
 		self._running = False	# boolean indicating whether a simulation is in progress
@@ -1735,7 +1734,7 @@ class pdata(object):
 						    # This # indicates how many time a / or 'end' 
 						    # can be read before loop terminates.
 				
-			elif key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
+			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
 				if end_count == 0:
 					np_fvar_name = ''
 					np_fvar_name = key 	# variable name is assigned here
@@ -1746,8 +1745,9 @@ class pdata(object):
 					isValid = True
 					tstring = line.split()[0:] # Convert string into list
 					# Assign type if last string is a type
-					if tstring[-1] == 'hydrostatic' or tstring[-1] == 'dirichlet' or tstring[-1] ==  'zero_gradient' or tstring[-1] == 'conductance' or tstring[-1] == 'seepage':
-						np_fvar_type = line.strip().split()[-1].lower()
+#					# Line below commented out since data may be used later.
+#					if tstring[-1] == 'hydrostatic' or tstring[-1] == 'dirichlet' or tstring[-1] ==  'zero_gradient' or tstring[-1] == 'conductance' or tstring[-1] == 'seepage':
+					np_fvar_type = line.strip().split()[-1].lower()
 					
 					# Appending and instantiation of new flow_variables
 					# occur here. Only two entries are filled, the rest
@@ -1761,19 +1761,17 @@ class pdata(object):
 					
 					# Should not exceed 4 per pflow object
 					
-				# Script assumes later use of keywords are values and not types
-				# Values are assigned here - More work needed here
 				
-				# Problem exists with np_varlist being one list 3x too large
 				elif end_count == 1:
 					tstring2 = line.split()[1:] # Convert string into list- ignore 1st entry				
 					count = 0
+					# Assign all values to list following variable key word
 					for var in tstring2:
+						i=0
 						try:
-							# Get last index of np_varlist
-							# Assign flow variable values
-							l = len(np_varlist) - 1
-							for i in range(0,4):
+							l = len(np_varlist) - 1 # Get last index of np_varlist
+							# Assign all flow variable valuelists for one flow object
+							for i in range(0,len(np_varlist)):
 								if key == np_varlist[l-i].name:
 									#np_varlist[l-j].valuelist = floatD(i)
 									np_varlist[l-i].valuelist.append(floatD(var))
@@ -1781,7 +1779,7 @@ class pdata(object):
 							# Assign variable value unit (C, M, etc.)
 							# Occurs because try fails to convert a
 							# string into a float.
-#							for j in range(0,4):
+							print '\n\n\ntest\n\n\n'
 							if key == np_varlist[l-i].name:
 								np_varlist[l-i].unit = var
 									

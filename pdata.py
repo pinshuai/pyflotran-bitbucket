@@ -5,23 +5,28 @@ from copy import deepcopy
 from copy import copy
 import os,time
 import platform
+#from subprocess import Popen, PIPE
+import subprocess
 
 from ptool import*
+from pdflt import*
+
+dflt = pdflt()
 
 WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
-cards = ['uniform_velocity','mode','chemistry','grid','timestepper','material_property',
-		'time','newton_solver','output','fluid_property',
+cards = ['co2_database','uniform_velocity','mode','chemistry','grid','timestepper',
+	 'material_property','time','newton_solver','output','fluid_property',
 		'saturation_function','region','observation','flow_condition',
 		'transport_condition','initial_condition','boundary_condition','source_sink',
 		'strata','constraint']
-headers = ['uniform_velocity','mode','chemistry','grid','time stepping','material properties',
-		   'time','newton solver','output','fluid properties',
-		   'saturation functions','regions','observation','flow conditions',
-		   'transport conditions','initial condition','boundary conditions','source sink',
-		   'stratigraphy couplers','constraints']
+headers = ['co2 database path','uniform velocity','mode','chemistry','grid',
+	   'time stepping','material properties','time','newton solver','output',
+	   'fluid properties','saturation functions','regions','observation','flow conditions',
+	   'transport conditions','initial condition','boundary conditions','source sink',
+	   'stratigraphy couplers','constraints']
 headers = dict(zip(cards,headers))
 
 class puniform_velocity(object):
@@ -655,10 +660,11 @@ class pdata(object):
 
 	"""
 
-	def __init__(self, filename=None):
+	def __init__(self, filename='', work_dir=''):
 		from copy import copy
 		# Note that objects need to be instantiated when hard-coded when it's set to
 		# None here.
+		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
 		self._mode = pmode()
 		self._chemistry = None
@@ -681,7 +687,64 @@ class pdata(object):
 		self._constraint_list = []
 		self._filename = filename
 		
-		if filename: self.read(filename) 		# read in file if requested upon initialisation
+#		if filename: self.read(filename) 		# read in file if requested upon initialisation
+
+		# run object
+		self._path = ppath(parent=self)
+		self._running = False	# boolean indicating whether a simulation is in progress
+		self.work_dir = work_dir
+		if self.work_dir:
+			try:
+				os.makedirs(self.work_dir)
+			except:
+				pass
+		
+		# OPTIONS
+		temp_path = ppath(); temp_path.filename = filename
+		if temp_path.filename:
+			if temp_path.absolute_to_file != os.getcwd():
+				self.work_dir = temp_path.absolute_to_file
+			self._path.filename = filename
+			self.read(filename)
+		else:
+			return
+
+	def run(self,input='', exe=pdflt().pflotran_path):
+		'''Run a pflotran simulation for a given input file.
+	
+		:param input: Name of input file. 
+		:type input: str
+		:param exe: Path to PFLOTRAN executable.
+		:type exe: str
+		'''
+		
+		# set up and check path to executable
+		exe_path = ppath()
+		exe_path.filename = exe
+		
+		if not os.path.isfile(exe_path.full_path): # if can't find the executable, halt
+			print('ERROR: Default location is' +exe + '. No executable at location '+exe)
+			return
+		
+		# option to write input file to new name
+		if input: self._path.filename = input
+		
+		# ASSEMBLE FILES IN CORRECT DIRECTORIES
+		if self.work_dir: wd = self.work_dir + os.sep
+		else: wd = os.getcwd() + os.sep
+		print wd
+		print self._path.filename
+		returnFlag = self.write(wd+self._path.filename) # ALWAYS write input file
+		print returnFlag
+		if returnFlag: 
+			print('ERROR: writing files')
+			return
+		
+	
+		# RUN SIMULATION
+		cwd = os.getcwd()
+		if self.work_dir: os.chdir(self.work_dir)
+		subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
@@ -689,7 +752,8 @@ class pdata(object):
 		if not os.path.isfile(filename): print filename + ' not found...'
 		self._filename = filename 	# assign filename attribute
 		read_fn = dict(zip(cards, 	
-				[self._read_uniform_velocity,
+				[self._read_co2_database,
+				 self._read_uniform_velocity,
 				 self._read_mode,
 				 self._read_chemistry,
 				 self._read_grid,
@@ -715,16 +779,16 @@ class pdata(object):
 			keepReading = True
 			while keepReading:
 				line = infile.readline()
-#				print line.strip()
 				if not line: keepReading = False
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
-					if card in ['material_property','mode','grid','timestepper',
-							'newton_solver','saturation_function',
-							'region','flow_condition','boundary_condition',
-							'transport_condition','constraint',
-							'uniform_velocity']:
+					if card in ['co2_database','material_property','mode','grid',
+					 'timestepper','newton_solver','saturation_function',
+					 'region','flow_condition','boundary_condition',
+					 'transport_condition','constraint',
+					 'uniform_velocity']:
+						
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
@@ -740,9 +804,11 @@ class pdata(object):
 		
 		# Presumes uniform_velocity.value_list is required
 		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
-			
+		
 		# Presumes mode.name is required
 		if self.mode.name: self._write_mode(outfile)
+		
+		if self.co2_database: self._write_co2_database(outfile)
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'Info: chemistry not detected\n'
@@ -830,7 +896,14 @@ class pdata(object):
 			outfile.write(self.mode.name+'\n\n')
 		else:
 			print 'error: mode.name is required'
+			
+	def _read_co2_database(self,infile,line):
+		self._co2_database = line.split()[-1]
 	
+	def _write_co2_database(self,outfile):
+		self._header(outfile,headers['co2_database'])
+		outfile.write('CO2_DATABASE\t' + self._co2_database + '\n\n')
+		
 	def _read_grid(self,infile,line):
 		g = pgrid()				# assign defaults before reading in values
 		ng_type = g.type
@@ -1736,7 +1809,7 @@ class pdata(object):
 		
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-			outfile.write('FLOW CONDITION\t' + flow.name.lower() + '\n')
+			outfile.write('FLOW_CONDITION\t' + flow.name.lower() + '\n')
 			if flow.sync_timestep_with_update:
 				outfile.write('\tSYNC_TIMESTEP_WITH_UPDATE\n')
 			outfile.write('\tTYPE\n')
@@ -1768,7 +1841,7 @@ class pdata(object):
 					outfile.write('\t' + flow.varlist[i].unit.upper())
 				outfile.write('\n')
 				i += 1
-			outfile.write('\tEND\nEND\n\n')
+			outfile.write('\tEND\n\n')
 			
 	def _read_initial_condition(self,infile):
 		p = pinitial_condition()
@@ -2138,6 +2211,9 @@ class pdata(object):
 		for i in range(pad): ws+='='
 		ws+='\n'
 	
+	def _get_co2_database(self): return self._co2_database
+	def _set_co2_database(self,value): self._co2_database = value
+	co2_database = property(_get_co2_database, _set_co2_database) #: (**)
 	def _get_uniform_velocity(self): return self._uniform_velocity
 	uniform_velocity = property(_get_uniform_velocity) #: (**)
 	def _get_mode(self): return self._mode

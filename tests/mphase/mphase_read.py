@@ -8,7 +8,9 @@ dat = pdata('mphase.in')
 
 # Print to console the data attributes
 
-if dat.uniform_velocity:
+print '\n\nEXECUTING\n\n'
+
+if dat.uniform_velocity.value_list:
 	print 'uniform_velocity:', dat.uniform_velocity
 	print 'value_list:', dat.uniform_velocity.value_list
 	print
@@ -195,4 +197,4 @@ if dat.constraint_list:
 
 # Write to File
 
-dat.write('mphase_2.in')
+dat.write('mphase2.in')

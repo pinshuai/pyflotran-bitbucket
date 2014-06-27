@@ -47,7 +47,7 @@ class pmaterial(object):
 
 	"""
 
-	def __init__(self,id,name,porosity=0.1,tortuosity=0.1,density=2.5e3,
+	def __init__(self,id=0,name='',porosity=0.1,tortuosity=0.1,density=2.5e3,
 		     specific_heat=1.e3,cond_dry=0.5,cond_wet=0.5,
 		     saturation='sf2',permeability=[1.e-15,1.e-15,1.e-15]):
 		self._id = id
@@ -264,7 +264,7 @@ class pnsolver(object):
 
 	"""
 
-	def __init__(self,name,atol=None,rtol=None,stol=None,dtol=None,itol=None,
+	def __init__(self,name='',atol=None,rtol=None,stol=None,dtol=None,itol=None,
 			max_it=None,max_f=None):
 		self._name = name	# Indicates Flow or Tran for Transport
 		self._atol = atol
@@ -351,7 +351,7 @@ class psaturation(object):
 
 	"""
 	
-	def __init__(self,name,permeability_function_type=None,saturation_function_type=None,
+	def __init__(self,name='',permeability_function_type=None,saturation_function_type=None,
 			residual_saturation_liquid=None,residual_saturation_gas=None,
 			a_lambda=None,alpha=None,max_capillary_pressure=None,
 			betac=None,power=None):
@@ -521,7 +521,7 @@ class pboundary_condition(object):
 
 	"""
 	
-	def __init__(self,name,flow=None,transport=None,region=None):
+	def __init__(self,name='',flow=None,transport=None,region=None):
 		self._name = name	# Name of boundary condition. (e.g. west, east)
 		self._flow = flow	# Flow Condition (e.g. initial)
 		self._transport = transport	# Transport Condition (e.g. river_chemistry)
@@ -545,7 +545,6 @@ class psource_sink(object):
 
 	"""
 	
-#	def __init__(self,flow=None,region=None):
 	def __init__(self,flow=None,region=None):
 		self._flow = flow	# Flow Condition (e.g. initial)
 		self._region = region	# Define region (e.g. west, east, well)
@@ -598,7 +597,7 @@ class ptransport(object):
 
 	"""
 	
-	def __init__(self, name, type=None, constraint_list_value=[],
+	def __init__(self, name='', type=None, constraint_list_value=[],
 		     constraint_list_type=[]):
 		self._name = name	# e.g. initial, west, east
 		self._type = type	# e.g. dirichlet, zero_gradient
@@ -623,7 +622,7 @@ class pconstraint(object):
 
 	"""
 	
-	def __init__(self, name, concentration_list=[]):
+	def __init__(self, name='', concentration_list=[]):
 		self._name = name
 		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
 		
@@ -810,53 +809,53 @@ class pdata(object):
 		if self.co2_database: self._write_co2_database(outfile)
 
 		if self.chemistry: self._write_chemistry(outfile)
-		else: print 'Info: chemistry not detected\n'
+		else: print 'info: chemistry not detected\n'
 		
 		if self.grid: self._write_grid(outfile)
-		else: print 'Error: grid is required, it is currently reading as empty\n'
+		else: print 'ERROR: grid is required, it is currently reading as empty\n'
 		
 		if self.timestepper : self._write_timestepper(outfile)
-		else: print 'Error: timestepper is required, it is currently reading as empty\n'
+		else: print 'ERROR: timestepper is required, it is currently reading as empty\n'
 		
 		if self.time: self._write_time(outfile)
-		else: print 'Error: time is required, it is currently reading as empty\n'
+		else: print 'ERROR: time is required, it is currently reading as empty\n'
 		
 		if self.proplist: self._write_prop(outfile)
-		else: print 'Error: proplist is required, it is currently reading as empty\n'
+		else: print 'ERROR: proplist is required, it is currently reading as empty\n'
 		
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'Error: nsolverlist is required, it is currently reading as empty\n'
+		else: print 'ERROR: nsolverlist is required, it is currently reading as empty\n'
 		
 		if self.output: self._write_output(outfile)
-		else: print 'Error: output is required, it is currently reading as empty\n'
+		else: print 'ERROR: output is required, it is currently reading as empty\n'
 		
 		if self.fluid: self._write_fluid(outfile)
-		else: print 'Error: fluid is required, it is currently reading as empty\n'
+		else: print 'ERROR: fluid is required, it is currently reading as empty\n'
 		
 		if self.saturation: self._write_saturation(outfile)
-		else: print 'Error: saturation is required, it is currently reading as empty\n'
+		else: print 'ERROR: saturation is required, it is currently reading as empty\n'
 		
 		if self.regionlist: self._write_region(outfile)
-		else: print 'Error: regionlist is required, it is currently reading as empty\n'
+		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
 		if self.observation: self._write_observation(outfile)
 		
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'Info: flowlist not detected\n'
+		else: print 'info: flowlist not detected\n'
 		
 		if self.transportlist: self._write_transport(outfile)
 		
 		if self.initial_condition: self._write_initial_condition(outfile)
-		else: print 'Error: initial_condition is required, it is currently reading as empty\n'
+		else: print 'ERROR: initial_condition is required, it is currently reading as empty\n'
 		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
-		else: print 'Error: boundary_condition_list is required, it is currently reading as empty\n'
+		else: print 'ERROR: boundary_condition_list is required, it is currently reading as empty\n'
 		
 		if self.source_sink: self._write_source_sink(outfile)
-		else: print 'Info: source_sink not detected\n'
+		else: print 'info: source_sink not detected\n'
 
 		if self.strata: self._write_strata(outfile)
-		else: print 'Error: strata is required, it is currently reading as empty\n'
+		else: print 'ERROR: strata is required, it is currently reading as empty\n'
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
@@ -892,7 +891,7 @@ class pdata(object):
 		self._header(outfile,headers['mode'])
 		outfile.write('MODE\t')
 		if self.mode.name:
-			outfile.write(self.mode.name+'\n\n')
+			outfile.write(self.mode.name.lower()+'\n\n')
 		else:
 			print 'error: mode.name is required'
 			
@@ -2213,14 +2212,17 @@ class pdata(object):
 	def _set_co2_database(self,value): self._co2_database = value
 	co2_database = property(_get_co2_database, _set_co2_database) #: (**)
 	def _get_uniform_velocity(self): return self._uniform_velocity
-	uniform_velocity = property(_get_uniform_velocity) #: (**)
+	def _set_uniform_velocity(self, object): self._uniform_velocity = object
+	uniform_velocity = property(_get_uniform_velocity, _set_uniform_velocity) #: (**)
 	def _get_mode(self): return self._mode
 	def _set_mode(self, object): self._mode = object
 	mode = property(_get_mode, _set_mode) #: (**)	
 	def _get_grid(self): return self._grid
-	grid = property(_get_grid) #: (**)
+	def _set_grid(self, object): self._grid = object
+	grid = property(_get_grid, _set_grid) #: (**)
 	def _get_time(self): return self._time
-	time = property(_get_time) #: (**)
+	def _set_time(self, object): self._time = object
+	time = property(_get_time, _set_time) #: (**)
 	def _get_proplist(self): return self._proplist
 	proplist = property(_get_proplist) #: (**) list of material properties
 	def _get_prop(self): return dict([(p.id,p) for p in self.proplist]+[(p.name,p) for p in self.proplist])
@@ -2229,35 +2231,46 @@ class pdata(object):
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
 	def _get_timestepper(self): return self._timestepper
-	timestepper = property(_get_timestepper) #: (**)
+	def _set_timestepper(self, object): self._timestepper = object
+	timestepper = property(_get_timestepper, _set_timestepper) #: (**)
 	def _get_nsolverlist(self): return self._nsolverlist
-	nsolverlist = property(_get_nsolverlist) #: (**)
+	def _set_nsolverlist(self, object): self._nsolverlist = object
+	nsolverlist = property(_get_nsolverlist, _set_nsolverlist) #: (**)
 	def _get_output(self): return self._output
-	output = property(_get_output) #: (**)	
+	def _set_output(self, object): self._output = object
+	output = property(_get_output, _set_output) #: (**)
 	def _get_fluid(self): return self._fluid
-	fluid = property(_get_fluid) #: (**)
+	def _set_fluid(self, object): self._fluid = object
+	fluid = property(_get_fluid, _set_fluid) #: (**)
 	def _get_saturation(self): return self._saturation
-	saturation = property(_get_saturation) #: (**)
+	def _set_saturation(self, object): self._saturation = object
+	saturation = property(_get_saturation, _set_saturation) #: (**)
 	def _get_regionlist(self): return self._regionlist
-	regionlist = property(_get_regionlist) #: (**)
+	def _set_regionlist(self, object): self._regionlist = object
+	regionlist = property(_get_regionlist, _set_regionlist) #: (**)
 	def _get_observation(self): return self._observation
 	def _set_observation(self, object): self._observation = object
 	observation = property(_get_observation, _set_observation) #: (**)
 	def _get_flowlist(self): return self._flowlist
-	flowlist = property(_get_flowlist) #: (**)
+	def _set_flowlist(self, object): self._flowlist = object
+	flowlist = property(_get_flowlist, _set_flowlist) #: (**)
 	def _get_initial_condition(self): return self._initial_condition
-	initial_condition = property(_get_initial_condition) #: (**)
+	def _set_initial_condition(self, object): self._initial_condition = object
+	initial_condition = property(_get_initial_condition, _set_initial_condition) #: (**)
 	def _get_boundary_condition_list(self): return self._boundary_condition_list
-	boundary_condition_list = property(_get_boundary_condition_list) #: (**)
+	def _set_boundary_condition_list(self, object): self._boundary_condition_list = object
+	boundary_condition_list = property(_get_boundary_condition_list, _set_boundary_condition_list) #: (**)
 	def _get_source_sink(self): return self._source_sink
-	def _set_source_sink(self, object): self._mode = object
+	def _set_source_sink(self, object): self._source_sink = object
 	source_sink = property(_get_source_sink, _set_source_sink) #: (**)
 	def _get_strata(self): return self._strata
-	strata = property(_get_strata) #: (**)
+	def _set_strata(self, object): self._strata = object
+	strata = property(_get_strata, _set_strata) #: (**)
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object
 	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
 	def _get_transportlist(self): return self._transportlist
-	transportlist = property(_get_transportlist) #: (**)
+	def _set_transportlist(self, object): self._transportlist = object
+	transportlist = property(_get_transportlist, _set_transportlist) #: (**)
 	def _get_constraint_list(self): return self._constraint_list
 	constraint_list = property(_get_constraint_list) #: (**)

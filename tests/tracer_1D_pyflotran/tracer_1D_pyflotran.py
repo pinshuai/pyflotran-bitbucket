@@ -19,270 +19,257 @@ dat.uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
 
 # set chemistry
 #--------------------------------------------------------------
-dat.chemistry = pchemistry()
-
-dat.chemistry.pspecies = 'A(aq)'
-dat.chemistry.molal = True
-dat.chemistry.output = 'ALL'
+c = pchemistry()
+c.pspecies = 'A(aq)'
+c.molal = True
+c.output = 'ALL'
+dat.chemistry = c
 #--------------------------------------------------------------
 
 # set grid
 #--------------------------------------------------------------
-dat.grid.type = 'structured'
-dat.grid.lower_bounds = [0.e0, 0.e0, 0.e0]
-dat.grid.upper_bounds = [0.04e0, 1.e0, 1.e0]
-dat.grid.bounds_bool = True
-dat.grid.orign = [0.e0, 0.e0, 0.e0]
-dat.grid.nxyz = [100, 1, 1]
-#dat.grid.dxyz = [5, 5, 5]	# Should not write
-#dat.grid.gravity_bool = False
-#dat.grid.gravity =  [0.0, 0.0, -9.8068]	# Should not write
-#dat.grid.filename =  ''
+g = pgrid()
+g.type = 'structured'
+g.lower_bounds = [0.e0, 0.e0, 0.e0]
+g.upper_bounds = [0.04e0, 1.e0, 1.e0]
+g.bounds_bool = True
+g.orign = [0.e0, 0.e0, 0.e0]
+g.nxyz = [100, 1, 1]
+dat.grid = g
 #--------------------------------------------------------------
 
 # set time stepping
 #--------------------------------------------------------------
-dat.timestepper.ts_acceleration = 25
-dat.timestepper.num_steps_after_cut = None
-dat.timestepper.max_ts_cuts = 10
-dat.timestepper.max_steps = 10000
-dat.timestepper.cfl_limiter = None
-
-dat.timestepper.initialize_to_steady_state = None
-dat.timestepper.run_as_steady_state = None
-dat.timestepper.max_pressure_change = None
-dat.timestepper.max_temperature_change = None
-dat.timestepper.max_concentration_change = None
-dat.timestepper.max_saturation_change = None
+ts = ptimestepper()
+ts.ts_acceleration = 25
+ts.max_ts_cuts = 10
+ts.max_steps = 10000
+dat.timestepper = ts
 #--------------------------------------------------------------
 
 # set newton solvers
 #--------------------------------------------------------------
-name = 'TRANSPORT'
-atol = 1e-15
-rtol = 1e-10
-stol = 1e-30
-dtol = None
-itol = 1e-8
-max_it = 100
-max_f = 100
-
-nsolver = pnsolver(name, atol, rtol, stol, dtol, itol, max_it, max_f)
-dat.nsolverlist.append(nsolver)
+ns = pnsolver()
+ns.name = 'TRANSPORT'
+ns.atol = 1e-15
+ns.rtol = 1e-10
+ns.stol = 1e-30
+ns.dtol = None
+ns.itol = 1e-8
+ns.max_it = 100
+ns.max_f = 100
+dat.nsolverlist.append(ns)
 #--------------------------------------------------------------
 
 # set fluid properties
 #--------------------------------------------------------------
-dat.fluid.diffusion_coefficient = 1.e-9
+f = pfluid()
+f.diffusion_coefficient = 1.e-9
+dat.fluid = f
 #--------------------------------------------------------------
 
-# set material properities aka prop_list
+# set material properties aka prop_list
 #--------------------------------------------------------------
-p = pmaterial(0, '')	# For assigning defaults
-
-name = 'soil1'
-id = 1
-porosity = 1.e0
-tortuosity = 1.e0
-density = 2.8e3		# Rock Density
-specific_heat = 1e3
-cond_dry = p.cond_dry	# Defaults are assigned
-cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
-saturation = 'default'
-permeability = [1.e-15,1.e-15,1.e-15]
-	
-material = pmaterial(id, name, porosity, tortuosity, density, specific_heat,
-		     cond_dry, cond_wet, saturation, permeability)
-dat.proplist.append(material)
+mp = pmaterial()	# For assigning defaults
+mp.name = 'soil1'
+mp.id = 1
+mp.porosity = 1.e0
+mp.tortuosity = 1.e0
+mp.density = 2.8e3		# Rock Density
+mp.specific_heat = 1e3
+mp.cond_dry 		# Defaults are assigned
+mp.cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
+mp.saturation = 'default'
+mp.permeability = [1.e-15,1.e-15,1.e-15]
+dat.proplist.append(mp)
 #--------------------------------------------------------------
 
 # set time
 #--------------------------------------------------------------
-dat.time.tf = [1.e6, 's']	# FINAL_TIME
-dat.time.dti = [1.e-6, 's']	# INITIAL_TIMESTEP_SIZE
-dat.time.dtf = [10.e0,'s']	# MAXIMUM_TIMESTEP_SIZE
-dat.time.dtf_lv = [1.e2, 1.e3]	#MAXIMUM_TIMESTEP_SIZE before 'at'
-dat.time.dtf_lv_unit = ['s', 's']		# time unit
-dat.time.dtf_li = [5.e3, 5.e4]	#MAXIMUM_TIMESTEP_SIZE after 'at'
-dat.time.dtf_li_unit = ['s', 's']		# time unit
-dat.time.dtf_i = 2	# Needs to be the length of dtf_lv and dtf_li
+t = ptime()
+t.tf = [1.e6, 's']		# FINAL_TIME
+t.dti = [1.e-6, 's']		# INITIAL_TIMESTEP_SIZE
+t.dtf = [10.e0,'s']		# MAXIMUM_TIMESTEP_SIZE
+t.dtf_lv = [1.e2, 1.e3]		#MAXIMUM_TIMESTEP_SIZE before 'at'
+t.dtf_lv_unit = ['s', 's']		# time unit
+t.dtf_li = [5.e3, 5.e4]		#MAXIMUM_TIMESTEP_SIZE after 'at'
+t.dtf_li_unit = ['s', 's']		# time unit
+t.dtf_i = 2			# Needs to be the length of dtf_lv and dtf_li
+dat.time = t
 #--------------------------------------------------------------
 
 # set output
 #--------------------------------------------------------------
-dat.output.time_list = ['s', 26042.0, 39063.0, 52083.0, 1000000.0]
-dat.output.periodic_observation_timestep = 1
-dat.output.print_column_ids = True
-dat.output.format.append('TECPLOT POINT')
+o = poutput()
+o.time_list = ['s', 26042.0, 39063.0, 52083.0, 1000000.0]
+o.periodic_observation_timestep = 1
+o.print_column_ids = True
+o.format.append('TECPLOT POINT')
+dat.output = o
 #--------------------------------------------------------------
 
 # set saturation functions
 #--------------------------------------------------------------
-dat.saturation.name = 'default'
-#dat.saturation.permeability_function_type = 'NMT_EXP'
-dat.saturation.saturation_function_type = 'VAN_GENUCHTEN'
-dat.saturation.residual_saturation_liquid = 0.1
-dat.saturation.residual_saturation_gas = 0.0
-dat.saturation.a_lambda = 0.762e0
-dat.saturation.alpha = 7.5e-4
-dat.saturation.max_capillary_pressure = 1.e6
-#dat.saturation.betac = 2.e0
-#dat.saturation.power = 7.e0
+s = psaturation()
+s.name = 'default'
+s.saturation_function_type = 'VAN_GENUCHTEN'
+s.residual_saturation_liquid = 0.1
+s.residual_saturation_gas = 0.0
+s.a_lambda = 0.762e0
+s.alpha = 7.5e-4
+s.max_capillary_pressure = 1.e6
+dat.saturation = s
 #--------------------------------------------------------------
 
 # set regions
 #--------------------------------------------------------------
-name = 'all'
-face = None
-coordinates_lower = [0.e0, 0.e0, 0.e0]
-coordinates_upper = [0.04e0, 1.e0,  1.e0]
+r = pregion()
+r.name = 'all'
+r.face = None
+r.coordinates_lower = [0.e0, 0.e0, 0.e0]
+r.coordinates_upper = [0.04e0, 1.e0,  1.e0]
+dat.regionlist.append(r)
 
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
+r = pregion()
+r.name = 'west'
+r.face = 'WEST'
+r.coordinates_lower = [0.e0, 0.e0, 0.e0]
+r.coordinates_upper = [0.e0, 1.e0,  1.e0]
+dat.regionlist.append(r)
 
-name = 'west'
-face = 'WEST'
-coordinates_lower = [0.e0, 0.e0, 0.e0]
-coordinates_upper = [0.e0, 1.e0,  1.e0]
+r = pregion()
+r.name = 'east'
+r.face = 'EAST'
+r.coordinates_lower = [0.04e0, 0.e0, 0.e0]
+r.coordinates_upper = [0.04e0, 1.e0, 1.e0]
+dat.regionlist.append(r)
 
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
-
-name = 'east'
-face = 'EAST'
-coordinates_lower = [0.04e0, 0.e0, 0.e0]
-coordinates_upper = [0.04e0, 1.e0, 1.e0]
-
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
-
-name = 'obs'
-face = None
-coordinates_lower = [0.04e0, 0.e0, 0.e0]
-coordinates_upper = [0.04e0, 1.e0, 1.e0]
-
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
+r = pregion()
+r.name = 'obs'
+r.face = None
+r.coordinates_lower = [0.04e0, 0.e0, 0.e0]
+r.coordinates_upper = [0.04e0, 1.e0, 1.e0]
+dat.regionlist.append(r)
 #--------------------------------------------------------------
 
 # set observation
 #--------------------------------------------------------------
-dat.observation = pobservation()
-
-dat.observation.region = 'obs'
+o = pobservation()
+o.region = 'obs'
+dat.observation = o
 #--------------------------------------------------------------
 
 # set transport conditions
 #--------------------------------------------------------------
-name = 'initial'
-type = 'dirichlet'
-constraint_list_value = [0.e0]
-constraint_list_type = ['initial']
+tc = ptransport()
+tc.name = 'initial'
+tc.type = 'dirichlet'
+tc.constraint_list_value = [0.e0]
+tc.constraint_list_type = ['initial']
+dat.transportlist.append(tc)
 
-t = ptransport(name,type,constraint_list_value,constraint_list_type)
-dat.transportlist.append(t)
+tc = ptransport()
+tc.name = 'WEST'
+tc.type = 'dirichlet'
+tc.constraint_list_value = [0.e0]
+tc.constraint_list_type = ['WEST']
+dat.transportlist.append(tc)
 
-name = 'WEST'
-type = 'dirichlet'
-constraint_list_value = [0.e0]
-constraint_list_type = ['WEST']
-
-t = ptransport(name,type,constraint_list_value,constraint_list_type)
-dat.transportlist.append(t)
-
-name = 'east'
-type = 'ZERO_gradient'
-constraint_list_value = [0.e0]
-constraint_list_type = ['east']
-
-t = ptransport(name,type,constraint_list_value,constraint_list_type)
-dat.transportlist.append(t)
+tc = ptransport()
+tc.name = 'east'
+tc.type = 'ZERO_gradient'
+tc.constraint_list_value = [0.e0]
+tc.constraint_list_type = ['east']
+dat.transportlist.append(tc)
 #--------------------------------------------------------------
 
 # set initial condition
 #--------------------------------------------------------------
-dat.initial_condition.flow = 'INITIAL'
-dat.initial_condition.transport = 'initial'
-dat.initial_condition.region = 'all'
+ic = pinitial_condition()
+ic.flow = 'INITIAL'
+ic.transport = 'initial'
+ic.region = 'all'
+dat.initial_condition = ic
 #--------------------------------------------------------------
 
 # set boundary conditions
 #--------------------------------------------------------------
-name = None
-flow = 'west'
-transport = 'west'
-region = 'WEST'
+bc = pboundary_condition()
+bc.name = ''
+bc.flow = 'west'
+bc.transport = 'west'
+bc.region = 'WEST'
+dat.boundary_condition_list.append(bc)
 
-b = pboundary_condition(name, flow, transport, region)
-dat.boundary_condition_list.append(b)
-
-name = None
-flow = 'east'
-transport = 'EAST'
-region = 'east'
-
-b = pboundary_condition(name, flow, transport, region)
-dat.boundary_condition_list.append(b)
+bc = pboundary_condition()
+bc.name = ''
+bc.flow = 'east'
+bc.transport = 'EAST'
+bc.region = 'east'
+dat.boundary_condition_list.append(bc)
 #--------------------------------------------------------------
 
 # set stratigraphy couplers
 #--------------------------------------------------------------
-dat.strata.region = 'ALL' 
-dat.strata.material = 'SOIL1'
-
+sc = pstrata()
+sc.region = 'ALL' 
+sc.material = 'SOIL1'
+dat.strata = sc
 #--------------------------------------------------------------
 
 # set constraints
 #--------------------------------------------------------------
 # initial condition - 1st condition
-name = 'initial'
-concentration_list = [] # Assigning for this done below
-
-pspecies = 'A(aq)'
-value = 0.1
-constraint = 'T'
-concentration = pconstraint_concentration(pspecies, value, constraint)
-concentration_list.append(concentration)
-
-constraint = pconstraint(name, concentration_list)
-dat.constraint_list.append(constraint)	# Assigning done here
+constraint = pconstraint()
+constraint.name = 'initial'
+constraint.concentration_list = [] # Assigning for this done below
+concentration = pconstraint_concentration()	# new concentration object
+concentration.pspecies = 'A(aq)'
+concentration.value = 0.1
+concentration.constraint = 'T'
+constraint.concentration_list.append(concentration)	# assign concentration
+dat.constraint_list.append(constraint)	# assign constraint
 
 # west condition - 2nd condition
-name = 'WEST'
-concentration_list = [] # Assigning for this done below
-
-# concentration
-pspecies = 'A(aq)'
-value = 1.e-8
-constraint = 'T'
-concentration = pconstraint_concentration(pspecies, value, constraint)
-concentration_list.append(concentration)
-
-constraint = pconstraint(name, concentration_list)
-dat.constraint_list.append(constraint)	# Assigning done here
+constraint = pconstraint()
+constraint.name = 'WEST'
+constraint.concentration_list = [] # Assigning for this done below
+concentration = pconstraint_concentration()	# new concentration object
+concentration.pspecies = 'A(aq)'
+concentration.value = 1.e-8
+concentration.constraint = 'T'
+constraint.concentration_list.append(concentration)	# assign concentration
+dat.constraint_list.append(constraint)	# assign constraint
 
 # east condition - 3rd condition
-name = 'east'
-concentration_list = [] # Assigning for this done below
-
-# concentration
-pspecies = 'A(aq)'
-value = 1.E-02
-constraint = 'T'
-concentration = pconstraint_concentration(pspecies, value, constraint)
-concentration_list.append(concentration)
-
-constraint = pconstraint(name, concentration_list)
-dat.constraint_list.append(constraint)	# Assigning done here
+constraint = pconstraint()
+constraint.name = 'east'
+constraint.concentration_list = [] # Assigning for this done below
+concentration = pconstraint_concentration()	# new concentration object
+concentration.pspecies = 'A(aq)'
+concentration.value = 1.E-02
+concentration.constraint = 'T'
+constraint.concentration_list.append(concentration)	# assign concentration
+dat.constraint_list.append(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 ###############################################################
 
 # Print to console the data attributes
 
-if dat.uniform_velocity:
+print '\n\nEXECUTING\n\n'
+
+print 'co2_database:', dat.co2_database
+print
+
+if dat.uniform_velocity.value_list:
 	print 'uniform_velocity:', dat.uniform_velocity
 	print 'value_list:', dat.uniform_velocity.value_list
+	print
+	
+print 'mode:', dat.mode
+print 'name:', dat.mode.name
+print
 
 if dat.chemistry:
 	print 'chemistry:', dat.chemistry
@@ -343,8 +330,6 @@ for prop in dat.proplist:
 	print
 print	# May double print an empty line - Done just in case a list is empty
 
-
-
 print '(newton_solver) nsolverlist:'
 for nsolver in dat.nsolverlist:
 	print '(newton_solver) nsolver:', dat.nsolverlist.index(nsolver), nsolver
@@ -358,15 +343,16 @@ for nsolver in dat.nsolverlist:
 	print 'max_f:', nsolver.max_f
 	print
 print
-	
-print 'output:', dat.output
-print 'times:', dat.output.time_list
-print 'periodic_observation_timestep:', dat.output.periodic_observation_timestep
-print 'print_column_ids:', dat.output.print_column_ids
-print 'format:', dat.output.format
-print 'velocities:', dat.output.velocities
-print 'mass_balance:', dat.output.mass_balance
-print
+
+if dat.output:
+	print 'output:', dat.output
+	print 'times:', dat.output.time_list
+	print 'periodic_observation_timestep:', dat.output.periodic_observation_timestep
+	print 'print_column_ids:', dat.output.print_column_ids
+	print 'format:', dat.output.format
+	print 'velocities:', dat.output.velocities
+	print 'mass_balance:', dat.output.mass_balance
+	print
 
 print 'fluid:', dat.fluid
 print 'diffusion_coefficient:', dat.fluid.diffusion_coefficient
@@ -395,11 +381,6 @@ for region in dat.regionlist:
 	print
 print
 
-if dat.observation:
-	print 'observation:', dat.observation
-	print 'region:', dat.observation.region
-	print
-
 print 'flowlist:'
 for flow in dat.flowlist:
 	print 'flow:', dat.flowlist.index(flow), flow
@@ -416,10 +397,9 @@ for flow in dat.flowlist:
 		print '\tunit:', variable.unit
 		print
 print
-		
+	
 print 'initial_condition:', dat.initial_condition
 print 'flow:', dat.initial_condition.flow
-print 'transport:', dat.initial_condition.transport
 print 'region:', dat.initial_condition.region
 print
 
@@ -464,7 +444,9 @@ if dat.constraint_list:
 			print '\tvalue:', concentration.value
 			print '\tconstraint:', concentration.constraint
 			print
-	print	
+	print
+	
+###############################################################
 
 # Write to File
 dat.write('tracer_1D.in')

@@ -20,341 +20,339 @@ dat = pdata('')
 
 # set mode
 #--------------------------------------------------------------
-dat.mode.name = 'MPHASE'
+m = pmode()
+m.name = 'mphase'
+dat.mode = m
+#--------------------------------------------------------------
+
+# set co2 database
+#--------------------------------------------------------------
+dat.co2_database = '/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat'
 #--------------------------------------------------------------
 
 # set grid
 #--------------------------------------------------------------
-dat.grid.type = 'structured'
-dat.grid.lower_bounds = [0.e0, 0.e0, 0.e0]
-dat.grid.upper_bounds = [321.e0, 1.e0, 51.e0]
-dat.grid.bounds_bool = True
-dat.grid.orign = [0.e0, 0.e0, 0.e0]
-dat.grid.nxyz = [107, 1, 51]
-dat.grid.dxyz = [5, 5, 5]	# Should not write
-dat.grid.gravity_bool = False
-dat.grid.gravity =  [0.0, 0.0, -9.8068]	# Should not write
-dat.grid.filename =  ''
+g = pgrid()
+g.type = 'structured'
+g.lower_bounds = [0.e0, 0.e0, 0.e0]
+g.upper_bounds = [321.e0, 1.e0, 51.e0]
+g.bounds_bool = True
+g.orign = [0.e0, 0.e0, 0.e0]
+g.nxyz = [107, 1, 51]
+g.dxyz = [5, 5, 5]	# Should not write
+g.gravity_bool = False
+g.gravity =  [0.0, 0.0, -9.8068]	# Should not write
+g.filename =  ''
+dat.grid = g
 #--------------------------------------------------------------
 
 # set time stepping
 #--------------------------------------------------------------
-dat.timestepper.ts_acceleration = 8
-dat.timestepper.num_steps_after_cut = None
-dat.timestepper.max_steps = None
-dat.timestepper.max_ts_cuts = None
-dat.timestepper.cfl_limiter = None
-dat.timestepper.initialize_to_steady_state = None
-dat.timestepper.run_as_steady_state = None
-dat.timestepper.max_pressure_change = None
-dat.timestepper.max_temperature_change = None
-dat.timestepper.max_concentration_change = None
-dat.timestepper.max_saturation_change = None
+ts = ptimestepper()
+ts.ts_acceleration = 8
+dat.timestepper = ts
 #--------------------------------------------------------------
 
 # set material properities aka prop_list
 #--------------------------------------------------------------
-id = 1
-name = 'soil1'
-porosity = 0.15e0
-tortuosity = 1e-1
-density = 2.65E3	# ROCK_DENSITY
-specific_heat = 1E3
-cond_dry = 0.5		# THERMAL_CONDUCTIVITY_DRY
-cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
-saturation = 'sf2'
-permeability = [1.e-15,1.e-15,1.e-17]
-	
-material = pmaterial(id, name, porosity, tortuosity, density, specific_heat,
-		     cond_dry, cond_wet, saturation, permeability)
-dat.proplist.append(material)
+m = pmaterial('','')
+m.id = 1
+m.name = 'soil1'
+m.porosity = 0.15e0
+m.tortuosity = 1e-1
+m.density = 2.65E3	# ROCK_DENSITY
+m.specific_heat = 1E3
+m.cond_dry = 0.5		# THERMAL_CONDUCTIVITY_DRY
+m.cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
+m.saturation = 'sf2'
+m.permeability = [1.e-15,1.e-15,1.e-17]
+dat.proplist.append(m)
 #--------------------------------------------------------------
 
 # set time
 #--------------------------------------------------------------
-dat.time.tf = [0.25e0, 'y']	# FINAL_TIME
-dat.time.dti = [1.e-6, 'y']	# INITIAL_TIMESTEP_SIZE
-dat.time.dtf = [50.e0,'y']	# MAXIMUM_TIMESTEP_SIZE
-dat.time.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]	# MAXIMUM_TIMESTEP_SIZE before 'at'
-dat.time.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time unit (eg. 'y')
-dat.time.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
-dat.time.dtf_li_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE after 'at' time unit (eg. 'y')
-dat.time.dtf_i = 4		# Needs to be the length of dtf_lv or dtf_li
+t = ptime()
+t.tf = [0.25e0, 'y']	# FINAL_TIME
+t.dti = [1.e-6, 'y']	# INITIAL_TIMESTEP_SIZE
+t.dtf = [50.e0,'y']	# MAXIMUM_TIMESTEP_SIZE
+t.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]	# MAXIMUM_TIMESTEP_SIZE before 'at'
+t.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time unit (eg. 'y')
+t.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
+t.dtf_li_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE after 'at' time unit (eg. 'y')
+t.dtf_i = 4		# Needs to be the length of dtf_lv or dtf_li
+dat.time = t
 #--------------------------------------------------------------
 
 # set newton solvers
 #--------------------------------------------------------------
-name = 'FLOW'
-atol = 1e-12
-rtol = 1e-12
-stol = 1e-30
-dtol = 1e15
-itol = 1e-8
-max_it = 25
-max_f = 100
+ns = pnsolver('')
+ns.name = 'FLOW'
+ns.atol = 1e-12
+ns.rtol = 1e-12
+ns.stol = 1e-30
+ns.dtol = 1e15
+ns.itol = 1e-8
+ns.max_it = 25
+ns.max_f = 100
+dat.nsolverlist.append(ns)
 
-nsolver = pnsolver(name, atol, rtol, stol, dtol, itol, max_it, max_f)
-dat.nsolverlist.append(nsolver)
-
-name = 'tran'
-atol = 1e-12
-rtol = 1e-12
-stol = 1e-30
-dtol = 1e15
-itol = 1e-8
-max_it = 25
-max_f = 100
-
-nsolver = pnsolver(name, atol, rtol, stol, dtol, itol, max_it, max_f)
-dat.nsolverlist.append(nsolver)
+ns = pnsolver('')
+ns.name = 'tran'
+ns.atol = 1e-12
+ns.rtol = 1e-12
+ns.stol = 1e-30
+ns.dtol = 1e15
+ns.itol = 1e-8
+ns.max_it = 25
+ns.max_f = 100
+dat.nsolverlist.append(ns)
 #--------------------------------------------------------------
 
 # set output
 #--------------------------------------------------------------
-dat.output.mass_balance = True
-dat.output.print_column_ids = True
-dat.output.periodic_observation_timestep = 1
-dat.output.format.append('TECPLOT POINT')
-dat.output.format.append('HDF5')
-dat.output.velocities = True
+o = poutput()
+o.mass_balance = True
+o.print_column_ids = True
+o.periodic_observation_timestep = 1
+o.format.append('TECPLOT POINT')
+o.format.append('HDF5')
+o.velocities = False
+dat.output = o
 #--------------------------------------------------------------
 
 # set fluid properties
 #--------------------------------------------------------------
-dat.fluid.diffusion_coefficient = 1.e-9
+f = pfluid()
+f.diffusion_coefficient = 1.e-9
+dat.fluid = f
 #--------------------------------------------------------------
 
 # set saturation functions
 #--------------------------------------------------------------
-dat.saturation.name = 'sf2'
-dat.saturation.permeability_function_type = 'NMT_EXP'
-dat.saturation.saturation_function_type = 'NMT_EXP'
-dat.saturation.residual_saturation_liquid = 0.1
-dat.saturation.residual_saturation_gas = 0.0
-dat.saturation.a_lambda = 0.762
-dat.saturation.alpha = 7.5e-4
-dat.saturation.max_capillary_pressure = 1.e6
-dat.saturation.betac = 2.e0
-dat.saturation.power = 7.e0
+s = psaturation('','')
+s.name = 'sf2'
+s.permeability_function_type = 'NMT_EXP'
+s.saturation_function_type = 'NMT_EXP'
+s.residual_saturation_liquid = 0.1
+s.residual_saturation_gas = 0.0
+s.a_lambda = 0.762
+s.alpha = 7.5e-4
+s.max_capillary_pressure = 1.e6
+s.betac = 2.e0
+s.power = 7.e0
+dat.saturation = s
 #--------------------------------------------------------------
 
 # set regions
 #--------------------------------------------------------------
-name = 'all'
-face = None
-coordinates_lower = [0.e0, 0.e0, 0.e0]
-coordinates_upper = [321.e0, 1.e0,  51.e0]
+r = pregion()
+r.name = 'all'
+r.face = None
+r.coordinates_lower = [0.e0, 0.e0, 0.e0]
+r.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.regionlist.append(r)
 
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
+r = pregion()
+r.name = 'top'
+r.face = 'top'
+r.coordinates_lower = [0.e0, 0.e0, 51.e0]
+r.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.regionlist.append(r)
 
-name = 'top'
-face = 'top'
-coordinates_lower = [0.e0, 0.e0, 51.e0]
-coordinates_upper = [321.e0, 1.e0,  51.e0]
+r = pregion()
+r.name = 'west'
+r.face = 'WEST'
+r.coordinates_lower = [0.e0, 0.e0, 0.e0]
+r.coordinates_upper = [0.e0, 1.e0,  51.e0]
+dat.regionlist.append(r)
 
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
+r = pregion()
+r.name = 'EAST'
+r.face = 'east'
+r.coordinates_lower = [321.e0, 0.e0, 0.e0]
+r.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.regionlist.append(r)
 
-name = 'west'
-face = 'WEST'
-coordinates_lower = [0.e0, 0.e0, 0.e0]
-coordinates_upper = [0.e0, 1.e0,  51.e0]
-
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
-
-name = 'EAST'
-face = 'east'
-coordinates_lower = [321.e0, 0.e0, 0.e0]
-coordinates_upper = [321.e0, 1.e0,  51.e0]
-
-
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
-
-name = 'well'
-face = None
-coordinates_lower = [160.e0, 1.e0, 20.e0]
-coordinates_upper = [160.e0, 1.e0, 20.e0]
-
-region = pregion(name, coordinates_lower, coordinates_upper, face)
-dat.regionlist.append(region)
+r = pregion()
+r.name = 'well'
+r.face = None
+r.coordinates_lower = [160.e0, 1.e0, 20.e0]
+r.coordinates_upper = [160.e0, 1.e0, 20.e0]
+dat.regionlist.append(r)
 #--------------------------------------------------------------
 
 # set flow conditions
 #--------------------------------------------------------------
 # initial flow condition
-name = 'initial'
-units_list = None
-iphase = 1
-sync_timestep_with_update = False
-varlist = [] # Assigning for this done below
+flow = pflow('')
+flow.name = 'initial'
+flow.units_list = None
+flow.iphase = 1
+flow.sync_timestep_with_update = False
+flow.varlist = [] # Assigning for this done below
+var = pflow_variable('')	# new flow var object
+var.name = 'pressure'
+var.type = 'hydrostatic'
+var.valuelist = [2e7, 2e7]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'TEMPERATURE'
+var.type = 'zero_gradient'
+var.valuelist = [50.0]
+var.list = []
+var.unit = 'C'
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'CONCENTRATION'
+var.type = 'zero_gradient'
+var.valuelist = [1e-6]
+var.list = []
+var.unit = 'm'
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'ENTHALPY'
+var.type = 'dirichlet'
+var.valuelist = [0.e0, 0.e0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+dat.flowlist.append(flow)	# Assigning for flow condition done here
 
-vname = 'pressure'
-vtype = 'hydrostatic'
-vvaluelist = [2e7, 2e7]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'TEMPERATURE'
-vtype = 'zero_gradient'
-vvaluelist = [50.0]
-vlist = []
-vunit = 'C'
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'CONCENTRATION'
-vtype = 'zero_gradient'
-vvaluelist = [1e-6]
-vlist = []
-vunit = 'm'
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'ENTHALPY'
-vtype = 'dirichlet'
-vvaluelist = [0.e0, 0.e0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-flow = pflow(name, units_list, iphase, sync_timestep_with_update, varlist)
-dat.flowlist.append(flow)	# Assigning done here
-
+flow = pflow('')
 # top flow condition goes here
-name = 'top'
-units_list = None
-iphase = 1
-sync_timestep_with_update = False
-varlist = [] # Assigning for this done below
-
-vname = 'pressure'
-vtype = 'dirichlet'
-vvaluelist = [3e7, 2e7]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'TEMPERATURE'
-vtype = 'zero_gradient'
-vvaluelist = [60.0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'CONCENTRATION'
-vtype = 'zero_gradient'
-vvaluelist = [1e-6]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'ENTHALPY'
-vtype = 'dirichlet'
-vvaluelist = [0.e0, 0.e0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-flow = pflow(name, units_list, iphase, sync_timestep_with_update, varlist)
-dat.flowlist.append(flow)	# Assigning done here
+flow.name = 'top'
+flow.units_list = None
+flow.iphase = 1
+flow.sync_timestep_with_update = False
+flow.varlist = [] # Assigning for this done below
+var = pflow_variable('')	# new flow var object
+var.name = 'pressure'
+var.type = 'dirichlet'
+var.valuelist = [3e7, 2e7]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'TEMPERATURE'
+var.type = 'zero_gradient'
+var.valuelist = [60.0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'CONCENTRATION'
+var.type = 'zero_gradient'
+var.valuelist = [1e-6]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'ENTHALPY'
+var.type = 'dirichlet'
+var.valuelist = [0.e0, 0.e0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+dat.flowlist.append(flow)	# Assigning for flow condition done here
 
 # source flow condition
-name = 'source'
-units_list = None
-iphase = None
-sync_timestep_with_update = True
-varlist = [] # Assigning for this done below
-
-vname = 'pressure'
-vtype = 'dirichlet'
-vvaluelist = [4e7, 2e7]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'TEMPERATURE'
-vtype = 'dirichlet'
-vvaluelist = [70.0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'CONCENTRATION'
-vtype = 'dirichlet'
-vvaluelist = [0.e0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-vname = 'ENTHALPY'
-vtype = 'dirichlet'
-vvaluelist = [0.e0, 0.e0]
-vlist = []
-vunit = None
-var = pflow_variable(vname, vtype, vvaluelist, vlist, vunit)
-varlist.append(var)
-
-flow = pflow(name, units_list, iphase, sync_timestep_with_update, varlist)
-dat.flowlist.append(flow)	# Assigning done here
+flow = pflow('')
+flow.name = 'source'
+flow.units_list = None
+flow.iphase = None
+flow.sync_timestep_with_update = True
+flow.varlist = [] # Assigning for this done below
+var = pflow_variable('') # new flow var object
+var.name = 'rate'
+var.type = 'mass_rate'
+var.valuelist = [0., 1.e-4]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'pressure'
+var.type = 'dirichlet'
+var.valuelist = [4e7, 2e7]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'TEMPERATURE'
+var.type = 'dirichlet'
+var.valuelist = [70.0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'CONCENTRATION'
+var.type = 'dirichlet'
+var.valuelist = [0.e0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+var = pflow_variable('') # new flow var object
+var.name = 'ENTHALPY'
+var.type = 'dirichlet'
+var.valuelist = [0.e0, 0.e0]
+var.list = []
+var.unit = None
+flow.varlist.append(var)	# assigning for flow var done here
+dat.flowlist.append(flow)	# Assigning for flow condition done here
 #--------------------------------------------------------------
 
 # set initial condition
 #--------------------------------------------------------------
-dat.initial_condition.flow = 'INITIAL'
-dat.initial_condition.region = 'all'
+ic = pinitial_condition()
+ic.flow = 'INITIAL'
+ic.region = 'all'
+dat.initial_condition = ic
 #--------------------------------------------------------------
 
 # set boundary conditions
 #--------------------------------------------------------------
-name = 'WEST'
-flow = 'INITIAL'
-transport = None
-region = 'west'
+bc = pboundary_condition()
+bc.name = 'WEST'
+bc.flow = 'INITIAL'
+bc.transport = None
+bc.region = 'west'
+dat.boundary_condition_list.append(bc)
 
-b = pboundary_condition(name, flow, transport,region)
-dat.boundary_condition_list.append(b)
-
-name = 'east'
-flow = 'INITIAL'
-transport = None
-region = 'east'
-
-b = pboundary_condition(name, flow, transport, region)
-dat.boundary_condition_list.append(b)
+bc = pboundary_condition()
+bc.name = 'east'
+bc.flow = 'INITIAL'
+bc.transport = None
+bc.region = 'east'
+dat.boundary_condition_list.append(bc)
 #--------------------------------------------------------------
 
 # set source sink
 #--------------------------------------------------------------
-dat._source_sink = psource_sink()
-dat.source_sink.flow = 'source'
-dat.source_sink.region = 'WELL'
+ss = psource_sink()
+ss.flow = 'source'
+ss.region = 'WELL'
+dat.source_sink = ss
 #--------------------------------------------------------------
 
 # set stratigraphy couplers
 #--------------------------------------------------------------
-dat.strata.region = 'ALL' 
-dat.strata.material = 'SOIL1'
-
+sc = pstrata()
+sc.region = 'ALL' 
+sc.material = 'SOIL1'
+dat.strata = sc
 #--------------------------------------------------------------
 
 ###############################################################
 
 # Print to console the data attributes
 
-if dat.uniform_velocity:
+print '\n\nEXECUTING\n\n'
+
+print 'co2_database:', dat.co2_database
+print
+
+if dat.uniform_velocity.value_list:
 	print 'uniform_velocity:', dat.uniform_velocity
 	print 'value_list:', dat.uniform_velocity.value_list
 	print
@@ -488,7 +486,7 @@ for flow in dat.flowlist:
 		print '\tunit:', variable.unit
 		print
 print
-		
+	
 print 'initial_condition:', dat.initial_condition
 print 'flow:', dat.initial_condition.flow
 print 'region:', dat.initial_condition.region

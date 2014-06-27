@@ -14,7 +14,12 @@ dat = pdata('tracer_1D_SC.in')
 
 # Print to console the data attributes
 
-if dat.uniform_velocity:
+print '\n\nEXECUTING\n\n'
+
+print 'co2_database:', dat.co2_database
+print
+
+if dat.uniform_velocity.value_list:
 	print 'uniform_velocity:', dat.uniform_velocity
 	print 'value_list:', dat.uniform_velocity.value_list
 	print
@@ -82,8 +87,6 @@ for prop in dat.proplist:
 	print
 print	# May double print an empty line - Done just in case a list is empty
 
-
-
 print '(newton_solver) nsolverlist:'
 for nsolver in dat.nsolverlist:
 	print '(newton_solver) nsolver:', dat.nsolverlist.index(nsolver), nsolver
@@ -134,11 +137,6 @@ for region in dat.regionlist:
 	print
 print
 
-if dat.observation:
-	print 'observation:', dat.observation
-	print 'region:', dat.observation.region
-	print
-
 print 'flowlist:'
 for flow in dat.flowlist:
 	print 'flow:', dat.flowlist.index(flow), flow
@@ -155,10 +153,9 @@ for flow in dat.flowlist:
 		print '\tunit:', variable.unit
 		print
 print
-		
+	
 print 'initial_condition:', dat.initial_condition
 print 'flow:', dat.initial_condition.flow
-print 'transport:', dat.initial_condition.transport
 print 'region:', dat.initial_condition.region
 print
 

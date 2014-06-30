@@ -1,7 +1,7 @@
 import sys
+sys.path.append('../../.')
 from pdata import*
 
-sys.path.append('../.')
 
 print '\nTEST EXECUTED\n'	# console header
 
@@ -449,4 +449,4 @@ if dat.constraint_list:
 ###############################################################
 
 # Write to File
-dat.write('tracer_1D.in')
+dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

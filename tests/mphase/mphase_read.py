@@ -1,7 +1,7 @@
 import sys
+sys.path.append('../../.')
 from pdata import*
 
-sys.path.append('../.')
 dat = pdata('mphase.in')
 
 ###############################################################

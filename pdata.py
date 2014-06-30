@@ -197,7 +197,7 @@ class pmode(object):
 
 	"""
 
-	def __init__(self,name='richards'):
+	def __init__(self,name=''):
 		self._name = name
 
 	def _get_name(self): return self._name
@@ -889,11 +889,9 @@ class pdata(object):
 	
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
-		outfile.write('MODE\t')
 		if self.mode.name:
+			outfile.write('MODE\t')
 			outfile.write(self.mode.name.lower()+'\n\n')
-		else:
-			print 'error: mode.name is required'
 			
 	def _read_co2_database(self,infile,line):
 		self._co2_database = line.split()[-1]
@@ -1477,7 +1475,7 @@ class pdata(object):
 		outfile.write('OUTPUT\n')
 # Further improvements can be made here in time_list for verifying 1st element is a time unit
 		if output.time_list:
-			outfile.write('\tTIME\t')
+			outfile.write('\tTIMES\t')
 			for i in output.time_list:
 				outfile.write('  '+strD(i))
 			outfile.write('\n')

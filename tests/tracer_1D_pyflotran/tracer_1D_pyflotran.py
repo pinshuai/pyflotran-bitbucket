@@ -87,7 +87,7 @@ dat.proplist.append(mp)
 # set time
 #--------------------------------------------------------------
 t = ptime()
-t.tf = [1.e6, 's']		# FINAL_TIME
+t.tf = [1.e4, 's']		# FINAL_TIME
 t.dti = [1.e-6, 's']		# INITIAL_TIMESTEP_SIZE
 t.dtf = [10.e0,'s']		# MAXIMUM_TIMESTEP_SIZE
 t.dtf_lv = [1.e2, 1.e3]		#MAXIMUM_TIMESTEP_SIZE before 'at'

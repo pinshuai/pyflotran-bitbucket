@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../.')
+sys.path.append('../../.')
 
 from pdata import*
 
@@ -538,4 +538,4 @@ if dat.constraint_list:
 ###############################################################
 
 # Write to File
-dat.write('mphase.in')
+dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

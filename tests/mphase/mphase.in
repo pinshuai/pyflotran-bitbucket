@@ -187,14 +187,12 @@ TEMPERATURE dirichlet
 CONCENTRATION dirichlet
 ENTHALPY dirichlet
 /
-:RATE LIST
-:  TIME_UNITS y
-:  DATA_UNITS kg/s
-:0.  0. 1.d-4
-: time rate1 rate2
-:10. 0. 0.
-:/
-RATE 0. 1.d-4 
+RATE LIST
+  TIME_UNITS y
+  DATA_UNITS kg/s
+  0.  0. 1.d-4
+  10. 0. 0.
+/
 PRESSURE 4.d7 2.d7
 TEMPERATURE 70.d0
 CONCENTRATION 0.D0

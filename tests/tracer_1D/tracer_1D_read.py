@@ -1,7 +1,7 @@
 import sys
-sys.path.append('../../.')
 from pdata import*
 
+sys.path.append('../../.')
 
 print '\nTEST EXECUTED\n'	# console header
 
@@ -148,9 +148,13 @@ for flow in dat.flowlist:
 	for variable in flow.varlist:
 		print '\tname:', variable.name
 		print '\ttype:', variable.type
-		print '\tvaluelist:', variable.valuelist
-		print '\tlist:', variable.list
-		print '\tunit:', variable.unit
+		if variable.valuelist:		print '\tvaluelist:', variable.valuelist
+		if variable.unit:		print '\tunit:', variable.unit
+		if variable.time_unit_type:	print '\ttime_unit_type:', variable.time_unit_type
+		if variable.data_unit_type:	print '\tdata_unit_type:', variable.data_unit_type
+		for var in variable.list:
+			print '\t\ttime_unit_value:', var.time_unit_value
+			print '\t\tdata_unit_value_list:', var.data_unit_value_list
 		print
 print
 	
@@ -205,5 +209,5 @@ if dat.constraint_list:
 ###############################################################
 	
 # Write to File
-dat.run(input='tracer_1D_SC_2.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
 
+dat.run(input='tracer_1D_SC_2.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

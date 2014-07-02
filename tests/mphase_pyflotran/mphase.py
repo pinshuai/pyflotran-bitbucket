@@ -267,9 +267,16 @@ flow.varlist = [] # Assigning for this done below
 var = pflow_variable('') # new flow var object
 var.name = 'rate'
 var.type = 'mass_rate'
-var.valuelist = [0., 1.e-4]
-var.list = []
-var.unit = None
+var.time_unit_type = 'y'
+var.data_unit_type = 'kg/s'
+tlist = pflow_variable_list()	# sub-class of pflow_variable, assigned to list attribute
+tlist.time_unit_value = 0.	# tlist = temporary list
+tlist.data_unit_value_list = [0., 1.e-4]
+var.list.append(tlist)
+tlist = pflow_variable_list()	# sub-class of pflow_variable, assigned to list attribute
+tlist.time_unit_value = 10.
+tlist.data_unit_value_list = [0., 0.]
+var.list.append(tlist)
 flow.varlist.append(var)	# assigning for flow var done here
 var = pflow_variable('') # new flow var object
 var.name = 'pressure'
@@ -481,9 +488,13 @@ for flow in dat.flowlist:
 	for variable in flow.varlist:
 		print '\tname:', variable.name
 		print '\ttype:', variable.type
-		print '\tvaluelist:', variable.valuelist
-		print '\tlist:', variable.list
-		print '\tunit:', variable.unit
+		if variable.valuelist:		print '\tvaluelist:', variable.valuelist
+		if variable.unit:		print '\tunit:', variable.unit
+		if variable.time_unit_type:	print '\ttime_unit_type:', variable.time_unit_type
+		if variable.data_unit_type:	print '\tdata_unit_type:', variable.data_unit_type
+		for var in variable.list:
+			print '\t\ttime_unit_value:', var.time_unit_value
+			print '\t\tdata_unit_value_list:', var.data_unit_value_list
 		print
 print
 	
@@ -539,3 +550,4 @@ if dat.constraint_list:
 
 # Write to File
 dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+

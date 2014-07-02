@@ -1,4 +1,5 @@
 """ Class for pflotran data """
+print	# Makes console output a little easier to read
 
 import numpy as np
 from copy import deepcopy
@@ -776,6 +777,9 @@ class pdata(object):
 		if self.work_dir: os.chdir(self.work_dir)
 		subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
 		
+		# After executing simulation, go back to the parent directory
+		if self.work_dir: os.chdir(cwd)
+		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
 	def read(self, filename):
@@ -1251,6 +1255,7 @@ class pdata(object):
 						tstring = line.split()[at_i+2:] # Use string only after 'at'
 						
 						if len(tstring) == 2:
+							np_dtf_li.append(floatD(tstring[0]))
 							np_dtf_li_unit.append(tstring[1])
 						else:
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
@@ -1339,8 +1344,6 @@ class pdata(object):
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
-			
-			
 			try:
 				# write before AT
 				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()	# Correct capitalization

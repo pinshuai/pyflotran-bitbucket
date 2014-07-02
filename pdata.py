@@ -1241,9 +1241,6 @@ class pdata(object):
 						#Read before AT
 						tstring = line.split()[1:]
 						if len(tstring) >= 2:
-#							np_dtf_lv.append(1)
-#							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
-#							np_dtf_lv_unit.append(tstring[1])
 							np_dtf_lv.append(floatD(tstring[0]))
 							np_dtf_lv_unit.append(tstring[1])
 						else:
@@ -1254,13 +1251,8 @@ class pdata(object):
 						tstring = line.split()[at_i+2:] # Use string only after 'at'
 						
 						if len(tstring) == 2:
-#							np_dtf_li.append(1)
-#							np_dtf_li[np_dtf_i] = floatD(tstring[0])
-#							np_dtf_li_unit.append(tstring[1])
-							np_dtf_li.append(floatD(tstring[0]))
 							np_dtf_li_unit.append(tstring[1])
 						else:
-#							np_dtf_li.append(1)
 							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
 						np_dtf_i = np_dtf_i + 1
@@ -1464,21 +1456,15 @@ class pdata(object):
 					except:
 						np_time_list.append(tstring[i])
 					i += 1
-#				for i in tstring:
-#					np_time_list.append(floatD(tstring[i]))
-#				np_time_list = tstring
 			if key == 'periodic_observation':
 				tstring = line.strip().split()[1].lower()	# Read the 2nd word
 				if tstring == 'timestep':
 					np_periodic_observation_timestep = int(line.split()[-1])
-# Usable later			#elif tstring == 'time':
-					#np_periodic_observation_time = float(line.split()[-1])	
 			elif key == 'print_column_ids':
 				np_print_column_ids = True
 			elif key == 'format':
 				tstring = (line.strip().split()[1:])
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
-				#tstring.lower()
 				if tstring == 'tecplot block':
 					np_format.append('TECPLOT BLOCK')
 				elif tstring == 'tecplot point':

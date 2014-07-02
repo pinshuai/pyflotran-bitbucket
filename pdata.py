@@ -2102,32 +2102,21 @@ class pdata(object):
 	def _write_chemistry(self,outfile):
 		self._header(outfile,headers['chemistry'])
 		c = self.chemistry
-		outfile.write('CHEMISTRY\n')
-		
 		# Write out chemistry variables
 		if c.pspecies:
 		# Database entry check needed
+			outfile.write('CHEMISTRY\n')
 			outfile.write('\tPRIMARY_SPECIES\n')
 			outfile.write('\t\t' + c.pspecies + '\n')
 			outfile.write('\t/\n\n')
-
-#		else:
-#			print 'error: chemistry.pspecies (primary species) is required\n'
-#			outfile.write('\t/\n\n')
 		if c.molal:
 			outfile.write('\tMOLAL\n')
-#		else:
-#			print 'error: chemistry.molal is required\n'
 		if c.output:
 			outfile.write('\tOUTPUT\n')
 			outfile.write('\t\t' + c.output.upper() + '\n')
 			outfile.write('\t/\n')
 			outfile.write('/\n\n')
-#		else:
-#			print 'error: chemistry.output is required\n'
-#			outfile.write('\t/\n')
-#			outfile.write('/\n\n')
-			
+		
 	def _read_transport(self,infile,line):
 		p = ptransport('')
 		np_name = line.split()[-1].lower()	# Transport Condition name passed in.

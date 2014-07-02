@@ -5,11 +5,11 @@ PyFLOTRAN is a set of classes and methods that the enable use of the massively p
 
 1. PFLOTRAN input file construction from Python environment. Reduces the need to learn all the keywords in PFLOTRAN.    (see Chapter :ref:`3 <pdata-chapter>`).
 
-2. Post-processing of output using matplotlib as well as including Python-based commandline calls to the open-source visualization toolkits such as VisIT and Paraview.
+2. Post-processing of output using matplotlib as well as including Python-based commandline calls to the open-source visualization toolkits such as VisIt and Paraview.
 
 3. Scripting tools that supports Python's built-in multi-processing capabilities for batch simulations. This reduces the time spent in creating separate input files either for multiple realizations or multiple simulations for comparison.
 
-4. Streamlined workflow from pre-processing to post-processing. Typical workflow with PFLOTRAN involves - pre-processing in Python or MATLAB, writing input files, executing the input files and then post-processing using matplotlib, VisIT or Paraview. PyFLOTRAN allows to perform all these steps using one Python script.
+4. Streamlined workflow from pre-processing to post-processing. Typical workflow with PFLOTRAN involves - pre-processing in Python or MATLAB, writing input files, executing the input files and then post-processing using matplotlib, VisIt or Paraview. PyFLOTRAN allows to perform all these steps using one Python script.
 
 
 Introductory :ref:`tutorials <ftutorial-chapter>` to PyFLOTRAN are also provided.
@@ -29,7 +29,7 @@ Python versions) of these modules can be obtained from http://www.lfd.uci.edu/~g
 PyFLOTRAN
 ^^^^^^
 
-A download link for the latest release version of PyFLOTRAN_ can be found at `pyflotran.lanl.gov`__
+A download link for the latest release version of PyFLOTRAN_ can be found at `pyflotran.lanl.gov`_
 
 .. _PyFLOTRAN: pyflotran.lanl.gov
 
@@ -49,3 +49,46 @@ For successfully using PyFLOTRAN, one needs to install PFLOTRAN. For details to 
 .. _PFLOTRAN: https://www.pflotran.org/
 
 __ PFLOTRAN_
+
+VisIt
+^^^^^^^^
+
+VisIt is a parallel, open-source visualisation software. PFLOTRAN can output in .h5 and .xmf format. These can be imported in VisIt and visualization can be performed. 
+
+Instructions for downloading and installing Paraview_ can be found at `https://wci.llnl.gov/codes/visit/download.html`__ 
+
+.. _VisIt: https://wci.llnl.gov/codes/visit
+
+__ VisIt_ 
+
+After installation, make sure to include the path to visit.exe in you PATH environment variable. This will ensure
+PyFLOTRAN can find Paraview and make full use of its capabilities.
+
+Paraview
+^^^^^^^^
+
+Paraview is a parallel, open-source visualisation software. PFLOTRAN can output in .xmf and .vtk format. These can be imported in Paraview and visualization can be performed. 
+
+Instructions for downloading and installing Paraview_ can be found at `www.paraview.org`__ 
+
+.. _Paraview: www.paraview.org
+
+__ Paraview_
+
+After installation, make sure to include the path to paraview.exe in you PATH environment variable. This will ensure
+PyFLOTRAN can find Paraview and make full use of its capabilities.
+
+Using PyFLOTRAN
+------------
+
+PyFLOTRAN consists of several Python modules. To access their functionality, the user must include the following line at the 
+top of any Python script
+
+``from pdata import*``
+
+Using this manual
+-----------------
+
+This manual comprises sections for each of the important PyFLOTRAN modules: :ref:`pdata <pdata-chapter>` In these, the important
+classes and their methods are documented, and example usage provided. Tutorials are provided in :ref:`tutorials <ptutorial-chapter>`. One get a feel for setting up, running and visualizing a PFLOTRAN simulations through these examples.
+

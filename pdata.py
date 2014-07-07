@@ -19,12 +19,12 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 cards = ['co2_database','uniform_velocity','mode','chemistry','grid','timestepper',
-	 'material_property','time','newton_solver','output','fluid_property',
+	 'material_property','time','linear_solver','newton_solver','output','fluid_property',
 		'saturation_function','region','observation','flow_condition',
 		'transport_condition','initial_condition','boundary_condition','source_sink',
 		'strata','constraint']
 headers = ['co2 database path','uniform velocity','mode','chemistry','grid',
-	   'time stepping','material properties','time','newton solver','output',
+	   'time stepping','material properties','time','linear solver','newton solver','output',
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
 	   'stratigraphy couplers','constraints']
@@ -48,9 +48,9 @@ class pmaterial(object):
 
 	"""
 
-	def __init__(self,id=0,name='',porosity=0.1,tortuosity=0.1,density=2.5e3,
-		     specific_heat=1.e3,cond_dry=0.5,cond_wet=0.5,
-		     saturation='sf2',permeability=[1.e-15,1.e-15,1.e-15]):
+	def __init__(self,id=None,name='',porosity=None,tortuosity=None,density=None,
+		     specific_heat=None,cond_dry=None,cond_wet=None,
+		     saturation='',permeability=[]):
 		self._id = id
 		self._name = name
 		self._porosity = porosity
@@ -98,8 +98,8 @@ class ptime(object):
 
 	"""
 	
-	def __init__(self,tf=[10.,None],dti=[1.e-2,None],dtf=[50.,None],dtf_lv=[None],
-		     dtf_li=[None],dtf_i=0,dtf_lv_unit=[], dtf_li_unit=[]):
+	def __init__(self,tf=[],dti=[],dtf=[],dtf_lv=[],
+		     dtf_li=[],dtf_i=0,dtf_lv_unit=[], dtf_li_unit=[]):
 		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
 					# variables except dtf_i
 		self._dti = dti		# Initial Timestep Size
@@ -259,6 +259,22 @@ class ptimestepper(object):
 	def _get_max_saturation_change(self): return self._max_saturation_change
 	def _set_max_saturation_change(self,value): self._max_saturation_change = value
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
+
+class plsolver(object):
+	""" Class for linear solver
+
+	"""
+	
+	def __init__(self, name='', solver=''):
+		self._name = name	# TRAN, TRANSPORT / FLOW
+		self._solver = solver	# Solver Type
+		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_solver(self): return self._solver
+	def _set_solver(self,value): self._solver = value
+	solver = property(_get_solver, _set_solver)
 
 class pnsolver(object):
 	""" Class for newton solver
@@ -607,23 +623,69 @@ class pstrata(object):
 	
 class pchemistry(object):
 	"""Class for chemistry
-
+	m_kinetics_list (RATE_CONSTANT) is not complete
 	"""
 	
-	def __init__(self, pspecies=None, molal=False, output=None):
-		self._pspecies = pspecies	# primary_species (eg. 'A(aq') - string
+	def __init__(self, pspecies_list=[], sec_species_list=[], gas_species_list=[],
+		     minerals_list=[], m_kinetics_list=[], log_formulation=False,
+		     database=None, activity_coefficients=None, molal=False, output_list=[] ):
+		self.pspecies_list = pspecies_list	# primary_species (eg. 'A(aq') - string
+		self._sec_species_list = sec_species_list # Secondary_species (E.g. 'OH-' - string
+		self._gas_species_list = gas_species_list # E.g. 'CO2(g)'
+		self._minerals_list = minerals_list	# E.g. 'Calcite'
+		self._m_kinetics_list = m_kinetics_list	# has pchemistry_m_kinetic assigned to it
+		self._log_formulation = log_formulation
+		self._database = database		# Database path (String)
+		self._activity_coefficients = activity_coefficients
 		self._molal = molal		# boolean
-		self._output = output		# incl. molarity/all, species and mineral names - string
+		self._output_list = output_list		# incl. molarity/all, species and mineral names - string
 		
-	def _get_pspecies(self): return self._pspecies
-	def _set_pspecies(self,value): self._pspecies = value
-	pspecies = property(_get_pspecies, _set_pspecies)
+	def _get_pspecies_list(self): return self._pspecies_list
+	def _set_pspecies_list(self,value): self._pspecies_list = value
+	pspecies_list = property(_get_pspecies_list, _set_pspecies_list)
+	def _get_sec_species_list(self): return self._sec_species_list
+	def _set_sec_species_list(self,value): self._sec_species_list = value
+	sec_species_list = property(_get_sec_species_list, _set_sec_species_list)
+	def _get_gas_species_list(self): return self._gas_species_list
+	def _set_gas_species_list(self,value): self._gas_species_list = value
+	gas_species_list = property(_get_gas_species_list, _set_gas_species_list)	
+	def _get_minerals_list(self): return self._minerals_list
+	def _set_minerals_list(self,value): self._minerals_list = value
+	minerals_list = property(_get_minerals_list, _set_minerals_list)	
+	def _get_m_kinetics_list(self): return self._m_kinetics_list
+	def _set_m_kinetics_list(self,value): self._m_kinetics_list = value
+	m_kinetics_list = property(_get_m_kinetics_list, _set_m_kinetics_list)
+	def _get_log_formulation(self): return self._log_formulation
+	def _set_log_formulation(self,value): self._log_formulation = value
+	log_formulation = property(_get_log_formulation, _set_log_formulation)
+	def _get_database(self): return self._database
+	def _set_database(self,value): self._database = value
+	database = property(_get_database, _set_database)
+	def _get_activity_coefficients(self): return self._activity_coefficients
+	def _set_activity_coefficients(self,value): self._activity_coefficients = value
+	activity_coefficients = property(_get_activity_coefficients, _set_activity_coefficients)
 	def _get_molal(self): return self._molal
 	def _set_molal(self,value): self._molal = value
 	molal = property(_get_molal, _set_molal)
-	def _get_output(self): return self._output
-	def _set_output(self,value): self._output = value
-	output = property(_get_output, _set_output)
+	def _get_output_list(self): return self._output_list
+	def _set_output_list(self,value): self._output_list = value
+	output_list = property(_get_output_list, _set_output_list)
+
+class pchemistry_m_kinetic(object):
+	"""Sub-class for pchemistry. 
+	mineral kinetics are assigned to m_kinetics_list in pchemistry.
+	"""
+	
+	def __init__(self, name=None, rate_constant_list=[]):
+		self.name = name
+		self.rate_constant_list = rate_constant_list
+	
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_rate_constant_list(self): return self._rate_constant_list
+	def _set_rate_constant_list(self,value): self._rate_constant_list = value
+	rate_constant_list = property(_get_rate_constant_list, _set_rate_constant_list)
 	
 class ptransport(object):
 	"""Class for transport conditions
@@ -672,10 +734,11 @@ class pconstraint_concentration(object):
 
 	"""
 	
-	def __init__(self, pspecies=None, value=None, constraint=None):
+	def __init__(self, pspecies='', value=None, constraint='', element=''):
 		self._pspecies = pspecies	# Primary Species Name (H+, O2(aq), etc.)
-		self.value = value
+		self._value = value
 		self._constraint = constraint	# (F, T, TOTAL_SORB, SC, etc.)
+		self._element = element		# mineral or gas
 		
 	def _get_pspecies(self): return self._pspecies
 	def _set_pspecies(self,value): self._pspecies = value
@@ -686,6 +749,9 @@ class pconstraint_concentration(object):
 	def _get_constraint(self): return self._constraint
 	def _set_constraint(self,value): self._constraint = value
 	constraint = property(_get_constraint, _set_constraint)
+	def _get_element(self): return self._element
+	def _set_element(self,value): self._element = value
+	element = property(_get_element, _set_element)
 	
 class pdata(object):
 	"""Class for pflotran data file
@@ -701,13 +767,14 @@ class pdata(object):
 		self._mode = pmode()
 		self._chemistry = None
 		self._grid = pgrid()
-		self._timestepper = ptimestepper()
+		self._timestepper = None
 		self._proplist = []
 		self._time = ptime()
+		self._lsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
 		self._nsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
 		self._output = poutput()
 		self._fluid = pfluid()
-		self._saturation = psaturation('')
+		self._saturation = None
 		self._regionlist = []	# There are multiple regions
 		self._observation = None
 		self._flowlist = []
@@ -719,7 +786,6 @@ class pdata(object):
 		self._constraint_list = []
 		self._filename = filename
 		
-#		if filename: self.read(filename) # read in file if requested upon initialisation
 		# run object
 		self._path = ppath(parent=self)
 		self._running = False	# boolean indicating whether a simulation is in progress
@@ -794,6 +860,7 @@ class pdata(object):
 				 self._read_timestepper,
 				 self._read_prop,
 				 self._read_time,
+				 self._read_lsolver,
 				 self._read_nsolver,
 				 self._read_output,
 				 self._read_fluid,
@@ -818,9 +885,9 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','material_property','mode','grid',
-					 'timestepper','newton_solver','saturation_function',
-					 'region','flow_condition','boundary_condition',
-					 'transport_condition','constraint',
+					 'timestepper','linear_solver','newton_solver',
+					 'saturation_function','region','flow_condition',
+					 'boundary_condition','transport_condition','constraint',
 					 'uniform_velocity']:
 						
 						read_fn[card](infile,line)
@@ -851,7 +918,7 @@ class pdata(object):
 		else: print 'ERROR: grid is required, it is currently reading as empty\n'
 		
 		if self.timestepper : self._write_timestepper(outfile)
-		else: print 'ERROR: timestepper is required, it is currently reading as empty\n'
+		else: print 'info: timestepper not detected\n'
 		
 		if self.time: self._write_time(outfile)
 		else: print 'ERROR: time is required, it is currently reading as empty\n'
@@ -859,8 +926,11 @@ class pdata(object):
 		if self.proplist: self._write_prop(outfile)
 		else: print 'ERROR: proplist is required, it is currently reading as empty\n'
 		
+		if self.lsolverlist: self._write_lsolver(outfile)
+		else: print 'info: lsolverlist (linear solver list) is not detected\n'
+		
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'ERROR: nsolverlist is required, it is currently reading as empty\n'
+		else: print 'info: nsolverlist (newton solver list) is not detected\n'
 		
 		if self.output: self._write_output(outfile)
 		else: print 'ERROR: output is required, it is currently reading as empty\n'
@@ -869,7 +939,7 @@ class pdata(object):
 		else: print 'ERROR: fluid is required, it is currently reading as empty\n'
 		
 		if self.saturation: self._write_saturation(outfile)
-		else: print 'ERROR: saturation is required, it is currently reading as empty\n'
+		else: print 'info: saturation not detected\n'
 		
 		if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
@@ -1015,28 +1085,26 @@ class pdata(object):
 			outfile.write('\tBOUNDS\n')
 			outfile.write('\t\t')
 			for i in range(3):
-				outfile.write(strD(grid.lower_bounds[i]) + ' ')
-			outfile.write('\n')
-			outfile.write('\t\t')
+				outfile.write(strD(grid.lower_bounds[i]) + '\t')
+			outfile.write('\n\t\t')
 			for i in range(3):
-				outfile.write(strD(grid.upper_bounds[i]) + ' ')
-			outfile.write('\n')
-			outfile.write('\tEND\n')
+				outfile.write(strD(grid.upper_bounds[i]) + '\t')
+			outfile.write('\n\t/\n')
 		else:
 			outfile.write('\tDXYZ\n')
 			for i in range(3):
 				outfile.write('\t\t' + strD(grid.dxyz[i]) + '\n')
-			outfile.write('\tEND\n')
+			outfile.write('\t/\n')
 		outfile.write('\tORIGIN' + ' ')
 		for i in range(3):
-			outfile.write(strD(grid.origin[i]) + ' ')
+			outfile.write(strD(grid.origin[i]) + '  ')
 		outfile.write('\n')
-		outfile.write('\tNXYZ' + ' ')
+		outfile.write('\tNXYZ' + '  ')
 		for i in range(3):
-			outfile.write(strD(grid.nxyz[i]) + ' ')
+			outfile.write(strD(grid.nxyz[i]) + '  ')
 		outfile.write('\n')
 		if grid.gravity_bool:
-			outfile.write('\tGRAVITY' + ' ')
+			outfile.write('\tGRAVITY' + '  ')
 			for i in range(3):
 				outfile.write(strD(grid.gravity[i]) + ' ')
 			outfile.write('\n')
@@ -1100,8 +1168,6 @@ class pdata(object):
 		outfile.write('TIMESTEPPER\n')
 		if self.timestepper.ts_acceleration:
                 	outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
-		else:
-			print 'error: timestepper.ts_acceleration is required\n'
 		if self.timestepper.num_steps_after_cut:
                   outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
                                 str(self.timestepper.num_steps_after_cut) + '\n')
@@ -1168,11 +1234,11 @@ class pdata(object):
 					line = infile.readline() 			# get next line
 					key = line.split()[0].lower() 		# take first keyword
 					if key == 'perm_x':
-						np_permeability[0] = floatD(line.split()[-1])
+						np_permeability.append(floatD(line.split()[-1]))
 					elif key == 'perm_y':
-						np_permeability[1] = floatD(line.split()[-1])
+						np_permeability.append(floatD(line.split()[-1]))
 					elif key == 'perm_z':
-						np_permeability[2] = floatD(line.split()[-1])
+						np_permeability.append(floatD(line.split()[-1]))
 					elif key in ['/','end']: keepReading2 = False
 			elif key in ['/','end']: keepReading = False
 		new_prop = pmaterial(np_id,np_name,np_porosity,np_tortuosity,np_density,
@@ -1184,21 +1250,30 @@ class pdata(object):
 	def _write_prop(self,outfile):
 		self._header(outfile,headers['material_property'])
 		for prop in self.proplist:
-			outfile.write('MATERIAL_PROPERTY\t')
-			outfile.write(prop.name+'\n')
-			outfile.write('\tID\t'+str(prop.id)+'\n')
-			outfile.write('\tPOROSITY\t'+strD(prop.porosity)+'\n')
-			outfile.write('\tTORTUOSITY\t'+strD(prop.tortuosity)+'\n')
-			outfile.write('\tROCK_DENSITY\t'+strD(prop.density)+'\n')
-			outfile.write('\tSPECIFIC_HEAT\t'+strD(prop.specific_heat)+'\n')
-			outfile.write('\tTHERMAL_CONDUCTIVITY_DRY\t'+strD(prop.cond_dry)+'\n')
-			outfile.write('\tTHERMAL_CONDUCTIVITY_WET\t'+strD(prop.cond_wet)+'\n')
-			outfile.write('\tSATURATION_FUNCTION\t'+prop.saturation+'\n')
-			outfile.write('\tPERMEABILITY\n')
-			outfile.write('\t\tPERM_X\t'+strD(prop.permeability[0])+'\n')
-			outfile.write('\t\tPERM_Y\t'+strD(prop.permeability[1])+'\n')
-			outfile.write('\t\tPERM_Z\t'+strD(prop.permeability[2])+'\n')
-			outfile.write('\tEND\n')
+			if prop.name:
+				outfile.write('MATERIAL_PROPERTY\t' + prop.name + '\n')
+			if prop.id:
+				outfile.write('\tID\t'+str(prop.id)+'\n')
+			if prop.porosity:
+				outfile.write('\tPOROSITY\t'+strD(prop.porosity)+'\n')
+			if prop.tortuosity:
+				outfile.write('\tTORTUOSITY\t'+strD(prop.tortuosity)+'\n')
+			if prop.density:
+				outfile.write('\tROCK_DENSITY\t'+strD(prop.density)+'\n')
+			if prop.specific_heat:
+				outfile.write('\tSPECIFIC_HEAT\t'+strD(prop.specific_heat)+'\n')
+			if prop.cond_dry:
+				outfile.write('\tTHERMAL_CONDUCTIVITY_DRY\t'+strD(prop.cond_dry)+'\n')
+			if prop.cond_wet:
+				outfile.write('\tTHERMAL_CONDUCTIVITY_WET\t'+strD(prop.cond_wet)+'\n')
+			if prop.saturation:
+				outfile.write('\tSATURATION_FUNCTION\t'+prop.saturation+'\n')
+			if prop.permeability:
+				outfile.write('\tPERMEABILITY\n')
+				outfile.write('\t\tPERM_X\t'+strD(prop.permeability[0])+'\n')
+				outfile.write('\t\tPERM_Y\t'+strD(prop.permeability[1])+'\n')
+				outfile.write('\t\tPERM_Z\t'+strD(prop.permeability[2])+'\n')
+				outfile.write('\t/\n')
 			outfile.write('END\n\n')
 	
 	def _read_time(self,infile):
@@ -1214,30 +1289,31 @@ class pdata(object):
 		
 		keepReading = True
 		while keepReading:
-			line = infile.readline() 			# get next line
+			line = infile.readline() 		# get next line
 			key = line.split()[0].lower() 		# take first keyword
 			if key == 'final_time':
-				tstring = line.split()[1:]
-				if len(tstring) == 2:
-					np_tf[0] = floatD(tstring[0])
-					np_tf[1] = tstring[-1]
-				else:
-					np_tf[0] = floatD(tstring[0])
+				tstring = line.split()[1:]	# temp list of strings, 
+								# do not include 1st sub-string
+				if len(tstring) == 2:	# Do this if there is a time unit to read
+					np_tf.append(floatD(tstring[0]))
+					np_tf.append(tstring[-1])
+				else:			# No time unit being read in
+					np_tf.append(floatD(tstring[0]))
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
-					np_dti[0] = floatD(tstring[0])
-					np_dti[1] = tstring[-1]					
+					np_dti.append(floatD(tstring[0]))
+					np_dti.append(tstring[-1])	
 				else:
-					np_dti[0] = floatD(tstring[0])
+					np_dti.append(floatD(tstring[0]))
 			elif key == 'maximum_timestep_size':
 				if ('at' not in line):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
-						np_dtf[0] = floatD(tstring[0])
-						np_dtf[1] = tstring[-1]	
+						np_dtf.append(floatD(tstring[0]))
+						np_dtf.append(tstring[-1])
 					else:
-						np_dtf[0] = floatD(tstring[0])
+						np_dtf.append(floatD(tstring[0]))
 				elif ('at' in line):
 					## Read maximum_timestep_size with AT keyword 
 					if (key == 'maximum_timestep_size'):
@@ -1272,75 +1348,30 @@ class pdata(object):
 		self._header(outfile,headers['time'])
 		time = self.time
 		outfile.write('TIME\n')
-		outfile.write('\tFINAL_TIME\t')	
 		
-	# Try statements are written so that the script can handle either 1 float,
-	# or a list with len 2.
-	# Done to handle the option of specifying a time unit
-		# write FINAL_TIME statement 
-		try:
-			time.tf[1] = time.tf[1].lower()	# Correct capitalization
-			if time.tf[1] == 's' or time.tf[1] == 'm' or time.tf[1] == 'h' or time.tf[1] == 'd' or time.tf[1] == 'mo' or time.tf[1] == 'y':
-				outfile.write(strD(time.tf[0])+' '+time.tf[1]+'\n')
-			elif time.tf[1] != None:
-				outfile.write(strD(time.tf[0])+' s\n')
-				print 'Warning: time.tf[1] (final time) has an unrecognized time unit. Default of seconds is being used.\n'
-			else:
-				print 'Warning: time.tf[1] (final time) has an unspecified time unit. Default of seconds is being used.\n'
-				outfile.write(strD(time.tf[0])+' s\n')
-		except:	# Used when var is not a list
+		# write FINAL_TIME statement (tf)
+		if time.tf:
 			try:
-				if time.tf:
-					print 'Warning: time.tf (final time) has an unspecified time unit. Default of seconds is being used.\n'
-					outfile.write(strD(time.tf)+' s\n')
-				else:
-					print 'error: time.tf (final time) is required.\n'
+				outfile.write('\tFINAL_TIME\t' + strD(time.tf[0]))
+				outfile.write('  ' + time.tf[1] +'\n')
 			except:
-				print 'error: time.tf (final time) should be a list of length 2 (float, string) or a single float\n'
-
-		outfile.write('\tINITIAL_TIMESTEP_SIZE\t')
+				print 'ERROR: time.tf (final time) input is invalid. Format should be a list: [number, string]\n'
 		
-		# write INITIAL_TIMESTEP_SIZE statement
-		try:
-			time.dti[1] = time.dti[1].lower()	# Correct capitalization
-			if time.dti[1] == 's' or time.dti[1] == 'm' or time.dti[1] == 'h' or time.dti[1] == 'd' or time.dti[1] == 'mo' or time.dti[1] == 'y':
-				outfile.write(strD(time.dti[0])+' '+time.dti[1]+'\n')
-			elif time.dti[1] != None:
-				outfile.write(strD(time.dti[0])+' s\n')
-				print 'Warning: time.dti[1] (initial_timestep_size) has an unrecognized time unit. Default of seconds is being used.\n'
-			else:
-				print 'Warning: time.dti[1] (initial_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
-				outfile.write(strD(time.dti[0])+' s\n')
-		except:
+		# write INITIAL_TIMESTEP_SIZE statement (dti)
+		if time.dti:
 			try:
-				if time.dti:
-					print 'Warning: time.dti (initial_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
-					outfile.write(strD(time.dti)+' s\n')
-				else:
-					print 'error: time.dti (initial_timestep_size) is required.\n'
+				outfile.write('\tINITIAL_TIMESTEP_SIZE\t' + strD(time.dti[0]))
+				outfile.write('  ' + time.dti[1] +'\n')
 			except:
-				print 'error: time.dti (initial timestep size) should be a list of length 2 (float, string)\n'
+				print 'ERROR: time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]\n'
 		
-		# write MAXIMUM_TIMESTEP_SIZE statement	
-		outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-		try:
-			time.dtf[1] = time.dtf[1].lower()	# Correct capitalization
-			if time.dtf[1] == 's' or time.dtf[1] == 'm' or time.dtf[1] == 'h' or time.dtf[1] == 'd' or time.dtf[1] == 'mo' or time.dtf[1] == 'y':
-				outfile.write(strD(time.dtf[0])+' '+time.dtf[1]+'\n')
-			elif time.dtf[1] != None:
-				outfile.write(strD(time.dtf[0])+' s\n')
-				print 'Warning: time.dtf[1] (maximum_timestep_size) has an unrecognized time unit. Default of seconds is being used.\n'
-			else:
-				print 'Warning: time.dtf[1] (maximum_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
-		except:	# Used when var is not a list
+		# write MAXIMUM_TIMESTEP_SIZE statement	dtf
+		if time.dtf:
 			try:
-				if time.dtf:
-					print 'Warning: time.dtf (maximum_timestep_size) has an unspecified time unit. Default of seconds is being used.\n'
-					oudtfile.write(strD(time.dtf)+' s\n')
-				else:
-					print 'error: time.dtf (maximum_timestep_size) is required.\n'
+				outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t' + strD(time.dtf[0]))
+				outfile.write('  ' + time.dtf[1] +'\n')
 			except:
-				print 'error: time.dtf (maximum_timestep_size) should be a list of length 2 (float, string) or a single float\n'
+				print 'ERROR: time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]\n'
 						
 		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
@@ -1369,8 +1400,24 @@ class pdata(object):
 					
 		outfile.write('END\n\n')
 		
+	def _read_lsolver(self,infile,line):
+		lsolver = plsolver()	# temporary object while reading
+		lsolver.name =  line.split()[-1].lower() # solver type - tran_solver or flow_solver
+		
+		keepReading = True
+		
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first key word
+			
+			if key == 'solver':
+				lsolver.solver = line.split()[-1] # Assign last word
+			elif key in ['/','end']: keepReading = False
+		
+		self._lsolverlist.append(lsolver)	# Assign object
+		
 	def _read_nsolver(self,infile,line):
-		np_name = line.split()[-1].lower()	# newton solver type - tran_solver or flow_solver
+		np_name = line.split()[-1].lower() # newton solver type - tran_solver or flow_solver
 		p = pnsolver('')		# Assign Defaults
 		np_atol = p.atol
 		np_rtol = p.rtol
@@ -1405,6 +1452,18 @@ class pdata(object):
 		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
 					np_max_it,np_max_f)	# Create an empty newton solver
 		self._nsolverlist.append(new_nsolver)
+		
+	def _write_lsolver(self,outfile):
+		self._header(outfile,headers['linear_solver'])
+		
+		for lsolver in self.lsolverlist:
+			if lsolver.name:
+				outfile.write('LINEAR_SOLVER\t' + lsolver.name.lower() + '\n')
+			else: 
+				print 'ERROR: name is required when using linear solver.'
+			if lsolver.solver:
+				outfile.write('\tSOLVER\t' + lsolver.solver.lower() + '\n')
+			outfile.write('END\n\n')
 		
 	def _write_nsolver(self,outfile):
 		self._header(outfile,headers['newton_solver'])
@@ -1513,7 +1572,7 @@ class pdata(object):
 		if output.format:
 			for i in range(0, len(output.format)):
 				outfile.write('\tFORMAT\t')
-				outfile.write(str(output.format[i]) + '\n')
+				outfile.write(str(output.format[i].upper()) + '\n')
 		if output.velocities:
 			outfile.write('\t'+'VELOCITIES'+'\n')
 		if output.mass_balance:
@@ -1551,7 +1610,7 @@ class pdata(object):
 		
 	def _read_saturation(self,infile,line):
 		np_name = line.split()[-1].lower()	# saturation function name, passed in.
-		p = psaturation('')	# assign defaults before reading in values
+		p = psaturation()	# assign defaults before reading in values
 		np_permeability_function_type = p.permeability_function_type
 		np_saturation_function_type = p.saturation_function_type
 		np_residual_saturation_liquid = p.residual_saturation_liquid
@@ -1916,8 +1975,6 @@ class pdata(object):
 		# Write out initial_condition variables
 		if initial_condition.flow:
 			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow.lower() + '\n')
-		else:
-			print 'error: initial_condition.flow (flow_condition) is required\n'
 			
 		if initial_condition.transport:
 			outfile.write('\tTRANSPORT_CONDITION\t'+initial_condition.transport.lower()+'\n')
@@ -1925,7 +1982,7 @@ class pdata(object):
 		if initial_condition.region:
 			outfile.write('\tREGION\t' + initial_condition.region.lower() + '\n')
 		else:
-			print 'error: initial_condition.region is required\n'
+			print 'ERROR: initial_condition.region is required\n'
 		
 		outfile.write('END\n\n')
 		
@@ -2045,66 +2102,154 @@ class pdata(object):
 		if s.region:
 			outfile.write('\tREGION\t' + s.region.lower() + '\n')
 		else:
-			print 'error: strata.region is required\n'
+			print 'ERROR: strata.region is required\n'
 		if s.material:
 			outfile.write('\tMATERIAL\t' + s.material.lower() + '\n')
 		else:
-			print 'error: strata.material is required\n'
+			print 'ERROR: strata.material is required\n'
 		outfile.write('END\n\n')
 		
 	def _read_chemistry(self, infile):
-		c = pchemistry()
-		np_pspecies = c.pspecies
-		np_molal = c.molal
-		np_output = c.output
+		chem = pchemistry()
+		
+		# lists needs to be reset in python so their not continually appended to.
+		chem.pspecies_list = []
+		chem.sec_species_list = []
+		chem.gas_species_list = []
+		chem.minerals_list = []
+		chem.m_kinetics_list = []
+		chem.output_list = []
 		
 		keepReading = True
 		
-		end_count = 0	# Counting for determining which / or 'END' is final
-				# Can also be used to limit when a if key condition will execute.
-		total_end_count = 1	# Determines when to finally stop reading by
-					# limiting total amount of / or 'END' that can be read
-					# before loop terminates.
-		
 		while keepReading:	# Read through all cards
 			line = infile.readline()	# get next line
-			key = line.strip().lower()	# take first key word
+			try:
+				key = line.strip().split()[0].lower()	# take first key word
+			except(IndexError):
+				continue # Read the next line if line is empty.
 			if key == 'primary_species':
-				total_end_count += 1	# Accomodate for the / or 'end'
-				line = infile.readline()	# get next line
-				np_pspecies = line.strip()	
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					chem.pspecies_list.append(line.strip())
+			elif key == 'secondary_species':
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					chem.sec_species_list.append(line.strip())
+			elif key == 'gas_species':
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					chem.gas_species_list.append(line.strip())
+			elif key == 'minerals':
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					chem.minerals_list.append(line.strip())
+			elif key == 'mineral_kinetics':
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					
+					mkinetic = pchemistry_m_kinetic() # temporary object
+					mkinetic.rate_constant_list = []
+					
+					# assign kinetic mineral name
+					mkinetic.name = line.strip()
+					
+					# Write mineral attributes here
+					while True:
+						line = infile.readline()	# get next line
+						if line.strip().lower() in ['/','end']: break
+						
+						# key is a kinetic mineral attribute here
+						key = line.strip().split()[0].lower() # take 1st
+						
+						tstring = line.split()[1:] # Assigns the rest of the line
+						
+						# assign kinetic mineral attributes
+						if key == 'rate_constant':
+							for substring in tstring:
+								try:
+									mkinetic.rate_constant_list.append(floatD(substring))
+								except(ValueError):
+									mkinetic.rate_constant_list.append(substring)
+								
+					chem.m_kinetics_list.append(mkinetic) # object assigned
+			elif key == 'database':
+				chem.database = line.split()[-1]	# take last word
+			elif key == 'log_formulation':
+				chem.log_formulation = True
+			elif key == 'activity_coefficients':
+				chem.activity_coefficients = line.split()[-1]
 			elif key == 'molal':
-				np_molal = True
+				chem.molal = True
 			elif key == 'output':
-				total_end_count += 1	# Accomodate for the / or 'end'
-				line = infile.readline()	# get next line
-				np_output = line.strip()
-			elif key in ['/','end']: 
-				end_count += 1
-				if end_count == total_end_count:
-					keepReading = False
+				while True:
+					line = infile.readline()	# get next line
+					if line.strip() in ['/','end']: break
+					chem.output_list.append(line.strip())
+			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty chemistry object and assign the values read in
-		new_chemistry = pchemistry(np_pspecies,np_molal,np_output)
-		self._chemistry = new_chemistry
+		self._chemistry = chem
 		
 	def _write_chemistry(self,outfile):
 		self._header(outfile,headers['chemistry'])
 		c = self.chemistry
+		outfile.write('CHEMISTRY\n')
+		
 		# Write out chemistry variables
-		if c.pspecies:
-		# Database entry check needed
-			outfile.write('CHEMISTRY\n')
+		if c.pspecies_list:
 			outfile.write('\tPRIMARY_SPECIES\n')
-			outfile.write('\t\t' + c.pspecies + '\n')
-			outfile.write('\t/\n\n')
+			for p in c.pspecies_list: # p = primary_specie in primary_species_list
+				outfile.write('\t\t' + p + '\n')
+			outfile.write('\t/\n')
+		if c.sec_species_list:
+			outfile.write('\tSECONDARY_SPECIES\n')
+			for s in c.sec_species_list: # s = secondary_specie
+				outfile.write('\t\t' + s + '\n')
+			outfile.write('\t/\n')
+		if c.gas_species_list:
+			outfile.write('\tGAS_SPECIES\n')
+			for g in c.gas_species_list: # s = gas_specie
+				outfile.write('\t\t' + g + '\n')
+			outfile.write('\t/\n')
+		if c.minerals_list:
+			outfile.write('\tMINERALS\n')
+			for m in c.minerals_list: # m = mineral
+				outfile.write('\t\t' + m + '\n')
+			outfile.write('\t/\n')
+		if c.m_kinetics_list:
+			outfile.write('\tMINERAL_KINETICS\n')
+			for mk in c.m_kinetics_list: # mk = mineral_kinetics
+				outfile.write('\t\t' + mk.name + '\n')
+				
+				if mk.rate_constant_list:
+					outfile.write('\t\t\tRATE_CONSTANT  ')
+				for rate in mk.rate_constant_list: 
+					try:
+						outfile.write(strD(rate) + '  ')
+					except(TypeError):
+						outfile.write(rate + '  ')
+				outfile.write('\n\t\t/\n') # marks end for mineral name
+			outfile.write('\t/\n') # marks end for mineral_kinetics
+		if c.database:
+			outfile.write('\tDATABASE\t' + c.database + '\n')
+		if c.log_formulation:
+			outfile.write('\tLOG_FORMULATION\n')
+		if c.activity_coefficients:
+			outfile.write('\tACTIVITY_COEFFICIENTS\t' + c.activity_coefficients.upper() + '\n')
 		if c.molal:
 			outfile.write('\tMOLAL\n')
-		if c.output:
+		if c.output_list:
 			outfile.write('\tOUTPUT\n')
-			outfile.write('\t\t' + c.output.upper() + '\n')
+			for o in c.output_list:	# o = output in in output_list
+				outfile.write('\t\t' + o + '\n')
 			outfile.write('\t/\n')
-			outfile.write('/\n\n')
+		outfile.write('END\n\n')
 		
 	def _read_transport(self,infile,line):
 		p = ptransport('')
@@ -2174,9 +2319,9 @@ class pdata(object):
 			outfile.write('END\n\n')	# END FOR TRANSPORT_CONDITION
 			
 	def _read_constraint(self, infile, line):
-		p = pconstraint('')
-		np_name = line.split()[-1].lower()	# constraint name passed in.
-		np_concentration_list = []
+		constraint = pconstraint()
+		constraint.name = line.split()[-1].lower()	# constraint name passed in.
+		constraint.concentration_list = []
 		
 		keepReading = True
 		
@@ -2185,29 +2330,29 @@ class pdata(object):
 			key = line.split()[0].lower()	# take first key word
 			
 			if key == 'concentrations':
-				np_pspecies = None
-				np_value = None
-				np_constraint = None
 				
-				line = infile.readline()
-				tstring = line.split()	# Convert to list
-				i=0	# index
-				c=0	# count
-				while c < len(tstring):	# Determines # of execution times by # of words on line
-					i = 0
-					np_pspecies = tstring[i] ; i+=1		# 1st word
-					np_value = floatD(tstring[i]) ; i+=1	# 2nd word, etc.
-					np_constraint = tstring[i]
-					c += 1
+				while True:
+					line = infile.readline() # get next line
+					tstring = line.split()	# Convert line to temporary list of strings
 					
-				new_concentration = pconstraint_concentration(np_pspecies, np_value, np_constraint)
-				np_concentration_list.append(new_concentration)
+					if line.strip().lower() in ['/','end']: 
+						break # Stop loop if line is a / or 'end'
+					
+					concentrations = pconstraint_concentration()
+					
+					# Assign concentrations - one line
+					try:
+						concentrations.pspecies = tstring[0]
+						concentrations.value = floatD(tstring[1])
+						concentrations.constraint = tstring[2]
+						concentrations.element = tstring[3]
+					except(IndexError):
+						pass # No assigning is done if a value doesn't exist while being read in.
+					constraint.concentration_list.append(concentrations)
 					
 			elif key in ['/','end']: keepReading = False
 			
-		new_constraint = pconstraint(np_name, np_concentration_list)
-		
-		self._constraint_list.append(new_constraint)
+		self._constraint_list.append(constraint)
 		
 	def _write_constraint(self, outfile):
 		self._header(outfile,headers['constraint'])
@@ -2222,14 +2367,18 @@ class pdata(object):
 			outfile.write('\tCONCENTRATIONS\n')
 			
 			for concn in c.concentration_list: # concn = concentration, c = constraint
-				outfile.write('\t\t'+concn.pspecies)
-				outfile.write('\t'+strD(concn.value))
-				outfile.write('\t'+concn.constraint)
+				if concn.pspecies:
+					outfile.write('\t\t'+concn.pspecies)
+				if concn.value:
+					outfile.write('\t'+strD(concn.value))
+				if concn.constraint:
+					outfile.write('\t'+concn.constraint)
+				if concn.element:
+					outfile.write('\t'+concn.element)
 				outfile.write('\n')
 				
-			outfile.write('\tEND\n') 	# END for concentrations
-			outfile.write('END\n\n')	# END for constraint	
-				
+			outfile.write('\t/\n') 	# END for concentrations
+			outfile.write('END\n\n')	# END for constraint
 			
 	def _header(self,outfile,header):
 		if not header: return
@@ -2265,6 +2414,9 @@ class pdata(object):
 	def _get_timestepper(self): return self._timestepper
 	def _set_timestepper(self, object): self._timestepper = object
 	timestepper = property(_get_timestepper, _set_timestepper) #: (**)
+	def _get_lsolverlist(self): return self._lsolverlist
+	def _set_lsolverlist(self, object): self._lsolverlist = object
+	lsolverlist = property(_get_lsolverlist, _set_lsolverlist) #: (**)
 	def _get_nsolverlist(self): return self._nsolverlist
 	def _set_nsolverlist(self, object): self._nsolverlist = object
 	nsolverlist = property(_get_nsolverlist, _set_nsolverlist) #: (**)

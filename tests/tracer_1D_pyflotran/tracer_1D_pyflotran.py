@@ -20,9 +20,9 @@ dat.uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
 # set chemistry
 #--------------------------------------------------------------
 c = pchemistry()
-c.pspecies = 'A(aq)'
+c.pspecies_list = ['A(aq)']
 c.molal = True
-c.output = 'ALL'
+c.output_list = ['All']
 dat.chemistry = c
 #--------------------------------------------------------------
 
@@ -252,6 +252,11 @@ concentration.constraint = 'T'
 constraint.concentration_list.append(concentration)	# assign concentration
 dat.constraint_list.append(constraint)	# assign constraint
 #--------------------------------------------------------------
+
+###############################################################
+
+# Test Write
+#dat.write('tracer_1D.in')
 
 # Write to File
 dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

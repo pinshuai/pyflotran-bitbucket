@@ -74,7 +74,7 @@ dat.proplist.append(m)
 t = ptime()
 t.tf = [0.25e0, 'y']	# FINAL_TIME
 t.dti = [1.e-6, 'y']	# INITIAL_TIMESTEP_SIZE
-t.dtf = [50.e0,'y']	# MAXIMUM_TIMESTEP_SIZE
+t.dtf = [50.e0, 'y']	# MAXIMUM_TIMESTEP_SIZE
 t.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]	# MAXIMUM_TIMESTEP_SIZE before 'at'
 t.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time unit (eg. 'y')
 t.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
@@ -350,6 +350,9 @@ sc.material = 'SOIL1'
 dat.strata = sc
 #--------------------------------------------------------------
 
+# Test write
+dat.write('mphase.in')
+
 # Write to file and execute that input file
-dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+#dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
 

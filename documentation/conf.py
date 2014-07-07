@@ -184,7 +184,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'PyFLOTRAN.tex', u'PyFLOTRAN Documentation',
-   u'Satish Karra, Cory Kitay, David Dempsey', 'manual'),
+   u'Satish Karra, David Dempsey, Cory Kitay', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -214,7 +214,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'pyflotran', u'PyFLOTRAN Documentation',
-     [u'Satish Karra, Cory Kitay, David Dempsey'], 1)
+     [u'Satish Karra, David Dempsey, Cory Kitay'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -228,7 +228,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'PyFLOTRAN', u'PyFLOTRAN Documentation',
-   u'Satish Karra, Cory Kitay, David Dempsey', 'PyFLOTRAN', 'One line description of project.',
+   u'Satish Karra, David Dempsey, Cory Kitay', 'PyFLOTRAN', 'One line description of project.',
    'Miscellaneous'),
 ]
 

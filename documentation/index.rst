@@ -13,6 +13,8 @@ Contents:
 
    intro 
    pdata
+   ptool
+   pdflt
    examples
 
 Indices and tables

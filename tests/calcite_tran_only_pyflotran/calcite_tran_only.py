@@ -18,51 +18,51 @@ dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
 
 # set chemistry
 #--------------------------------------------------------------
-c = pchemistry()
-c.pspecies_list = ['H+', 'HCO3-', 'Ca++']
-c.sec_species_list = ['OH-', 'CO3--', 'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
-c.gas_species_list = ['CO2(g)']
-c.minerals_list = ['Calcite']
-mk = pchemistry_m_kinetic()	# new mineral kinetic object
-mk.name = 'Calcite'
-mk.rate_constant_list = [1.e-6, 'mol/m^2-sec']
-c.m_kinetics_list.append(mk)	# assigning for mineral kinetic object done here
-c.database = '/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/hanford.dat'
-c.log_formulation = True
-c.activity_coefficients = 'TIMESTEP'
-c.output_list = ['PH','all']
-dat.chemistry = c	# assign chemistry object
+chemistry = pchemistry()
+chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
+chemistry.sec_species_list = ['OH-', 'CO3--', 'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
+chemistry.gas_species_list = ['CO2(g)']
+chemistry.minerals_list = ['Calcite']
+mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
+mineral_kinetic.name = 'Calcite'
+mineral_kinetic.rate_constant_list = [1.e-6, 'mol/m^2-sec']
+chemistry.m_kinetics_list.append(mineral_kinetic)	# assigning for mineral kinetic object done here
+chemistry.database = '/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/hanford.dat'
+chemistry.log_formulation = True
+chemistry.activity_coefficients = 'TIMESTEP'
+chemistry.output_list = ['PH','all']
+dat.chemistry = chemistry	# assign chemistry object
 #--------------------------------------------------------------
 
 # set grid
 #--------------------------------------------------------------
-g = pgrid()
-g.type = 'structured'
-g.lower_bounds = [0.0, 0.0, 0.0]
-g.upper_bounds = [100.0, 1.0, 1.0]
-g.bounds_bool = True
-g.orign = [0.0, 0.0, 0.0 ]
-g.nxyz = [100, 1, 1]
-dat.grid = g
+grid = pgrid()
+grid.type = 'structured'
+grid.lower_bounds = [0.0, 0.0, 0.0]
+grid.upper_bounds = [100.0, 1.0, 1.0]
+grid.bounds_bool = True
+grid.orign = [0.0, 0.0, 0.0 ]
+grid.nxyz = [100, 1, 1]
+dat.grid = grid
 #--------------------------------------------------------------
 
 # set time
 #--------------------------------------------------------------
-t = ptime()
-t.tf = [25.0, 'y']	# FINAL_TIME
-t.dti = [1.0, 'h']	# INITIAL_TIMESTEP_SIZE
-t.dtf = [0.25 ,'y']	# MAXIMUM_TIMESTEP_SIZE
-dat.time = t
+time = ptime()
+time.tf = [25.0, 'y']	# FINAL_TIME
+time.dti = [1.0, 'h']	# INITIAL_TIMESTEP_SIZE
+time.dtf = [0.25 ,'y']	# MAXIMUM_TIMESTEP_SIZE
+dat.time = time
 #--------------------------------------------------------------
 
 # set material properties aka prop_list
 #--------------------------------------------------------------
-mp = pmaterial()	# For assigning defaults
-mp.name = 'soil1'
-mp.id = 1
-mp.porosity = 0.25
-mp.tortuosity = 1.0
-dat.proplist.append(mp)
+material_propery = pmaterial()
+material_propery.name = 'soil1'
+material_propery.id = 1
+material_propery.porosity = 0.25
+material_propery.tortuosity = 1.0
+dat.proplist.append(material_propery)
 #--------------------------------------------------------------
 
 # set linear solvers
@@ -208,7 +208,7 @@ dat.constraint_list.append(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-#dat.write('calcite_tran_only.in')
+# dat.write('calcite_tran_only.in')
 
 # Write to file and execute that input file
 dat.run(input='calcite_tran_only.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

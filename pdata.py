@@ -927,10 +927,10 @@ class pdata(object):
 		else: print 'ERROR: proplist is required, it is currently reading as empty\n'
 		
 		if self.lsolverlist: self._write_lsolver(outfile)
-		else: print 'info: lsolverlist (linear solver list) is not detected\n'
+		else: print 'info: lsolverlist (linear solver list) not detected\n'
 		
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'info: nsolverlist (newton solver list) is not detected\n'
+		else: print 'info: nsolverlist (newton solver list) not detected\n'
 		
 		if self.output: self._write_output(outfile)
 		else: print 'ERROR: output is required, it is currently reading as empty\n'
@@ -983,9 +983,9 @@ class pdata(object):
 		
 	def _write_uniform_velocity(self,outfile):
 		self._header(outfile,headers['uniform_velocity'])
-		outfile.write('UNIFORM_VELOCITY\t')
+		outfile.write('UNIFORM_VELOCITY ')
 		for v in self.uniform_velocity.value_list:	# value in value_list
-			outfile.write(strD(v) + '\t')
+			outfile.write(strD(v) + ' ')
 		outfile.write('\n\n')
 		
 	def _read_mode(self,infile,line):
@@ -996,7 +996,7 @@ class pdata(object):
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
 		if self.mode.name:
-			outfile.write('MODE\t')
+			outfile.write('MODE ')
 			outfile.write(self.mode.name.lower()+'\n\n')
 			
 	def _read_co2_database(self,infile,line):
@@ -1004,7 +1004,7 @@ class pdata(object):
 	
 	def _write_co2_database(self,outfile):
 		self._header(outfile,headers['co2_database'])
-		outfile.write('CO2_DATABASE\t' + self._co2_database + '\n\n')
+		outfile.write('CO2_DATABASE ' + self._co2_database + '\n\n')
 		
 	def _read_grid(self,infile,line):
 		g = pgrid()				# assign defaults before reading in values
@@ -1078,38 +1078,38 @@ class pdata(object):
 		grid = self.grid
 		outfile.write('GRID\n')
 		if grid.type:
-			outfile.write('\tTYPE\t' + grid.type + '\n')
+			outfile.write('  TYPE ' + grid.type + '\n')
 		else:
 			print 'error: grid.type is required'
 		if grid.bounds_bool:
-			outfile.write('\tBOUNDS\n')
-			outfile.write('\t\t')
+			outfile.write('  BOUNDS\n')
+			outfile.write('    ')
 			for i in range(3):
-				outfile.write(strD(grid.lower_bounds[i]) + '\t')
-			outfile.write('\n\t\t')
+				outfile.write(strD(grid.lower_bounds[i]) + ' ')
+			outfile.write('\n    ')
 			for i in range(3):
-				outfile.write(strD(grid.upper_bounds[i]) + '\t')
-			outfile.write('\n\t/\n')
-		else:
-			outfile.write('\tDXYZ\n')
+				outfile.write(strD(grid.upper_bounds[i]) + ' ')
+			outfile.write('\n  /\n') # / marks end of writing out bounds
+		else:	# DXYZ is only written if no bounds are provided
+			outfile.write('  DXYZ\n')
 			for i in range(3):
-				outfile.write('\t\t' + strD(grid.dxyz[i]) + '\n')
-			outfile.write('\t/\n')
-		outfile.write('\tORIGIN' + ' ')
+				outfile.write('    ' + strD(grid.dxyz[i]) + '\n')
+			outfile.write('  /\n')
+		outfile.write('  ORIGIN' + ' ')
 		for i in range(3):
-			outfile.write(strD(grid.origin[i]) + '  ')
+			outfile.write(strD(grid.origin[i]) + ' ')
 		outfile.write('\n')
-		outfile.write('\tNXYZ' + '  ')
+		outfile.write('  NXYZ' + ' ')
 		for i in range(3):
-			outfile.write(strD(grid.nxyz[i]) + '  ')
+			outfile.write(strD(grid.nxyz[i]) + ' ')
 		outfile.write('\n')
 		if grid.gravity_bool:
-			outfile.write('\tGRAVITY' + '  ')
+			outfile.write('  GRAVITY' + ' ')
 			for i in range(3):
 				outfile.write(strD(grid.gravity[i]) + ' ')
 			outfile.write('\n')
 		if grid.type == 'unstructured':
-			outfile.write('\tFILENAME' + grid.filename + '\n')
+			outfile.write('  FILENAME' + grid.filename + '\n')
 		outfile.write('END\n\n')
 	
 	def _read_timestepper(self,infile,line):
@@ -1167,30 +1167,32 @@ class pdata(object):
 		self._header(outfile,headers['timestepper'])
 		outfile.write('TIMESTEPPER\n')
 		if self.timestepper.ts_acceleration:
-                	outfile.write('\t' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
+			outfile.write('  ' + 'TS_ACCELERATION ' + 
+                                str(self.timestepper.ts_acceleration) + '\n')
 		if self.timestepper.num_steps_after_cut:
-                  outfile.write('\t' + 'NUM_STEPS_AFTER_CUT ' + 
+			outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' + 
                                 str(self.timestepper.num_steps_after_cut) + '\n')
 		if self.timestepper.max_ts_cuts:
-			outfile.write('\t' + 'MAX_TS_CUTS ' + str(self.timestepper.max_ts_cuts) + '\n')
+			outfile.write('  ' + 'MAX_TS_CUTS ' + str(self.timestepper.max_ts_cuts) + '\n')
 		if self.timestepper.max_steps:
-                  outfile.write('\t' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
+			outfile.write('  ' + 'MAX_STEPS ' + str(self.timestepper.max_steps) + '\n')
 		if self.timestepper.cfl_limiter:
-                  outfile.write('\t' + 'CFL_LIMITER ' + strD(self.timestepper.cfl_limiter) + '\n')
+			outfile.write('  ' + 'CFL_LIMITER ' + strD(self.timestepper.cfl_limiter) + '\n')
 		if self.timestepper.initialize_to_steady_state:
-                  outfile.write('\t' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
+			outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
 		if self.timestepper.run_as_steady_state:
-                  outfile.write('\t' + 'RUN_AS_STEADY_STATE ' + '\n')
+			outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
 		if self.timestepper.max_pressure_change:
-                  outfile.write('\t' + 'MAX_PRESSURE_CHANGE' + strD(self.timestepper.max_pressure_change) + '\n')
+			outfile.write('  ' + 'MAX_PRESSURE_CHANGE' + 
+                                strD(self.timestepper.max_pressure_change) + '\n')
 		if self.timestepper.max_temperature_change:
-                  outfile.write('\t' + 'MAX_TEMPERATURE_CHANGE' + 
+			outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE' +
                                 strD(self.timestepper.max_temperature_change) + '\n')
 		if self.timestepper.max_concentration_change:
-                  outfile.write('\t' + 'MAX_CONCENTRATION_CHANGE' +
+			outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE' +
                                 strD(self.timestepper.max_concentration_change) + '\n')
 		if self.timestepper.max_saturation_change:
-                  outfile.write('\t' + 'MAX_SATURATION_CHANGE' + 
+                  outfile.write('  ' + 'MAX_SATURATION_CHANGE' + 
                                 strD(self.timestepper.max_saturation_change) + '\n')
 		outfile.write('END\n\n')
 
@@ -1251,29 +1253,29 @@ class pdata(object):
 		self._header(outfile,headers['material_property'])
 		for prop in self.proplist:
 			if prop.name:
-				outfile.write('MATERIAL_PROPERTY\t' + prop.name + '\n')
+				outfile.write('MATERIAL_PROPERTY ' + prop.name + '\n')
 			if prop.id:
-				outfile.write('\tID\t'+str(prop.id)+'\n')
+				outfile.write('  ID '+str(prop.id)+'\n')
 			if prop.porosity:
-				outfile.write('\tPOROSITY\t'+strD(prop.porosity)+'\n')
+				outfile.write('  POROSITY '+strD(prop.porosity)+'\n')
 			if prop.tortuosity:
-				outfile.write('\tTORTUOSITY\t'+strD(prop.tortuosity)+'\n')
+				outfile.write('  TORTUOSITY '+strD(prop.tortuosity)+'\n')
 			if prop.density:
-				outfile.write('\tROCK_DENSITY\t'+strD(prop.density)+'\n')
+				outfile.write('  ROCK_DENSITY '+strD(prop.density)+'\n')
 			if prop.specific_heat:
-				outfile.write('\tSPECIFIC_HEAT\t'+strD(prop.specific_heat)+'\n')
+				outfile.write('  SPECIFIC_HEAT '+strD(prop.specific_heat)+'\n')
 			if prop.cond_dry:
-				outfile.write('\tTHERMAL_CONDUCTIVITY_DRY\t'+strD(prop.cond_dry)+'\n')
+				outfile.write('  THERMAL_CONDUCTIVITY_DRY '+strD(prop.cond_dry)+'\n')
 			if prop.cond_wet:
-				outfile.write('\tTHERMAL_CONDUCTIVITY_WET\t'+strD(prop.cond_wet)+'\n')
+				outfile.write('  THERMAL_CONDUCTIVITY_WET '+strD(prop.cond_wet)+'\n')
 			if prop.saturation:
-				outfile.write('\tSATURATION_FUNCTION\t'+prop.saturation+'\n')
+				outfile.write('  SATURATION_FUNCTION '+prop.saturation+'\n')
 			if prop.permeability:
-				outfile.write('\tPERMEABILITY\n')
-				outfile.write('\t\tPERM_X\t'+strD(prop.permeability[0])+'\n')
-				outfile.write('\t\tPERM_Y\t'+strD(prop.permeability[1])+'\n')
-				outfile.write('\t\tPERM_Z\t'+strD(prop.permeability[2])+'\n')
-				outfile.write('\t/\n')
+				outfile.write('  PERMEABILITY\n')
+				outfile.write('    PERM_X '+strD(prop.permeability[0])+'\n')
+				outfile.write('    PERM_Y '+strD(prop.permeability[1])+'\n')
+				outfile.write('    PERM_Z '+strD(prop.permeability[2])+'\n')
+				outfile.write('  /\n')
 			outfile.write('END\n\n')
 	
 	def _read_time(self,infile):
@@ -1352,52 +1354,59 @@ class pdata(object):
 		# write FINAL_TIME statement (tf)
 		if time.tf:
 			try:
-				outfile.write('\tFINAL_TIME\t' + strD(time.tf[0]))
-				outfile.write('  ' + time.tf[1] +'\n')
+				outfile.write('  FINAL_TIME ' + strD(time.tf[0])) # Write value
+				outfile.write(' ' + time.tf[1] +'\n')		  # Write time unit
 			except:
 				print 'ERROR: time.tf (final time) input is invalid. Format should be a list: [number, string]\n'
 		
 		# write INITIAL_TIMESTEP_SIZE statement (dti)
 		if time.dti:
 			try:
-				outfile.write('\tINITIAL_TIMESTEP_SIZE\t' + strD(time.dti[0]))
-				outfile.write('  ' + time.dti[1] +'\n')
+				outfile.write('  INITIAL_TIMESTEP_SIZE ' + 
+                                        strD(time.dti[0]))		# Write value
+				outfile.write(' ' + time.dti[1] +'\n')	# Write time unit
 			except:
 				print 'ERROR: time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]\n'
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	dtf
 		if time.dtf:
 			try:
-				outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t' + strD(time.dtf[0]))
-				outfile.write('  ' + time.dtf[1] +'\n')
+				outfile.write('  MAXIMUM_TIMESTEP_SIZE ' + strD(time.dtf[0]))
+				outfile.write(' ' + time.dtf[1] +'\n')
 			except:
 				print 'ERROR: time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]\n'
-						
-		# write more MAXIMUM_TIMESTEP_SIZE statements if applicable
+				
+		# Determine dtf_i size, the length of the smallest sized list being used
+		# with MAXIMUM_TIMESTEP_SIZE with key word 'at'.
+		# Displays a warning if the lists are not all of equal length.
+		if time.dtf_i == 0:	# Checks to see if user manually specified length so that 
+					# it does not re-assign user input
+			# Assign minimum value
+			time.dtf_i = min(len(time.dtf_lv), len(time.dtf_li), 
+					 len(time.dtf_lv_unit), len(time.dtf_li_unit))
+			
+			# Display warning if lists are not all of equal length
+			# This check may not be needed.
+			if not all(i == time.dtf_i for i in (len(time.dtf_lv), len(time.dtf_li),
+							     len(time.dtf_lv_unit),
+							     len(time.dtf_li_unit))):
+				print 'WARNING: The lengths of time.dtf_lv, time.dtf_li, time.dtf_lv, and time.dtf_li are not all of equal length.\n\tSome values assigned will be missing.\n'
+				
+		# Write more MAXIMUM_TIMESTEP_SIZE statements if applicable
 		for i in range(0, time.dtf_i):
 			try:
-				# write before AT
-				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()	# Correct capitalization
-				outfile.write('\tMAXIMUM_TIMESTEP_SIZE\t')
-				if time.dtf_lv_unit[i] == 's' or time.dtf_lv_unit[i] == 'm' or time.dtf_lv_unit[i] == 'h' or time.dtf_lv_unit[i] == 'd' or time.dtf_lv_unit[i] == 'mo' or time.dtf_lv_unit[i] == 'y' :
-					outfile.write(strD(time.dtf_lv[i])+' '+
-					time.dtf_lv_unit[i]+' ')
-				elif time.dtf_lv_unit[i] != None:
-					outfile.write(strD(time.dtf_lv[i])+' s\n')
-					print 'Warning: time.dtf_lv['+i+'] (maximum_time_step size list value with \'AT\') has an unrecognized time unit. Default of seconds is being used.\n'
-				else:
-					print 'Warning: time.dtf_lv['+i+'] (maximum_time_step size list value with \'AT\') has an unspecified time unit. Default of seconds is being used.\n'
-					outfile.write(strD(time.dtf_lv[i])+' s\n')
-				# write after AT
-				time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()	# Correct capitalization
+				# write before key word 'AT'
+				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()# lower capitalization
+				outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
+				outfile.write(strD(time.dtf_lv[i]) + ' ' + 	# Value 
+					      time.dtf_lv_unit[i])		# Time Unit
+				# write after key word 'AT'
+				time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()# lower capitalization
 				outfile.write(' at ')
-				if time.dtf_li_unit[i]:
-					outfile.write(strD(time.dtf_li[i])+' y\n')
-				else:
-					outfile.write(strD(time.dtf_li[i])+'\n')
+				outfile.write(strD(time.dtf_li[i]) + ' ' + 
+					      time.dtf_li_unit[i] + '\n')
 			except:
-				print 'error: time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list with either strings or nothing assigned. All lists should be of equal length with that number assigned to dtf_i\n'
-					
+				print 'ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of strings. All lists should be of equal length.\n'
 		outfile.write('END\n\n')
 		
 	def _read_lsolver(self,infile,line):
@@ -1458,11 +1467,11 @@ class pdata(object):
 		
 		for lsolver in self.lsolverlist:
 			if lsolver.name:
-				outfile.write('LINEAR_SOLVER\t' + lsolver.name.lower() + '\n')
+				outfile.write('LINEAR_SOLVER ' + lsolver.name.lower() + '\n')
 			else: 
 				print 'ERROR: name is required when using linear solver.'
 			if lsolver.solver:
-				outfile.write('\tSOLVER\t' + lsolver.solver.lower() + '\n')
+				outfile.write('  SOLVER ' + lsolver.solver.lower() + '\n')
 			outfile.write('END\n\n')
 		
 	def _write_nsolver(self,outfile):
@@ -1472,26 +1481,26 @@ class pdata(object):
 			# Write Newton Solver Type - Not certain this is correct.
 			
 			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
-				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')
+				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
 			elif nsolver.name.lower() == 'tran':
-				outfile.write('NEWTON_SOLVER\t' + nsolver.name.lower() + '\n')
+				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
 			else:
 				print 'error: nsolver_name (newton solver name) is invalid, unrecognized, or missing.\n'
 			
 			if nsolver.atol:
-				outfile.write('\tATOL\t' + strD(nsolver.atol) + '\n')
+				outfile.write('  ATOL ' + strD(nsolver.atol) + '\n')
 			if nsolver.rtol:
-				outfile.write('\tRTOL\t' + strD(nsolver.rtol) + '\n')
+				outfile.write('  RTOL ' + strD(nsolver.rtol) + '\n')
 			if nsolver.stol:
-				outfile.write('\tSTOL\t' + strD(nsolver.stol) + '\n')
+				outfile.write('  STOL ' + strD(nsolver.stol) + '\n')
 			if nsolver.dtol:
-				outfile.write('\tDTOL\t' + strD(nsolver.dtol) + '\n')
+				outfile.write('  DTOL ' + strD(nsolver.dtol) + '\n')
 			if nsolver.itol:
-				outfile.write('\tITOL\t' + strD(nsolver.itol) + '\n')
+				outfile.write('  ITOL ' + strD(nsolver.itol) + '\n')
 			if nsolver.max_it:
-				outfile.write('\tMAXIT\t' + str(nsolver.max_it) + '\n')
+				outfile.write('  MAXIT ' + str(nsolver.max_it) + '\n')
 			if nsolver.max_f:
-				outfile.write('\tMAXF\t' + str(nsolver.max_f) + '\n')
+				outfile.write('  MAXF ' + str(nsolver.max_f) + '\n')
 			outfile.write('END\n\n')
 	
 	def _read_output(self,infile):
@@ -1555,28 +1564,28 @@ class pdata(object):
 		outfile.write('OUTPUT\n')
 # Further improvements can be made here in time_list for verifying 1st element is a time unit
 		if output.time_list:
-			outfile.write('\tTIMES\t')
+			outfile.write('  TIMES ')
 			for i in output.time_list:
-				outfile.write('  '+strD(i))
+				outfile.write(' '+strD(i))
 			outfile.write('\n')
 					
 # This is here on purpose - Needed later
 		#if output.periodic_observation_time:
-			#outfile.write('\tPERIODIC_OBSERVATION TIME\t'+
+			#outfile.write('  PERIODIC_OBSERVATION TIME  '+
 					#str(output.periodic_observation_time)+'\n')		
 		if output.periodic_observation_timestep:
-			outfile.write('\tPERIODIC_OBSERVATION TIMESTEP\t'+
+			outfile.write('  PERIODIC_OBSERVATION TIMESTEP '+
 					str(output.periodic_observation_timestep)+'\n')
 		if output.print_column_ids:
-			outfile.write('\t'+'PRINT_COLUMN_IDS'+'\n')
+			outfile.write('  '+'PRINT_COLUMN_IDS'+'\n')
 		if output.format:
 			for i in range(0, len(output.format)):
-				outfile.write('\tFORMAT\t')
+				outfile.write('  FORMAT ')
 				outfile.write(str(output.format[i].upper()) + '\n')
 		if output.velocities:
-			outfile.write('\t'+'VELOCITIES'+'\n')
+			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
-			outfile.write('\t'+'MASS_BALANCE'+'\n')
+			outfile.write('  '+'MASS_BALANCE'+'\n')
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):
@@ -1604,7 +1613,7 @@ class pdata(object):
 		
 		# Write out requested (not null) fluid properties
 		if fluid.diffusion_coefficient:
-			outfile.write('\tDIFFUSION_COEFFICIENT\t' + 
+			outfile.write('  DIFFUSION_COEFFICIENT ' + 
 					strD(fluid.diffusion_coefficient) + '\n') # Read last entry
 		outfile.write('END\n\n')
 		
@@ -1669,32 +1678,32 @@ class pdata(object):
 		# Write out saturation properties that exist
 		outfile.write('SATURATION_FUNCTION')
 		if saturation.name:
-			outfile.write('\t' + saturation.name + '\n')
+			outfile.write('  ' + saturation.name + '\n')
 		else:
 			outfile.write('n')
 		if saturation.permeability_function_type:
-			outfile.write('\tPERMEABILITY_FUNCTION_TYPE\t' +
+			outfile.write('  PERMEABILITY_FUNCTION_TYPE ' +
 					saturation.permeability_function_type + '\n')
 		if saturation.saturation_function_type:
-			outfile.write('\tSATURATION_FUNCTION_TYPE\t' + 
+			outfile.write('  SATURATION_FUNCTION_TYPE ' + 
 					saturation.saturation_function_type + '\n')
 		if saturation.residual_saturation_liquid or saturation.residual_saturation_liquid ==0:
-			outfile.write('\tRESIDUAL_SATURATION LIQUID_PHASE\t' + 
+			outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' + 
 					strD(saturation.residual_saturation_liquid) + '\n')
 		if saturation.residual_saturation_gas or saturation.residual_saturation_gas == 0:
-			outfile.write('\tRESIDUAL_SATURATION GAS_PHASE\t' +
+			outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' +
 					strD(saturation.residual_saturation_gas) + '\n')
 		if saturation.a_lambda:
-			outfile.write('\tLAMBDA\t' + strD(saturation.a_lambda) + '\n')
+			outfile.write('  LAMBDA ' + strD(saturation.a_lambda) + '\n')
 		if saturation.alpha:
-			outfile.write('\tALPHA\t' + strD(saturation.alpha) + '\n')
+			outfile.write('  ALPHA ' + strD(saturation.alpha) + '\n')
 		if saturation.max_capillary_pressure:
-			outfile.write('\tMAX_CAPILLARY_PRESSURE\t' + 
+			outfile.write('  MAX_CAPILLARY_PRESSURE ' + 
 					strD(saturation.max_capillary_pressure) + '\n')
 		if saturation.betac:
-			outfile.write('\tBETAC\t' + strD(saturation.betac) + '\n')
+			outfile.write('  BETAC ' + strD(saturation.betac) + '\n')
 		if saturation.power:
-			outfile.write('\tPOWER\t' + strD(saturation.power) + '\n')
+			outfile.write('  POWER ' + strD(saturation.power) + '\n')
 		outfile.write('END\n\n')
 		
 	def _read_region(self,infile,line):
@@ -1743,20 +1752,20 @@ class pdata(object):
 		# Write out all valid region object entries with Region as Key word
 		for region in self.regionlist:
 #			if region.coordinates_bool: # Not needed anymore due to check in read
-			outfile.write('REGION\t')
+			outfile.write('REGION ')
 			outfile.write(region.name.lower() + '\n')
 			if region.face:
-				outfile.write('\tFACE\t' + region.face.lower() + '\n')
+				outfile.write('  FACE ' + region.face.lower() + '\n')
 			# no if statement below to ensure 0's are accepted for coordinates
-			outfile.write('\tCOORDINATES\n')
-			outfile.write('\t\t')
+			outfile.write('  COORDINATES\n')
+			outfile.write('    ')
 			for i in range(3):
 				outfile.write(strD(region.coordinates_lower[i]) + ' ')
-			outfile.write('\n\t\t')
+			outfile.write('\n    ')
 			for i in range(3):
 				outfile.write(strD(region.coordinates_upper[i]) + ' ')
 			outfile.write('\n')
-			outfile.write('\tEND\n')
+			outfile.write('  END\n')
 			outfile.write('END\n\n')
 			
 	def _read_observation(self,infile):
@@ -1782,7 +1791,7 @@ class pdata(object):
 		
 		outfile.write('OBSERVATION\n')
 		if observation.region:
-			outfile.write('\tREGION\t'+observation.region.lower()+'\n')
+			outfile.write('  REGION '+observation.region.lower()+'\n')
 		outfile.write('END\n\n')
 				
 	def _read_flow(self,infile,line):
@@ -1894,54 +1903,54 @@ class pdata(object):
 		
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-			outfile.write('FLOW_CONDITION\t' + flow.name.lower() + '\n')
+			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
 			if flow.sync_timestep_with_update:
-				outfile.write('\tSYNC_TIMESTEP_WITH_UPDATE\n')
-			outfile.write('\tTYPE\n')
+				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
+			outfile.write('  TYPE\n')
 			
 			# variable name and type from lists go here
 			i = 0
 			while i< len(flow.varlist):
-				outfile.write('\t\t' + flow.varlist[i].name.upper() + '\t' +
+				outfile.write('    ' + flow.varlist[i].name.upper() + '  ' +
 							  flow.varlist[i].type.lower() + '\n')
 				i += 1
 				
-			outfile.write('\tEND\n')
+			outfile.write('  END\n')
 			if flow.iphase:
-				outfile.write('\tIPHASE\t'+str(flow.iphase)+'\n')
+				outfile.write('  IPHASE '+str(flow.iphase)+'\n')
 				
 			# variable name and values from lists along with units go here
 			i = 0
 			while i< len(flow.varlist):
 				# Write if using non-list format (Single line)
 				if flow.varlist[i].valuelist:	
-					outfile.write('\t\t' + flow.varlist[i].name.upper())
+					outfile.write('    ' + flow.varlist[i].name.upper())
 					j = 0
 					while j < len(flow.varlist[i].valuelist):
 						try:
-							outfile.write('\t' + strD(flow.varlist[i].valuelist[j]))
+							outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
 						except:
 							print 'error: writing flow.varlist should only contain floats, not strings'
 						j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
-						outfile.write('\t' + flow.varlist[i].unit.upper())
+						outfile.write(' ' + flow.varlist[i].unit.upper())
 					outfile.write('\n')
 				# Write if using list format (multiple lines)
 				elif flow.varlist[i].list:	
-					outfile.write('\t\t' + flow.varlist[i].name.upper() + ' LIST' + '\n')
+					outfile.write('    ' + flow.varlist[i].name.upper() + ' LIST' + '\n')
 					if flow.varlist[i].time_unit_type:
-						outfile.write('\t\t\tTIME_UNITS\t' + flow.varlist[i].time_unit_type + '\n')
+						outfile.write('      TIME_UNITS ' + flow.varlist[i].time_unit_type + '\n')
 					if flow.varlist[i].data_unit_type:
-						outfile.write('\t\t\tDATA_UNITS\t' + flow.varlist[i].data_unit_type + '\n')
+						outfile.write('      DATA_UNITS ' + flow.varlist[i].data_unit_type + '\n')
 					for k in flow.varlist[i].list:
-						outfile.write('\t\t\t\t' + strD(k.time_unit_value))
-						outfile.write('\t' + strD(k.data_unit_value_list[0]))
-						outfile.write('\t' + strD(k.data_unit_value_list[1]))
+						outfile.write('        ' + strD(k.time_unit_value))
+						outfile.write('  ' + strD(k.data_unit_value_list[0]))
+						outfile.write('  ' + strD(k.data_unit_value_list[1]))
 						outfile.write('\n')
-					outfile.write('\t\t/\n')
+					outfile.write('    /\n')
 				i += 1
-			outfile.write('\tEND\n\n')
+			outfile.write('  END\n\n')
 			
 	def _read_initial_condition(self,infile):
 		p = pinitial_condition()
@@ -1974,13 +1983,13 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if initial_condition.flow:
-			outfile.write('\tFLOW_CONDITION\t' + initial_condition.flow.lower() + '\n')
+			outfile.write('  FLOW_CONDITION ' + initial_condition.flow.lower() + '\n')
 			
 		if initial_condition.transport:
-			outfile.write('\tTRANSPORT_CONDITION\t'+initial_condition.transport.lower()+'\n')
+			outfile.write('  TRANSPORT_CONDITION  '+initial_condition.transport.lower()+'\n')
 			
 		if initial_condition.region:
-			outfile.write('\tREGION\t' + initial_condition.region.lower() + '\n')
+			outfile.write('  REGION ' + initial_condition.region.lower() + '\n')
 		else:
 			print 'ERROR: initial_condition.region is required\n'
 		
@@ -2022,15 +2031,15 @@ class pdata(object):
 		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
 				if b.name:
-					outfile.write('BOUNDARY_CONDITION\t' + b.name.lower() + '\n')
+					outfile.write('BOUNDARY_CONDITION ' + b.name.lower() + '\n')
 				else:
 					outfile.write('BOUNDARY_CONDITION\n')
 				if b.flow:
-					outfile.write('\tFLOW_CONDITION\t' + b.flow.lower() + '\n')
+					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
 				if b.transport:
-					outfile.write('\tTRANSPORT_CONDITION\t'+b.transport.lower()+'\n')
+					outfile.write('  TRANSPORT_CONDITION '+b.transport.lower()+'\n')
 				if b.region:
-					outfile.write('\tREGION\t' + b.region.lower() + '\n')
+					outfile.write('  REGION ' + b.region.lower() + '\n')
 				outfile.write('END\n\n')
 		except:
 			print 'Error: At least one boundary_condition with valid attributes is required\n'
@@ -2063,11 +2072,11 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if ss.flow:
-			outfile.write('\tFLOW_CONDITION\t' + ss.flow.lower() + '\n')
+			outfile.write('  FLOW_CONDITION ' + ss.flow.lower() + '\n')
 		else:
 			print 'error: source_sink.flow (flow_condition) is required\n'
 		if ss.region:
-			outfile.write('\tREGION\t' + ss.region.lower() + '\n')
+			outfile.write('  REGION ' + ss.region.lower() + '\n')
 		else:
 			print 'error: source_sink.region is required\n'
 		outfile.write('END\n\n')
@@ -2100,11 +2109,11 @@ class pdata(object):
 		
 		# Write out initial_condition variables
 		if s.region:
-			outfile.write('\tREGION\t' + s.region.lower() + '\n')
+			outfile.write('  REGION ' + s.region.lower() + '\n')
 		else:
 			print 'ERROR: strata.region is required\n'
 		if s.material:
-			outfile.write('\tMATERIAL\t' + s.material.lower() + '\n')
+			outfile.write('  MATERIAL ' + s.material.lower() + '\n')
 		else:
 			print 'ERROR: strata.material is required\n'
 		outfile.write('END\n\n')
@@ -2203,52 +2212,52 @@ class pdata(object):
 		
 		# Write out chemistry variables
 		if c.pspecies_list:
-			outfile.write('\tPRIMARY_SPECIES\n')
+			outfile.write('  PRIMARY_SPECIES\n')
 			for p in c.pspecies_list: # p = primary_specie in primary_species_list
-				outfile.write('\t\t' + p + '\n')
-			outfile.write('\t/\n')
+				outfile.write('    ' + p + '\n')
+			outfile.write('  /\n')
 		if c.sec_species_list:
-			outfile.write('\tSECONDARY_SPECIES\n')
+			outfile.write('  SECONDARY_SPECIES\n')
 			for s in c.sec_species_list: # s = secondary_specie
-				outfile.write('\t\t' + s + '\n')
-			outfile.write('\t/\n')
+				outfile.write('    ' + s + '\n')
+			outfile.write('  /\n')
 		if c.gas_species_list:
-			outfile.write('\tGAS_SPECIES\n')
+			outfile.write('  GAS_SPECIES\n')
 			for g in c.gas_species_list: # s = gas_specie
-				outfile.write('\t\t' + g + '\n')
-			outfile.write('\t/\n')
+				outfile.write('    ' + g + '\n')
+			outfile.write('  /\n')
 		if c.minerals_list:
-			outfile.write('\tMINERALS\n')
+			outfile.write('  MINERALS\n')
 			for m in c.minerals_list: # m = mineral
-				outfile.write('\t\t' + m + '\n')
-			outfile.write('\t/\n')
+				outfile.write('    ' + m + '\n')
+			outfile.write('  /\n')
 		if c.m_kinetics_list:
-			outfile.write('\tMINERAL_KINETICS\n')
+			outfile.write('  MINERAL_KINETICS\n')
 			for mk in c.m_kinetics_list: # mk = mineral_kinetics
-				outfile.write('\t\t' + mk.name + '\n')
+				outfile.write('    ' + mk.name + '\n')
 				
 				if mk.rate_constant_list:
-					outfile.write('\t\t\tRATE_CONSTANT  ')
+					outfile.write('      RATE_CONSTANT ')
 				for rate in mk.rate_constant_list: 
 					try:
-						outfile.write(strD(rate) + '  ')
+						outfile.write(strD(rate) + ' ')
 					except(TypeError):
-						outfile.write(rate + '  ')
-				outfile.write('\n\t\t/\n') # marks end for mineral name
-			outfile.write('\t/\n') # marks end for mineral_kinetics
+						outfile.write(rate + ' ')
+				outfile.write('\n    /\n') # marks end for mineral name
+			outfile.write('  /\n') # marks end for mineral_kinetics
 		if c.database:
-			outfile.write('\tDATABASE\t' + c.database + '\n')
+			outfile.write('  DATABASE ' + c.database + '\n')
 		if c.log_formulation:
-			outfile.write('\tLOG_FORMULATION\n')
+			outfile.write('  LOG_FORMULATION\n')
 		if c.activity_coefficients:
-			outfile.write('\tACTIVITY_COEFFICIENTS\t' + c.activity_coefficients.upper() + '\n')
+			outfile.write('  ACTIVITY_COEFFICIENTS ' + c.activity_coefficients.upper() + '\n')
 		if c.molal:
-			outfile.write('\tMOLAL\n')
+			outfile.write('  MOLAL\n')
 		if c.output_list:
-			outfile.write('\tOUTPUT\n')
+			outfile.write('  OUTPUT\n')
 			for o in c.output_list:	# o = output in in output_list
-				outfile.write('\t\t' + o + '\n')
-			outfile.write('\t/\n')
+				outfile.write('    ' + o + '\n')
+			outfile.write('  /\n')
 		outfile.write('END\n\n')
 		
 	def _read_transport(self,infile,line):
@@ -2292,15 +2301,15 @@ class pdata(object):
 		tl = self.transportlist
 		for t in tl: # t for transport
 			if t.name:
-				outfile.write('TRANSPORT_CONDITION\t'+t.name.lower()+'\n')
+				outfile.write('TRANSPORT_CONDITION '+t.name.lower()+'\n')
 			else:
 				print 'Error: transport_condition['+str(tl.index(t))+'].name is required.\n'
 			if t.type:
-				outfile.write('\tTYPE\t'+t.type.lower()+'\n')
+				outfile.write('  TYPE '+t.type.lower()+'\n')
 			else:
 				print 'Error: transport['+str(tl.index(t))+'].type is required\n'
 			try :
-				outfile.write('\tCONSTRAINT_LIST\n')
+				outfile.write('  CONSTRAINT_LIST\n')
 
 				clv = t.constraint_list_value
 				clt = t.constraint_list_type
@@ -2308,14 +2317,14 @@ class pdata(object):
 				i=0 # index for constraint_list_value and constraint_list_type
 				for i in range(0, len(clv)):
 					if clv[i] != None:
-						outfile.write('\t\t'+strD(clv[i]))
+						outfile.write('    '+strD(clv[i]))
 					if clt[i] != None:
-						outfile.write('\t'+str(clt[i]).lower())
+						outfile.write('  '+str(clt[i]).lower())
 					else:
 						print 'Error: transport['+str(tl.index(t))+'].constraint_list_type['+str(clt.index(i))+'] is required to have a value when transport.constraint_list_value does.\n'
 			except:
 				print 'Error: transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n'
-			outfile.write('\n\tEND\n')	# END FOR CONSTRAINT_LIST
+			outfile.write('\n  END\n')	# END FOR CONSTRAINT_LIST
 			outfile.write('END\n\n')	# END FOR TRANSPORT_CONDITION
 			
 	def _read_constraint(self, infile, line):
@@ -2360,24 +2369,24 @@ class pdata(object):
 		
 		for c in cl:	# c = constraint, cl = constraint_list
 			if c.name:
-				outfile.write('CONSTRAINT\t'+c.name.lower()+'\n')
+				outfile.write('CONSTRAINT '+c.name.lower()+'\n')
 			else:
 				print 'Error: constraint_list['+str(cl.index(c))+'].name is required.\n'
 
-			outfile.write('\tCONCENTRATIONS\n')
+			outfile.write('  CONCENTRATIONS\n')
 			
 			for concn in c.concentration_list: # concn = concentration, c = constraint
 				if concn.pspecies:
-					outfile.write('\t\t'+concn.pspecies)
+					outfile.write('    '+concn.pspecies)
 				if concn.value:
-					outfile.write('\t'+strD(concn.value))
+					outfile.write('  '+strD(concn.value))
 				if concn.constraint:
-					outfile.write('\t'+concn.constraint)
+					outfile.write('  '+concn.constraint)
 				if concn.element:
-					outfile.write('\t'+concn.element)
+					outfile.write('  '+concn.element)
 				outfile.write('\n')
 				
-			outfile.write('\t/\n') 	# END for concentrations
+			outfile.write('  /\n') 	# END for concentrations
 			outfile.write('END\n\n')	# END for constraint
 			
 	def _header(self,outfile,header):

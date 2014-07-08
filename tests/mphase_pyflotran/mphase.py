@@ -79,7 +79,7 @@ t.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]	# MAXIMUM_TIMESTEP_SIZE before 'at
 t.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time unit (eg. 'y')
 t.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
 t.dtf_li_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE after 'at' time unit (eg. 'y')
-t.dtf_i = 4		# Needs to be the length of dtf_lv or dtf_li
+#t.dtf_i = 4		# Needs to be the length of dtf_lv or dtf_li
 dat.time = t
 #--------------------------------------------------------------
 
@@ -351,8 +351,8 @@ dat.strata = sc
 #--------------------------------------------------------------
 
 # Test write
-dat.write('mphase.in')
+#dat.write('mphase.in')
 
 # Write to file and execute that input file
-#dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
 

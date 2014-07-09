@@ -30,6 +30,12 @@ headers = ['co2 database path','uniform velocity','mode','chemistry','grid',
 	   'stratigraphy couplers','constraints']
 headers = dict(zip(cards,headers))
 
+buildWarnings = []
+
+def _buildWarnings(s):
+	global buildWarnings
+	buildWarnings.append(s)
+    
 class puniform_velocity(object):
 	""" Class for uniform velcity for transport observation.
 	Example:
@@ -719,8 +725,8 @@ class pconstraint(object):
 	
 	def __init__(self, name='', concentration_list=[], mineral_list=[]):
 		self._name = name
-		self._concentration_list = [] # Composed of pconstraint_concentration objects
-		self._mineral_list = [] # list of minerals
+		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
+		self._mineral_list = mineral_list # list of minerals
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
@@ -989,6 +995,27 @@ class pdata(object):
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
+        
+	def add(self,obj,overwrite=False):					#Adds a new object to the file
+		'''Attach a region, boundary condition object to the data file.
+		
+		:param obj: Object to be added to the data file.
+		:type obj: pregion
+		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
+		:type overwrite: bool
+		'''
+		if isinstance(obj,pregion): self._add_region(obj,overwrite)
+
+	def delete(self,obj): 								#Deletes an object from the file
+		'''Delete a region, boundary condition object from the data file.
+		
+		:param obj: Object to be deleted from the data file. Can be a list of objects.
+		:type obj: pregion, list
+		'''
+		if isinstance(obj,pregion): self._delete_region(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pregion): self._delete_region(obji)
 		
 	def _read_uniform_velocity(self,infile,line):
 		np_value_list = []
@@ -1769,7 +1796,24 @@ class pdata(object):
 			new_region = pregion(np_name,np_coordinates_lower,np_coordinates_upper,
 						np_face)
 			self._regionlist.append(new_region)
-				
+
+    def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
+		# check if region already exists
+		if isinstance(region,pregion):		
+			if region.name in self.region.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A region with name \''+str(region.name)+'\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.')
+					return
+				else:
+					self.delete(self.pregion[pregion.name])
+		
+		#region._parent = self
+		if region not in self._regionlist:
+			self._regionlist.append(region)
+            
+	def _delete_region(self,region=pregion()):
+		self._regionlist.remove(region)		
+        		
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
 		
@@ -2523,4 +2567,6 @@ class pdata(object):
 	transportlist = property(_get_transportlist, _set_transportlist) #: (**)
 	def _get_constraint_list(self): return self._constraint_list
 	constraint_list = property(_get_constraint_list) #: (**)
-	
+	def _get_region(self):
+		return dict([rgn.name,rgn] for rgn in self.regionlist if rgn.name)
+	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.

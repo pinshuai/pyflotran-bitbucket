@@ -159,8 +159,7 @@ class pgrid(object):		# discretization
 	"""
 
 	def __init__(self,type='structured',lower_bounds=[0.0,0.0,0.0],upper_bounds=[50.0,50.0,50.0],
-				 bounds_bool=True,origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity_bool=False,
-				 gravity=[0.0,0.0,-9.8068],filename=''):
+				 origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity=[0.0,0.0,-9.8068],filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -169,8 +168,6 @@ class pgrid(object):		# discretization
 		self._dxyz = dxyz
 		self._gravity = gravity
 		self._filename = filename
-		self._bounds_bool = bounds_bool
-		self._gravity_bool = gravity_bool
 
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
@@ -196,12 +193,6 @@ class pgrid(object):		# discretization
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
-	def _get_bounds_bool(self): return self._bounds_bool
-	def _set_bounds_bool(self,value): self._bounds_bool = value
-	bounds_bool = property(_get_bounds_bool, _set_bounds_bool) #: (**)
-	def _get_gravity_bool(self): return self._gravity_bool
-	def _set_gravity_bool(self,value): self._gravity_bool = value
-	gravity_bool = property(_get_gravity_bool, _set_gravity_bool) #: (**)
 
 
 class pmode(object):
@@ -1084,7 +1075,6 @@ class pdata(object):
 			if key == 'type':
 				ng_type = line.split()[-1]
 			elif key == 'bounds':
-				bounds_key = True
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
@@ -1106,7 +1096,6 @@ class pdata(object):
 				ng_nxyz[1] = int(line.split()[2])
 				ng_nxyz[2] = int(line.split()[3])
 			elif key == 'gravity':
-				gravity_key = True
 				ng_gravity[0] = floatD(line.split()[1])
 				ng_gravity[1] = floatD(line.split()[2])
 				ng_gravity[2] = floatD(line.split()[3])
@@ -1125,8 +1114,8 @@ class pdata(object):
 						ng_dxyz[count] = floatD(line.strip().split()[0])
 						count = count + 1
 			elif key in ['/','end']: keepReading = False
-		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,bounds_key,ng_origin,ng_nxyz,
-						 ng_dxyz,gravity_key,ng_gravity,ng_filename) 		# create an empty grid
+		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,ng_origin,ng_nxyz,
+						 ng_dxyz,ng_gravity,ng_filename) 		# create an empty grid
 		self._grid = new_grid
 	
 	def _write_grid(self,outfile):
@@ -1137,7 +1126,7 @@ class pdata(object):
 			outfile.write('  TYPE ' + grid.type + '\n')
 		else:
 			print 'error: grid.type is required'
-		if grid.bounds_bool:
+		if grid.lower_bounds or grid.upper_bounds:
 			outfile.write('  BOUNDS\n')
 			outfile.write('    ')
 			for i in range(3):
@@ -1159,7 +1148,7 @@ class pdata(object):
 		for i in range(3):
 			outfile.write(strD(grid.nxyz[i]) + ' ')
 		outfile.write('\n')
-		if grid.gravity_bool:
+		if grid.gravity:
 			outfile.write('  GRAVITY' + ' ')
 			for i in range(3):
 				outfile.write(strD(grid.gravity[i]) + ' ')
@@ -1773,14 +1762,12 @@ class pdata(object):
 		np_coordinates_lower = [None]*3
 		np_coordinates_upper = [None]*3
 		np_face = None
-		coordinates_bool = False
 		
 		keepReading = True
 		while keepReading:	# Read through all cards
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'coordinates':
-				coordinates_bool = True
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
@@ -1797,12 +1784,11 @@ class pdata(object):
 				np_face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
-		if coordinates_bool:
 			new_region = pregion(np_name,np_coordinates_lower,np_coordinates_upper,
 						np_face)
 			self._regionlist.append(new_region)
 
-    def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
+	def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
 		# check if region already exists
 		if isinstance(region,pregion):		
 			if region.name in self.region.keys():
@@ -1824,7 +1810,6 @@ class pdata(object):
 		
 		# Write out all valid region object entries with Region as Key word
 		for region in self.regionlist:
-#			if region.coordinates_bool: # Not needed anymore due to check in read
 			outfile.write('REGION ')
 			outfile.write(region.name.lower() + '\n')
 			if region.face:

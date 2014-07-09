@@ -2,7 +2,14 @@ import sys
 sys.path.append('../../.')
 
 from pdata import*
-
+import os
+try:
+  pflotran_dir = os.environ['PFLOTRAN_DIR']
+except KeyError:
+  print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pflotran_dir + '/src/python')
+import pflotran as pft
 
 '''
 Floats can be inputted directly as a float using 'e' or 'E' - E.g. - 0.e0
@@ -27,7 +34,7 @@ dat.mode = m
 
 # set co2 database
 #--------------------------------------------------------------
-dat.co2_database = '/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat'
+dat.co2_database = pflotran_dir + '/database/co2data0.dat'
 #--------------------------------------------------------------
 
 # set grid
@@ -36,7 +43,6 @@ g = pgrid()
 g.type = 'structured'
 g.lower_bounds = [0.e0, 0.e0, 0.e0]
 g.upper_bounds = [321.e0, 1.e0, 51.e0]
-g.bounds_bool = True
 g.orign = [0.e0, 0.e0, 0.e0]
 g.nxyz = [107, 1, 51]
 g.dxyz = [5, 5, 5]	# Should not write
@@ -347,12 +353,14 @@ dat.source_sink = ss
 sc = pstrata()
 sc.region = 'ALL' 
 sc.material = 'SOIL1'
-dat.strata = sc
+dat.strata_list.append(sc)
+
 #--------------------------------------------------------------
 
 # Test write
 #dat.write('mphase.in')
 
+pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file
-dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+dat.run(input='mphase.in',exe=pflotran_exe)
 

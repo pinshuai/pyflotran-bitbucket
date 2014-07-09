@@ -18,6 +18,11 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
+pressure_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
+temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+
+
 cards = ['co2_database','uniform_velocity','mode','chemistry','grid','timestepper',
 	 'material_property','time','linear_solver','newton_solver','output','fluid_property',
 		'saturation_function','region','observation','flow_condition',
@@ -812,7 +817,7 @@ class pdata(object):
 		self._initial_condition = pinitial_condition()
 		self._boundary_condition_list = []
 		self._source_sink = None
-		self._strata = pstrata()
+		self._strata_list = []
 		self._constraint_list = []
 		self._filename = filename
 		
@@ -990,8 +995,8 @@ class pdata(object):
 		if self.source_sink: self._write_source_sink(outfile)
 		else: print 'info: source_sink not detected\n'
 
-		if self.strata: self._write_strata(outfile)
-		else: print 'ERROR: strata is required, it is currently reading as empty\n'
+		if self.strata_list: self._write_strata(outfile)
+		else: print 'info: (stratigraphy_coupler) strata is required, it is currently reading as empty\n'
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
@@ -2150,10 +2155,7 @@ class pdata(object):
 		outfile.write('END\n\n')
 			
 	def _read_strata(self,infile):
-		p = pstrata()
-		np_region = p.region
-		np_material = p.material
-		
+		strata = pstrata()
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
@@ -2161,30 +2163,30 @@ class pdata(object):
 			key = line.strip().split()[0].lower()	# take first key word
 			
 			if key == 'region':
-				np_region = line.split()[-1]	# take last word
+				strata.region = line.split()[-1]	# take last word
 			elif key == 'material':
-				np_material = line.split()[-1]	# take last word
+				strata.material = line.split()[-1]	# take last word
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty source sink and assign the values read in
-		new_strata = pstrata(np_region,np_material)
-		self._strata = new_strata
+		self._strata_list.append(strata)
 		
 	def _write_strata(self,outfile):
 		self._header(outfile,headers['strata'])
-		s = self.strata
+#		strata = self.strata
 		outfile.write('STRATA\n')
 		
-		# Write out initial_condition variables
-		if s.region:
-			outfile.write('  REGION ' + s.region.lower() + '\n')
-		else:
-			print 'ERROR: strata.region is required\n'
-		if s.material:
-			outfile.write('  MATERIAL ' + s.material.lower() + '\n')
-		else:
-			print 'ERROR: strata.material is required\n'
-		outfile.write('END\n\n')
+		# Write out strata condition variables
+		for strata in self.strata_list:
+			if strata.region:
+				outfile.write('  REGION ' + strata.region.lower() + '\n')
+			else:
+				print 'ERROR: strata.region is required\n'
+			if strata.material:
+				outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
+			else:
+				print 'ERROR: strata.material is required\n'
+			outfile.write('END\n\n')
 		
 	def _read_chemistry(self, infile):
 		chem = pchemistry()
@@ -2556,9 +2558,9 @@ class pdata(object):
 	def _get_source_sink(self): return self._source_sink
 	def _set_source_sink(self, object): self._source_sink = object
 	source_sink = property(_get_source_sink, _set_source_sink) #: (**)
-	def _get_strata(self): return self._strata
-	def _set_strata(self, object): self._strata = object
-	strata = property(_get_strata, _set_strata) #: (**)
+	def _get_strata_list(self): return self._strata_list
+	def _set_strata_list(self, object): self._strata_list = object
+	strata_list = property(_get_strata_list, _set_strata_list) #: (**)
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object
 	chemistry = property(_get_chemistry, _set_chemistry) #: (**)

@@ -175,10 +175,10 @@ dat.boundary_condition_list.append(bc)
 
 # set stratigraphy couplers
 #--------------------------------------------------------------
-sc = pstrata()
-sc.region = 'all' 
-sc.material = 'soil1'
-dat.strata = sc
+stratigraphy_coupler = pstrata()
+stratigraphy_coupler.region = 'all' 
+stratigraphy_coupler.material = 'soil1'
+dat.strata_list.append(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # set constraints
@@ -240,7 +240,6 @@ dat.constraint_list.append(constraint)	# assign constraint
 print('******************************************')
 print('Writing PFLOTRAN input file and executing it.')
 print('******************************************')
-
 
 executable = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file

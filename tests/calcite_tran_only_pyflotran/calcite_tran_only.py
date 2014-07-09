@@ -154,10 +154,10 @@ dat.boundary_condition_list.append(bc)
 
 # set stratigraphy couplers
 #--------------------------------------------------------------
-sc = pstrata()
-sc.region = 'all' 
-sc.material = 'soil1'
-dat.strata = sc
+stratigraphy_coupler = pstrata()
+stratigraphy_coupler.region = 'all' 
+stratigraphy_coupler.material = 'soil1'
+dat.strata_list.append(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # set constraints
@@ -208,7 +208,7 @@ dat.constraint_list.append(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-# dat.write('calcite_tran_only.in')
+dat.write('calcite_tran_only.in')
 
 # Write to file and execute that input file
-dat.run(input='calcite_tran_only.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+#dat.run(input='calcite_tran_only.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

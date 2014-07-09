@@ -1,4 +1,4 @@
-""" Class for pflotran data """
+""" /lass for pflotran data """
 print	# Makes console output a little easier to read
 
 import numpy as np
@@ -2420,13 +2420,13 @@ class pdata(object):
 			
 			for concn in c.concentration_list: # concn = concentration, c = constraint
 				if concn.pspecies:
-					outfile.write('    '+concn.pspecies)
+					outfile.write('    ' + concn.pspecies)
 				if concn.value:
-					outfile.write('  '+strD(concn.value))
+					outfile.write('  ' + strD(concn.value))
 				if concn.constraint:
-					outfile.write('  '+concn.constraint)
+					outfile.write('  ' + concn.constraint)
 				if concn.element:
-					outfile.write('  '+concn.element)
+					outfile.write('  ' + concn.element)
 				outfile.write('\n')
 
 			outfile.write('  /\n') 	# END for concentrations
@@ -2436,11 +2436,11 @@ class pdata(object):
 				for mineral in c.mineral_list:
 					print mineral.name
 					if mineral.name:
-						outfile.write('\t' + mineral.name)
+						outfile.write('    ' + mineral.name)
 					if mineral.volume_fraction:
-						outfile.write('\t '+ strD(mineral.volume_fraction))
+						outfile.write('  ' + strD(mineral.volume_fraction))
 					if mineral.surface_area:
-						outfile.write('\t' + strD(mineral.surface_area))
+						outfile.write('  ' + strD(mineral.surface_area))
 					outfile.write('\n')
 				outfile.write('  /\n') 	# END for concentrations
 			outfile.write('END\n\n')	# END for constraint

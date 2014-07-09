@@ -1,4 +1,4 @@
-""" Class for pflotran data """
+""" /lass for pflotran data """
 print	# Makes console output a little easier to read
 
 import numpy as np
@@ -722,9 +722,10 @@ class pconstraint(object):
 
 	"""
 	
-	def __init__(self, name='', concentration_list=[]):
+	def __init__(self, name='', concentration_list=[], mineral_list=[]):
 		self._name = name
-		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
+		self._concentration_list = [] # Composed of pconstraint_concentration objects
+		self._mineral_list = [] # list of minerals
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
@@ -732,6 +733,9 @@ class pconstraint(object):
 	def _get_concentration_list(self): return self._concentration_list
 	def _set_concentration_list(self,value): self._concentration_list = value
 	concentration_list = property(_get_concentration_list, _set_concentration_list)
+	def _get_mineral_list(self): return self._mineral_list
+	def _set_mineral_list(self,value): self._mineral_list = value
+	mineral_list = property(_get_mineral_list, _set_mineral_list)
 		
 class pconstraint_concentration(object):
 	"""Concentration unit
@@ -757,6 +761,26 @@ class pconstraint_concentration(object):
 	def _get_element(self): return self._element
 	def _set_element(self,value): self._element = value
 	element = property(_get_element, _set_element)
+    
+class pmineral_constraint(object):
+	"""Class for mineral in a constraint with vol. fraction and surface area
+
+	"""
+
+	def __init__(self, name='', volume_fraction=None, surface_area=None):
+		self._name = name 
+		self._volume_fraction = volume_fraction 
+		self._surface_area = surface_area
+
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_volume_fraction(self): return self._volume_fraction
+	def _set_volume_fraction(self,value): self._volume_fraction = value
+	volume_fraction = property(_get_volume_fraction, _set_volume_fraction) 
+	def _get_surface_area(self): return self._surface_area
+	def _set_surface_area(self,value): self._surface_area = value
+	surface_area = property(_get_surface_area, _set_surface_area)       
 	
 class pdata(object):
 	"""Class for pflotran data file
@@ -2333,7 +2357,8 @@ class pdata(object):
 		constraint = pconstraint()
 		constraint.name = line.split()[-1].lower()	# constraint name passed in.
 		constraint.concentration_list = []
-		
+		constraint.mineral_list = []
+	
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
@@ -2360,7 +2385,25 @@ class pdata(object):
 					except(IndexError):
 						pass # No assigning is done if a value doesn't exist while being read in.
 					constraint.concentration_list.append(concentrations)
-					
+
+			elif key == 'minerals':
+				while True:
+					line = infile.readline()
+					tstring = line.split()
+					if line.strip().lower() in ['/','end']:
+						break
+					mineral = pmineral_constraint()
+
+					try:
+						mineral.name = tstring[0]
+						mineral.volume_fraction = floatD(tstring[1])
+						mineral.surface_area = floatD(tstring[2])
+
+					except(IndexError):
+						pass # No assigning is done if a value doesn't exist while being read in.
+				
+					constraint.mineral_list.append(mineral)
+
 			elif key in ['/','end']: keepReading = False
 			
 		self._constraint_list.append(constraint)
@@ -2379,16 +2422,29 @@ class pdata(object):
 			
 			for concn in c.concentration_list: # concn = concentration, c = constraint
 				if concn.pspecies:
-					outfile.write('    '+concn.pspecies)
+					outfile.write('    ' + concn.pspecies)
 				if concn.value:
-					outfile.write('  '+strD(concn.value))
+					outfile.write('  ' + strD(concn.value))
 				if concn.constraint:
-					outfile.write('  '+concn.constraint)
+					outfile.write('  ' + concn.constraint)
 				if concn.element:
-					outfile.write('  '+concn.element)
+					outfile.write('  ' + concn.element)
 				outfile.write('\n')
-				
+
 			outfile.write('  /\n') 	# END for concentrations
+			print c.name
+			if c.mineral_list:
+				outfile.write('  MINERALS\n')
+				for mineral in c.mineral_list:
+					print mineral.name
+					if mineral.name:
+						outfile.write('    ' + mineral.name)
+					if mineral.volume_fraction:
+						outfile.write('  ' + strD(mineral.volume_fraction))
+					if mineral.surface_area:
+						outfile.write('  ' + strD(mineral.surface_area))
+					outfile.write('\n')
+				outfile.write('  /\n') 	# END for concentrations
 			outfile.write('END\n\n')	# END for constraint
 			
 	def _header(self,outfile,header):

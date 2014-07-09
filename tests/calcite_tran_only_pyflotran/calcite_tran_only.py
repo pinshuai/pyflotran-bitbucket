@@ -204,6 +204,11 @@ concentration.value = 5.e-4
 concentration.constraint = 'M'
 concentration.element = 'Calcite'
 constraint.concentration_list.append(concentration)	# assign concentration
+mineral = pmineral_constraint()
+mineral.name = 'Calcite'
+mineral.volume_fraction = 1.e-5
+mineral.surface_area = 1.e0
+constraint.mineral_list.append(mineral)
 dat.constraint_list.append(constraint)	# assign constraint
 
 # west condition - 2nd condition
@@ -237,6 +242,7 @@ print('******************************************')
 
 executable = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file
+dat.write('calcite_tran_only.in')
 dat.run(input='calcite_tran_only.in',exe=executable)
 
 

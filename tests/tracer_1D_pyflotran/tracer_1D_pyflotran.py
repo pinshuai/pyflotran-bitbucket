@@ -94,7 +94,6 @@ t.dtf_lv = [1.e2, 1.e3]		#MAXIMUM_TIMESTEP_SIZE before 'at'
 t.dtf_lv_unit = ['s', 's']		# time unit
 t.dtf_li = [5.e3, 5.e4]		#MAXIMUM_TIMESTEP_SIZE after 'at'
 t.dtf_li_unit = ['s', 's']		# time unit
-t.dtf_i = 2			# Needs to be the length of dtf_lv and dtf_li
 dat.time = t
 #--------------------------------------------------------------
 
@@ -104,7 +103,7 @@ o = poutput()
 o.time_list = ['s', 26042.0, 39063.0, 52083.0, 1000000.0]
 o.periodic_observation_timestep = 1
 o.print_column_ids = True
-o.format.append('TECPLOT POINT')
+o.format_list.append('TECPLOT POINT')
 dat.output = o
 #--------------------------------------------------------------
 
@@ -214,7 +213,7 @@ dat.boundary_condition_list.append(bc)
 sc = pstrata()
 sc.region = 'ALL' 
 sc.material = 'SOIL1'
-dat.strata = sc
+dat.strata_list.append(sc)
 #--------------------------------------------------------------
 
 # set constraints
@@ -256,7 +255,7 @@ dat.constraint_list.append(constraint)	# assign constraint
 ###############################################################
 
 # Test Write
-#dat.write('tracer_1D.in')
+dat.write('tracer_1D.in')
 
 # Write to File
-dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+#dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

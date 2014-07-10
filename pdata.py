@@ -18,10 +18,45 @@ WINDOWS = platform.system()=='Windows'
 if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
+# Multiple classes/key words - allowed strings
+time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week', 'mo', 'month', 'y']
+solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
+
+# mode - allowed strings
+mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'immis']
+
+# grid - allowed strings
+grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
+grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical'] # cartesian is default in pflotran
+
+# output - allowed strings
+output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 
+			  'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
+
+# saturation_function - allowed strings
+saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 
+				     'NMT_EXP', 'PRUESS_1']
+permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 
+				       'NMT_EXP', 'PRUESS_1']
+
+# material_property, region, initial_condition, boundary_condition, source_sink, stratigraphy_couplers - manual does not appear to document all valid entries
+
+# flow_conditions - allowed strings
+flow_condition_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 
+				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
+rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
+flux_types_allowed = ['dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance',
+		      'zero_gradient', 'production_well', 'seepage', 'volumetric',
+		      'volumetric_rate', 'equilibrium']
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+saturation_types_allowed = ['dirichlet']
+enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 
+# transport_condition - allowed strings
+transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
+				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
 cards = ['co2_database','uniform_velocity','mode','chemistry','grid','timestepper',
 	 'material_property','time','linear_solver','newton_solver','output','fluid_property',
@@ -329,12 +364,12 @@ class poutput(object):
 	
 	# Remember to add time_list=[] back in, temporarily removed
 	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False,
-		     periodic_observation_timestep=None, format=[],velocities=False):
+		     periodic_observation_timestep=None, format_list=[],velocities=False):
 		self._time_list = time_list
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
 		self._periodic_observation_timestep = periodic_observation_timestep
-		self._format = format
+		self._format_list = format_list
 		self._velocities = velocities
 		
 	def _get_time_list(self): return self._time_list
@@ -349,9 +384,9 @@ class poutput(object):
 	def _get_periodic_observation_timestep(self): return self._periodic_observation_timestep
 	def _set_periodic_observation_timestep(self,value): self._periodic_observation_timestep = value
 	periodic_observation_timestep = property(_get_periodic_observation_timestep, _set_periodic_observation_timestep)
-	def _get_format(self): return self._format
-	def _set_format(self,value): self._format = value
-	format = property(_get_format, _set_format)
+	def _get_format_list(self): return self._format_list
+	def _set_format_list(self,value): self._format_list = value
+	format_list = property(_get_format_list, _set_format_list)
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
 	velocities = property(_get_velocities, _set_velocities)	
@@ -762,7 +797,7 @@ class pconstraint_concentration(object):
 	def _set_element(self,value): self._element = value
 	element = property(_get_element, _set_element)
     
-class pmineral_constraint(object):
+class pconstraint_mineral(object):
 	"""Class for mineral in a constraint with vol. fraction and surface area
 
 	"""
@@ -1024,9 +1059,13 @@ class pdata(object):
 	
 	def _write_mode(self,outfile):
 		self._header(outfile,headers['mode'])
-		if self.mode.name:
+		mode = self.mode
+		if mode.name.lower() in mode_names_allowed:
 			outfile.write('MODE ')
-			outfile.write(self.mode.name.lower()+'\n\n')
+			outfile.write(mode.name.lower()+'\n\n')
+		else:
+			print 'ERROR: mode.name: \''+ mode.name +'\' is invalid.'
+			print '       valid mode.names:', mode_names_allowed, '\n'
 			
 	def _read_co2_database(self,infile,line):
 		self._co2_database = line.split()[-1]
@@ -1106,10 +1145,11 @@ class pdata(object):
 		self._header(outfile,headers['grid'])
 		grid = self.grid
 		outfile.write('GRID\n')
-		if grid.type:
+		if grid.type in grid_types_allowed:
 			outfile.write('  TYPE ' + grid.type + '\n')
 		else:
-			print 'error: grid.type is required'
+			print 'ERROR: grid.type: \''+ grid.type +'\' is invalid.'
+			print '       valid grid.types:', grid_types_allowed, '\n'
 		if grid.bounds_bool:
 			outfile.write('  BOUNDS\n')
 			outfile.write('    ')
@@ -1384,7 +1424,11 @@ class pdata(object):
 		if time.tf:
 			try:
 				outfile.write('  FINAL_TIME ' + strD(time.tf[0])) # Write value
-				outfile.write(' ' + time.tf[1] +'\n')		  # Write time unit
+				if time.tf[1].lower() in time_units_allowed:
+					outfile.write(' ' + time.tf[1].lower() +'\n')# Write time unit
+				else:
+					print 'ERROR: time.tf[1]: \'' + time.tf[1] + '\' is invalid.'
+					print '       valid time.units', time_units_allowed, '\n'
 			except:
 				print 'ERROR: time.tf (final time) input is invalid. Format should be a list: [number, string]\n'
 		
@@ -1393,7 +1437,11 @@ class pdata(object):
 			try:
 				outfile.write('  INITIAL_TIMESTEP_SIZE ' + 
                                         strD(time.dti[0]))		# Write value
-				outfile.write(' ' + time.dti[1] +'\n')	# Write time unit
+				if time.dti[1].lower() in time_units_allowed:
+					outfile.write(' ' + time.dti[1] +'\n')	# Write time unit
+				else:
+					print 'ERROR: time.dti[1]: \'' + time.dti[1] + '\' is invalid.'
+					print '       valid time.units', time_units_allowed, '\n'
 			except:
 				print 'ERROR: time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]\n'
 		
@@ -1401,7 +1449,11 @@ class pdata(object):
 		if time.dtf:
 			try:
 				outfile.write('  MAXIMUM_TIMESTEP_SIZE ' + strD(time.dtf[0]))
-				outfile.write(' ' + time.dtf[1] +'\n')
+				if time.dtf[1].lower() in time_units_allowed:
+					outfile.write(' ' + time.dtf[1] +'\n')
+				else:
+					print 'ERROR: time.dtf[1]: \'' + time.dtf[1] + '\' is invalid.'
+					print '       valid time.units', time_units_allowed, '\n'
 			except:
 				print 'ERROR: time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]\n'
 				
@@ -1427,13 +1479,23 @@ class pdata(object):
 				# write before key word 'AT'
 				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()# lower capitalization
 				outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
-				outfile.write(strD(time.dtf_lv[i]) + ' ' + 	# Value 
-					      time.dtf_lv_unit[i])		# Time Unit
+				outfile.write(strD(time.dtf_lv[i]) + ' ') # Write Value 
+				if time.dtf_lv_unit[i] in time_units_allowed:
+					outfile.write(time.dtf_lv_unit[i])# Write Time Unit
+				else:
+					print 'ERROR: time.dtf_lv_unit: \'' + time.dtf_lv_unit[i] + '\' is invalid.'
+					print '       valid time.units', time_units_allowed, '\n'
+				
 				# write after key word 'AT'
 				time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()# lower capitalization
 				outfile.write(' at ')
-				outfile.write(strD(time.dtf_li[i]) + ' ' + 
-					      time.dtf_li_unit[i] + '\n')
+				outfile.write(strD(time.dtf_li[i]) + ' ') # Write Value
+				if time.dtf_li_unit[i] in time_units_allowed:
+					outfile.write(time.dtf_li_unit[i]) # Write Time Unit
+				else:
+					print 'ERROR: time.dtf_li_unit: \'' + time.dtf_li_unit[i] + '\' is invalid.'
+					print '       valid time.units', time_units_allowed, '\n'
+				outfile.write('\n')
 			except:
 				print 'ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of strings. All lists should be of equal length.\n'
 		outfile.write('END\n\n')
@@ -1455,15 +1517,10 @@ class pdata(object):
 		self._lsolverlist.append(lsolver)	# Assign object
 		
 	def _read_nsolver(self,infile,line):
-		np_name = line.split()[-1].lower() # newton solver type - tran_solver or flow_solver
-		p = pnsolver('')		# Assign Defaults
-		np_atol = p.atol
-		np_rtol = p.rtol
-		np_stol = p.stol
-		np_dtol = p.dtol
-		np_itol = p.itol
-		np_max_it = p.max_it
-		np_max_f = p.max_f
+		
+		nsolver = pnsolver('')		# Assign Defaults
+		
+		nsolver.name = line.split()[-1].lower() # newton solver type - tran_solver or flow_solver
 		
 		keepReading = True
 		
@@ -1472,33 +1529,31 @@ class pdata(object):
 			key = line.strip().split()[0].lower()	# take first key word
 			
 			if key == 'atol':
-				np_atol = floatD(line.split()[-1])
+				nsolver.atol = floatD(line.split()[-1])
 			if key == 'rtol':
-				np_rtol = floatD(line.split()[-1])
+				nsolver.rtol = floatD(line.split()[-1])
 			if key == 'stol':
-				np_stol = floatD(line.split()[-1])
+				nsolver.stol = floatD(line.split()[-1])
 			if key == 'dtol':
-				np_dtol = floatD(line.split()[-1])
+				nsolver.dtol = floatD(line.split()[-1])
 			if key == 'itol':
-				np_itol = floatD(line.split()[-1])
+				nsolver.itol = floatD(line.split()[-1])
 			if key == 'maxit':
-				np_max_it = int(line.split()[-1])
+				nsolver.max_it = int(line.split()[-1])
 			if key == 'maxf':
-				np_max_f = int(line.split()[-1])
+				nsolver.max_f = int(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
-		
-		new_nsolver = pnsolver(np_name,np_atol,np_rtol,np_stol,np_dtol,np_itol,
-					np_max_it,np_max_f)	# Create an empty newton solver
-		self._nsolverlist.append(new_nsolver)
+		self._nsolverlist.append(nsolver)
 		
 	def _write_lsolver(self,outfile):
 		self._header(outfile,headers['linear_solver'])
 		
 		for lsolver in self.lsolverlist:
-			if lsolver.name:
+			if lsolver.name.lower() in solver_names_allowed:
 				outfile.write('LINEAR_SOLVER ' + lsolver.name.lower() + '\n')
-			else: 
-				print 'ERROR: name is required when using linear solver.'
+			else:
+				print 'ERROR: lsolver.name: \''+ lsolver.name +'\' is invalid.'
+				print '       valid solver.names', solver_names_allowed, '\n'
 			if lsolver.solver:
 				outfile.write('  SOLVER ' + lsolver.solver.lower() + '\n')
 			outfile.write('END\n\n')
@@ -1509,12 +1564,15 @@ class pdata(object):
 		for nsolver in self.nsolverlist:
 			# Write Newton Solver Type - Not certain this is correct.
 			
-			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
-				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
-			elif nsolver.name.lower() == 'tran':
+#			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
+#				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
+#			elif nsolver.name.lower() == 'tran':
+#				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
+			if nsolver.name.lower() in solver_names_allowed:
 				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
 			else:
-				print 'error: nsolver_name (newton solver name) is invalid, unrecognized, or missing.\n'
+				print 'ERROR: nsolver.name: \''+ nsolver.name +'\' is invalid.'
+				print '       valid solver.names', solver_names_allowed, '\n'
 			
 			if nsolver.atol:
 				outfile.write('  ATOL ' + strD(nsolver.atol) + '\n')
@@ -1538,7 +1596,7 @@ class pdata(object):
 		np_mass_balance = p.mass_balance
 		np_print_column_ids = p.print_column_ids
 		np_periodic_observation_timestep = p.periodic_observation_timestep
-		np_format = p.format
+		np_format_list = p.format_list
 		np_velocities = p.velocities
 		
 		keepReading = True
@@ -1563,16 +1621,9 @@ class pdata(object):
 			elif key == 'print_column_ids':
 				np_print_column_ids = True
 			elif key == 'format':
-				tstring = (line.strip().split()[1:])
+				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
-				if tstring == 'tecplot block':
-					np_format.append('TECPLOT BLOCK')
-				elif tstring == 'tecplot point':
-					np_format.append('TECPLOT POINT')
-				elif tstring == 'hdf5':
-					np_format.append('HDF5')
-				elif tstring == 'vtk':
-					np_format.append('VTK')
+				np_format_list.append(tstring)	# assign
 			elif key == 'velocities':
 				np_velocities = True
 			elif key == 'mass_balance':
@@ -1581,7 +1632,7 @@ class pdata(object):
 			
 		# Create new empty output object and assign values read in.
 		new_output = poutput(np_time_list, np_mass_balance,np_print_column_ids,
-					np_periodic_observation_timestep,np_format,
+					np_periodic_observation_timestep,np_format_list,
 					np_velocities)	# Create an empty output
 		self._output = new_output	# Values read in are assigned now'
 		
@@ -1591,11 +1642,17 @@ class pdata(object):
 		
 		# Write Output - if used so null/None entries are not written
 		outfile.write('OUTPUT\n')
-# Further improvements can be made here in time_list for verifying 1st element is a time unit
+		
 		if output.time_list:
-			outfile.write('  TIMES ')
-			for i in output.time_list:
-				outfile.write(' '+strD(i))
+			# Check if 1st variable in list a valid time unit
+			if output.time_list[0] in time_units_allowed:
+				outfile.write('  TIMES ')
+				# Write remaining number(s) after time unit is specified
+				for value in output.time_list:
+						outfile.write(' '+strD(value))
+			else:
+				print 'ERROR: output.time_list[0]: \''+ output.time_list[0] +'\' is invalid.'
+				print '       valid time.units', time_units_allowed, '\n'
 			outfile.write('\n')
 					
 # This is here on purpose - Needed later
@@ -1607,10 +1664,14 @@ class pdata(object):
 					str(output.periodic_observation_timestep)+'\n')
 		if output.print_column_ids:
 			outfile.write('  '+'PRINT_COLUMN_IDS'+'\n')
-		if output.format:
-			for i in range(0, len(output.format)):
+#		for i in range(0, len(output.format)):
+		for format in output.format_list:
+			if format.upper() in output_formats_allowed:
 				outfile.write('  FORMAT ')
-				outfile.write(str(output.format[i].upper()) + '\n')
+				outfile.write(format.upper() + '\n')
+			else:
+				print 'ERROR: output.format: \''+ format +'\' is invalid.'
+				print '       valid output.format:', output_formats_allowed, '\n'
 		if output.velocities:
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
@@ -1711,11 +1772,19 @@ class pdata(object):
 		else:
 			outfile.write('n')
 		if saturation.permeability_function_type:
-			outfile.write('  PERMEABILITY_FUNCTION_TYPE ' +
+			if saturation.permeability_function_type in permeability_function_types_allowed:
+				outfile.write('  PERMEABILITY_FUNCTION_TYPE ' +
 					saturation.permeability_function_type + '\n')
+			else:
+				print 'ERROR: saturation.permeability_function_type: \'' + saturation.permeability_function_type +'\' is invalid.'
+				print '       valid saturation.permeability_function_types', permeability_function_types_allowed, '\n'
 		if saturation.saturation_function_type:
-			outfile.write('  SATURATION_FUNCTION_TYPE ' + 
-					saturation.saturation_function_type + '\n')
+			if saturation.saturation_function_type in saturation_function_types_allowed:
+				outfile.write('  SATURATION_FUNCTION_TYPE ' + 
+						saturation.saturation_function_type + '\n')
+			else:
+				print 'ERROR: saturation.saturation_function_type: \'' + saturation.saturation_function_type +'\' is invalid.'
+				print '       valid saturation.permeability_function_types', saturation_function_types_allowed, '\n'
 		if saturation.residual_saturation_liquid or saturation.residual_saturation_liquid ==0:
 			outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' + 
 					strD(saturation.residual_saturation_liquid) + '\n')
@@ -1930,6 +1999,63 @@ class pdata(object):
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
 		
+		# Function is used to determine which flow_condition type allowed list 
+		# to check depending on the flow_condition name specified.
+		# Also does the work of writing or error reporting
+		def check_condition_type(condition_name, condition_type):
+			if condition_name.upper() == 'PRESSURE':
+				if condition_type.lower() in pressure_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition pressure_types_allowed:', pressure_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'RATE':
+				if condition_type.lower() in rate_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'FLUX':
+				if condition_type.lower() in flux_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'TEMPERATURE':
+				if condition_type.lower() in temperature_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition temperature_types_allowed:', temperature_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'CONCENTRATION':
+				if condition_type.lower() in concentration_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition concentration_types_allowed:', concentration_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'SATURATION':
+				if condition_type.lower() in saturation_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition saturation_types_allowed:', saturation_types_allowed, '\n'	
+				return 0 # Break out of function
+			elif condition_name.upper() == 'ENTHALPY':
+				if condition_type.lower() in enthalpy_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition enthalpy_types_allowed:', enthalpy_types_allowed, '\n'	
+				return 0 # Break out of function
+			else:
+				pass # Error reporting for flow_condition.name is done elsewhere
+				# name should be validated before this function is called.
+			
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
 			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
@@ -1940,8 +2066,16 @@ class pdata(object):
 			# variable name and type from lists go here
 			i = 0
 			while i< len(flow.varlist):
-				outfile.write('    ' + flow.varlist[i].name.upper() + '  ' +
-							  flow.varlist[i].type.lower() + '\n')
+				if flow.varlist[i].name.upper() in flow_condition_names_allowed:
+					outfile.write('    ' + flow.varlist[i].name.upper() + '  ')
+				else:
+					print 'ERROR: flow.varlist.name: \'' + flow.varlist[i].name +'\' is invalid.'
+					print '       valid flow_condition.names:', flow_condition_names_allowed, '\n'
+				
+				# Checks flow.varlist[i].type and performs write or error reporting
+				check_condition_type(flow.varlist[i].name, flow.varlist[i].type)
+				
+				outfile.write('\n')
 				i += 1
 				
 			outfile.write('  END\n')
@@ -2056,7 +2190,6 @@ class pdata(object):
 		self._header(outfile,headers['boundary_condition'])
 
 		# Write all boundary conditions to file
-#		if boundary_condition_list:
 		try:
 			for b in self.boundary_condition_list:	# b = boundary_condition
 				if b.name:
@@ -2330,10 +2463,11 @@ class pdata(object):
 				outfile.write('TRANSPORT_CONDITION '+t.name.lower()+'\n')
 			else:
 				print 'Error: transport_condition['+str(tl.index(t))+'].name is required.\n'
-			if t.type:
+			if t.type.lower() in transport_condition_types_allowed:
 				outfile.write('  TYPE '+t.type.lower()+'\n')
 			else:
-				print 'Error: transport['+str(tl.index(t))+'].type is required\n'
+				print 'ERROR: transport.type: \'' + t.type +'\' is invalid.'
+				print '       valid transport_condition.types:', transport_condition_types_allowed, '\n'	
 			try :
 				outfile.write('  CONSTRAINT_LIST\n')
 
@@ -2392,7 +2526,7 @@ class pdata(object):
 					tstring = line.split()
 					if line.strip().lower() in ['/','end']:
 						break
-					mineral = pmineral_constraint()
+					mineral = pconstraint_mineral()
 
 					try:
 						mineral.name = tstring[0]
@@ -2432,11 +2566,9 @@ class pdata(object):
 				outfile.write('\n')
 
 			outfile.write('  /\n') 	# END for concentrations
-			print c.name
 			if c.mineral_list:
 				outfile.write('  MINERALS\n')
 				for mineral in c.mineral_list:
-					print mineral.name
 					if mineral.name:
 						outfile.write('    ' + mineral.name)
 					if mineral.volume_fraction:

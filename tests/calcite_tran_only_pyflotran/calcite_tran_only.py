@@ -48,7 +48,7 @@ mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
 mineral_kinetic.name = 'Calcite'
 mineral_kinetic.rate_constant_list = [1.e-6, 'mol/m^2-sec']
 chemistry.m_kinetics_list.append(mineral_kinetic)	# assigning for mineral kinetic object done here
-chemistry.database = pflotran_dir + '/database/hanford.dat'
+chemistry.database = pflotran_dir + 'database/hanford.dat' # 1st / not needed
 chemistry.log_formulation = True
 chemistry.activity_coefficients = 'TIMESTEP'
 chemistry.output_list = ['PH','all']
@@ -98,7 +98,7 @@ dat.lsolverlist.append(ls)
 #--------------------------------------------------------------
 o = poutput()
 o.time_list = ['y', 5.0, 10.0, 15.0, 20.0]
-o.format.append('tecplot point')
+o.format_list.append('tecplot point')
 dat.output = o
 #--------------------------------------------------------------
 
@@ -204,11 +204,11 @@ concentration.value = 5.e-4
 concentration.constraint = 'M'
 concentration.element = 'Calcite'
 constraint.concentration_list.append(concentration)	# assign concentration
-mineral = pmineral_constraint()
+mineral = pconstraint_mineral()				# new mineral object
 mineral.name = 'Calcite'
 mineral.volume_fraction = 1.e-5
 mineral.surface_area = 1.e0
-constraint.mineral_list.append(mineral)
+constraint.mineral_list.append(mineral)			# assign mineral object
 dat.constraint_list.append(constraint)	# assign constraint
 
 # west condition - 2nd condition
@@ -242,6 +242,9 @@ print('******************************************')
 executable = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file
 dat.write('calcite_tran_only.in')
+
+# Commented out for testing - remove comment if pushed by accident
+
 dat.run(input='calcite_tran_only.in',exe=executable)
 
 

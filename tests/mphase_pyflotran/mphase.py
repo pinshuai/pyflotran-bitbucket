@@ -114,9 +114,8 @@ o = poutput()
 o.mass_balance = True
 o.print_column_ids = True
 o.periodic_observation_timestep = 1
-o.format.append('TECPLOT POINT')
-o.format.append('HDF5')
-o.velocities = False
+o.format_list.append('TECPLOT POINT')
+o.format_list.append('HDF5')
 dat.output = o
 #--------------------------------------------------------------
 
@@ -344,10 +343,10 @@ dat.source_sink = ss
 
 # set stratigraphy couplers
 #--------------------------------------------------------------
-sc = pstrata()
-sc.region = 'ALL' 
-sc.material = 'SOIL1'
-dat.strata = sc
+stratigraphy_coupler = pstrata()
+stratigraphy_coupler.region = 'ALL' 
+stratigraphy_coupler.material = 'SOIL1'
+dat.strata_list.append(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # Test write

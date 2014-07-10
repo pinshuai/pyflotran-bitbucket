@@ -34,7 +34,7 @@ dat = pdata('')
 
 # set uniform_velocity
 #--------------------------------------------------------------
-dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
+dat.uniform_velocity.velocity = [1.e0, 0.e0, 0.e0, 'm/yr']
 #--------------------------------------------------------------
 
 # set chemistry

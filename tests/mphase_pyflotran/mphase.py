@@ -46,7 +46,6 @@ g.upper_bounds = [321.e0, 1.e0, 51.e0]
 g.orign = [0.e0, 0.e0, 0.e0]
 g.nxyz = [107, 1, 51]
 g.dxyz = [5, 5, 5]	# Should not write
-g.gravity_bool = False
 g.gravity =  [0.0, 0.0, -9.8068]	# Should not write
 g.filename =  ''
 dat.grid = g
@@ -103,7 +102,7 @@ ns.max_f = 100
 dat.nsolverlist.append(ns)
 
 ns = pnsolver('')
-ns.name = 'tran'
+ns.name = 'TRAN'
 ns.atol = 1e-12
 ns.rtol = 1e-12
 ns.stol = 1e-30
@@ -153,38 +152,37 @@ dat.saturation = s
 #--------------------------------------------------------------
 r = pregion()
 r.name = 'all'
-r.face = None
 r.coordinates_lower = [0.e0, 0.e0, 0.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'top'
 r.face = 'top'
 r.coordinates_lower = [0.e0, 0.e0, 51.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'west'
 r.face = 'WEST'
 r.coordinates_lower = [0.e0, 0.e0, 0.e0]
 r.coordinates_upper = [0.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'EAST'
 r.face = 'east'
 r.coordinates_lower = [321.e0, 0.e0, 0.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'well'
-r.face = None
 r.coordinates_lower = [160.e0, 1.e0, 20.e0]
 r.coordinates_upper = [160.e0, 1.e0, 20.e0]
-dat.regionlist.append(r)
+dat.add(r)
+
 #--------------------------------------------------------------
 
 # set flow conditions
@@ -216,43 +214,6 @@ var.type = 'zero_gradient'
 var.valuelist = [1e-6]
 var.list = []
 var.unit = 'm'
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'ENTHALPY'
-var.type = 'dirichlet'
-var.valuelist = [0.e0, 0.e0]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-dat.flowlist.append(flow)	# Assigning for flow condition done here
-
-flow = pflow('')
-# top flow condition goes here
-flow.name = 'top'
-flow.units_list = None
-flow.iphase = 1
-flow.sync_timestep_with_update = False
-flow.varlist = [] # Assigning for this done below
-var = pflow_variable('')	# new flow var object
-var.name = 'pressure'
-var.type = 'dirichlet'
-var.valuelist = [3e7, 2e7]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'TEMPERATURE'
-var.type = 'zero_gradient'
-var.valuelist = [60.0]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'CONCENTRATION'
-var.type = 'zero_gradient'
-var.valuelist = [1e-6]
-var.list = []
-var.unit = None
 flow.varlist.append(var)	# assigning for flow var done here
 var = pflow_variable('') # new flow var object
 var.name = 'ENTHALPY'

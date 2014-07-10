@@ -1,4 +1,4 @@
-""" /lass for pflotran data """
+""" Class for pflotran data """
 print	# Makes console output a little easier to read
 
 import numpy as np
@@ -47,12 +47,12 @@ class puniform_velocity(object):
 	UNIFORM_VELOCITY 3.84259d-6 0.d0 0.d0 ! 1.38333 cm/h
 	"""
 	
-	def __init__(self,value_list=[]):
-		self._value_list = value_list
+	def __init__(self,velocity=[0.0,0.0,0.0]):
+		self._velocity = velocity
 		
-	def _get_value_list(self): return self._value_list
-	def _set_value_list(self,value): self._value_list = value
-	value_list = property(_get_value_list, _set_value_list) #: (**)
+	def _get_velocity(self): return self._velocity
+	def _set_velocity(self,value): self._velocity = value
+	velocity = property(_get_velocity, _set_velocity) #: (**)
 
 class pmaterial(object):
 	""" Class for material property card
@@ -527,7 +527,6 @@ class pflow_variable(object):
 	def _get_list(self): return self._list
 	def _set_list(self,value): self._list = value
 	list = property(_get_list, _set_list)
-
 	
 class pflow_variable_list(object):
 	"""Sub-class of pflow_variable.
@@ -930,7 +929,7 @@ class pdata(object):
 		outfile = open(self.filename,'w')
 		
 		# Presumes uniform_velocity.value_list is required
-		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
+		if self.uniform_velocity.velocity: self._write_uniform_velocity(outfile)
 		
 		# Presumes mode.name is required
 		if self.mode.name: self._write_mode(outfile)
@@ -1031,7 +1030,7 @@ class pdata(object):
 	def _write_uniform_velocity(self,outfile):
 		self._header(outfile,headers['uniform_velocity'])
 		outfile.write('UNIFORM_VELOCITY ')
-		for v in self.uniform_velocity.value_list:	# value in value_list
+		for v in self.uniform_velocity.velocity:	# value in value_list
 			outfile.write(strD(v) + ' ')
 		outfile.write('\n\n')
 		
@@ -1786,7 +1785,7 @@ class pdata(object):
 			
 			new_region = pregion(np_name,np_coordinates_lower,np_coordinates_upper,
 						np_face)
-			self._regionlist.append(new_region)
+			self.add(new_region)
 
 	def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
 		# check if region already exists

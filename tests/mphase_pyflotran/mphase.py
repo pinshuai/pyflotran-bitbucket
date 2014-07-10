@@ -2,7 +2,14 @@ import sys
 sys.path.append('../../.')
 
 from pdata import*
-
+import os
+try:
+  pflotran_dir = os.environ['PFLOTRAN_DIR']
+except KeyError:
+  print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pflotran_dir + '/src/python')
+import pflotran as pft
 
 '''
 Floats can be inputted directly as a float using 'e' or 'E' - E.g. - 0.e0
@@ -27,7 +34,7 @@ dat.mode = m
 
 # set co2 database
 #--------------------------------------------------------------
-dat.co2_database = '/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat'
+dat.co2_database = pflotran_dir + '/database/co2data0.dat'
 #--------------------------------------------------------------
 
 # set grid
@@ -36,11 +43,9 @@ g = pgrid()
 g.type = 'structured'
 g.lower_bounds = [0.e0, 0.e0, 0.e0]
 g.upper_bounds = [321.e0, 1.e0, 51.e0]
-g.bounds_bool = True
 g.orign = [0.e0, 0.e0, 0.e0]
 g.nxyz = [107, 1, 51]
 g.dxyz = [5, 5, 5]	# Should not write
-g.gravity_bool = False
 g.gravity =  [0.0, 0.0, -9.8068]	# Should not write
 g.filename =  ''
 dat.grid = g
@@ -97,7 +102,7 @@ ns.max_f = 100
 dat.nsolverlist.append(ns)
 
 ns = pnsolver('')
-ns.name = 'tran'
+ns.name = 'TRAN'
 ns.atol = 1e-12
 ns.rtol = 1e-12
 ns.stol = 1e-30
@@ -146,38 +151,37 @@ dat.saturation = s
 #--------------------------------------------------------------
 r = pregion()
 r.name = 'all'
-r.face = None
 r.coordinates_lower = [0.e0, 0.e0, 0.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'top'
 r.face = 'top'
 r.coordinates_lower = [0.e0, 0.e0, 51.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'west'
 r.face = 'WEST'
 r.coordinates_lower = [0.e0, 0.e0, 0.e0]
 r.coordinates_upper = [0.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'EAST'
 r.face = 'east'
 r.coordinates_lower = [321.e0, 0.e0, 0.e0]
 r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.regionlist.append(r)
+dat.add(r)
 
 r = pregion()
 r.name = 'well'
-r.face = None
 r.coordinates_lower = [160.e0, 1.e0, 20.e0]
 r.coordinates_upper = [160.e0, 1.e0, 20.e0]
-dat.regionlist.append(r)
+dat.add(r)
+
 #--------------------------------------------------------------
 
 # set flow conditions
@@ -209,43 +213,6 @@ var.type = 'zero_gradient'
 var.valuelist = [1e-6]
 var.list = []
 var.unit = 'm'
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'ENTHALPY'
-var.type = 'dirichlet'
-var.valuelist = [0.e0, 0.e0]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-dat.flowlist.append(flow)	# Assigning for flow condition done here
-
-flow = pflow('')
-# top flow condition goes here
-flow.name = 'top'
-flow.units_list = None
-flow.iphase = 1
-flow.sync_timestep_with_update = False
-flow.varlist = [] # Assigning for this done below
-var = pflow_variable('')	# new flow var object
-var.name = 'pressure'
-var.type = 'dirichlet'
-var.valuelist = [3e7, 2e7]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'TEMPERATURE'
-var.type = 'zero_gradient'
-var.valuelist = [60.0]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
-var.name = 'CONCENTRATION'
-var.type = 'zero_gradient'
-var.valuelist = [1e-6]
-var.list = []
-var.unit = None
 flow.varlist.append(var)	# assigning for flow var done here
 var = pflow_variable('') # new flow var object
 var.name = 'ENTHALPY'
@@ -347,11 +314,13 @@ stratigraphy_coupler = pstrata()
 stratigraphy_coupler.region = 'ALL' 
 stratigraphy_coupler.material = 'SOIL1'
 dat.strata_list.append(stratigraphy_coupler)
+
 #--------------------------------------------------------------
 
 # Test write
 #dat.write('mphase.in')
 
+pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file
-dat.run(input='mphase.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+dat.run(input='mphase.in',exe=pflotran_exe)
 

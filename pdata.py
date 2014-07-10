@@ -1,4 +1,4 @@
-""" /lass for pflotran data """
+""" Class for pflotran data """
 print	# Makes console output a little easier to read
 
 import numpy as np
@@ -70,18 +70,24 @@ headers = ['co2 database path','uniform velocity','mode','chemistry','grid',
 	   'stratigraphy couplers','constraints']
 headers = dict(zip(cards,headers))
 
+buildWarnings = []
+
+def _buildWarnings(s):
+	global buildWarnings
+	buildWarnings.append(s)
+    
 class puniform_velocity(object):
 	""" Class for uniform velcity for transport observation.
 	Example:
 	UNIFORM_VELOCITY 3.84259d-6 0.d0 0.d0 ! 1.38333 cm/h
 	"""
 	
-	def __init__(self,value_list=[]):
-		self._value_list = value_list
+	def __init__(self,velocity=[0.0,0.0,0.0]):
+		self._velocity = velocity
 		
-	def _get_value_list(self): return self._value_list
-	def _set_value_list(self,value): self._value_list = value
-	value_list = property(_get_value_list, _set_value_list) #: (**)
+	def _get_velocity(self): return self._velocity
+	def _set_velocity(self,value): self._velocity = value
+	velocity = property(_get_velocity, _set_velocity) #: (**)
 
 class pmaterial(object):
 	""" Class for material property card
@@ -188,8 +194,7 @@ class pgrid(object):		# discretization
 	"""
 
 	def __init__(self,type='structured',lower_bounds=[0.0,0.0,0.0],upper_bounds=[50.0,50.0,50.0],
-				 bounds_bool=True,origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity_bool=False,
-				 gravity=[0.0,0.0,-9.8068],filename=''):
+				 origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity=[0.0,0.0,-9.8068],filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -198,8 +203,6 @@ class pgrid(object):		# discretization
 		self._dxyz = dxyz
 		self._gravity = gravity
 		self._filename = filename
-		self._bounds_bool = bounds_bool
-		self._gravity_bool = gravity_bool
 
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
@@ -225,12 +228,6 @@ class pgrid(object):		# discretization
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
-	def _get_bounds_bool(self): return self._bounds_bool
-	def _set_bounds_bool(self,value): self._bounds_bool = value
-	bounds_bool = property(_get_bounds_bool, _set_bounds_bool) #: (**)
-	def _get_gravity_bool(self): return self._gravity_bool
-	def _set_gravity_bool(self,value): self._gravity_bool = value
-	gravity_bool = property(_get_gravity_bool, _set_gravity_bool) #: (**)
 
 
 class pmode(object):
@@ -565,7 +562,6 @@ class pflow_variable(object):
 	def _get_list(self): return self._list
 	def _set_list(self,value): self._list = value
 	list = property(_get_list, _set_list)
-
 	
 class pflow_variable_list(object):
 	"""Sub-class of pflow_variable.
@@ -759,8 +755,8 @@ class pconstraint(object):
 	
 	def __init__(self, name='', concentration_list=[], mineral_list=[]):
 		self._name = name
-		self._concentration_list = [] # Composed of pconstraint_concentration objects
-		self._mineral_list = [] # list of minerals
+		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
+		self._mineral_list = mineral_list # list of minerals
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
@@ -968,7 +964,7 @@ class pdata(object):
 		outfile = open(self.filename,'w')
 		
 		# Presumes uniform_velocity.value_list is required
-		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
+		if self.uniform_velocity.velocity: self._write_uniform_velocity(outfile)
 		
 		# Presumes mode.name is required
 		if self.mode.name: self._write_mode(outfile)
@@ -1029,6 +1025,27 @@ class pdata(object):
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
+        
+	def add(self,obj,overwrite=False):					#Adds a new object to the file
+		'''Attach a region, boundary condition object to the data file.
+		
+		:param obj: Object to be added to the data file.
+		:type obj: pregion
+		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
+		:type overwrite: bool
+		'''
+		if isinstance(obj,pregion): self._add_region(obj,overwrite)
+
+	def delete(self,obj): 								#Deletes an object from the file
+		'''Delete a region, boundary condition object from the data file.
+		
+		:param obj: Object to be deleted from the data file. Can be a list of objects.
+		:type obj: pregion, list
+		'''
+		if isinstance(obj,pregion): self._delete_region(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pregion): self._delete_region(obji)
 		
 	def _read_uniform_velocity(self,infile,line):
 		np_value_list = []
@@ -1048,7 +1065,7 @@ class pdata(object):
 	def _write_uniform_velocity(self,outfile):
 		self._header(outfile,headers['uniform_velocity'])
 		outfile.write('UNIFORM_VELOCITY ')
-		for v in self.uniform_velocity.value_list:	# value in value_list
+		for v in self.uniform_velocity.velocity:	# value in value_list
 			outfile.write(strD(v) + ' ')
 		outfile.write('\n\n')
 		
@@ -1096,7 +1113,6 @@ class pdata(object):
 			if key == 'type':
 				ng_type = line.split()[-1]
 			elif key == 'bounds':
-				bounds_key = True
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
@@ -1118,7 +1134,6 @@ class pdata(object):
 				ng_nxyz[1] = int(line.split()[2])
 				ng_nxyz[2] = int(line.split()[3])
 			elif key == 'gravity':
-				gravity_key = True
 				ng_gravity[0] = floatD(line.split()[1])
 				ng_gravity[1] = floatD(line.split()[2])
 				ng_gravity[2] = floatD(line.split()[3])
@@ -1137,8 +1152,8 @@ class pdata(object):
 						ng_dxyz[count] = floatD(line.strip().split()[0])
 						count = count + 1
 			elif key in ['/','end']: keepReading = False
-		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,bounds_key,ng_origin,ng_nxyz,
-						 ng_dxyz,gravity_key,ng_gravity,ng_filename) 		# create an empty grid
+		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,ng_origin,ng_nxyz,
+						 ng_dxyz,ng_gravity,ng_filename) 		# create an empty grid
 		self._grid = new_grid
 	
 	def _write_grid(self,outfile):
@@ -1150,7 +1165,7 @@ class pdata(object):
 		else:
 			print 'ERROR: grid.type: \''+ grid.type +'\' is invalid.'
 			print '       valid grid.types:', grid_types_allowed, '\n'
-		if grid.bounds_bool:
+		if grid.lower_bounds:
 			outfile.write('  BOUNDS\n')
 			outfile.write('    ')
 			for i in range(3):
@@ -1172,7 +1187,7 @@ class pdata(object):
 		for i in range(3):
 			outfile.write(strD(grid.nxyz[i]) + ' ')
 		outfile.write('\n')
-		if grid.gravity_bool:
+		if grid.gravity:
 			outfile.write('  GRAVITY' + ' ')
 			for i in range(3):
 				outfile.write(strD(grid.gravity[i]) + ' ')
@@ -1815,14 +1830,12 @@ class pdata(object):
 		np_coordinates_lower = [None]*3
 		np_coordinates_upper = [None]*3
 		np_face = None
-		coordinates_bool = False
 		
 		keepReading = True
 		while keepReading:	# Read through all cards
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'coordinates':
-				coordinates_bool = True
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
@@ -1839,17 +1852,32 @@ class pdata(object):
 				np_face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
-		if coordinates_bool:
 			new_region = pregion(np_name,np_coordinates_lower,np_coordinates_upper,
 						np_face)
-			self._regionlist.append(new_region)
-				
+			self.add(new_region)
+
+	def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
+		# check if region already exists
+		if isinstance(region,pregion):		
+			if region.name in self.region.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A region with name \''+str(region.name)+'\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.')
+					return
+				else:
+					self.delete(self.pregion[pregion.name])
+		
+		#region._parent = self
+		if region not in self._regionlist:
+			self._regionlist.append(region)
+            
+	def _delete_region(self,region=pregion()):
+		self._regionlist.remove(region)		
+        		
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
 		
 		# Write out all valid region object entries with Region as Key word
 		for region in self.regionlist:
-#			if region.coordinates_bool: # Not needed anymore due to check in read
 			outfile.write('REGION ')
 			outfile.write(region.name.lower() + '\n')
 			if region.face:
@@ -2657,4 +2685,6 @@ class pdata(object):
 	transportlist = property(_get_transportlist, _set_transportlist) #: (**)
 	def _get_constraint_list(self): return self._constraint_list
 	constraint_list = property(_get_constraint_list) #: (**)
-	
+	def _get_region(self):
+		return dict([rgn.name,rgn] for rgn in self.regionlist if rgn.name)
+	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.

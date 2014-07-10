@@ -34,7 +34,7 @@ dat = pdata('')
 
 # set uniform_velocity
 #--------------------------------------------------------------
-dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
+dat.uniform_velocity.velocity = [1.e0, 0.e0, 0.e0, 'm/yr']
 #--------------------------------------------------------------
 
 # set chemistry
@@ -187,6 +187,7 @@ dat.strata_list.append(stratigraphy_coupler)
 constraint = pconstraint()
 constraint.name = 'initial_CONSTRAINT'
 constraint.concentration_list = [] # Assigning for this done below
+constraint.mineral_list = []
 concentration = pconstraint_concentration()		# new concentration object
 concentration.pspecies = 'H+'
 concentration.value = 1.e-8
@@ -215,6 +216,7 @@ dat.constraint_list.append(constraint)	# assign constraint
 constraint = pconstraint()
 constraint.name = 'inlet_constraint'
 constraint.concentration_list = [] # Assigning for this done below
+constraint.mineral_list = []
 concentration = pconstraint_concentration()		# new concentration object
 concentration.pspecies = 'H+'
 concentration.value = 5.

@@ -48,7 +48,7 @@ mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
 mineral_kinetic.name = 'Calcite'
 mineral_kinetic.rate_constant_list = [1.e-6, 'mol/m^2-sec']
 chemistry.m_kinetics_list.append(mineral_kinetic)	# assigning for mineral kinetic object done here
-chemistry.database = pflotran_dir + 'database/hanford.dat' # 1st / not needed
+chemistry.database = pflotran_dir + 'database/hanford.dat'
 chemistry.log_formulation = True
 chemistry.activity_coefficients = 'TIMESTEP'
 chemistry.output_list = ['PH','all']
@@ -83,15 +83,15 @@ material_propery.name = 'soil1'
 material_propery.id = 1
 material_propery.porosity = 0.25
 material_propery.tortuosity = 1.0
-dat.proplist.append(material_propery)
+dat.add(material_propery)
 #--------------------------------------------------------------
 
 # set linear solvers
 #--------------------------------------------------------------
-ls = plsolver()
-ls.name = 'TRANSPORT'
-ls.solver = 'DirECT'
-dat.lsolverlist.append(ls)
+linear_solver = plsolver()
+linear_solver.name = 'TRANSPORT'
+linear_solver.solver = 'DirECT'
+dat.add(linear_solver)
 #--------------------------------------------------------------
 
 # set output
@@ -111,43 +111,43 @@ dat.fluid = f
 
 # set regions
 #--------------------------------------------------------------
-r = pregion()
-r.name = 'ALL'
-r.face = None
-r.coordinates_lower = [0.0, 0.0, 0.0]
-r.coordinates_upper = [100.0, 1.0, 1.0]
-dat.regionlist.append(r)
+region = pregion()
+region.name = 'ALL'
+region.face = None
+region.coordinates_lower = [0.0, 0.0, 0.0]
+region.coordinates_upper = [100.0, 1.0, 1.0]
+dat.add(region)
 
-r = pregion()
-r.name = 'west'
-r.face = 'WEST'
-r.coordinates_lower = [0.e0, 0.e0, 0.e0]
-r.coordinates_upper = [0.e0, 1.e0,  1.e0]
-dat.regionlist.append(r)
+region = pregion()
+region.name = 'west'
+region.face = 'WEST'
+region.coordinates_lower = [0.e0, 0.e0, 0.e0]
+region.coordinates_upper = [0.e0, 1.e0,  1.e0]
+dat.add(region)
 
-r = pregion()
-r.name = 'east'
-r.face = 'EAST'
-r.coordinates_lower = [100.0, 0.0, 0.0]
-r.coordinates_upper = [100.0, 1.0, 1.0]
-dat.regionlist.append(r)
+region = pregion()
+region.name = 'east'
+region.face = 'EAST'
+region.coordinates_lower = [100.0, 0.0, 0.0]
+region.coordinates_upper = [100.0, 1.0, 1.0]
+dat.add(region)
 #--------------------------------------------------------------
 
 # set transport conditions
 #--------------------------------------------------------------
-tc = ptransport()
-tc.name = 'background_CONC'
-tc.type = 'zero_gradient'
-tc.constraint_list_value = [0.e0]
-tc.constraint_list_type = ['initial_CONSTRAINT']
-dat.transportlist.append(tc)
+transport_condition = ptransport()
+transport_condition.name = 'background_CONC'
+transport_condition.type = 'zero_gradient'
+transport_condition.constraint_list_value = [0.e0]
+transport_condition.constraint_list_type = ['initial_CONSTRAINT']
+dat.add(transport_condition)
 
-tc = ptransport()
-tc.name = 'inlet_conc'
-tc.type = 'dirichlet_zero_gradient'
-tc.constraint_list_value = [0.e0]
-tc.constraint_list_type = ['inlet_constraint']
-dat.transportlist.append(tc)
+transport_condition = ptransport()
+transport_condition.name = 'inlet_conc'
+transport_condition.type = 'dirichlet_zero_gradient'
+transport_condition.constraint_list_value = [0.e0]
+transport_condition.constraint_list_type = ['inlet_constraint']
+dat.add(transport_condition)
 #--------------------------------------------------------------
 
 # set initial condition
@@ -164,13 +164,13 @@ bc = pboundary_condition()
 bc.name = 'OUTLEt'
 bc.transport = 'background_CONC'
 bc.region = 'EAST'
-dat.boundary_condition_list.append(bc)
+dat.add(bc)
 
 bc = pboundary_condition()
 bc.name = 'inlet'
 bc.transport = 'inlet_conc'
 bc.region = 'west'
-dat.boundary_condition_list.append(bc)
+dat.add(bc)
 #--------------------------------------------------------------
 
 # set stratigraphy couplers
@@ -178,7 +178,7 @@ dat.boundary_condition_list.append(bc)
 stratigraphy_coupler = pstrata()
 stratigraphy_coupler.region = 'all' 
 stratigraphy_coupler.material = 'soil1'
-dat.strata_list.append(stratigraphy_coupler)
+dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # set constraints
@@ -210,7 +210,7 @@ mineral.name = 'Calcite'
 mineral.volume_fraction = 1.e-5
 mineral.surface_area = 1.e0
 constraint.mineral_list.append(mineral)			# assign mineral object
-dat.constraint_list.append(constraint)	# assign constraint
+dat.add(constraint)	# assign constraint
 
 # west condition - 2nd condition
 constraint = pconstraint()
@@ -232,20 +232,20 @@ concentration.pspecies = 'Ca++'
 concentration.value = 1.e-6
 concentration.constraint = 'Z'
 constraint.concentration_list.append(concentration)	# assign concentration
-dat.constraint_list.append(constraint)	# assign constraint
+dat.add(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-# dat.write('calcite_tran_only.in')
+#dat.write('calcite_tran_only.in')
+
 print('******************************************')
 print('Writing PFLOTRAN input file and executing it.')
 print('******************************************')
 
-executable = pflotran_dir + '/src/pflotran/pflotran'
+executable = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.write('calcite_tran_only.in')
 
-# Commented out for testing - remove comment if pushed by accident
 
 dat.run(input='calcite_tran_only.in',exe=executable)
 

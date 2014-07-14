@@ -32,7 +32,7 @@ CHEMISTRY
       RATE_CONSTANT 1.d-6 mol/m^2-sec
     /
   /
-  DATABASE ../../../database/hanford.dat
+  DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/hanford.dat
   LOG_FORMULATION
 #  OPERATOR_SPLITTING
   ACTIVITY_COEFFICIENTS TIMESTEP

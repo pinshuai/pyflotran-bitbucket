@@ -75,19 +75,19 @@ buildWarnings = []
 def _buildWarnings(s):
 	global buildWarnings
 	buildWarnings.append(s)
-    
+	
 class puniform_velocity(object):
 	""" Class for uniform velcity for transport observation.
 	Example:
 	UNIFORM_VELOCITY 3.84259d-6 0.d0 0.d0 ! 1.38333 cm/h
 	"""
 	
-	def __init__(self,velocity=[0.0,0.0,0.0]):
-		self._velocity = velocity
+	def __init__(self, value_list=[0.0,0.0,0.0]):
+		self._value_list = value_list
 		
-	def _get_velocity(self): return self._velocity
-	def _set_velocity(self,value): self._velocity = value
-	velocity = property(_get_velocity, _set_velocity) #: (**)
+	def _get_value_list(self): return self._value_list
+	def _set_value_list(self,value): self._value_list = value
+	value_list = property(_get_value_list, _set_value_list) #: (**)
 
 class pmaterial(object):
 	""" Class for material property card
@@ -830,7 +830,7 @@ class pdata(object):
 		self._timestepper = None
 		self._proplist = []
 		self._time = ptime()
-		self._lsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
+		self._lsolverlist = []	# Possible to have 1 or 2 lsolver lists. FLOW/TRAN
 		self._nsolverlist = []	# Possible to have 1 or 2 nsolver lists. FLOW/TRAN
 		self._output = poutput()
 		self._fluid = pfluid()
@@ -964,7 +964,7 @@ class pdata(object):
 		outfile = open(self.filename,'w')
 		
 		# Presumes uniform_velocity.value_list is required
-		if self.uniform_velocity.velocity: self._write_uniform_velocity(outfile)
+		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 		
 		# Presumes mode.name is required
 		if self.mode.name: self._write_mode(outfile)
@@ -1027,25 +1027,74 @@ class pdata(object):
 		outfile.close()
         
 	def add(self,obj,overwrite=False):					#Adds a new object to the file
-		'''Attach a region, boundary condition object to the data file.
+		'''Attach an object associated w/ list (e.g. region) to the data file.
 		
 		:param obj: Object to be added to the data file.
-		:type obj: pregion
+		:type obj: object(eg.pregion)
 		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
 		:type overwrite: bool
 		'''
+		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
+		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
+		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
 		if isinstance(obj,pregion): self._add_region(obj,overwrite)
-
+		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
+		if isinstance(obj,pboundary_condition): self._add_boundary_condition(obj,overwrite)
+		if isinstance(obj,pstrata): self._add_strata(obj,overwrite)
+		if isinstance(obj,ptransport): self._add_transport(obj,overwrite)
+		if isinstance(obj,pconstraint): self._add_constraint(obj,overwrite)
+		
 	def delete(self,obj): 								#Deletes an object from the file
-		'''Delete a region, boundary condition object from the data file.
+		'''Delete an object that is assigned to a list e.g.(region) from the data file.
 		
 		:param obj: Object to be deleted from the data file. Can be a list of objects.
-		:type obj: pregion, list
+		:type obj: object(eg. pregion), list
 		'''
+
+		if isinstance(obj,pmaterial): self._delete_prop(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):	# obji = object index
+				if isinstance(obji,pmaterial): self._delete_prop(obji)
+				
+		if isinstance(obj,plsolver): self._delete_lsolver(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,plsolver): self._delete_lsolver(obji)
+		
+		if isinstance(obj,pnsolver): self._delete_nsolver(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pnsolver): self._delete_nsolver(obji)
+		
 		if isinstance(obj,pregion): self._delete_region(obj)
 		elif isinstance(obj,list):
 			for obji in copy(obj):
 				if isinstance(obji,pregion): self._delete_region(obji)
+				
+		if isinstance(obj,pflow): self._delete_flow(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pflow): self._delete_flow(obji)
+				
+		if isinstance(obj,pboundary_condition): self._delete_boundary_condition(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pboundary_condition): self._delete_boundary_condition(obji)
+				
+		if isinstance(obj,pstrata): self._delete_strata(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pstrata): self._delete_strata(obji)
+				
+		if isinstance(obj,ptransport): self._delete_transport(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,ptransport): self._delete_transport(obji)
+				
+		if isinstance(obj,pconstraint): self._delete_constraint(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pconstraint): self._delete_constraint(obji)
 		
 	def _read_uniform_velocity(self,infile,line):
 		np_value_list = []
@@ -1065,7 +1114,7 @@ class pdata(object):
 	def _write_uniform_velocity(self,outfile):
 		self._header(outfile,headers['uniform_velocity'])
 		outfile.write('UNIFORM_VELOCITY ')
-		for v in self.uniform_velocity.velocity:	# value in value_list
+		for v in self.uniform_velocity.value_list:	# value in value_list
 			outfile.write(strD(v) + ' ')
 		outfile.write('\n\n')
 		
@@ -1085,22 +1134,14 @@ class pdata(object):
 			print '       valid mode.names:', mode_names_allowed, '\n'
 			
 	def _read_co2_database(self,infile,line):
-		self._co2_database = line.split()[-1]
+		self._co2_database = del_extra_slash(line.split()[-1])
 	
 	def _write_co2_database(self,outfile):
 		self._header(outfile,headers['co2_database'])
 		outfile.write('CO2_DATABASE ' + self._co2_database + '\n\n')
 		
 	def _read_grid(self,infile,line):
-		g = pgrid()				# assign defaults before reading in values
-		ng_type = g.type
-		ng_lower_bounds = g.lower_bounds
-		ng_upper_bounds = g.upper_bounds
-		ng_origin = g.origin
-		ng_nxyz = g.nxyz
-		ng_gravity = g.gravity
-		ng_filename = g.filename
-		ng_dxyz = g.dxyz
+		grid = pgrid()				# assign defaults before reading in values
 
 		keepReading = True
 		bounds_key = False
@@ -1111,35 +1152,35 @@ class pdata(object):
 			if key in ['#']:
 				pass
 			if key == 'type':
-				ng_type = line.split()[-1]
+				grid.type = line.split()[-1]
 			elif key == 'bounds':
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
-					ng_lower_bounds[0] = floatD(line1.split()[0])
-					ng_lower_bounds[1] = floatD(line1.split()[1])
-					ng_lower_bounds[2] = floatD(line1.split()[2])
+					grid.lower_bounds[0] = floatD(line1.split()[0])
+					grid.lower_bounds[1] = floatD(line1.split()[1])
+					grid.lower_bounds[2] = floatD(line1.split()[2])
 					line2 = infile.readline()
-					ng_upper_bounds[0] = floatD(line2.split()[0])
-					ng_upper_bounds[1] = floatD(line2.split()[1])
-					ng_upper_bounds[2] = floatD(line2.split()[2])
+					grid.upper_bounds[0] = floatD(line2.split()[0])
+					grid.upper_bounds[1] = floatD(line2.split()[1])
+					grid.upper_bounds[2] = floatD(line2.split()[2])
 					line3 = infile.readline()
 					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False
 			elif key == 'origin':
-				ng_origin[0] = floatD(line.strip().split()[1])
-				ng_origin[1] = floatD(line.strip().split()[2])
-				ng_origin[2] = floatD(line.strip().split()[3])
+				grid.origin[0] = floatD(line.strip().split()[1])
+				grid.origin[1] = floatD(line.strip().split()[2])
+				grid.origin[2] = floatD(line.strip().split()[3])
 			elif key == 'nxyz':
-				ng_nxyz[0] = int(line.split()[1])
-				ng_nxyz[1] = int(line.split()[2])
-				ng_nxyz[2] = int(line.split()[3])
+				grid.nxyz[0] = int(line.split()[1])
+				grid.nxyz[1] = int(line.split()[2])
+				grid.nxyz[2] = int(line.split()[3])
 			elif key == 'gravity':
-				ng_gravity[0] = floatD(line.split()[1])
-				ng_gravity[1] = floatD(line.split()[2])
-				ng_gravity[2] = floatD(line.split()[3])
+				grid.gravity[0] = floatD(line.split()[1])
+				grid.gravity[1] = floatD(line.split()[2])
+				grid.gravity[2] = floatD(line.split()[3])
 			elif key == 'filename':
-				if ng_type != 'unstructured': print 'Error - filename not need with structure grid'; return
-				ng_filename = line.split()[-1]
+				if grid.type != 'unstructured': print 'Error - filename not need with structure grid'; return
+				grid.filename = line.split()[-1]
 			elif key == 'dxyz':
 				if bounds_key: print 'Error - specify either bounds of dxyz'; return
 				keepReading2 = True
@@ -1149,12 +1190,10 @@ class pdata(object):
 					if line.strip().split()[0].lower() in ['/','end']:
 						keepReading2 = False
 					else:
-						ng_dxyz[count] = floatD(line.strip().split()[0])
+						grid.dxyz[count] = floatD(line.strip().split()[0])
 						count = count + 1
 			elif key in ['/','end']: keepReading = False
-		new_grid = pgrid(ng_type,ng_lower_bounds,ng_upper_bounds,ng_origin,ng_nxyz,
-						 ng_dxyz,ng_gravity,ng_filename) 		# create an empty grid
-		self._grid = new_grid
+		self._grid = grid
 	
 	def _write_grid(self,outfile):
 		self._header(outfile,headers['grid'])
@@ -1331,7 +1370,23 @@ class pdata(object):
 		                     np_specific_heat,np_cond_dry,np_cond_wet,
 				             np_saturation,np_permeability) 		# create an empty material property
 
-		self._proplist.append(new_prop)	
+		self.add(new_prop)
+		
+	def _add_prop(self,prop=pmaterial(),overwrite=False):			#Adds a prop object.
+		# check if prop already exists
+		if isinstance(prop,pmaterial):		
+			if prop.id in self.prop.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A Material Property with id \''+str(prop.id)+'\' already exists. Prop will not be defined, use overwrite = True in add() to overwrite the old prop.')
+					return
+				else:
+					self.delete(self.pmaterial[pmaterial.id])
+					
+		if prop not in self._proplist:
+			self._proplist.append(prop)
+			
+	def _delete_prop(self,prop=pmaterial()):
+		self._proplist.remove(prop)
 	
 	def _write_prop(self,outfile):
 		self._header(outfile,headers['material_property'])
@@ -1529,7 +1584,36 @@ class pdata(object):
 				lsolver.solver = line.split()[-1] # Assign last word
 			elif key in ['/','end']: keepReading = False
 		
-		self._lsolverlist.append(lsolver)	# Assign object
+		self.add(lsolver) # Assign object
+
+	def _add_lsolver(self,lsolver=plsolver(),overwrite=False):	#Adds a Linear Solver object.
+		# check if lsolver already exists
+		if isinstance(lsolver,plsolver):
+			if lsolver.name in self.lsolver.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A linear solver with name \''+str(lsolver.name)+'\' already exists. lsolver will not be defined, use overwrite = True in add() to overwrite the old lsolver.')
+					return
+				else:
+					self.delete(self.plsolver[plsolver.name])
+					
+		if lsolver not in self._lsolverlist:
+			self._lsolverlist.append(lsolver)
+			
+	def _delete_lsolver(self,lsolver=plsolver()):
+		self._lsolverlist.remove(lsolver)
+
+	def _write_lsolver(self,outfile):
+		self._header(outfile,headers['linear_solver'])
+		
+		for lsolver in self.lsolverlist:
+			if lsolver.name.lower() in solver_names_allowed:
+				outfile.write('LINEAR_SOLVER ' + lsolver.name.lower() + '\n')
+			else:
+				print 'ERROR: lsolver.name: \''+ lsolver.name +'\' is invalid.'
+				print '       valid solver.names', solver_names_allowed, '\n'
+			if lsolver.solver:
+				outfile.write('  SOLVER ' + lsolver.solver.lower() + '\n')
+			outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):
 		
@@ -1558,20 +1642,23 @@ class pdata(object):
 			if key == 'maxf':
 				nsolver.max_f = int(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
-		self._nsolverlist.append(nsolver)
+		self.add(nsolver)	# Assign
 		
-	def _write_lsolver(self,outfile):
-		self._header(outfile,headers['linear_solver'])
-		
-		for lsolver in self.lsolverlist:
-			if lsolver.name.lower() in solver_names_allowed:
-				outfile.write('LINEAR_SOLVER ' + lsolver.name.lower() + '\n')
-			else:
-				print 'ERROR: lsolver.name: \''+ lsolver.name +'\' is invalid.'
-				print '       valid solver.names', solver_names_allowed, '\n'
-			if lsolver.solver:
-				outfile.write('  SOLVER ' + lsolver.solver.lower() + '\n')
-			outfile.write('END\n\n')
+	def _add_nsolver(self,nsolver=pnsolver(),overwrite=False):	#Adds a Newton Solver object.
+		# check if nsolver already exists
+		if isinstance(nsolver,pnsolver):		
+			if nsolver.name in self.nsolver.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A newton solver with name \''+str(nsolver.name)+'\' already exists. nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.')
+					return
+				else:
+					self.delete(self.pnsolver[pnsolver.name])
+					
+		if nsolver not in self._nsolverlist:
+			self._nsolverlist.append(nsolver)
+			
+	def _delete_nsolver(self,nsolver=pnsolver()):
+		self._nsolverlist.remove(nsolver)
 		
 	def _write_nsolver(self,outfile):
 		self._header(outfile,headers['newton_solver'])
@@ -1820,16 +1907,12 @@ class pdata(object):
 		outfile.write('END\n\n')
 		
 	def _read_region(self,infile,line):
-#		region_name = line.split()[-1].lower()	# saturation function name, passed in.
-		np_name = line.split()[-1].lower()	# saturation function name, passed in.
 		
-		# Assign defaults before reading in value - default initializer is not working
-		# correctly. It can initialize values correctly if specified though in the
-		# parameters.
-		p = pregion()	# Not being used because it's not working correctly
-		np_coordinates_lower = [None]*3
-		np_coordinates_upper = [None]*3
-		np_face = None
+		region = pregion()
+		region.coordinates_lower = [None]*3
+		region.coordinates_upper = [None]*3
+		
+		region.name = line.split()[-1].lower()
 		
 		keepReading = True
 		while keepReading:	# Read through all cards
@@ -1839,34 +1922,31 @@ class pdata(object):
 				keepReading2 = True
 				while keepReading2:
 					line1 = infile.readline()
-					np_coordinates_lower[0] = floatD(line1.split()[0])
-					np_coordinates_lower[1] = floatD(line1.split()[1])
-					np_coordinates_lower[2] = floatD(line1.split()[2])
+					region.coordinates_lower[0] = floatD(line1.split()[0])
+					region.coordinates_lower[1] = floatD(line1.split()[1])
+					region.coordinates_lower[2] = floatD(line1.split()[2])
 					line2 = infile.readline()
-					np_coordinates_upper[0] = floatD(line2.split()[0])
-					np_coordinates_upper[1] = floatD(line2.split()[1])
-					np_coordinates_upper[2] = floatD(line2.split()[2])
+					region.coordinates_upper[0] = floatD(line2.split()[0])
+					region.coordinates_upper[1] = floatD(line2.split()[1])
+					region.coordinates_upper[2] = floatD(line2.split()[2])
 					line3 = infile.readline()
 					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False	
 			elif key == 'face':
-				np_face = line.strip().split()[-1].lower()
+				region.face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
 			
-			new_region = pregion(np_name,np_coordinates_lower,np_coordinates_upper,
-						np_face)
-			self.add(new_region)
+			self.add(region)
 
 	def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
 		# check if region already exists
-		if isinstance(region,pregion):		
+		if isinstance(region,pregion):
 			if region.name in self.region.keys():
 				if not overwrite:
 					_buildWarnings('WARNING: A region with name \''+str(region.name)+'\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.')
 					return
 				else:
 					self.delete(self.pregion[pregion.name])
-		
-		#region._parent = self
+					
 		if region not in self._regionlist:
 			self._regionlist.append(region)
             
@@ -2020,10 +2100,25 @@ class pdata(object):
 				if end_count == total_end_count:
 					keepReading = False
 					
-		if isValid:			
-			self._flowlist.append(flow)
-		
+		if isValid:
+			self.add(flow)
 			
+	def _add_flow(self,flow=pflow(),overwrite=False):			#Adds a Flow object.
+		# check if flow already exists
+		if isinstance(flow,pflow):		
+			if flow.name in self.flow.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A flow with name \''+str(flow.name)+'\' already exists. Flow will not be defined, use overwrite = True in add() to overwrite the old flow.')
+					return
+				else:
+					self.delete(self.pflow[pflow.name])
+					
+		if flow not in self._flowlist:
+			self._flowlist.append(flow)
+			
+	def _delete_flow(self,flow=pflow()):
+		self._flowlist.remove(flow)
+		
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
 		
@@ -2212,7 +2307,23 @@ class pdata(object):
 		
 		# Create an empty boundary condition and assign the values read in
 		new_boundary_condition = pboundary_condition(np_name,np_flow,np_transport,np_region)
-		self._boundary_condition_list.append(new_boundary_condition)
+		self.add(new_boundary_condition)
+		
+	def _add_boundary_condition(self,boundary_condition=pboundary_condition(),overwrite=False):			#Adds a boundary_condition object.
+		# check if flow already exists
+		if isinstance(boundary_condition,pboundary_condition):		
+			if boundary_condition.name in self.boundary_condition.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A boundary_condition with name \''+str(boundary_condition.name)+'\' already exists. boundary_condition will not be defined, use overwrite = True in add() to overwrite the old boundary_condition.')
+					return
+				else:
+					self.delete(self.pboundary_condition[pboundary_condition.name])
+					
+		if boundary_condition not in self._boundary_condition_list:
+			self._boundary_condition_list.append(boundary_condition)
+			
+	def _delete_boundary_condition(self,boundary_condition=pboundary_condition()):
+		self._boundary_condition_list.remove(boundary_condition)
 		
 	def _write_boundary_condition(self,outfile):
 		self._header(outfile,headers['boundary_condition'])
@@ -2270,6 +2381,9 @@ class pdata(object):
 		else:
 			print 'error: source_sink.region is required\n'
 		outfile.write('END\n\n')
+		
+	def _delete_strata(self,strata=pstrata()):
+		self._strata_list.remove(strata)
 			
 	def _read_strata(self,infile):
 		strata = pstrata()
@@ -2286,7 +2400,23 @@ class pdata(object):
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty source sink and assign the values read in
-		self._strata_list.append(strata)
+		self.add(strata)
+		
+	def _add_strata(self,strata=pstrata(),overwrite=False):			#Adds a strata object.
+		# check if stratigraphy coupler already exists
+		if isinstance(strata,pstrata):		
+			if strata.region in self.strata.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A strata with name \''+str(strata.region)+'\' already exists. strata will not be defined, use overwrite = True in add() to overwrite the old strata.')
+					return
+				else:
+					self.delete(self.pstrata[pstrata.region])
+					
+		if strata not in self._strata_list:
+			self._strata_list.append(strata)
+			
+	def _delete_strata(self,strata=pstrata()):
+		self._strata_list.remove(strata)
 		
 	def _write_strata(self,outfile):
 		self._header(outfile,headers['strata'])
@@ -2481,7 +2611,23 @@ class pdata(object):
 		# Create an empty transport condition and assign the values read in
 		new_transport = ptransport(np_name,np_type,np_constraint_list_value,
 					   np_constraint_list_type)
-		self._transportlist.append(new_transport)
+		self.add(new_transport)
+		
+	def _add_transport(self,transport=ptransport(),overwrite=False):	#Adds a transport object.
+		# check if transport already exists
+		if isinstance(transport,ptransport):	
+			if transport.name in self.transport.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A transport with name \''+str(transport.name)+'\' already exists. transport will not be defined, use overwrite = True in add() to overwrite the old transport.')
+					return
+				else:
+					self.delete(self.ptransport[ptransport.name])
+					
+		if transport not in self._transportlist:
+			self._transportlist.append(transport)
+			
+	def _delete_transport(self,transport=ptransport()):
+		self._transportlist.remove(transport)
 		
 	def _write_transport(self,outfile):
 		self._header(outfile,headers['transport_condition'])
@@ -2568,7 +2714,23 @@ class pdata(object):
 
 			elif key in ['/','end']: keepReading = False
 			
-		self._constraint_list.append(constraint)
+		self.add(constraint)
+		
+	def _add_constraint(self,constraint=pconstraint(),overwrite=False):	#Adds a constraint object.
+		# check if constraint already exists
+		if isinstance(constraint,pconstraint):		
+			if constraint.name in self.constraint.keys():
+				if not overwrite:
+					_buildWarnings('WARNING: A constraint with name \''+str(constraint.name)+'\' already exists. constraint will not be defined, use overwrite = True in add() to overwrite the old constraint.')
+					return
+				else:
+					self.delete(self.pconstraint[pconstraint.name])
+					
+		if constraint not in self._constraint_list:
+			self._constraint_list.append(constraint)
+			
+	def _delete_constraint(self,constraint=pconstraint()):
+		self._constraint_list.remove(constraint)
 		
 	def _write_constraint(self, outfile):
 		self._header(outfile,headers['constraint'])
@@ -2619,72 +2781,118 @@ class pdata(object):
 	def _get_co2_database(self): return self._co2_database
 	def _set_co2_database(self,value): self._co2_database = value
 	co2_database = property(_get_co2_database, _set_co2_database) #: (**)
+	
 	def _get_uniform_velocity(self): return self._uniform_velocity
 	def _set_uniform_velocity(self, object): self._uniform_velocity = object
 	uniform_velocity = property(_get_uniform_velocity, _set_uniform_velocity) #: (**)
+	
 	def _get_mode(self): return self._mode
 	def _set_mode(self, object): self._mode = object
 	mode = property(_get_mode, _set_mode) #: (**)	
+	
 	def _get_grid(self): return self._grid
 	def _set_grid(self, object): self._grid = object
 	grid = property(_get_grid, _set_grid) #: (**)
+	
 	def _get_time(self): return self._time
 	def _set_time(self, object): self._time = object
 	time = property(_get_time, _set_time) #: (**)
+	
 	def _get_proplist(self): return self._proplist
 	proplist = property(_get_proplist) #: (**) list of material properties
-	def _get_prop(self): return dict([(p.id,p) for p in self.proplist]+[(p.name,p) for p in self.proplist])
+	def _get_prop(self): 
+		return dict([(p.id,p) for p in self.proplist]+[(p.name,p) for p in self.proplist])
 	prop = property(_get_prop) #: (**) dictionary of material properties, indexable by ID or name
+	
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
+	
 	def _get_timestepper(self): return self._timestepper
 	def _set_timestepper(self, object): self._timestepper = object
 	timestepper = property(_get_timestepper, _set_timestepper) #: (**)
+	
 	def _get_lsolverlist(self): return self._lsolverlist
 	def _set_lsolverlist(self, object): self._lsolverlist = object
 	lsolverlist = property(_get_lsolverlist, _set_lsolverlist) #: (**)
+	def _get_lsolver(self):
+		return dict([lsolv.name,lsolv] for lsolv in self.lsolverlist if lsolv.name)
+	lsolver = property(_get_lsolver)#: (*dict[pnsolver]*) Dictionary of linear solver objects, indexed by linear solver name.
+	
 	def _get_nsolverlist(self): return self._nsolverlist
 	def _set_nsolverlist(self, object): self._nsolverlist = object
 	nsolverlist = property(_get_nsolverlist, _set_nsolverlist) #: (**)
+	def _get_nsolver(self):
+		return dict([nsolv.name,nsolv] for nsolv in self.nsolverlist if nsolv.name)
+	nsolver = property(_get_nsolver)#: (*dict[pnsolver]*) Dictionary of newton solver objects, indexed by newton solver name.
+	
 	def _get_output(self): return self._output
 	def _set_output(self, object): self._output = object
 	output = property(_get_output, _set_output) #: (**)
+	
 	def _get_fluid(self): return self._fluid
 	def _set_fluid(self, object): self._fluid = object
 	fluid = property(_get_fluid, _set_fluid) #: (**)
+	
 	def _get_saturation(self): return self._saturation
 	def _set_saturation(self, object): self._saturation = object
 	saturation = property(_get_saturation, _set_saturation) #: (**)
+	
 	def _get_regionlist(self): return self._regionlist
 	def _set_regionlist(self, object): self._regionlist = object
 	regionlist = property(_get_regionlist, _set_regionlist) #: (**)
-	def _get_observation(self): return self._observation
-	def _set_observation(self, object): self._observation = object
-	observation = property(_get_observation, _set_observation) #: (**)
-	def _get_flowlist(self): return self._flowlist
-	def _set_flowlist(self, object): self._flowlist = object
-	flowlist = property(_get_flowlist, _set_flowlist) #: (**)
-	def _get_initial_condition(self): return self._initial_condition
-	def _set_initial_condition(self, object): self._initial_condition = object
-	initial_condition = property(_get_initial_condition, _set_initial_condition) #: (**)
-	def _get_boundary_condition_list(self): return self._boundary_condition_list
-	def _set_boundary_condition_list(self, object): self._boundary_condition_list = object
-	boundary_condition_list = property(_get_boundary_condition_list, _set_boundary_condition_list) #: (**)
-	def _get_source_sink(self): return self._source_sink
-	def _set_source_sink(self, object): self._source_sink = object
-	source_sink = property(_get_source_sink, _set_source_sink) #: (**)
-	def _get_strata_list(self): return self._strata_list
-	def _set_strata_list(self, object): self._strata_list = object
-	strata_list = property(_get_strata_list, _set_strata_list) #: (**)
-	def _get_chemistry(self): return self._chemistry
-	def _set_chemistry(self, object): self._chemistry = object
-	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
-	def _get_transportlist(self): return self._transportlist
-	def _set_transportlist(self, object): self._transportlist = object
-	transportlist = property(_get_transportlist, _set_transportlist) #: (**)
-	def _get_constraint_list(self): return self._constraint_list
-	constraint_list = property(_get_constraint_list) #: (**)
 	def _get_region(self):
 		return dict([rgn.name,rgn] for rgn in self.regionlist if rgn.name)
 	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.
+	
+	def _get_observation(self): return self._observation
+	def _set_observation(self, object): self._observation = object
+	observation = property(_get_observation, _set_observation) #: (**)
+	
+	def _get_flowlist(self): return self._flowlist
+	def _set_flowlist(self, object): self._flowlist = object
+	flowlist = property(_get_flowlist, _set_flowlist) #: (**)
+	def _get_flow(self):
+		return dict([flow.name,flow] for flow in self.flowlist if flow.name)
+	flow = property(_get_flow)#: (*dict[pregion]*) Dictionary of flow objects, indexed by flow name.
+	
+	def _get_initial_condition(self): return self._initial_condition
+	def _set_initial_condition(self, object): self._initial_condition = object
+	initial_condition = property(_get_initial_condition, _set_initial_condition) #: (**)
+	
+	def _get_boundary_condition_list(self): return self._boundary_condition_list
+	def _set_boundary_condition_list(self, object): self._boundary_condition_list = object
+	boundary_condition_list = property(_get_boundary_condition_list, _set_boundary_condition_list) #: (**)
+	def _get_boundary_condition(self):
+		return dict([boundary_condition.name,boundary_condition] for boundary_condition in self.boundary_condition_list if boundary_condition.name)
+	boundary_condition = property(_get_boundary_condition)#: (*dict[pboundary_condition]*) Dictionary of boundary_condition objects, indexed by flow name.
+	
+	def _get_source_sink(self): return self._source_sink
+	def _set_source_sink(self, object): self._source_sink = object
+	source_sink = property(_get_source_sink, _set_source_sink) #: (**)
+	
+	def _get_strata_list(self): return self._strata_list
+	def _set_strata_list(self, object): self._strata_list = object
+	strata_list = property(_get_strata_list, _set_strata_list) #: (**)
+	def _get_strata(self):
+		return dict([strata.region,strata] for strata in self.strata_list if strata.region)
+	strata = property(_get_strata)#: (*dict[pstrata]*) Dictionary of strata objects, indexed by strata region.
+	
+	def _get_chemistry(self): return self._chemistry
+	def _set_chemistry(self, object): self._chemistry = object
+	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
+	
+	def _get_transportlist(self): return self._transportlist
+	def _set_transportlist(self, object): self._transportlist = object
+	transportlist = property(_get_transportlist, _set_transportlist) #: (**)
+	def _get_transport(self):
+		return dict([transport.name,transport] for transport in self.transportlist if transport.name)
+	transport = property(_get_transport)#: (*dict[ptransport]*) Dictionary of transport objects, indexed by transport name.
+	
+	def _get_constraint_list(self): return self._constraint_list
+	def _set_constraint_list(self, object): self._constraint_list = object
+	constraint_list = property(_get_constraint_list, _set_constraint_list) #: (**)
+	def _get_constraint(self):
+		return dict([constraint.name,constraint] for constraint in self.constraint_list if constraint.name)
+	constraint = property(_get_constraint)#: (*dict[pconstraint]*) Dictionary of constraint objects, indexed by constraint name.
+	

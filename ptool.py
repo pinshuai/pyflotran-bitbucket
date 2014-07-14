@@ -9,6 +9,24 @@ else: slash = '/'
 from pdflt import*
 dflt = pdflt()
 
+# Suggested for determining file path when reading an input file in-case it is relative
+#def produce_valid_file_path(path):
+#	# Return the string without modifications if it's an absolute file path
+#	if path[0] == '/':  
+#		return path
+#	# Determine PLOFTRAN installation directory and made appropriate changes to string
+#	else:
+#		try:
+#			pflotran_dir = os.environ['PFLOTRAN_DIR']
+#		except KeyError:
+#			print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+
+# Simple Function to determine if a '/' already exists somewhere in a relative file path name
+# Don't use with absolute file path name
+# NOT TESTED WITH WINDOWS
+def del_extra_slash(path): return path.replace(slash+slash, slash)
+	
+
 def floatD(string):
 	"""Converts input number string to float, replacing 'd' with 'e'
 	

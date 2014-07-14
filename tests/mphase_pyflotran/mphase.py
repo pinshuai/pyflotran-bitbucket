@@ -8,7 +8,8 @@ try:
 except KeyError:
   print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
-sys.path.append(pflotran_dir + '/src/python')
+sys.path.append(del_extra_slash(pflotran_dir + '/src/python'))
+
 import pflotran as pft
 
 '''
@@ -34,7 +35,7 @@ dat.mode = m
 
 # set co2 database
 #--------------------------------------------------------------
-dat.co2_database = pflotran_dir + '/database/co2data0.dat'
+dat.co2_database = del_extra_slash(pflotran_dir + '/database/co2data0.dat')
 #--------------------------------------------------------------
 
 # set grid
@@ -58,20 +59,20 @@ ts.ts_acceleration = 8
 dat.timestepper = ts
 #--------------------------------------------------------------
 
-# set material properities aka prop_list
+# set material properties aka prop_list
 #--------------------------------------------------------------
-m = pmaterial('','')
-m.id = 1
-m.name = 'soil1'
-m.porosity = 0.15e0
-m.tortuosity = 1e-1
-m.density = 2.65E3	# ROCK_DENSITY
-m.specific_heat = 1E3
-m.cond_dry = 0.5		# THERMAL_CONDUCTIVITY_DRY
-m.cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
-m.saturation = 'sf2'
-m.permeability = [1.e-15,1.e-15,1.e-17]
-dat.proplist.append(m)
+material = pmaterial('','')
+material.id = 1
+material.name = 'soil1'
+material.porosity = 0.15e0
+material.tortuosity = 1e-1
+material.density = 2.65E3	# ROCK_DENSITY
+material.specific_heat = 1E3
+material.cond_dry = 0.5		# THERMAL_CONDUCTIVITY_DRY
+material.cond_wet = 0.5		# THERMAL_CONDUCTIVITY_WET
+material.saturation = 'sf2'
+material.permeability = [1.e-15,1.e-15,1.e-17]
+dat.add(material)
 #--------------------------------------------------------------
 
 # set time
@@ -90,27 +91,29 @@ dat.time = t
 
 # set newton solvers
 #--------------------------------------------------------------
-ns = pnsolver('')
-ns.name = 'FLOW'
-ns.atol = 1e-12
-ns.rtol = 1e-12
-ns.stol = 1e-30
-ns.dtol = 1e15
-ns.itol = 1e-8
-ns.max_it = 25
-ns.max_f = 100
-dat.nsolverlist.append(ns)
+newton_solver = pnsolver('')
+newton_solver.name = 'FLOW'
+newton_solver.atol = 1e-12
+newton_solver.rtol = 1e-12
+newton_solver.stol = 1e-30
+newton_solver.dtol = 1e15
+newton_solver.itol = 1e-8
+newton_solver.max_it = 25
+newton_solver.max_f = 100
+dat.add(newton_solver)
+#dat.nsolverlist.append(newton_solver)
 
-ns = pnsolver('')
-ns.name = 'TRAN'
-ns.atol = 1e-12
-ns.rtol = 1e-12
-ns.stol = 1e-30
-ns.dtol = 1e15
-ns.itol = 1e-8
-ns.max_it = 25
-ns.max_f = 100
-dat.nsolverlist.append(ns)
+newton_solver = pnsolver('')
+newton_solver.name = 'TRAN'
+newton_solver.atol = 1e-12
+newton_solver.rtol = 1e-12
+newton_solver.stol = 1e-30
+newton_solver.dtol = 1e15
+newton_solver.itol = 1e-8
+newton_solver.max_it = 25
+newton_solver.max_f = 100
+dat.add(newton_solver)
+#dat.nsolverlist.append(ns)
 #--------------------------------------------------------------
 
 # set output
@@ -149,38 +152,38 @@ dat.saturation = s
 
 # set regions
 #--------------------------------------------------------------
-r = pregion()
-r.name = 'all'
-r.coordinates_lower = [0.e0, 0.e0, 0.e0]
-r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.add(r)
+region = pregion()
+region.name = 'all'
+region.coordinates_lower = [0.e0, 0.e0, 0.e0]
+region.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.add(region)
 
-r = pregion()
-r.name = 'top'
-r.face = 'top'
-r.coordinates_lower = [0.e0, 0.e0, 51.e0]
-r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.add(r)
+region = pregion()
+region.name = 'top'
+region.face = 'top'
+region.coordinates_lower = [0.e0, 0.e0, 51.e0]
+region.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.add(region)
 
-r = pregion()
-r.name = 'west'
-r.face = 'WEST'
-r.coordinates_lower = [0.e0, 0.e0, 0.e0]
-r.coordinates_upper = [0.e0, 1.e0,  51.e0]
-dat.add(r)
+region = pregion()
+region.name = 'west'
+region.face = 'WEST'
+region.coordinates_lower = [0.e0, 0.e0, 0.e0]
+region.coordinates_upper = [0.e0, 1.e0,  51.e0]
+dat.add(region)
 
-r = pregion()
-r.name = 'EAST'
-r.face = 'east'
-r.coordinates_lower = [321.e0, 0.e0, 0.e0]
-r.coordinates_upper = [321.e0, 1.e0,  51.e0]
-dat.add(r)
+region = pregion()
+region.name = 'EAST'
+region.face = 'east'
+region.coordinates_lower = [321.e0, 0.e0, 0.e0]
+region.coordinates_upper = [321.e0, 1.e0,  51.e0]
+dat.add(region)
 
-r = pregion()
-r.name = 'well'
-r.coordinates_lower = [160.e0, 1.e0, 20.e0]
-r.coordinates_upper = [160.e0, 1.e0, 20.e0]
-dat.add(r)
+region = pregion()
+region.name = 'well'
+region.coordinates_lower = [160.e0, 1.e0, 20.e0]
+region.coordinates_upper = [160.e0, 1.e0, 20.e0]
+dat.add(region)
 
 #--------------------------------------------------------------
 
@@ -192,7 +195,7 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
-flow.varlist = [] # Assigning for this done below
+flow.varlist = [] 	# Assigning for this done below
 var = pflow_variable('')	# new flow var object
 var.name = 'pressure'
 var.type = 'hydrostatic'
@@ -200,28 +203,55 @@ var.valuelist = [2e7, 2e7]
 var.list = []
 var.unit = None
 flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
+var = pflow_variable('') 	# new flow var object
 var.name = 'TEMPERATURE'
 var.type = 'zero_gradient'
 var.valuelist = [50.0]
 var.list = []
 var.unit = 'C'
 flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
+var = pflow_variable('')	# new flow var object
 var.name = 'CONCENTRATION'
 var.type = 'zero_gradient'
 var.valuelist = [1e-6]
 var.list = []
 var.unit = 'm'
 flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') # new flow var object
+var = pflow_variable('') 	# new flow var object
 var.name = 'ENTHALPY'
 var.type = 'dirichlet'
 var.valuelist = [0.e0, 0.e0]
 var.list = []
 var.unit = None
 flow.varlist.append(var)	# assigning for flow var done here
-dat.flowlist.append(flow)	# Assigning for flow condition done here
+dat.add(flow)
+
+# top flow condition
+flow = pflow()
+flow.name = 'top'
+flow.iphase = 1
+flow.varlist = [] 	# Assigning for this done below
+variable = pflow_variable()	# new flow variable object
+variable.name = 'pressure'
+variable.type = 'dirichlet'
+variable.valuelist = [3e7, 2e7]
+flow.varlist.append(variable)	# assigning for flow var done here
+variable = pflow_variable()	# new flow variable object
+variable.name = 'temperature'
+variable.type = 'zero_gradient'
+variable.valuelist = [60.0]
+flow.varlist.append(variable)	# assigning for flow var done here
+variable = pflow_variable()	# new flow variable object
+variable.name = 'concentration'
+variable.type = 'zero_gradient'
+variable.valuelist = [1e-6]
+flow.varlist.append(variable)	# assigning for flow var done here
+variable = pflow_variable()	# new flow variable object
+variable.name = 'enthalpy'
+variable.type = 'dirichlet'
+variable.valuelist = [0.e0, 0.e0]
+flow.varlist.append(variable)	# assigning for flow var done here
+dat.add(flow)
 
 # source flow condition
 flow = pflow('')
@@ -272,7 +302,7 @@ var.valuelist = [0.e0, 0.e0]
 var.list = []
 var.unit = None
 flow.varlist.append(var)	# assigning for flow var done here
-dat.flowlist.append(flow)	# Assigning for flow condition done here
+dat.add(flow)	# Assigning for flow condition done here
 #--------------------------------------------------------------
 
 # set initial condition
@@ -285,19 +315,19 @@ dat.initial_condition = ic
 
 # set boundary conditions
 #--------------------------------------------------------------
-bc = pboundary_condition()
-bc.name = 'WEST'
-bc.flow = 'INITIAL'
-bc.transport = None
-bc.region = 'west'
-dat.boundary_condition_list.append(bc)
+boundary_condition = pboundary_condition()
+boundary_condition.name = 'WEST'
+boundary_condition.flow = 'INITIAL'
+boundary_condition.transport = None
+boundary_condition.region = 'west'
+dat.add(boundary_condition)
 
-bc = pboundary_condition()
-bc.name = 'east'
-bc.flow = 'INITIAL'
-bc.transport = None
-bc.region = 'east'
-dat.boundary_condition_list.append(bc)
+boundary_condition = pboundary_condition()
+boundary_condition.name = 'east'
+boundary_condition.flow = 'INITIAL'
+boundary_condition.transport = None
+boundary_condition.region = 'east'
+dat.add(boundary_condition)
 #--------------------------------------------------------------
 
 # set source sink
@@ -313,14 +343,13 @@ dat.source_sink = ss
 stratigraphy_coupler = pstrata()
 stratigraphy_coupler.region = 'ALL' 
 stratigraphy_coupler.material = 'SOIL1'
-dat.strata_list.append(stratigraphy_coupler)
-
+dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # Test write
 #dat.write('mphase.in')
 
-pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
+pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.run(input='mphase.in',exe=pflotran_exe)
 

@@ -14,6 +14,10 @@ dat = pdata('')
 
 # set uniform_velocity
 #--------------------------------------------------------------
+# Comments are alternative way of doing the same thing
+#uniform_velocity = puniform_velocity()
+#uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
+#dat.uniform_velocity = uniform_velocity
 dat.uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
 #--------------------------------------------------------------
 
@@ -255,7 +259,7 @@ dat.constraint_list.append(constraint)	# assign constraint
 ###############################################################
 
 # Test Write
-dat.write('tracer_1D.in')
+#dat.write('tracer_1D.in')
 
 # Write to File
-#dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')

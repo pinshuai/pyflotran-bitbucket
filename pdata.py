@@ -1048,7 +1048,7 @@ class pdata(object):
 		if isinstance(obj,ptransport): self._add_transport(obj,overwrite)
 		if isinstance(obj,pconstraint): self._add_constraint(obj,overwrite)
 		
-	def delete(self,obj,super_obj):	#Deletes an object from the file
+	def delete(self,obj,super_obj=None):	#Deletes an object from the file
 		'''Delete an object that is assigned to a list e.g.(region) from the data file.
 		
 		:param obj: Object to be deleted from the data file. Can be a list of objects.
@@ -1382,15 +1382,17 @@ class pdata(object):
 
 		self.add(new_prop)
 		
-	def _add_prop(self,prop=pmaterial(),overwrite=False):			#Adds a prop object.
+	def _add_prop(self,prop=pmaterial(),overwrite=False):	#Adds a prop object.
 		# check if prop already exists
 		if isinstance(prop,pmaterial):		
 			if prop.id in self.prop.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A Material Property with id \''+str(prop.id)+'\' already exists. Prop will not be defined, use overwrite = True in add() to overwrite the old prop.')
+					warning = 'WARNING: A Material Property with id \''+str(prop.id)+'\' already exists. Prop will not be defined, use overwrite = True in add() to overwrite the old prop.'
+					print warning; print
+					_buildWarnings(warning)
 					return
-				else:
-					self.delete(self.pmaterial[pmaterial.id])
+				else: # Executes if overwrite = True
+					self.delete(self.prop[prop.id])
 					
 		if prop not in self._proplist:
 			self._proplist.append(prop)
@@ -1601,10 +1603,12 @@ class pdata(object):
 		if isinstance(lsolver,plsolver):
 			if lsolver.name in self.lsolver.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A linear solver with name \''+str(lsolver.name)+'\' already exists. lsolver will not be defined, use overwrite = True in add() to overwrite the old lsolver.')
+					warning = 'WARNING: A linear solver with name \''+str(lsolver.name)+'\' already exists. lsolver will not be defined, use overwrite = True in add() to overwrite the old lsolver.'
+					print warning; warning
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.plsolver[plsolver.name])
+					self.delete(self.lsolver[lsolver.name])
 					
 		if lsolver not in self._lsolverlist:
 			self._lsolverlist.append(lsolver)
@@ -1659,10 +1663,12 @@ class pdata(object):
 		if isinstance(nsolver,pnsolver):		
 			if nsolver.name in self.nsolver.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A newton solver with name \''+str(nsolver.name)+'\' already exists. nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.')
+					warning = 'WARNING: A newton solver with name \''+str(nsolver.name)+'\' already exists. nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.'
+					print warning; print
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.pnsolver[pnsolver.name])
+					self.delete(self.nsolver[nsolver.name])
 					
 		if nsolver not in self._nsolverlist:
 			self._nsolverlist.append(nsolver)
@@ -1952,10 +1958,12 @@ class pdata(object):
 		if isinstance(region,pregion):
 			if region.name in self.region.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A region with name \''+str(region.name)+'\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.')
+					warning = 'WARNING: A region with name \''+str(region.name)+'\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.'
+					print warning; print
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.pregion[pregion.name])
+					self.delete(self.region[region.name])
 					
 		if region not in self._regionlist:
 			self._regionlist.append(region)
@@ -2360,13 +2368,15 @@ class pdata(object):
 		
 	def _add_boundary_condition(self,boundary_condition=pboundary_condition(),overwrite=False):			#Adds a boundary_condition object.
 		# check if flow already exists
-		if isinstance(boundary_condition,pboundary_condition):		
-			if boundary_condition.name in self.boundary_condition.keys():
+		if isinstance(boundary_condition,pboundary_condition):
+			if boundary_condition.region in self.boundary_condition.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A boundary_condition with name \''+str(boundary_condition.name)+'\' already exists. boundary_condition will not be defined, use overwrite = True in add() to overwrite the old boundary_condition.')
+					warning = 'WARNING: A boundary_condition with region \''+str(boundary_condition.region)+'\' already exists. boundary_condition will not be defined, use overwrite = True in add() to overwrite the old boundary_condition.'
+					print warning; print
+					_buildWarnings(warning)
 					return
-				else:
-					self.delete(self.pboundary_condition[pboundary_condition.name])
+				else:	
+					self.delete(self.boundary_condition[boundary_condition.region])
 					
 		if boundary_condition not in self._boundary_condition_list:
 			self._boundary_condition_list.append(boundary_condition)
@@ -2456,10 +2466,12 @@ class pdata(object):
 		if isinstance(strata,pstrata):		
 			if strata.region in self.strata.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A strata with name \''+str(strata.region)+'\' already exists. strata will not be defined, use overwrite = True in add() to overwrite the old strata.')
+					warning = 'WARNING: A strata with name \''+str(strata.region)+'\' already exists. strata will not be defined, use overwrite = True in add() to overwrite the old strata.'
+					print warning; print
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.pstrata[pstrata.region])
+					self.delete(self.strata[strata.region])
 					
 		if strata not in self._strata_list:
 			self._strata_list.append(strata)
@@ -2667,10 +2679,12 @@ class pdata(object):
 		if isinstance(transport,ptransport):	
 			if transport.name in self.transport.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A transport with name \''+str(transport.name)+'\' already exists. transport will not be defined, use overwrite = True in add() to overwrite the old transport.')
+					warning = 'WARNING: A transport with name \''+str(transport.name)+'\' already exists. transport will not be defined, use overwrite = True in add() to overwrite the old transport.'
+					print warning; warning
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.ptransport[ptransport.name])
+					self.delete(self.transport[transport.name])
 					
 		if transport not in self._transportlist:
 			self._transportlist.append(transport)
@@ -2770,10 +2784,12 @@ class pdata(object):
 		if isinstance(constraint,pconstraint):		
 			if constraint.name in self.constraint.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A constraint with name \''+str(constraint.name)+'\' already exists. constraint will not be defined, use overwrite = True in add() to overwrite the old constraint.')
+					warning = 'WARNING: A constraint with name \''+str(constraint.name)+'\' already exists. constraint will not be defined, use overwrite = True in add() to overwrite the old constraint.'
+					print warning; print
+					_buildWarnings(warning)
 					return
 				else:
-					self.delete(self.pconstraint[pconstraint.name])
+					self.delete(self.constraint[constraint.name])
 					
 		if constraint not in self._constraint_list:
 			self._constraint_list.append(constraint)
@@ -2850,7 +2866,7 @@ class pdata(object):
 	def _get_proplist(self): return self._proplist
 	proplist = property(_get_proplist) #: (**) list of material properties
 	def _get_prop(self): 
-		return dict([(p.id,p) for p in self.proplist]+[(p.name,p) for p in self.proplist])
+		return dict([(p.id,p) for p in self.proplist]+[(p.id,p) for p in self.proplist])
 	prop = property(_get_prop) #: (**) dictionary of material properties, indexable by ID or name
 	
 	def _get_filename(self): return self._filename
@@ -2917,8 +2933,8 @@ class pdata(object):
 	def _set_boundary_condition_list(self, object): self._boundary_condition_list = object
 	boundary_condition_list = property(_get_boundary_condition_list, _set_boundary_condition_list) #: (**)
 	def _get_boundary_condition(self):
-		return dict([boundary_condition.name,boundary_condition] for boundary_condition in self.boundary_condition_list if boundary_condition.name)
-	boundary_condition = property(_get_boundary_condition)#: (*dict[pboundary_condition]*) Dictionary of boundary_condition objects, indexed by flow name.
+		return dict([boundary_condition.region,boundary_condition] for boundary_condition in self.boundary_condition_list if boundary_condition.region)
+	boundary_condition = property(_get_boundary_condition)#: (*dict[pboundary_condition]*) Dictionary of boundary_condition objects, indexed by flow region.
 	
 	def _get_source_sink(self): return self._source_sink
 	def _set_source_sink(self, object): self._source_sink = object

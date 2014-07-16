@@ -34,7 +34,7 @@ dat = pdata('')
 
 # set uniform_velocity
 #--------------------------------------------------------------
-dat.uniform_velocity.velocity = [1.e0, 0.e0, 0.e0, 'm/yr']
+dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
 #--------------------------------------------------------------
 
 # set chemistry
@@ -96,17 +96,17 @@ dat.add(linear_solver)
 
 # set output
 #--------------------------------------------------------------
-o = poutput()
-o.time_list = ['y', 5.0, 10.0, 15.0, 20.0]
-o.format_list.append('tecplot point')
-dat.output = o
+output = poutput()
+output.time_list = ['y', 5.0, 10.0, 15.0, 20.0]
+output.format_list.append('tecplot point')
+dat.output = output
 #--------------------------------------------------------------
 
 # set fluid properties
 #--------------------------------------------------------------
-f = pfluid()
-f.diffusion_coefficient = 1.0000000e-09
-dat.fluid = f
+fluid = pfluid()
+fluid.diffusion_coefficient = 1.0000000e-09
+dat.fluid = fluid
 #--------------------------------------------------------------
 
 # set regions
@@ -152,25 +152,25 @@ dat.add(transport_condition)
 
 # set initial condition
 #--------------------------------------------------------------
-ic = pinitial_condition()
-ic.transport = 'background_CONC'
-ic.region = 'ALL'
-dat.initial_condition = ic
+initial_condition = pinitial_condition()
+initial_condition.transport = 'background_CONC'
+initial_condition.region = 'ALL'
+dat.initial_condition = initial_condition
 #--------------------------------------------------------------
 
 # set boundary conditions
 #--------------------------------------------------------------
-bc = pboundary_condition()
-bc.name = 'OUTLEt'
-bc.transport = 'background_CONC'
-bc.region = 'EAST'
-dat.add(bc)
+boundary_condition = pboundary_condition()
+boundary_condition.name = 'OUTLEt'
+boundary_condition.transport = 'background_CONC'
+boundary_condition.region = 'EAST'
+dat.add(boundary_condition)
 
-bc = pboundary_condition()
-bc.name = 'inlet'
-bc.transport = 'inlet_conc'
-bc.region = 'west'
-dat.add(bc)
+boundary_condition = pboundary_condition()
+boundary_condition.name = 'inlet'
+boundary_condition.transport = 'inlet_conc'
+boundary_condition.region = 'west'
+dat.add(boundary_condition)
 #--------------------------------------------------------------
 
 # set stratigraphy couplers
@@ -236,12 +236,13 @@ dat.add(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-#dat.write('calcite_tran_only.in')
+dat.write('calcite_tran_only.in')
 
 print('******************************************')
 print('Writing PFLOTRAN input file and executing it.')
 print('******************************************')
-
+# commented out for testing
+'''
 executable = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.write('calcite_tran_only.in')
@@ -304,3 +305,4 @@ f.subplots_adjust(hspace=0.2,wspace=0.2,
 
 #plt.show()
 plt.savefig('pH_tran_only.pdf')
+'''

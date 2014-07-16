@@ -85,7 +85,6 @@ t.dtf_lv = [200.e0, 500.e0, 1000.e0, 5000.e0]	# MAXIMUM_TIMESTEP_SIZE before 'at
 t.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time unit (eg. 'y')
 t.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
 t.dtf_li_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE after 'at' time unit (eg. 'y')
-#t.dtf_i = 4		# Needs to be the length of dtf_lv or dtf_li
 dat.time = t
 #--------------------------------------------------------------
 
@@ -182,7 +181,6 @@ region.name = 'well'
 region.coordinates_lower = [160.e0, 1.e0, 20.e0]
 region.coordinates_upper = [160.e0, 1.e0, 20.e0]
 dat.add(region)
-
 #--------------------------------------------------------------
 
 # set flow conditions
@@ -342,25 +340,6 @@ stratigraphy_coupler.material = 'SOIL1'
 dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
-'''
-# testing
-print 'flowlist:'
-for flow in dat.flowlist:
-	print 'flow:', dat.flowlist.index(flow), flow
-	print 'name:', flow.name
-	print 'units_list:', flow.units_list
-	print 'iphase:', flow.iphase
-	print 'sync_timestep_with_update:', flow.sync_timestep_with_update
-	print 'varlist:'
-	for variable in flow.varlist:
-		print '\tname:', variable.name
-		print '\ttype:', variable.type
-		print '\tvaluelist:', variable.valuelist
-		print '\tlist:', variable.list
-		print '\tunit:', variable.unit
-		print
-print
-'''
 # Test write
 #dat.write('mphase.in')
 

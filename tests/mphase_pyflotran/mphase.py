@@ -101,7 +101,6 @@ newton_solver.itol = 1e-8
 newton_solver.max_it = 25
 newton_solver.max_f = 100
 dat.add(newton_solver)
-#dat.nsolverlist.append(newton_solver)
 
 newton_solver = pnsolver('')
 newton_solver.name = 'TRAN'
@@ -113,7 +112,6 @@ newton_solver.itol = 1e-8
 newton_solver.max_it = 25
 newton_solver.max_f = 100
 dat.add(newton_solver)
-#dat.nsolverlist.append(ns)
 #--------------------------------------------------------------
 
 # set output
@@ -195,36 +193,34 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
-flow.varlist = [] 	# Assigning for this done below
-var = pflow_variable('')	# new flow var object
-var.name = 'pressure'
-var.type = 'hydrostatic'
-var.valuelist = [2e7, 2e7]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') 	# new flow var object
-var.name = 'TEMPERATURE'
-var.type = 'zero_gradient'
-var.valuelist = [50.0]
-var.list = []
-var.unit = 'C'
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('')	# new flow var object
-var.name = 'CONCENTRATION'
-var.type = 'zero_gradient'
-var.valuelist = [1e-6]
-var.list = []
-var.unit = 'm'
-flow.varlist.append(var)	# assigning for flow var done here
-var = pflow_variable('') 	# new flow var object
-var.name = 'ENTHALPY'
-var.type = 'dirichlet'
-var.valuelist = [0.e0, 0.e0]
-var.list = []
-var.unit = None
-flow.varlist.append(var)	# assigning for flow var done here
 dat.add(flow)
+flow.varlist = [] 	# Assigning for this done below
+# adding flow_variable to inital flow_condition
+variable = pflow_variable('')	# new flow var object
+variable.name = 'pressure'
+variable.type = 'hydrostatic'
+variable.valuelist = [2e7, 2e7]
+dat.add(variable)
+# adding flow_variable to inital flow_condition
+variable = pflow_variable('') 	# new flow var object
+variable.name = 'TEMPERATURE'
+variable.type = 'zero_gradient'
+variable.valuelist = [50.0]
+variable.unit = 'C'
+dat.add(variable)
+# adding flow_variable to inital flow_condition
+variable = pflow_variable('')	# new flow var object
+variable.name = 'CONCENTRATION'
+variable.type = 'zero_gradient'
+variable.valuelist = [1e-6]
+variable.unit = 'm'
+dat.add(variable)
+# adding flow_variable to inital flow_condition
+variable = pflow_variable('') 	# new flow var object
+variable.name = 'ENTHALPY'
+variable.type = 'dirichlet'
+variable.valuelist = [0.e0, 0.e0]
+dat.add(variable)
 
 # top flow condition
 flow = pflow()
@@ -346,6 +342,25 @@ stratigraphy_coupler.material = 'SOIL1'
 dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
+'''
+# testing
+print 'flowlist:'
+for flow in dat.flowlist:
+	print 'flow:', dat.flowlist.index(flow), flow
+	print 'name:', flow.name
+	print 'units_list:', flow.units_list
+	print 'iphase:', flow.iphase
+	print 'sync_timestep_with_update:', flow.sync_timestep_with_update
+	print 'varlist:'
+	for variable in flow.varlist:
+		print '\tname:', variable.name
+		print '\ttype:', variable.type
+		print '\tvaluelist:', variable.valuelist
+		print '\tlist:', variable.list
+		print '\tunit:', variable.unit
+		print
+print
+'''
 # Test write
 #dat.write('mphase.in')
 

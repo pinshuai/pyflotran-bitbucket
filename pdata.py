@@ -889,10 +889,10 @@ class pdata(object):
 		# ASSEMBLE FILES IN CORRECT DIRECTORIES
 		if self.work_dir: wd = self.work_dir + os.sep
 		else: wd = os.getcwd() + os.sep
-		print wd
-		print self._path.filename
+		print wd # testing?
+		print self._path.filename # testing?
 		returnFlag = self.write(wd+self._path.filename) # ALWAYS write input file
-		print returnFlag
+		print returnFlag # testing?
 		if returnFlag: 
 			print('ERROR: writing files')
 			return
@@ -1026,11 +1026,13 @@ class pdata(object):
 		if self.constraint_list: self._write_constraint(outfile)
 		outfile.close()
         
-	def add(self,obj,overwrite=False):					#Adds a new object to the file
+	def add(self,obj,index='',overwrite=False):	#Adds a new object to the file
 		'''Attach an object associated w/ list (e.g. region) to the data file.
 		
 		:param obj: Object to be added to the data file.
 		:type obj: object(eg.pregion)
+		:param index: Used to find an object that is using a string as an index in a dictionary.
+		:type index: String
 		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
 		:type overwrite: bool
 		'''
@@ -1039,12 +1041,14 @@ class pdata(object):
 		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
 		if isinstance(obj,pregion): self._add_region(obj,overwrite)
 		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
+		if isinstance(obj, pflow_variable): 
+			self._add_flow_variable(obj,index,overwrite)
 		if isinstance(obj,pboundary_condition): self._add_boundary_condition(obj,overwrite)
 		if isinstance(obj,pstrata): self._add_strata(obj,overwrite)
 		if isinstance(obj,ptransport): self._add_transport(obj,overwrite)
 		if isinstance(obj,pconstraint): self._add_constraint(obj,overwrite)
 		
-	def delete(self,obj): 								#Deletes an object from the file
+	def delete(self,obj,super_obj):	#Deletes an object from the file
 		'''Delete an object that is assigned to a list e.g.(region) from the data file.
 		
 		:param obj: Object to be deleted from the data file. Can be a list of objects.
@@ -1075,6 +1079,12 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):
 				if isinstance(obji,pflow): self._delete_flow(obji)
+		
+		if isinstance(obj,pflow_variable): # Flow object needs to be specified
+			self._delete_flow_variable(obj, super_obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pflow_variable): self._delete__variable(obji)
 				
 		if isinstance(obj,pboundary_condition): self._delete_boundary_condition(obj)
 		elif isinstance(obj,list):
@@ -2105,19 +2115,58 @@ class pdata(object):
 			
 	def _add_flow(self,flow=pflow(),overwrite=False):			#Adds a Flow object.
 		# check if flow already exists
-		if isinstance(flow,pflow):		
+		if isinstance(flow,pflow):
 			if flow.name in self.flow.keys():
 				if not overwrite:
-					_buildWarnings('WARNING: A flow with name \''+str(flow.name)+'\' already exists. Flow will not be defined, use overwrite = True in add() to overwrite the old flow.')
+					warning = 'WARNING: A flow with name \''+str(flow.name)+'\' already exists. Flow will not be defined, use overwrite = True in add() to overwrite the old flow.'
+					print warning; print
+					_buildWarnings(warning)
 					return
-				else:
-					self.delete(self.pflow[pflow.name])
+				else: # Executes if overwrite = True
+					self.delete(self.flow[flow.name])
 					
 		if flow not in self._flowlist:
 			self._flowlist.append(flow)
 			
 	def _delete_flow(self,flow=pflow()):
 		self._flowlist.remove(flow)
+	
+	'''
+	Automate adding the sub-class flow_variable to a flow object. The flow object 
+	can be specified by name. If flow object name is not specified, the function
+	will append pflow_variable to the last flow object added to the list.
+	Function will provided a warning if a flow_variable.name already exists
+	in the flow object it is trying to add it to.
+	'''
+	def _add_flow_variable(self,flow_variable=pflow_variable(),index='',
+			       overwrite=False):	#Adds a flow_variable object.
+		
+		# check if flow.name was specified
+		if index:
+			flow = self.flow.get(index) # Assign flow object to existing flow object
+						    # with string type name/index
+		else: # Set flow to last flow object in list
+			flow = self.flowlist[-1]
+		
+		# check if flow_variable already exists
+		if isinstance(flow_variable,pflow_variable):		
+			if flow_variable.name in self._get_flow_variable(flow).keys():
+				if not overwrite:
+					warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable. Use flow=\'name\' if you want to specify the flow object to add flow_variable to.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else: # Executes if overwrite = True
+					self.delete(self._get_flow_variable(flow)[flow_variable.name],
+						    flow)
+		
+		# Add flow_variable to flow (as a sub-class) if flow_variable does
+		# not exist in specified flow object
+		if flow_variable not in flow.varlist:
+			flow.varlist.append(flow_variable)
+			
+	def _delete_flow_variable(self,flow_variable=pflow_variable(),flow=pflow(),):
+		flow.varlist.remove(flow_variable)
 		
 	def _write_flow(self,outfile):
 		self._header(outfile,headers['flow_condition'])
@@ -2854,7 +2903,11 @@ class pdata(object):
 	flowlist = property(_get_flowlist, _set_flowlist) #: (**)
 	def _get_flow(self):
 		return dict([flow.name,flow] for flow in self.flowlist if flow.name)
-	flow = property(_get_flow)#: (*dict[pregion]*) Dictionary of flow objects, indexed by flow name.
+	flow = property(_get_flow)#: (*dict[pflow]*) Dictionary of flow objects, indexed by flow name.
+	
+	def _get_flow_variable(self, flow=pflow()):
+		return dict([flow_variable.name, flow_variable] for flow_variable in flow.varlist if flow_variable.name)
+	flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
 	
 	def _get_initial_condition(self): return self._initial_condition
 	def _set_initial_condition(self, object): self._initial_condition = object

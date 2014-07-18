@@ -226,34 +226,35 @@ dat.add(stratigraphy_coupler)
 constraint = pconstraint()
 constraint.name = 'initial'
 constraint.concentration_list = [] # Assigning for this done below
+dat.add(constraint)	# assign constraint
 concentration = pconstraint_concentration()	# new concentration object
 concentration.pspecies = 'A(aq)'
 concentration.value = 0.1
 concentration.constraint = 'T'
-constraint.concentration_list.append(concentration)	# assign concentration
-dat.add(constraint)	# assign constraint
+#constraint.concentration_list.append(concentration)	# assign concentration
+dat.add(concentration)		# assign_concentration
 
 # west condition - 2nd condition
 constraint = pconstraint()
 constraint.name = 'WEST'
 constraint.concentration_list = [] # Assigning for this done below
+dat.add(constraint)	# assign constraint
 concentration = pconstraint_concentration()	# new concentration object
 concentration.pspecies = 'A(aq)'
 concentration.value = 1.e-8
 concentration.constraint = 'T'
-constraint.concentration_list.append(concentration)	# assign concentration
-dat.add(constraint)	# assign constraint
+dat.add(concentration,'west')		# assign_concentration - alternative
 
 # east condition - 3rd condition
 constraint = pconstraint()
 constraint.name = 'east'
 constraint.concentration_list = [] # Assigning for this done below
+dat.add(constraint)
 concentration = pconstraint_concentration()	# new concentration object
 concentration.pspecies = 'A(aq)'
 concentration.value = 1.E-02
 concentration.constraint = 'T'
-constraint.concentration_list.append(concentration)	# assign concentration
-dat.add(constraint)	# assign constraint
+dat.add(concentration,constraint)		# assign_concentration - alternative
 #--------------------------------------------------------------
 
 ###############################################################

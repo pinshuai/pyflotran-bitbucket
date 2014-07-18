@@ -42,7 +42,7 @@ permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
 # material_property, region, initial_condition, boundary_condition, source_sink, stratigraphy_couplers - manual does not appear to document all valid entries
 
 # flow_conditions - allowed strings
-flow_condition_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 
+flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 
 				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
@@ -496,7 +496,7 @@ class pflow(object):
 	def __init__(self,name='',units_list=None,
 			iphase=None,sync_timestep_with_update=False,
 			varlist=[]):
-		self._name = name		# Include initial, top, source
+		self._name = name.lower()	# Include initial, top, source
 		self._units_list = units_list	# Specify type of units to display such as
 						# time,length,rate,pressure,velocity, temperature,
 						# concentration, and enthalpy.
@@ -506,7 +506,7 @@ class pflow(object):
 		self._varlist = varlist
 		
 	def _get_name(self): return self._name
-	def _set_name(self,value): self._name = value
+	def _set_name(self,value): self._name = value.lower()
 	name = property(_get_name, _set_name)
 	def _get_units_list(self): return self._units_list
 	def _set_units_list(self,value): self._units_list = value
@@ -521,6 +521,42 @@ class pflow(object):
 	def _set_varlist(self,value): self._varlist = value
 	varlist = property(_get_varlist, _set_varlist)
 	
+	# Code below is an attempt to change the way sub-classes are added.
+	# it's not necessary. (Attempting to make it possible to do a flow.add(variable)
+	# instead of dat.add(variable). Current way of specifying which flow object to
+	# add to is dat.add(variable,flow)
+	'''
+	# Definitions for sub-class of pflow object
+	
+	# Adds a new pflow_variable to a pflow object
+	def add(self,variable,overwrite=False):
+		
+		# Establish super-class flow variable reference
+		flow = super(self,)
+		
+		# check if flow_variable already exists
+		if isinstance(self.flow_variable,pflow_variable):		
+#			if flow_variable.name in super(self)._get_flow_variable(self).keys(): #testing
+			if flow_variable.name in self._get_flow_variable(self).keys():
+				if not overwrite:
+					warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else: # Executes if overwrite = True
+					self.delete(self._get_flow_variable(flow)[flow_variable.name],
+						    flow)
+		
+		# Add flow_variable to flow (as a sub-class) if flow_variable does
+		# not exist in specified flow object
+		if flow_variable not in flow.varlist:
+			flow.varlist.append(flow_variable)
+			
+	def _get_flow_variable(self, flow):
+		return dict([flow_variable.name, flow_variable] for flow_variable in flow.varlist if flow_variable.name)
+	flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
+	'''
+	
 class pflow_variable(object):
 	"""Sub-class of pflow for each kind of variable (Includes type and value)
 
@@ -528,7 +564,7 @@ class pflow_variable(object):
 	
 	def __init__(self,name='',type=None, valuelist=[], unit='',
 		     time_unit_type='', data_unit_type='', list=[]):
-		self._name = name	# Pressure,temp., concen.,enthalpy...(String)
+		self._name = name.lower()# Pressure,temp., concen.,enthalpy...(String)
 		self._type = type	# hydrostatic, zero_gradient, dirichlet ...(String)
 		
 		# The Following attributes are a stand alone single list w/out lists
@@ -542,7 +578,7 @@ class pflow_variable(object):
 		self._list = list	# Holds a list of pflow_variable_lists objects
 		
 	def _get_name(self): return self._name
-	def _set_name(self,value): self._name = value
+	def _set_name(self,value): self._name = value.lower()
 	name = property(_get_name, _set_name)		
 	def _get_type(self): return self._type
 	def _set_type(self,value): self._type = value
@@ -754,12 +790,12 @@ class pconstraint(object):
 	"""
 	
 	def __init__(self, name='', concentration_list=[], mineral_list=[]):
-		self._name = name
+		self._name = name.lower()
 		self._concentration_list = concentration_list # Composed of pconstraint_concentration objects
 		self._mineral_list = mineral_list # list of minerals
 		
 	def _get_name(self): return self._name
-	def _set_name(self,value): self._name = value
+	def _set_name(self,value): self._name = value.lower()
 	name = property(_get_name, _set_name)
 	def _get_concentration_list(self): return self._concentration_list
 	def _set_concentration_list(self,value): self._concentration_list = value
@@ -889,10 +925,10 @@ class pdata(object):
 		# ASSEMBLE FILES IN CORRECT DIRECTORIES
 		if self.work_dir: wd = self.work_dir + os.sep
 		else: wd = os.getcwd() + os.sep
-		print wd # testing?
-		print self._path.filename # testing?
+#		print wd # testing?
+#		print self._path.filename # testing?
 		returnFlag = self.write(wd+self._path.filename) # ALWAYS write input file
-		print returnFlag # testing?
+#		print returnFlag # testing?
 		if returnFlag: 
 			print('ERROR: writing files')
 			return
@@ -1030,12 +1066,16 @@ class pdata(object):
 		'''Attach an object associated w/ list (e.g. region) to the data file.
 		
 		:param obj: Object to be added to the data file.
-		:type obj: object(eg.pregion)
-		:param index: Used to find an object that is using a string as an index in a dictionary.
+		:type obj: object(eg. pregion)
+		:param index: (Optional) Used to find an object that is using a string as an index in a dictionary. Intended for the super class object. (E.g. Index represents flow.name if instance is pflow_variable.) Default if not specified is to use the last super-class object added to pdata.
 		:type index: String
 		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
 		:type overwrite: bool
 		'''
+		
+		# Always make index lower case if it's being used as a string
+		if isinstance(index,str): index=index.lower()
+		
 		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
 		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
 		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
@@ -1043,10 +1083,13 @@ class pdata(object):
 		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
 		if isinstance(obj, pflow_variable): 
 			self._add_flow_variable(obj,index,overwrite)
-		if isinstance(obj,pboundary_condition): self._add_boundary_condition(obj,overwrite)
+		if isinstance(obj,pboundary_condition):
+			self._add_boundary_condition(obj,overwrite)
 		if isinstance(obj,pstrata): self._add_strata(obj,overwrite)
 		if isinstance(obj,ptransport): self._add_transport(obj,overwrite)
 		if isinstance(obj,pconstraint): self._add_constraint(obj,overwrite)
+		if isinstance(obj,pconstraint_concentration): 
+			self._add_constraint_concentration(obj,index,overwrite)
 		
 	def delete(self,obj,super_obj=None):	#Deletes an object from the file
 		'''Delete an object that is assigned to a list e.g.(region) from the data file.
@@ -1082,9 +1125,9 @@ class pdata(object):
 		
 		if isinstance(obj,pflow_variable): # Flow object needs to be specified
 			self._delete_flow_variable(obj, super_obj)
-		elif isinstance(obj,list):
+		elif isinstance(obj,list): # Condition not tested
 			for obji in copy(obj):
-				if isinstance(obji,pflow_variable): self._delete__variable(obji)
+				if isinstance(obji,pflow_variable): self._delete_flow_variable(obji)
 				
 		if isinstance(obj,pboundary_condition): self._delete_boundary_condition(obj)
 		elif isinstance(obj,list):
@@ -1105,6 +1148,12 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):
 				if isinstance(obji,pconstraint): self._delete_constraint(obji)
+				
+		if isinstance(obj,pconstraint_concentration): # Constraint object needs to be specified
+			self._delete_constraint_concentration(obj, super_obj)
+		elif isinstance(obj,list): # Condition not tested
+			for obji in copy(obj):
+				if isinstance(obji,pconstraint_concentration): self._delete_constraint_concentration(obji)
 		
 	def _read_uniform_velocity(self,infile,line):
 		np_value_list = []
@@ -2151,13 +2200,19 @@ class pdata(object):
 		
 		# check if flow.name was specified
 		if index:
-			flow = self.flow.get(index) # Assign flow object to existing flow object
-						    # with string type name/index
+			if isinstance(index,str):
+				flow = self.flow.get(index) # Assign flow object to existing flow object with string type name/index
+				if not flow: # Occurs if index/string is not found in flow object
+					print 'WARNING: a flow object with flow.name', index, 'was not found. Current found entries are:', self.flow.keys(), 'pflow_variable was not added.\n'
+					return
+
+			elif isinstance(index,pflow):
+				flow = index # Assigns if index is the flow object reference
 		else: # Set flow to last flow object in list
 			flow = self.flowlist[-1]
 		
 		# check if flow_variable already exists
-		if isinstance(flow_variable,pflow_variable):		
+		if isinstance(flow_variable,pflow_variable):
 			if flow_variable.name in self._get_flow_variable(flow).keys():
 				if not overwrite:
 					warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable. Use flow=\'name\' if you want to specify the flow object to add flow_variable to.'
@@ -2165,15 +2220,14 @@ class pdata(object):
 					_buildWarnings(warning)
 					return
 				else: # Executes if overwrite = True
-					self.delete(self._get_flow_variable(flow)[flow_variable.name],
-						    flow)
+					self.delete(self._get_flow_variable(flow)[flow_variable.name],flow)
 		
 		# Add flow_variable to flow (as a sub-class) if flow_variable does
 		# not exist in specified flow object
 		if flow_variable not in flow.varlist:
 			flow.varlist.append(flow_variable)
 			
-	def _delete_flow_variable(self,flow_variable=pflow_variable(),flow=pflow(),):
+	def _delete_flow_variable(self,flow_variable=pflow_variable(),flow=pflow()):
 		flow.varlist.remove(flow_variable)
 		
 	def _write_flow(self,outfile):
@@ -2246,11 +2300,11 @@ class pdata(object):
 			# variable name and type from lists go here
 			i = 0
 			while i< len(flow.varlist):
-				if flow.varlist[i].name.upper() in flow_condition_names_allowed:
+				if flow.varlist[i].name.upper() in flow_condition_type_names_allowed:
 					outfile.write('    ' + flow.varlist[i].name.upper() + '  ')
 				else:
 					print 'ERROR: flow.varlist.name: \'' + flow.varlist[i].name +'\' is invalid.'
-					print '       valid flow_condition.names:', flow_condition_names_allowed, '\n'
+					print '       valid flow_condition.names:', flow_condition_type_names_allowed, '\n'
 				
 				# Checks flow.varlist[i].type and performs write or error reporting
 				check_condition_type(flow.varlist[i].name, flow.varlist[i].type)
@@ -2797,6 +2851,45 @@ class pdata(object):
 	def _delete_constraint(self,constraint=pconstraint()):
 		self._constraint_list.remove(constraint)
 		
+	# Adds a constraint_concentration object
+	def _add_constraint_concentration(self,
+					  constraint_concentration=pconstraint_concentration(),
+					  index='',overwrite=False):
+		
+		# check if constraint.name was specified
+		if index:
+			if isinstance(index,str):
+				constraint = self.constraint.get(index) # Assign constraint object to existing constraint object with string type name/index
+				if not constraint: # Occurs if index/string is not found in constraint object
+					print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found entries are:', self.constraint.keys(), 'pconstraint_concentration was not added.\n'
+					return
+
+			elif isinstance(index,pconstraint):
+				constraint = index # Assigns if index is the constraint object reference
+		else: # Set constraint to last constraint object in list
+			constraint = self.constraint_list[-1]
+		
+		# check if constraint_concentration already exists
+		if isinstance(constraint_concentration,pconstraint_concentration):
+			if constraint_concentration.pspecies in self._get_constraint_concentration(constraint).keys():
+				if not overwrite:
+					warning = 'WARNING: A constraint_concentration with pspecies \''+str(constraint_concentration.pspecies)+'\' already exists in constraint with name \''+str(constraint.name)+'\'. constraint_concentration will not be defined, use overwrite = True in add() to overwrite the old constraint_concentration. Use constraint=\'name\' if you want to specify the constraint object to add constraint_concentration to.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else: # Executes if overwrite = True
+					self.delete(self._get_constraint_concentration(constraint)[constraint_concentration.pspecies],
+						    constraint)
+		
+		# Add constraint_concentration to constraint (as a sub-class) if constraint_concentration does not exist in specified constraint object
+		if constraint_concentration not in constraint.concentration_list:
+			constraint.concentration_list.append(constraint_concentration)
+			
+	def _delete_constraint_concentration(self,
+					     constraint_concentration=pconstraint_concentration(),
+					     constraint=pconstraint()):
+		constraint.concentration_list.remove(constraint_concentration)
+		
 	def _write_constraint(self, outfile):
 		self._header(outfile,headers['constraint'])
 		cl = self.constraint_list
@@ -2918,11 +3011,12 @@ class pdata(object):
 	def _set_flowlist(self, object): self._flowlist = object
 	flowlist = property(_get_flowlist, _set_flowlist) #: (**)
 	def _get_flow(self):
-		return dict([flow.name,flow] for flow in self.flowlist if flow.name)
+		return dict([flow.name.lower(),flow] for flow in self.flowlist if flow.name.lower)
 	flow = property(_get_flow)#: (*dict[pflow]*) Dictionary of flow objects, indexed by flow name.
 	
 	def _get_flow_variable(self, flow=pflow()):
-		return dict([flow_variable.name, flow_variable] for flow_variable in flow.varlist if flow_variable.name)
+		return dict([flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist if flow_variable.name.lower())
+
 	flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
 	
 	def _get_initial_condition(self): return self._initial_condition
@@ -2962,6 +3056,10 @@ class pdata(object):
 	def _set_constraint_list(self, object): self._constraint_list = object
 	constraint_list = property(_get_constraint_list, _set_constraint_list) #: (**)
 	def _get_constraint(self):
-		return dict([constraint.name,constraint] for constraint in self.constraint_list if constraint.name)
+		return dict([constraint.name.lower(),constraint] for constraint in self.constraint_list if constraint.name.lower())
 	constraint = property(_get_constraint)#: (*dict[pconstraint]*) Dictionary of constraint objects, indexed by constraint name.
+	
+	def _get_constraint_concentration(self, constraint=pconstraint()):
+		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
+	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies
 	

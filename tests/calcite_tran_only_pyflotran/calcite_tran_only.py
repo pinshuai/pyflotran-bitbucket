@@ -236,13 +236,12 @@ dat.add(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-dat.write('calcite_tran_only.in')
+#dat.write('calcite_tran_only.in')
 
 print('******************************************')
 print('Writing PFLOTRAN input file and executing it.')
 print('******************************************')
-# commented out for testing
-'''
+
 executable = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.write('calcite_tran_only.in')
@@ -305,4 +304,3 @@ f.subplots_adjust(hspace=0.2,wspace=0.2,
 
 #plt.show()
 plt.savefig('pH_tran_only.pdf')
-'''

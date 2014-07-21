@@ -8,4 +8,8 @@ and methods to read, manipulate and write PFLOTRAN input files.
 
 Methods
 
-.. autoclass:: pdata 
+.. autoclass:: pdata.pdata
+
+
+.. automethod:: pdata.pdata.run
+

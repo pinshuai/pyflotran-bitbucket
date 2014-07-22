@@ -50,17 +50,18 @@ chemistry = pchemistry() # new chemistry object
 chemistry.pspecies_list = []
 chemistry.sec_species_list = []
 chemistry.gas_species_list = []
-chemistry.minerals_list = [] # mineral_kinetic objects are appended to this list
-mineral_kinetic = pchemistry_m_kinetic() # new mineral kinetic object, sub-class of chemistry
-mineral_kinetic.name = None
-mineral_kinetic.rate_constant_list = []
-chemistry.m_kinetics_list.append(mineral_kinetic) # append mineral kinetic object to chemistry
+chemistry.minerals_list = [] 
 chemistry.log_formulation = False
 chemistry.database = pflotran_dir + 'database/hanford.dat'
 chemistry.activity_coefficients = None
 chemistry.molal = False
 chemistry.output_list = []
-dat.chemistry = chemistry # assign chemistry object
+chemistry.m_kinetics_list = [] # mineral_kinetic objects are appended to this list
+dat.chemistry = chemistry      # assign chemistry object
+mineral_kinetic = pchemistry_m_kinetic() # new mineral kinetic object, sub-class of chemistry
+mineral_kinetic.name = None
+mineral_kinetic.rate_constant_list = []
+dat.add(mineral_kinetic)       # append mineral kinetic object to chemistry
 #--------------------------------------------------------------
 
 # set co2 database

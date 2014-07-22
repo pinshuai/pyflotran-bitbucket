@@ -222,7 +222,7 @@ flow.units_list = None
 flow.iphase = None
 flow.sync_timestep_with_update = False
 flow.varlist = [] # variable objects are appended to this list
-dat.add(flow)	  # assign flow object
+dat.add(flow)	  # append flow object
 variable = pflow_variable('') # new variable object, sub-class of flow object
 variable.name = ''
 variable.type = ''

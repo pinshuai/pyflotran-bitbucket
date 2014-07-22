@@ -1075,8 +1075,9 @@ class pdata(object):
 		
 		# Always make index lower case if it's being used as a string
 		if isinstance(index,str): index=index.lower()
-		
 		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
+		if isinstance(obj,pchemistry_m_kinetic): 
+			self._add_chemistry_m_kinetic(obj,overwrite)
 		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
 		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
 		if isinstance(obj,pregion): self._add_region(obj,overwrite)
@@ -2170,7 +2171,7 @@ class pdata(object):
 		if isValid:
 			self.add(flow)
 			
-	def _add_flow(self,flow=pflow(),overwrite=False):			#Adds a Flow object.
+	def _add_flow(self,flow=pflow(),overwrite=False):	#Adds a Flow object.
 		# check if flow already exists
 		if isinstance(flow,pflow):
 			if flow.name in self.flow.keys():
@@ -2637,6 +2638,32 @@ class pdata(object):
 		# Create an empty chemistry object and assign the values read in
 		self._chemistry = chem
 		
+	'''
+	Automate adding the sub-class m_kinetic to chemistry object.
+	Function will provide a warning if a m_kinetic.name already exists
+	in the chemistry object it is trying to add it to.
+	'''
+	def _add_chemistry_m_kinetic(self,m_kinetic=pchemistry_m_kinetic(),
+				     overwrite=False): # Adds a mineral_kinetic object
+		
+		chemistry = self._chemistry
+		
+		# check if m_kinetic already exists
+		if isinstance(m_kinetic,pchemistry_m_kinetic):
+			if m_kinetic.name in self._get_m_kinetic().keys():
+				if not overwrite:
+					warning = 'WARNING: A m_kinetic with name \''+str(m_kinetic.name)+'\' already exists in chemistry. Mineral_Kinetic will not be defined, use overwrite = True in add() to overwrite the old m_kinetic.'
+					print warning; print
+					_buildWarnings(warning)
+					return # exit function
+				else: # Executes if overwrite = True
+					self.delete(self._get_m_kinetic()[m_kinetic.name], chemistry)
+					
+		# Add m_kinetic to chemistry (as a sub-class) if that specific 
+		# m_kinetic does not exist in chemistry object
+		if m_kinetic not in chemistry.m_kinetics_list:
+			chemistry.m_kinetics_list.append(m_kinetic)
+			
 	def _write_chemistry(self,outfile):
 		self._header(outfile,headers['chemistry'])
 		c = self.chemistry
@@ -3016,7 +3043,6 @@ class pdata(object):
 	
 	def _get_flow_variable(self, flow=pflow()):
 		return dict([flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist if flow_variable.name.lower())
-
 	flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
 	
 	def _get_initial_condition(self): return self._initial_condition
@@ -3044,6 +3070,11 @@ class pdata(object):
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object
 	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
+	
+	def _get_m_kinetic(self):
+		chemistry = self._chemistry
+		return dict([m_kinetic.name, m_kinetic] for m_kinetic in chemistry.m_kinetics_list if m_kinetic.name)
+	m_kinetic = property(_get_m_kinetic)#: (*dict[pchemistry_m_kinetic]*) Dictionary of pfchemistry_m_kinetic objects in chemistry object, indexed by m_kinetic name
 	
 	def _get_transportlist(self): return self._transportlist
 	def _set_transportlist(self, object): self._transportlist = object

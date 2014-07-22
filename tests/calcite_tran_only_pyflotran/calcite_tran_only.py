@@ -44,15 +44,15 @@ chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
 chemistry.sec_species_list = ['OH-', 'CO3--', 'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
 chemistry.gas_species_list = ['CO2(g)']
 chemistry.minerals_list = ['Calcite']
-mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
-mineral_kinetic.name = 'Calcite'
-mineral_kinetic.rate_constant_list = [1.e-6, 'mol/m^2-sec']
-chemistry.m_kinetics_list.append(mineral_kinetic)	# assigning for mineral kinetic object done here
 chemistry.database = pflotran_dir + 'database/hanford.dat'
 chemistry.log_formulation = True
 chemistry.activity_coefficients = 'TIMESTEP'
 chemistry.output_list = ['PH','all']
 dat.chemistry = chemistry	# assign chemistry object
+mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
+mineral_kinetic.name = 'Calcite'
+mineral_kinetic.rate_constant_list = [1.e-6, 'mol/m^2-sec']
+dat.add(mineral_kinetic)		# append mineral kinetic object to chemistry object
 #--------------------------------------------------------------
 
 # set grid
@@ -236,7 +236,8 @@ dat.add(constraint)	# assign constraint
 #--------------------------------------------------------------
 
 # Testing write
-#dat.write('calcite_tran_only.in')
+dat.write('calcite_tran_only.in')
+
 
 print('******************************************')
 print('Writing PFLOTRAN input file and executing it.')

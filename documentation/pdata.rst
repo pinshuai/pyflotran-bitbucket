@@ -19,3 +19,19 @@ Methods
 .. autoclass:: pdata.ptime
 
 .. autoclass:: pdata.pgrid
+
+.. autoclass:: pdata.pmode
+
+.. autoclass:: pdata.ptimestepper
+
+.. autoclass:: pdata.plsolver
+
+.. autoclass:: pdata.pnsolver
+
+.. autoclass:: pdata.poutput
+
+.. autoclass:: pdata.pfluid
+
+.. autoclass:: pdata.psaturation
+
+.. autoclass:: pdata.pregion

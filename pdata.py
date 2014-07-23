@@ -77,7 +77,7 @@ def _buildWarnings(s):
 	buildWarnings.append(s)
 	
 class puniform_velocity(object):
-	""" Class for uniform velocity for transport observation. Optional
+	""" Class for uniform velocity card for transport observation. Optional
 	
 	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g. [14.4e0, 0.e0, 0.e0, 'm/yr']
 	:type value_list: [float,float,float,str]
@@ -91,8 +91,7 @@ class puniform_velocity(object):
 	value_list = property(_get_value_list, _set_value_list) #: (**)
 
 class pmaterial(object):
-	""" Class for material property card.
-	
+	""" Class for material property card. 
 	Syntax to instantiate/create default class object is 'pmaterial()'. 
 	Multiple material property objects can be created.
 	
@@ -163,7 +162,7 @@ class pmaterial(object):
 	permeability = property(_get_permeability, _set_permeability) #: (**)
 
 class ptime(object):
-	""" Class for time property. 
+	""" Class for time property card. 
 	Time works by using time values and by specifying its' unit of measurement. 
 	Acceptable time units are: (s, m, h, d, mo, y). 
 	Syntax to instantiate/create default class object is 'ptime()'. 
@@ -187,8 +186,8 @@ class ptime(object):
 	:type dtf_i: int
 	"""
 	
-	def __init__(self,tf=[],dti=[],dtf=[],dtf_lv=[],
-		     dtf_li=[],dtf_i=0,dtf_lv_unit=[], dtf_li_unit=[]):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, tf=[], dti=[], dtf=[], dtf_lv=[], dtf_li=[], dtf_i=0, dtf_lv_unit=[], dtf_li_unit=[]):
 		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
 					# variables except dtf_i
 		self._dti = dti		# Initial Timestep Size
@@ -232,7 +231,7 @@ class ptime(object):
 	dtf_li_unit = property(_get_dtf_li_unit, _set_dtf_li_unit) #: (**)
 	
 class pgrid(object):
-	""" Class for grid (a.ka. discretization) property. *Required. 
+	""" Class for grid property card. *Required. 
 	Defines the discretization scheme, the type of grid and resolution, and the geometry employed in the simulation.
 	
 	:param type: Grid type. Valid entries include: 'structured', 'structured_mimetic', 'unstructured', 'amr'. e.g. 'structured'
@@ -253,8 +252,8 @@ class pgrid(object):
 	:type filename: str
 	"""
 
-	def __init__(self,type='structured',lower_bounds=[0.0,0.0,0.0],upper_bounds=[50.0,50.0,50.0],
-				 origin=[0.0,0.0,0.0],nxyz=[10,10,10],dxyz=[5,5,5],gravity=[0.0,0.0,-9.8068],filename=''):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[50.0,50.0,50.0], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dxyz=[5,5,5], gravity=[0.0,0.0,-9.8068], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -291,11 +290,17 @@ class pgrid(object):
 
 
 class pmode(object):
-	""" Class for mode
-
+	""" Class for mode card. Determines the flow mode. 
+	Richards (variably saturated porous media); 
+	MPH, MPHASE, FLASH2 (CO_2 + H_2O); 
+	THC (Thermal-Hydrologic-Chemical, in progress); 
+	IMMIS, THS(Immisible).
+	
+	:param name: Specify mode name. Options include: 'richards', 'mphase', 'mph','flash2', 'thc', 'immis', 'ims', 'ths'.
+	:type name: str
 	"""
 
-	def __init__(self,name=''):
+	def __init__(self, name=''):
 		self._name = name
 
 	def _get_name(self): return self._name
@@ -303,14 +308,34 @@ class pmode(object):
 	name = property(_get_name, _set_name)
 
 class ptimestepper(object):
-	""" Class for time stepper
-
+	""" Class for time stepper card. Controls time stepping.
+	
+	:param ts_acceleration: Integer indexing time step acceleration ramp (expert users only) [5]. Timestepper acceleration. e.g. 8
+	:type ts_acceleration: int
+	:param num_steps_after_cut: Number of time steps after a time step cut that the time step size is held constant [5].
+	:type num_steps_after_cut: int
+	:param max_steps: Maximum time step after which the simulation will be terminated [999999].
+	:type max_steps: int
+	:param max_ts_cuts: Maximum number of consecutive time step cuts before the simulation is terminated with plot of the current solution printed to a XXX_cut_to_failure.tec file for debugging [16].
+	:type max_ts_cuts: int
+	:param cfl_limiter: The maximum CFL number allowed for transport. Enables Courant (CFL) number lim-iting on the transport time step.
+	:type cfl_limiter: float
+	:param initialize_to_steady_state: Boolean flag indicating that the simulation is to be run as steady state (Warning: not robust).
+	:type initialize_to_steady_state: bool - True or False
+	:param run_as_steady_state: Boolean flag requesting that a steady state solution be computed based on boundary and initial conditions at the beginning of the simulation (Warning: not robust).
+	:type run_as_steady_state: bool - True or False
+	:param max_pressure_change: Maximum change in pressure for a time step [5.d4 Pa].
+	:type max_pressure_change: float
+	:param max_temperature_change: Maximum change in temperature for a time step [5 C].
+	:type max_temperature_change: float
+	:param max_concentration_change: Maximum change in pressure for a time step [1. mol/L].
+	:type max_concentration_change: float
+	:param max_saturation_change: Maximum change in pressure for a time step [0.5].
+	:type max_saturation_change: float
 	"""
-
-	def __init__(self,ts_acceleration=None,num_steps_after_cut=None,max_steps=None,max_ts_cuts=None,
-                          cfl_limiter=None,initialize_to_steady_state=False,run_as_steady_state=False,
-                          max_pressure_change=None,max_temperature_change=None,max_concentration_change=None,
-                          max_saturation_change=None):
+	
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, ts_acceleration=None, num_steps_after_cut=None, max_steps=None, max_ts_cuts=None, cfl_limiter=None, initialize_to_steady_state=False, run_as_steady_state=False, max_pressure_change=None, max_temperature_change=None, max_concentration_change=None, max_saturation_change=None):
 		self._ts_acceleration = ts_acceleration
 		self._num_steps_after_cut = num_steps_after_cut 
 		self._max_steps = max_steps
@@ -358,8 +383,12 @@ class ptimestepper(object):
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
 
 class plsolver(object):
-	""" Class for linear solver
-
+	""" Class for linear solver card. Multiple linear solver objects can be created.
+	
+	:param name: Specify linear solver to use. Options include: 'tran', 'transport','flow'.
+	:type name: str
+	:param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
+	:type solver: str
 	"""
 	
 	def __init__(self, name='', solver=''):
@@ -374,12 +403,28 @@ class plsolver(object):
 	solver = property(_get_solver, _set_solver)
 
 class pnsolver(object):
-	""" Class for newton solver
-
+	""" Class for newton solver card. Multiple newton solver objects can be created.
+	
+	:param name: Specify newton solver to use: Options include: 'tran', 'transport', 'tran_solver', 'flow_solver'. Default: 'flow_solver'
+	:type name: str
+	:param atol: 
+	:type atol: float
+	:param rtol: 
+	:type rtol: float
+	:param stol: 
+	:type stol: float
+	:param dtol: 
+	:type dtol: float
+	:param itol: 
+	:type itol: float
+	:param max_it: Cuts time step if the number of iterations exceed this value.
+	:type max_it: int
+	:param max_f: 
+	:type max_f: int
 	"""
 
-	def __init__(self,name='',atol=None,rtol=None,stol=None,dtol=None,itol=None,
-			max_it=None,max_f=None):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, name='', atol=None, rtol=None, stol=None, dtol=None, itol=None, max_it=None, max_f=None):
 		self._name = name	# Indicates Flow or Tran for Transport
 		self._atol = atol
 		self._rtol = rtol
@@ -415,13 +460,24 @@ class pnsolver(object):
 	max_f = property(_get_max_f, _set_max_f)
 	
 class poutput(object):
-	"""Class for output options
-
+	"""Class for output options card.
+	
+	:param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats. Acceptable time units are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
+	:type time_list: [str, float*]
+	:param mass_balance: Flag to indicate whether to output the mass balance of the system if this card is activated. It includes global mass balance as well as fluxes at all boundaries for water and chemical species specified for output in the CHEMISTRY card. For the MPHASE mode only global mass balances are provided including supercritical CO_2. Output times are controlled by PERIODIC_OBSERVATION TIMESTEP and TIME, and printout times. Default: False
+	:type mass_balance: bool - True or False
+	:param print_column_ids: Flag to indicate whether to print column numbers in observation and mass balance output files. Default: False
+	:type print_column_ids: bool - True or False
+	:param periodic_observation_timestep: Outputs the results at observation points and mass balance output at specified time steps.
+	:type periodic_observation_timestep: int
+	:param format_list: Specify file format options to use for specifying the snapshop in time file type.. Input is a list of strings. Multiple formats can be specified. File format input options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file named pflotran.h5, 'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file at each output time, 'MAD' - (not supported), 'VTK' - VTK format.
+	:type format_list: [str]
+	:param velocities: 
+	:type velocities: bool - True or False
 	"""
 	
-	# Remember to add time_list=[] back in, temporarily removed
-	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False,
-		     periodic_observation_timestep=None, format_list=[],velocities=False):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False, periodic_observation_timestep=None, format_list=[], velocities=False):
 		self._time_list = time_list
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
@@ -449,11 +505,13 @@ class poutput(object):
 	velocities = property(_get_velocities, _set_velocities)	
 	
 class pfluid(object):
-	"""Class for fluid properties
-
+	"""Class for fluid properties card.
+	
+	:param diffusion_coefficient: Unit of measurement is [m^2/s]. Default: 1.0000000e-09
+	:type diffusion_coefficient: float
 	"""
 	
-	def __init__(self,diffusion_coefficient=None):
+	def __init__(self, diffusion_coefficient=None):
 		self._diffusion_coefficient = diffusion_coefficient
 		
 	def _get_diffusion_coefficient(self): return self._diffusion_coefficient
@@ -462,13 +520,31 @@ class pfluid(object):
 	
 class psaturation(object):
 	"""Class for saturation functions
-
+	
+	:param name: Saturation function name. e.g. 'sf2'
+	:type name: str
+	:param permeability_function_type: Options include: 'VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 'NMT_EXP', 'PRUESS_1'.
+	:type permeability_function_type: str
+	:param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1'.
+	:type saturation_function_type: str
+	:param residual_saturation_liquid: MODES: MPHASE
+	:type residual_saturation_liquid: float
+	:param residual_saturation_gas: MODES: MPHASE
+	:type residual_saturation_gas: float
+	:param a_lambda: lambda
+	:type a_lambda: float
+	:param alpha: Pa^-1
+	:type alpha: float
+	:param max_capillary_pressure: Pa
+	:type max_capillary_pressure: float
+	:param betac: 
+	:type betac: float
+	:param power: 
+	:type power: float
 	"""
 	
-	def __init__(self,name='',permeability_function_type=None,saturation_function_type=None,
-			residual_saturation_liquid=None,residual_saturation_gas=None,
-			a_lambda=None,alpha=None,max_capillary_pressure=None,
-			betac=None,power=None):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, name='', permeability_function_type=None, saturation_function_type=None, residual_saturation_liquid=None, residual_saturation_gas=None, a_lambda=None, alpha=None, max_capillary_pressure=None, betac=None, power=None):
 		self._name = name
 		self._permeability_function_type = permeability_function_type
 		self._saturation_function_type = saturation_function_type
@@ -512,11 +588,17 @@ class psaturation(object):
 	power = property(_get_power, _set_power)
 	
 class pregion(object):
-	"""Class for regions
-	
-	There are currently unresolved issues with the initializer not working correctly.
-	This has caused problems with reading in list attributes from list objects.
+	"""Class for regions. Multiple region objects can be created.
+	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g. a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region.
 
+	:param name: Region name. Options include: 'all', 'top', 'west', 'east', 'well'.
+	:type name: str
+	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x1, y1, z1. e.g. [0.e0, 0.e0, 0.e0]
+	:type coordinates_lower: [float]*3
+	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g.[321.e0, 1.e0,  51.e0]
+	:type coordinates_upper: [float]*3
+	:param face: Defines the face of the grid cell to which boundary conditions are connected. Options include: 'west', 'east', 'north', 'south', 'bottom', 'top'. (structured grids only).
+	:type face: str
 	"""
 	
 	def __init__(self,name='',coordinates_lower=[0.0,0.0,0.0],coordinates_upper=[0.0,0.0,0.0],

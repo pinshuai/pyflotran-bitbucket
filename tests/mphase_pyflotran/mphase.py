@@ -86,6 +86,40 @@ time.dtf_lv_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE before 'at' time un
 time.dtf_li = [50., 20000., 50000., 100000.]	# MAXIMUM_TIMESTEP_SIZE after 'at'
 time.dtf_li_unit = ['y','y','y','y']	# MAXIMUM_TIMESTEP_SIZE after 'at' time unit (eg. 'y')
 dat.time = time
+
+'''
+# Alternative interface proposal for changing the data structure for dtf_lv, dtf_lv_unit, dtf_li, and dtf_li_unit.
+# Uncertain if this is better. Currently not implemented.
+time = ptime()
+time.tf = [0.25e0, 'y']	# FINAL_TIME
+time.dti = [1.e-6, 'y']	# INITIAL_TIMESTEP_SIZE
+time.dtf = [50.e0, 'y']	# MAXIMUM_TIMESTEP_SIZE
+dat.time = time
+dtf_more = ptime_time_dtf()
+dtf_more.time_value = 200.e0
+dtf_more.time_value_unit = 'y'
+dtf_more.time_increment = 50.
+dtf_more.time_increment_unit = 'y' 
+dat.add(dtf_more)
+dtf_more = ptime_time_dtf()
+dtf_more.time_value = 500.e0
+dtf_more.time_value_unit = 'y'
+dtf_more.time_increment = 20000.
+dtf_more.time_increment_unit = 'y' 
+dat.add(dtf_more)
+dtf_more = ptime_time_dtf()
+dtf_more.time_value = 1000.e0
+dtf_more.time_value_unit = 'y'
+dtf_more.time_increment = 50000.
+dtf_more.time_increment_unit = 'y' 
+dat.add(dtf_more)
+dtf_more = ptime_time_dtf()
+dtf_more.time_value = 5000.e0
+dtf_more.time_value_unit = 'y'
+dtf_more.time_increment = 100000.
+dtf_more.time_increment_unit = 'y' 
+dat.add(dtf_more)
+'''
 #--------------------------------------------------------------
 
 # set newton solvers

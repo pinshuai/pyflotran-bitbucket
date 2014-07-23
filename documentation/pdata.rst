@@ -10,6 +10,12 @@ Methods
 
 .. autoclass:: pdata.pdata
 
-
 .. automethod:: pdata.pdata.run
 
+.. autoclass:: pdata.puniform_velocity
+
+.. autoclass:: pdata.pmaterial
+
+.. autoclass:: pdata.ptime
+
+.. autoclass:: pdata.pgrid

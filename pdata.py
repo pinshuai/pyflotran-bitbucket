@@ -77,9 +77,10 @@ def _buildWarnings(s):
 	buildWarnings.append(s)
 	
 class puniform_velocity(object):
-	""" Class for uniform velcity for transport observation.
-	Example:
-	UNIFORM_VELOCITY 3.84259d-6 0.d0 0.d0 ! 1.38333 cm/h
+	""" Class for uniform velocity for transport observation. Optional
+	
+	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g. [14.4e0, 0.e0, 0.e0, 'm/yr']
+	:type value_list: [float,float,float,str]
 	"""
 	
 	def __init__(self, value_list=[0.0,0.0,0.0]):
@@ -90,13 +91,35 @@ class puniform_velocity(object):
 	value_list = property(_get_value_list, _set_value_list) #: (**)
 
 class pmaterial(object):
-	""" Class for material property card
-
+	""" Class for material property card.
+	
+	Syntax to instantiate/create default class object is 'pmaterial()'. 
+	Multiple material property objects can be created.
+	
+	:param id: Unique identifier of material property.
+	:type id: int
+	:param name: Name of material property. e.g. 'soil1'
+	:type name: str
+	:param porosity: Porosity of material property.
+	:type porosity: float
+	:param tortuosity: Tortuosity of material property.
+	:type tortuosity: float
+	:param density: Rock density of material property in kg/m^3.
+	:type density: float
+	:param specific_heat: Specific heat of material property in J/kg/K.
+	:type specific_heat: float
+	:param cond_dry: Thermal dry conductivity of material property in W/m/K.
+	:type cond_dry: float
+	:param cond_wet: Thermal wet conductivity of material property in W/m/K.
+	:type cond_wet: float
+	:param saturation: Saturation function of material property. e.g. 'sf2'
+	:type saturation: str
+	:param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g. [1.e-15,1.e-15,1.e-17]
+	:type permeability: [float]*3
 	"""
 
-	def __init__(self,id=None,name='',porosity=None,tortuosity=None,density=None,
-		     specific_heat=None,cond_dry=None,cond_wet=None,
-		     saturation='',permeability=[]):
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, id=None, name='', porosity=None, tortuosity=None, density=None, specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[]):
 		self._id = id
 		self._name = name
 		self._porosity = porosity
@@ -140,8 +163,28 @@ class pmaterial(object):
 	permeability = property(_get_permeability, _set_permeability) #: (**)
 
 class ptime(object):
-	""" Class for time property
-
+	""" Class for time property. 
+	Time works by using time values and by specifying its' unit of measurement. 
+	Acceptable time units are: (s, m, h, d, mo, y). 
+	Syntax to instantiate/create default class object is 'ptime()'. 
+	List length (# of variables assigned to a parameter/attribute) of dtf_lv, dtf_lv_unit, dtf_li, dtf_li_unit should all be equal.
+	
+	:param tf: time final. 1st variable is time value. 2nd variable specifies time unit. e.g. [0.25e0, 'y']
+	:type tf: [float, str]
+	:param dti: delta (change) time initial a.k.a. initial timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g. [0.25e0, 'y']
+	:type dti: [float, str]
+	:param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g. [50.e0, 'y']
+	:type dtf: [float, str]
+	:param dtf_lv: list of values for delta (change) time final a.k.a. maximum timestep size. Holds list of time values for additional maximum timestep size values. In a PFLOTRAN input deck, these are the numbers that come before key word 'at'. Input is a list of floats. e.g. [200.e0, 500.e0, 1000.e0, 5000.e0]
+	:type dtf_lv: [float]
+	:param dtf_lv_unit: list of time unit measurements applied to values for delta (change) time final a.k.a. maximum timestep size. Holds list of time units for additional maximum timestep sizes. In a PFLOTRAN input deck, this is the time unit that come before key word 'at'. Input is a list of strings. e.g. ['y','y','y','y']
+	:type dtf_lv_unit: [str]
+	:param dtf_li: list of increments for delta (change) time final a.k.a. maximum timestep size. Holds list of time increments for additional maximum timestep size values. In a PFLOTRAN input deck, these are the numbers that come after key word 'at'. Input is a list of floats. e.g. [50., 20000., 50000., 100000.]
+	:type dtf_li: [float]
+	:param dtf_li_unit: list of time unit measurements applied to increments for delta (change) time final a.k.a. maximum timestep size. Holds list of time increments for additional maximum timestep sizes. In a PFLOTRAN input deck, this is the time unit that come after key word 'at'. Input is a list of strings. e.g. ['y','y','y','y']
+	:type dtf_li_unit: [str]
+	:param dtf_i: Specifies the list length (# of variables assigned to a parameter/attribute) to be used with dtf_lv, dtf_lv_unit, dtf_li, dtf_li_unit. Should not need to be manually set. pdata sets this automatically.
+	:type dtf_i: int
 	"""
 	
 	def __init__(self,tf=[],dti=[],dtf=[],dtf_lv=[],
@@ -188,9 +231,26 @@ class ptime(object):
 	def _set_dtf_li_unit(self,value): self._dtf_li_unit = value
 	dtf_li_unit = property(_get_dtf_li_unit, _set_dtf_li_unit) #: (**)
 	
-class pgrid(object):		# discretization
-	""" Class for grid property
-
+class pgrid(object):
+	""" Class for grid (a.ka. discretization) property. *Required. 
+	Defines the discretization scheme, the type of grid and resolution, and the geometry employed in the simulation.
+	
+	:param type: Grid type. Valid entries include: 'structured', 'structured_mimetic', 'unstructured', 'amr'. e.g. 'structured'
+	:type type: str
+	:param lower_bounds: Lower/Minimum 3D boundaries coordinates in order of x_min, y_min, z_min. Input is a list of 3 floats. e.g. [0.e0, 0.e0, 0.e0]
+	:type lower_bounds: [float]*3
+	:param upper_bounds: Upper/Maximum 3D boundaries coordinates in order of x_max, y_max, z_max. Input is a list of 3 floats. e.g. [321.e0, 1.e0, 51.e0]
+	:type lower_bounds: [float]*3
+	:param origin: Coordinates of grid origin. Optional. Input is a list of 3 floats. Default: [0.e0, 0.e0, 0.e0]
+	:type origin: [float]*3
+	:param nxyz: Number of grid cells in x,y,z directions. Only works with type='structured'. Input is a list of 3 floats. e.g. [107, 1, 51]
+	:type nxyz: [float]*3
+	:param dxyz: Specifies grid spacing of structured cartesian grid in order of dx, dy, dz. Input is a list of 3 floats. e.g. [5, 5, 5]
+	:type dxyz: [float]*3
+	:param gravity: Specifies gravity vector in unit 'm/s^2'. Input is a list of 3 floats. Default: [0, 0, 9.8068]
+	:type gravity: [float]*3
+	:param filename: Specify name of file containing grid information. Only works with type='unstructured'.
+	:type filename: str
 	"""
 
 	def __init__(self,type='structured',lower_bounds=[0.0,0.0,0.0],upper_bounds=[50.0,50.0,50.0],
@@ -850,10 +910,10 @@ class pconstraint_mineral(object):
 	surface_area = property(_get_surface_area, _set_surface_area)       
 	
 class pdata(object):
-	"""Class for pflotran data file
-
+	"""Class for pflotran data file. Use 'from pdata import*' to access pdata library
 	"""
 
+	# definitions are put on one line to work better with rst/latex/sphinx.
 	def __init__(self, filename='', work_dir=''):
 		from copy import copy
 		# Note that objects need to be instantiated when hard-coded when it's set to

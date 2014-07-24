@@ -3,19 +3,49 @@
 pdata: PFLOTRAN input file generation
 =====================================
 
-The :class:`.pdata` module is the main module in PyFLOTRAN which contains classes
-and methods to read, manipulate and write PFLOTRAN input files.
+The pdata  module is the main module in PyFLOTRAN which contains classes
+and methods to read, manipulate, write and execute PFLOTRAN input files.
 
-Methods
+pdata class
+-----------
+
+The :class:`.pdata` is the main class that has 
 
 .. autoclass:: pdata.pdata
 
+Attributes
+^^^^^^^^^^
+
+Methods
+^^^^^^^
 .. automethod:: pdata.pdata.run
 
-.. autoclass:: pdata.puniform_velocity
 
+Grid
+----
+.. autoclass:: pdata.pgrid
+
+Attributes
+^^^^^^^^^^
+
+Material 
+--------
 .. autoclass:: pdata.pmaterial
 
+Attributes
+^^^^^^^^^^
+
+Time
+----
 .. autoclass:: pdata.ptime
 
-.. autoclass:: pdata.pgrid
+Attributes
+^^^^^^^^^^
+
+Uniform Velocity
+----------------
+.. autoclass:: pdata.puniform_velocity
+
+Attributes
+^^^^^^^^^^
+

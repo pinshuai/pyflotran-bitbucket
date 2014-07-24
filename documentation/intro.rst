@@ -85,6 +85,8 @@ top of any Python script
 
 ``from pdata import*``
 
+Before doing this, one needs to ensure that pyflotran directory is in the PYTHONPATH. This can be done by configuring cshrc or bashrc files.
+
 Using this manual
 -----------------
 

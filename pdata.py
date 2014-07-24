@@ -725,7 +725,7 @@ class pflow_variable(object):
 	:type name: str
 	:param type: Indicates type that is associated with name under keyword TYPE. Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage'. Options for RATE include: 'mass_rate', 'volumetric_rate', 'scaled_volumetric_rate'. Options for FLUX include: 'dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance', 'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'. Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
 	:type type: str
-	:param valuelist: Non-list alternative, do not use with list alternative. The 2nd float is optional.
+	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional.
 	:type valuelist: [float, float]
 	:param unit: Currently not supported. Non-list alternative, do not use with list alternative.
 	:type unit: str

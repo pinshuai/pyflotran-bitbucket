@@ -622,6 +622,13 @@ class pregion(object):
 	face = property(_get_face, _set_face)
 	
 class pobservation(object):
+	"""Class for observation card.
+	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g. pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
+	Currently, only region is supported in PyFLOTRAN.
+	
+	:param region: Defines the name of the region (usually a point in space) to which the observation point is linked. e.g. 'obs'.
+	:type region: str
+	"""
 	
 	def __init__(self,region=None):
 		self._region = region
@@ -631,7 +638,19 @@ class pobservation(object):
 	region = property(_get_region, _set_region) 
 	
 class pflow(object):
-	"""Class for flow conditions - There can be multiple flow condition objects
+	"""Class for flow conditions card. There can be multiple flow condition objects.
+	The FLOW_CONDITION keyword specifies scalar or vector data sets to be associated with a given boundary or initial condition. For instance, to specify a hydrostatic boundary condition, the user would specify a condition with a pressure associated with a point in space (i.e. datum) in space and a gradient, both vector quantities. Note that in the case of a hydrostatic boundary condition, the vertical gradient specified in the input deck must be zero in order to enable the hydrostatic pressure calculation. Otherwise, the specified vertical gradient overrides the hydrostatic pressure. Transient pressures, temperatures, concentrations, datums, gradients, etc. are specified using the FILE filename combination for the name of the data set.
+	
+	:param name: Options include: 'initial', 'top', 'source'.
+	:type name: str
+	:param units_list: Not currently supported.
+	:type units_list: [str]
+	:param iphase: 
+	:type iphase: int
+	:param sync_timestep_with_update: Flag that indicates whether to use sync_timestep_with_update. Default: False.
+	:type sync_timestep_with_update: bool - True or False
+	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g. dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
+	:type varlist: [pflow_variable]
 
 	"""
 	
@@ -700,8 +719,22 @@ class pflow(object):
 	'''
 	
 class pflow_variable(object):
-	"""Sub-class of pflow for each kind of variable (Includes type and value)
-
+	"""Sub-class of pflow for each kind of variable (Includes type and value). There can be multiple pflow_variable objects appended to a single pflow object.
+	
+	:param name: Indicates name for keyword TYPE under keyword FLOW_CONDITION. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
+	:type name: str
+	:param type: Indicates type that is associated with name under keyword TYPE. Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage'. Options for RATE include: 'mass_rate', 'volumetric_rate', 'scaled_volumetric_rate'. Options for FLUX include: 'dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance', 'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'. Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
+	:type type: str
+	:param valuelist: Non-list alternative, do not use with list alternative. The 2nd float is optional.
+	:type valuelist: [float, float]
+	:param unit: Currently not supported. Non-list alternative, do not use with list alternative.
+	:type unit: str
+	:param time_unit_type: List alternative, do not use with non-list alternative attributes/parameters. 
+	:type time_unit_type: str
+	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
+	:type data_unit_type: str
+	:param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g. variable.list.append(var_list) if var_list=pflow_variable_list.
+	:type list: [pflow_variable_list]
 	"""
 	
 	def __init__(self,name='',type=None, valuelist=[], unit='',

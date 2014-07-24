@@ -35,3 +35,9 @@ Methods
 .. autoclass:: pdata.psaturation
 
 .. autoclass:: pdata.pregion
+
+.. autoclass:: pdata.pobservation
+
+.. autoclass:: pdata.pflow
+
+.. autoclass:: pdata.pflow_variable

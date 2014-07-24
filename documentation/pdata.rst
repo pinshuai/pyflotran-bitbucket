@@ -9,7 +9,7 @@ and methods to read, manipulate, write and execute PFLOTRAN input files.
 pdata class
 -----------
 
-The :class:`.pdata` is the main class that has 
+The :class:`.pdata` is the main class that does the reading, writing, manipulation and execution of the PFLOTRAN input files.
 
 .. autoclass:: pdata.pdata
 
@@ -49,19 +49,60 @@ Uniform Velocity
 Attributes
 ^^^^^^^^^^
 
-
+Mode
+----
 .. autoclass:: pdata.pmode
 
+Attributes
+^^^^^^^^^^
+
+Timestepper
+-----------
 .. autoclass:: pdata.ptimestepper
 
+Attributes
+^^^^^^^^^^
+
+Linear Solver
+-------------
 .. autoclass:: pdata.plsolver
 
+Attributes
+^^^^^^^^^^
+
+Newton Solver
+-------------
 .. autoclass:: pdata.pnsolver
 
+Attributes
+^^^^^^^^^^
+
+Output
+------
 .. autoclass:: pdata.poutput
 
+Attributes
+^^^^^^^^^^
+
+Fluid Properties
+----------------
 .. autoclass:: pdata.pfluid
 
+Attributes
+^^^^^^^^^^
+
+Saturation Function
+-------------------
 .. autoclass:: pdata.psaturation
 
+Attributes
+^^^^^^^^^^
+
+Region
+------
 .. autoclass:: pdata.pregion
+
+Attributes
+^^^^^^^^^^
+
+

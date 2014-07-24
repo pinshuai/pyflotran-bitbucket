@@ -78,6 +78,7 @@ def _buildWarnings(s):
 	
 class puniform_velocity(object):
 	""" Class for uniform velocity card for transport observation. Optional
+with transport problem when not coupling with a flow mode.
 	
 	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g. [14.4e0, 0.e0, 0.e0, 'm/yr']
 	:type value_list: [float,float,float,str]

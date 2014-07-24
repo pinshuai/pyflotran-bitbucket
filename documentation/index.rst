@@ -13,9 +13,8 @@ Contents:
 
    intro 
    pdata
-   ptool
-   pdflt
-   examples
+   tutorials
+   unsupported_keywords
 
 Indices and tables
 ==================

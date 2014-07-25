@@ -94,10 +94,8 @@ time = ptime()
 time.tf = [1.e4, 's']		# FINAL_TIME
 time.dti = [1.e-6, 's']		# INITIAL_TIMESTEP_SIZE
 time.dtf = [10.e0,'s']		# MAXIMUM_TIMESTEP_SIZE
-time.dtf_lv = [1.e2, 1.e3]		#MAXIMUM_TIMESTEP_SIZE before 'at'
-time.dtf_lv_unit = ['s', 's']		# time unit
-time.dtf_li = [5.e3, 5.e4]		#MAXIMUM_TIMESTEP_SIZE after 'at'
-time.dtf_li_unit = ['s', 's']		# time unit
+time.dtf_list.append([1.e2, 's', 5.e3, 's'])
+time.dtf_list.append([1.e3, 's', 5.e4, 's'])
 dat.time = time
 #--------------------------------------------------------------
 

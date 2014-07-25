@@ -447,16 +447,19 @@ class poutput(object):
 	:type format_list: [str]
 	:param velocities: 
 	:type velocities: bool - True or False
+	:param screen_periodic: Print to screen every <integer> time steps.
+	:type screen_periodic: int
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False, periodic_observation_timestep=None, format_list=[], velocities=False):
+	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False, periodic_observation_timestep=None, format_list=[], velocities=False, screen_periodic=None):
 		self._time_list = time_list
 		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
 		self._periodic_observation_timestep = periodic_observation_timestep
 		self._format_list = format_list
 		self._velocities = velocities
+		self._screen_periodic = screen_periodic
 		
 	def _get_time_list(self): return self._time_list
 	def _set_time_list(self,value): self._time_list = value
@@ -475,7 +478,10 @@ class poutput(object):
 	format_list = property(_get_format_list, _set_format_list)
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
-	velocities = property(_get_velocities, _set_velocities)	
+	velocities = property(_get_velocities, _set_velocities)
+	def _get_screen_periodic(self): return self._screen_periodic
+	def _set_screen_periodic(self,value): self._screen_periodic = value
+	screen_periodic = property(_get_screen_periodic, _set_screen_periodic)	
 	
 class pfluid(object):
 	"""Class for fluid properties card.
@@ -562,7 +568,7 @@ class psaturation(object):
 	
 class pregion(object):
 	"""Class for regions. Multiple region objects can be created.
-	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g. a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region.
+	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g. a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region. Please note there is currently a minor glitch when using the add function for pregion. A false WARNING may print to console stating a region with name 'user_value' already exists when reading another input deck. This can occur as a result of a region name being used in another key words such as INITIAL_CONDITION. In cases where WARNING messages are produced due to this glitch, it will not affect the outcome of the program and can be ignored. The pdata script is incorrectly reading pregion key words more than once and automatically correcting itself which produces the warning message.
 
 	:param name: Region name. Options include: 'all', 'top', 'west', 'east', 'well'.
 	:type name: str
@@ -576,13 +582,13 @@ class pregion(object):
 	
 	def __init__(self,name='',coordinates_lower=[0.0,0.0,0.0],coordinates_upper=[0.0,0.0,0.0],
 			face=None):
-		self._name = name
+		self._name = name.lower()
 		self._coordinates_lower = coordinates_lower	# 3D coordinates
 		self._coordinates_upper = coordinates_upper	# 3D coordinates
 		self._face = face
 		
 	def _get_name(self): return self._name
-	def _set_name(self,value): self._name = value
+	def _set_name(self,value): self._name = value.lower()
 	name = property(_get_name, _set_name)
 	def _get_coordinates_lower(self): return self._coordinates_lower
 	def _set_coordinates_lower(self,value): self._coordinates_lower = value
@@ -1686,11 +1692,6 @@ class pdata(object):
 							# assign 2nd unit (increment)
 							dtf_more.append(tstring[1])
 							
-#							time.dtf_li.append(floatD(tstring[0]))
-#							time.dtf_li_unit.append(tstring[1])
-#						else:
-#							time.dtf_li[time.dtf_i] = floatD(tstring[0])
-							
 						time.dtf_list.append(dtf_more)
 							
 			elif key in ['/','end']: keepReading = False
@@ -1945,13 +1946,8 @@ class pdata(object):
 			outfile.write('END\n\n')
 	
 	def _read_output(self,infile):
-		p = poutput()
-		np_time_list = []
-		np_mass_balance = p.mass_balance
-		np_print_column_ids = p.print_column_ids
-		np_periodic_observation_timestep = p.periodic_observation_timestep
-		np_format_list = p.format_list
-		np_velocities = p.velocities
+		output = poutput()
+		output.time_list = []
 		
 		keepReading = True
 		
@@ -1964,31 +1960,27 @@ class pdata(object):
 				i=0
 				while i < len(tstring):
 					try:
-						np_time_list.append(floatD(tstring[i]))
+						output.time_list.append(floatD(tstring[i]))
 					except:
-						np_time_list.append(tstring[i])
+						output.time_list.append(tstring[i])
 					i += 1
 			if key == 'periodic_observation':
 				tstring = line.strip().split()[1].lower()	# Read the 2nd word
 				if tstring == 'timestep':
-					np_periodic_observation_timestep = int(line.split()[-1])
+					output.periodic_observation_timestep = int(line.split()[-1])
 			elif key == 'print_column_ids':
-				np_print_column_ids = True
+				output.print_column_ids = True
 			elif key == 'format':
 				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
-				np_format_list.append(tstring)	# assign
+				output.format_list.append(tstring)	# assign
 			elif key == 'velocities':
-				np_velocities = True
+				output.velocities = True
 			elif key == 'mass_balance':
-				np_mass_balance = True
+				output.mass_balance = True
 			elif key in ['/','end']: keepReading = False
 			
-		# Create new empty output object and assign values read in.
-		new_output = poutput(np_time_list, np_mass_balance,np_print_column_ids,
-					np_periodic_observation_timestep,np_format_list,
-					np_velocities)	# Create an empty output
-		self._output = new_output	# Values read in are assigned now'
+		self._output = output
 		
 	def _write_output(self,outfile):
 		self._header(outfile,headers['output'])
@@ -2030,6 +2022,12 @@ class pdata(object):
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
 			outfile.write('  '+'MASS_BALANCE'+'\n')
+		if output.screen_periodic:
+			try: # Error checking to ensure screen_periodic is an integer.
+				output.screen_periodic = int(output.screen_periodic)
+				outfile.write('  '+'SCREEN PERIODIC '+str(output.screen_periodic)+'\n')
+			except(ValueError):
+				print 'ERROR: output.screen_periodic '+output.screen_periodic+' is not an int (integer).\n'
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):
@@ -2189,7 +2187,7 @@ class pdata(object):
 			
 			self.add(region)
 
-	def _add_region(self,region=pregion(),overwrite=False):			#Adds a Region object.
+	def _add_region(self,region=pregion(),overwrite=False):		#Adds a Region object.
 		# check if region already exists
 		if isinstance(region,pregion):
 			if region.name in self.region.keys():
@@ -2203,10 +2201,10 @@ class pdata(object):
 					
 		if region not in self._regionlist:
 			self._regionlist.append(region)
-            
+			
 	def _delete_region(self,region=pregion()):
-		self._regionlist.remove(region)		
-        		
+		self._regionlist.remove(region)
+		
 	def _write_region(self,outfile):
 		self._header(outfile,headers['region'])
 		
@@ -3213,7 +3211,7 @@ class pdata(object):
 	def _set_regionlist(self, object): self._regionlist = object
 	regionlist = property(_get_regionlist, _set_regionlist) #: (**)
 	def _get_region(self):
-		return dict([rgn.name,rgn] for rgn in self.regionlist if rgn.name)
+		return dict([region.name.lower(),region] for region in self.regionlist if region.name)
 	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.
 	
 	def _get_observation(self): return self._observation

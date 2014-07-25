@@ -121,6 +121,7 @@ output.print_column_ids = True
 output.periodic_observation_timestep = 1
 output.format_list.append('TECPLOT POINT')
 output.format_list.append('HDF5')
+#output.screen_periodic = 5
 dat.output = output
 #--------------------------------------------------------------
 

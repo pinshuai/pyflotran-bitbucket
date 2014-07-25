@@ -175,61 +175,33 @@ class ptime(object):
 	:type dti: [float, str]
 	:param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g. [50.e0, 'y']
 	:type dtf: [float, str]
-	:param dtf_lv: list of values for delta (change) time final a.k.a. maximum timestep size. Holds list of time values for additional maximum timestep size values. In a PFLOTRAN input deck, these are the numbers that come before key word 'at'. Input is a list of floats. e.g. [200.e0, 500.e0, 1000.e0, 5000.e0]
-	:type dtf_lv: [float]
-	:param dtf_lv_unit: list of time unit measurements applied to values for delta (change) time final a.k.a. maximum timestep size. Holds list of time units for additional maximum timestep sizes. In a PFLOTRAN input deck, this is the time unit that come before key word 'at'. Input is a list of strings. e.g. ['y','y','y','y']
-	:type dtf_lv_unit: [str]
-	:param dtf_li: list of increments for delta (change) time final a.k.a. maximum timestep size. Holds list of time increments for additional maximum timestep size values. In a PFLOTRAN input deck, these are the numbers that come after key word 'at'. Input is a list of floats. e.g. [50., 20000., 50000., 100000.]
-	:type dtf_li: [float]
-	:param dtf_li_unit: list of time unit measurements applied to increments for delta (change) time final a.k.a. maximum timestep size. Holds list of time increments for additional maximum timestep sizes. In a PFLOTRAN input deck, this is the time unit that come after key word 'at'. Input is a list of strings. e.g. ['y','y','y','y']
-	:type dtf_li_unit: [str]
-	:param dtf_i: Specifies the list length (# of variables assigned to a parameter/attribute) to be used with dtf_lv, dtf_lv_unit, dtf_li, dtf_li_unit. Should not need to be manually set. pdata sets this automatically.
-	:type dtf_i: int
+	:param dtf_list: delta (change) time final list a.ka. maximum timestep size. The dtf lists are for multiple max time step entries at specified time intervals. Uses key word 'at'. Input is a list that can have multiple lists appended to it. e.g. time.dtf_list.append([1.e2, 's', 5.e3, 's'])
+	:type dtf_list: [ [float, str, float, str] ]
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, tf=[], dti=[], dtf=[], dtf_lv=[], dtf_li=[], dtf_i=0, dtf_lv_unit=[], dtf_li_unit=[]):
+	def __init__(self, tf=[], dti=[], dtf=[], dtf_list=[]):
 		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
 					# variables except dtf_i
 		self._dti = dti		# Initial Timestep Size
 		self._dtf = dtf		# Maximum Timestep Size
-		self._dtf_lv = dtf_lv	# Maximum Timestep Size list - # before 'y' - 
-					# goes after 1st entry (dtf) - lv = list value
-		self._dtf_li = dtf_li	# Maximum Timestep Size list - # after 'y' - 
-					# goes after 1st entry (dtf) - li = list increment
-		self._dtf_i = dtf_i	# Index, also being used as a counter
-					# 2nd and 3rd paramenter can be a string to specify time 
-					# unit for a dtf list
-		self._dtf_lv_unit = dtf_lv_unit	# time unit list for lv (s,m,h,d,mo,y)	- Needed for hardcoding and a user interface - not needed for reading test files
-		self._dtf_li_unit = dtf_li_unit # time unit list for li (s,m,h,d,mo,y) - Needed for hardcoding and a user interface - not needed for reading test files
+		self._dtf_list = dtf_list # Maximum Timestep Size using keyword 'at'
+					  # Lists (manually) are assigned to lists
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
 	tf = property(_get_tf, _set_tf) #: (**)
 	def _get_dti(self): return self._dti
 	def _set_dti(self,value): self._dti = value
-	dti = property(_get_dti, _set_dti) #: (**)
-	
+	dti = property(_get_dti, _set_dti) #: (**)s
 	def _get_dtf(self): return self._dtf
 	def _set_dtf(self,value): self._dtf = value
 	dtf = property(_get_dtf, _set_dtf) #: (**)
 	
 	# The dtf lists are for multiple max time step entries at specified time intervals
-	def _get_dtf_lv(self): return self._dtf_lv
-	def _set_dtf_lv(self,value): self._dtf_lv = value
-	dtf_lv = property(_get_dtf_lv, _set_dtf_lv) #: (**)
-	def _get_dtf_li(self): return self._dtf_li
-	def _set_dtf_li(self,value): self._dtf_li = value
-	dtf_li = property(_get_dtf_li, _set_dtf_li) #: (**)
-	def _get_dtf_i(self): return self._dtf_i
-	def _set_dtf_i(self,value): self._dtf_i = value
-	dtf_i = property(_get_dtf_i, _set_dtf_i) #: (**)
-	def _get_dtf_lv_unit(self): return self._dtf_lv_unit
-	def _set_dtf_lv_unit(self,value): self._dtf_lv_unit = value
-	dtf_lv_unit = property(_get_dtf_lv_unit, _set_dtf_lv_unit) #: (**)
-	def _get_dtf_li_unit(self): return self._dtf_li_unit
-	def _set_dtf_li_unit(self,value): self._dtf_li_unit = value
-	dtf_li_unit = property(_get_dtf_li_unit, _set_dtf_li_unit) #: (**)
+	def _get_dtf_list(self): return self._dtf_list
+	def _set_dtf_list(self,value): self._dtf_list = value
+	dtf_list = property(_get_dtf_list, _set_dtf_list) #: (**)
 	
 class pgrid(object):
 	""" Class for grid property card. *Required. 
@@ -1656,15 +1628,8 @@ class pdata(object):
 			outfile.write('END\n\n')
 	
 	def _read_time(self,infile):
-		p = ptime()
-		np_tf = p._tf
-		np_dti = p._dti
-		np_dtf = p._dtf
-		np_dtf_lv = [] #p._dtf_lv
-		np_dtf_li = [] #p._dtf_li
-		np_dtf_i = p._dtf_i
-		np_dtf_lv_unit = p._dtf_lv_unit
-		np_dtf_li_unit = p._dtf_li_unit
+		time = ptime()
+		time.dtf_list = []
 		
 		keepReading = True
 		while keepReading:
@@ -1674,54 +1639,63 @@ class pdata(object):
 				tstring = line.split()[1:]	# temp list of strings, 
 								# do not include 1st sub-string
 				if len(tstring) == 2:	# Do this if there is a time unit to read
-					np_tf.append(floatD(tstring[0]))
-					np_tf.append(tstring[-1])
+					time.tf.append(floatD(tstring[0]))
+					time.tf.append(tstring[-1])
 				else:			# No time unit being read in
-					np_tf.append(floatD(tstring[0]))
+					time.tf.append(floatD(tstring[0]))
 			elif key == 'initial_timestep_size':
 				tstring = line.split()[1:]
 				if len(tstring) == 2:
-					np_dti.append(floatD(tstring[0]))
-					np_dti.append(tstring[-1])	
+					time.dti.append(floatD(tstring[0]))
+					time.dti.append(tstring[-1])	
 				else:
-					np_dti.append(floatD(tstring[0]))
+					time.dti.append(floatD(tstring[0]))
 			elif key == 'maximum_timestep_size':
 				if ('at' not in line):
 					tstring = line.split()[1:]
 					if len(tstring) == 2:
-						np_dtf.append(floatD(tstring[0]))
-						np_dtf.append(tstring[-1])
+						time.dtf.append(floatD(tstring[0]))
+						time.dtf.append(tstring[-1])
 					else:
-						np_dtf.append(floatD(tstring[0]))
+						time.dtf.append(floatD(tstring[0]))
 				elif ('at' in line):
 					## Read maximum_timestep_size with AT keyword 
 					if (key == 'maximum_timestep_size'):
 						
+						# temporary variable
+						dtf_more = []
+						
 						#Read before AT
 						tstring = line.split()[1:]
 						if len(tstring) >= 2:
-							np_dtf_lv.append(floatD(tstring[0]))
-							np_dtf_lv_unit.append(tstring[1])
-						else:
-							np_dtf_lv[np_dtf_i] = floatD(tstring[0])
+							# assign 1st value
+							dtf_more.append(floatD(tstring[0]))
+							
+							# assign 1st unit
+							dtf_more.append(tstring[1])
 							
 						#Read after AT
 						at_i = tstring.index('at') # Find index # in list (Not string)
 						tstring = line.split()[at_i+2:] # Use string only after 'at'
 						
 						if len(tstring) == 2:
-							np_dtf_li.append(floatD(tstring[0]))
-							np_dtf_li_unit.append(tstring[1])
-						else:
-							np_dtf_li[np_dtf_i] = floatD(tstring[0])
 							
-						np_dtf_i = np_dtf_i + 1
+							# assign 2nd value (increment)
+							dtf_more.append(floatD(tstring[0]))
+							
+							# assign 2nd unit (increment)
+							dtf_more.append(tstring[1])
+							
+#							time.dtf_li.append(floatD(tstring[0]))
+#							time.dtf_li_unit.append(tstring[1])
+#						else:
+#							time.dtf_li[time.dtf_i] = floatD(tstring[0])
+							
+						time.dtf_list.append(dtf_more)
 							
 			elif key in ['/','end']: keepReading = False
 			
-		# Create new empty time object and assign values read in.	
-		new_time = ptime(np_tf,np_dti,np_dtf,np_dtf_lv,np_dtf_li,np_dtf_i)
-		self._time = new_time
+		self._time = time
 
 	def _write_time(self,outfile):
 		self._header(outfile,headers['time'])
@@ -1765,6 +1739,40 @@ class pdata(object):
 			except:
 				print 'ERROR: time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]\n'
 				
+		# Write more MAXIMUM_TIME_STEP_SIZE statements if applicable
+		for dtf in time.dtf_list:
+			outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
+			
+			try:
+				# Write 1st value before 'at'
+				if isinstance(dtf[0], float):
+					outfile.write(strD(dtf[0]) + ' ')
+				else:
+					print 'ERROR: The 1st variable in a dtf_list is not recognized as a float.\n'
+					
+				# Write 1st time unit before 'at'
+				if isinstance(dtf[1], str):
+					outfile.write((dtf[1]) + ' ')
+				else:
+					print 'ERROR: The 2nd variable in a dtf_list is not recognized as a str (string).\n'
+					
+				outfile.write('at ')
+					
+				# Write 2nd value after 'at'
+				if isinstance(dtf[2], float):
+					outfile.write(strD(dtf[2]) + ' ')
+				else:
+					print 'ERROR: The 3rd variable in a dtf_list is not recognized as a float.\n'
+					
+				# Write 2nd time unit after 'at'
+				if isinstance(dtf[3], str):
+					outfile.write((dtf[3]))
+				else:
+					print 'ERROR: The 4th variable in a dtf_list is not recognized as a str (string).\n'
+			except:
+				print 'ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a list: [float, str, float, str]\n'
+			outfile.write('\n')
+		'''
 		# Determine dtf_i size, the length of the smallest sized list being used
 		# with MAXIMUM_TIMESTEP_SIZE with key word 'at'.
 		# Displays a warning if the lists are not all of equal length.
@@ -1806,7 +1814,9 @@ class pdata(object):
 				outfile.write('\n')
 			except:
 				print 'ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of strings. All lists should be of equal length.\n'
+		'''
 		outfile.write('END\n\n')
+		
 		
 	def _read_lsolver(self,infile,line):
 		lsolver = plsolver()	# temporary object while reading

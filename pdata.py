@@ -58,12 +58,12 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
 				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
-cards = ['co2_database','uniform_velocity','mode','chemistry','grid','timestepper',
-	 'material_property','time','linear_solver','newton_solver','output','fluid_property',
-		'saturation_function','region','observation','flow_condition',
-		'transport_condition','initial_condition','boundary_condition','source_sink',
-		'strata','constraint']
-headers = ['co2 database path','uniform velocity','mode','chemistry','grid',
+cards = ['co2_database','uniform_velocity','mode','checkpoint','restart','chemistry','grid',
+		'timestepper','material_property','time','linear_solver','newton_solver',
+		'output','fluid_property','saturation_function','region','observation',
+		'flow_condition','transport_condition','initial_condition',
+		'boundary_condition','source_sink','strata','constraint']
+headers = ['co2 database path','uniform velocity','mode','checkpoint','restart','chemistry','grid',
 	   'time stepping','material properties','time','linear solver','newton solver','output',
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
@@ -434,32 +434,49 @@ class pnsolver(object):
 	
 class poutput(object):
 	"""Class for output options card.
+	Acceptable time units (units of measurements) are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
 	
-	:param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats. Acceptable time units are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
+	:param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats.
 	:type time_list: [str, float*]
-	:param mass_balance: Flag to indicate whether to output the mass balance of the system if this card is activated. It includes global mass balance as well as fluxes at all boundaries for water and chemical species specified for output in the CHEMISTRY card. For the MPHASE mode only global mass balances are provided including supercritical CO_2. Output times are controlled by PERIODIC_OBSERVATION TIMESTEP and TIME, and printout times. Default: False
-	:type mass_balance: bool - True or False
 	:param print_column_ids: Flag to indicate whether to print column numbers in observation and mass balance output files. Default: False
 	:type print_column_ids: bool - True or False
+	:param screen_periodic: Print to screen every <integer> time steps.
+	:type screen_periodic: int
+	:param periodic_time: 1st variable is value, 2nd variable is time unit.
+	:type periodic_time: [float, str]
+	:param periodic_timestep: 1st variable is value, 2nd variable is time unit.
+	:type periodic_timestep: [float, str]
+	:param periodic_observation_time: Output the results at observation points and mass balance output at specified output time. 1st variable is value, 2nd variable is time unit.
+	:type periodic_observation_time: [float, str]
 	:param periodic_observation_timestep: Outputs the results at observation points and mass balance output at specified time steps.
 	:type periodic_observation_timestep: int
 	:param format_list: Specify file format options to use for specifying the snapshop in time file type.. Input is a list of strings. Multiple formats can be specified. File format input options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file named pflotran.h5, 'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file at each output time, 'MAD' - (not supported), 'VTK' - VTK format.
 	:type format_list: [str]
+	:param permeability: 
+	:type permeability: bool - True or False
+	:param porosity: 
+	:type porosity: bool - True or False
 	:param velocities: 
 	:type velocities: bool - True or False
-	:param screen_periodic: Print to screen every <integer> time steps.
-	:type screen_periodic: int
+	:param mass_balance: Flag to indicate whether to output the mass balance of the system if this card is activated. It includes global mass balance as well as fluxes at all boundaries for water and chemical species specified for output in the CHEMISTRY card. For the MPHASE mode only global mass balances are provided including supercritical CO_2. Output times are controlled by PERIODIC_OBSERVATION TIMESTEP and TIME, and printout times. Default: False
+	:type mass_balance: bool - True or False
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, time_list=[], mass_balance=False, print_column_ids=False, periodic_observation_timestep=None, format_list=[], velocities=False, screen_periodic=None):
+	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, periodic_time=[],periodic_timestep=[], periodic_observation_time=[], periodic_observation_timestep=None, format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
 		self._time_list = time_list
-		self._mass_balance = mass_balance
 		self._print_column_ids = print_column_ids
-		self._periodic_observation_timestep = periodic_observation_timestep
+		self._screen_periodic = screen_periodic	# int
+		self._periodic_time = periodic_time	# [float, str]
+		self._periodic_timestep = periodic_timestep # [float, str]
+		self._periodic_observation_time = periodic_observation_time # [float, str] 
+		self._periodic_observation_timestep = periodic_observation_timestep # int
 		self._format_list = format_list
+		self._permeability = permeability
+		self._porosity = porosity
 		self._velocities = velocities
-		self._screen_periodic = screen_periodic
+		self._mass_balance = mass_balance
+		
 		
 	def _get_time_list(self): return self._time_list
 	def _set_time_list(self,value): self._time_list = value
@@ -470,18 +487,33 @@ class poutput(object):
 	def _get_print_column_ids(self): return self._print_column_ids
 	def _set_print_column_ids(self,value): self._print_column_ids = value
 	print_column_ids = property(_get_print_column_ids, _set_print_column_ids)
+	def _get_screen_periodic(self): return self._screen_periodic
+	def _set_screen_periodic(self,value): self._screen_periodic = value
+	screen_periodic = property(_get_screen_periodic, _set_screen_periodic)
+	def _get_periodic_time(self): return self._periodic_time
+	def _set_periodic_time(self,value): self._periodic_time = value
+	periodic_time = property(_get_periodic_time, _set_periodic_time)
+	def _get_periodic_timestep(self): return self._periodic_timestep
+	def _set_periodic_timestep(self,value): self._periodic_timestep = value
+	periodic_timestep = property(_get_periodic_timestep, _set_periodic_timestep)
+	def _get_periodic_observation_time(self): return self._periodic_observation_time
+	def _set_periodic_observation_time(self,value): self._periodic_observation_time = value
+	periodic_observation_time = property(_get_periodic_observation_time, _set_periodic_observation_time)
 	def _get_periodic_observation_timestep(self): return self._periodic_observation_timestep
 	def _set_periodic_observation_timestep(self,value): self._periodic_observation_timestep = value
 	periodic_observation_timestep = property(_get_periodic_observation_timestep, _set_periodic_observation_timestep)
 	def _get_format_list(self): return self._format_list
 	def _set_format_list(self,value): self._format_list = value
 	format_list = property(_get_format_list, _set_format_list)
+	def _get_permeability(self): return self._permeability
+	def _set_permeability(self,value): self._permeability = value
+	permeability = property(_get_permeability, _set_permeability)	
+	def _get_porosity(self): return self._porosity
+	def _set_porosity(self,value): self._porosity = value
+	porosity = property(_get_porosity, _set_porosity)
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
 	velocities = property(_get_velocities, _set_velocities)
-	def _get_screen_periodic(self): return self._screen_periodic
-	def _set_screen_periodic(self,value): self._screen_periodic = value
-	screen_periodic = property(_get_screen_periodic, _set_screen_periodic)	
 	
 class pfluid(object):
 	"""Class for fluid properties card.
@@ -506,6 +538,8 @@ class psaturation(object):
 	:type permeability_function_type: str
 	:param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1'.
 	:type saturation_function_type: str
+	:param residual_saturation: MODES: RICHARDS, TH, THC
+	:type residual_saturation: float
 	:param residual_saturation_liquid: MODES: MPHASE
 	:type residual_saturation_liquid: float
 	:param residual_saturation_gas: MODES: MPHASE
@@ -523,12 +557,13 @@ class psaturation(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, name='', permeability_function_type=None, saturation_function_type=None, residual_saturation_liquid=None, residual_saturation_gas=None, a_lambda=None, alpha=None, max_capillary_pressure=None, betac=None, power=None):
+	def __init__(self, name='', permeability_function_type=None, saturation_function_type=None, residual_saturation=None, residual_saturation_liquid=None, residual_saturation_gas=None, a_lambda=None, alpha=None, max_capillary_pressure=None, betac=None, power=None):
 		self._name = name
 		self._permeability_function_type = permeability_function_type
 		self._saturation_function_type = saturation_function_type
-		self._residual_saturation_liquid = residual_saturation_liquid
-		self._residual_saturation_gas = residual_saturation_gas
+		self._residual_saturation = residual_saturation # float
+		self._residual_saturation_liquid = residual_saturation_liquid # float
+		self._residual_saturation_gas = residual_saturation_gas # float
 		self._a_lambda = a_lambda
 		self._alpha = alpha
 		self._max_capillary_pressure = max_capillary_pressure
@@ -544,6 +579,9 @@ class psaturation(object):
 	def _get_saturation_function_type(self): return self._saturation_function_type
 	def _set_saturation_function_type(self,value): self._saturation_function_type = value
 	saturation_function_type = property(_get_saturation_function_type, _set_saturation_function_type)	
+	def _get_residual_saturation(self): return self._residual_saturation
+	def _set_residual_saturation(self,value): self._residual_saturation = value
+	residual_saturation = property(_get_residual_saturation, _set_residual_saturation)
 	def _get_residual_saturation_liquid(self): return self._residual_saturation_liquid
 	def _set_residual_saturation_liquid(self,value): self._residual_saturation_liquid = value
 	residual_saturation_liquid = property(_get_residual_saturation_liquid, _set_residual_saturation_liquid)
@@ -847,6 +885,51 @@ class pstrata(object):
 	def _set_material(self,value): self._material = value
 	material = property(_get_material, _set_material)
 	
+class pcheckpoint(object):
+	"""Class for checkpoint card. 
+	Checkpoint files enable the restart of a simulation at any discrete point in simulation where a checkpoint file has been printed. When the CHECKPOINT card is included in the input deck, checkpoint files are printed every N time steps, where N is the checkpoint frequency, and at the end of the simulation, should the simulation finish or the be shut down properly mid-simulation using the WALL_CLOCK_STOP card. Checkpoint files are named pflotran.chkN, where N is the number of the timestep when the checkpoint file was printed. A file named restart.chk will also be written when PFLOTRAN properly terminates execution. One use of this file is to pick up from where the simulation stopped by increasing the final time. Checkpointing can be used to start from an initial steady-state solution, but note that porosity and permeability are checkpointed as there are scenarios where they can change over time. To override this behavior add: OVERWRITE_RESTART_FLOW_PARAMS to the input file to set porosity/permeability to their read-in values
+	
+	:param frequency: checkpoint_frequency.
+	:type frequency: int
+	:param overwrite: Currently not supported. Intended to be used with OVERWRITE_RESTART_FLOW_PARAMS.
+	:type overwrite: bool - True or False
+	"""
+	
+	def __init__(self, frequency=None, overwrite=False):
+		self._frequency = frequency # int
+		self._overwrite = overwrite # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how to write it.
+		
+	def _get_frequency(self): return self._frequency
+	def _set_frequency(self,value): self._frequency = value
+	frequency = property(_get_frequency, _set_frequency)
+	
+class prestart(object):
+	"""Class for restart card.
+	The RESTART card defines a checkpoint file from which the current simulation should be restarted. If a time is specified after the file name, the initial simulation time is set to that time. Defines the checkpoint filename to be read in to restart a simulation at the specified time.
+	
+	:param file_name: Specify file path and name for restart.chk file.
+	:type file_name: str
+	:param time_value: Specify time value.
+	:type time_value: float
+	:param time_unit: Specify unit of measurement to use for time. Options include: 's', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
+	:type time_unit: str
+	"""
+	
+	def __init__(self, file_name='', time_value=None, time_unit=''):
+		self._file_name = file_name	# restart.chk file name
+		self._time_value = time_value	# float
+		self._time_unit = time_unit	# unit of measurement to use for time - str
+		
+	def _get_file_name(self): return self._file_name
+	def _set_file_name(self,value): self._file_name = value
+	file_name = property(_get_file_name, _set_file_name)
+	def _get_time_value(self): return self._time_value
+	def _set_time_value(self,value): self._time_value = value
+	time_value = property(_get_time_value, _set_time_value)
+	def _get_time_unit(self): return self._time_unit
+	def _set_time_unit(self,value): self._time_unit = value
+	time_unit = property(_get_time_unit, _set_time_unit)
+	
 class pchemistry(object):
 	"""Class for chemistry
 	m_kinetics_list (RATE_CONSTANT) is not complete
@@ -1015,6 +1098,8 @@ class pdata(object):
 		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
 		self._mode = pmode()
+		self._checkpoint = pcheckpoint()
+		self._restart = prestart()
 		self._chemistry = None
 		self._grid = pgrid()
 		self._timestepper = None
@@ -1105,6 +1190,8 @@ class pdata(object):
 				[self._read_co2_database,
 				 self._read_uniform_velocity,
 				 self._read_mode,
+				 self._read_checkpoint,
+				 self._read_restart,
 				 self._read_chemistry,
 				 self._read_grid,
 				 self._read_timestepper,
@@ -1134,7 +1221,8 @@ class pdata(object):
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
-					if card in ['co2_database','material_property','mode','grid',
+					if card in ['co2_database','checkpoint','restart','material_property',
+					 'mode','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
 					 'boundary_condition','transport_condition','constraint',
@@ -1160,6 +1248,12 @@ class pdata(object):
 		if self.mode.name: self._write_mode(outfile)
 		
 		if self.co2_database: self._write_co2_database(outfile)
+		
+		if self.checkpoint.frequency: self._write_checkpoint(outfile)
+		else: print 'info: checkpoint not detected\n'
+		
+		if self.restart.file_name: self._write_restart(outfile)
+		else: print 'info: restart not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'info: chemistry not detected\n'
@@ -1964,9 +2058,24 @@ class pdata(object):
 					except:
 						output.time_list.append(tstring[i])
 					i += 1
-			if key == 'periodic_observation':
-				tstring = line.strip().split()[1].lower()	# Read the 2nd word
-				if tstring == 'timestep':
+			elif key == 'screen':
+				tstring = line.strip().split()[1].lower() # Read the 2nd word
+				if tstring == 'periodic':
+					output.screen_periodic = int(line.split()[-1])
+			elif key == 'periodic':
+				tstring = line.strip().split()[1].lower() # Read the 2nd word
+				if tstring == 'time':
+					output.periodic_time.append(floatD(line.split()[-2])) # 2nd from last word.
+					output.periodic_time.append(line.split()[-1]) # last word
+				elif tstring == 'timestep':
+					output.periodic_timestep.append(floatD(line.split()[-2])) # 2nd from last word.
+					output.periodic_timestep.append(line.split()[-1]) # last word
+			elif key == 'periodic_observation':
+				tstring = line.strip().split()[1].lower() # Read the 2nd word
+				if tstring == 'time':
+					output.periodic_observation_time.append(floatD(line.split()[-2])) # 2nd from last word.
+					output.periodic_observation_time.append(line.split()[-1]) # last word
+				elif tstring == 'timestep':
 					output.periodic_observation_timestep = int(line.split()[-1])
 			elif key == 'print_column_ids':
 				output.print_column_ids = True
@@ -1974,6 +2083,10 @@ class pdata(object):
 				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
 				output.format_list.append(tstring)	# assign
+			elif key == 'permeability':
+				output.permeability = True
+			elif key == 'porosity':
+				output.porosity = True
 			elif key == 'velocities':
 				output.velocities = True
 			elif key == 'mass_balance':
@@ -1991,11 +2104,11 @@ class pdata(object):
 		
 		if output.time_list:
 			# Check if 1st variable in list a valid time unit
-			if output.time_list[0] in time_units_allowed:
+			if output.time_list[0].lower() in time_units_allowed:
 				outfile.write('  TIMES ')
 				# Write remaining number(s) after time unit is specified
 				for value in output.time_list:
-						outfile.write(' '+strD(value))
+						outfile.write(' '+strD(value).lower())
 			else:
 				print 'ERROR: output.time_list[0]: \''+ output.time_list[0] +'\' is invalid.'
 				print '       valid time.units', time_units_allowed, '\n'
@@ -2004,13 +2117,60 @@ class pdata(object):
 # This is here on purpose - Needed later
 		#if output.periodic_observation_time:
 			#outfile.write('  PERIODIC_OBSERVATION TIME  '+
-					#str(output.periodic_observation_time)+'\n')		
+					#str(output.periodic_observation_time)+'\n')
+		if output.screen_periodic:
+			try: # Error checking to ensure screen_periodic is int (integer).
+				output.screen_periodic = int(output.screen_periodic)
+				outfile.write('  '+'SCREEN PERIODIC '+str(output.screen_periodic)+'\n')
+			except(ValueError):
+				print 'ERROR: output.screen_periodic: \''+output.screen_periodic+'\' is not int (integer).\n'
+		if output.periodic_time:
+			try: # Error checking to ensure periodic_time is [float, str].
+				output.periodic_time[0] = floatD(output.periodic_time[0])
+				if output.periodic_time[1].lower() in time_units_allowed:
+					output.periodic_time[1] = str(output.periodic_time[1].lower())
+				else:
+					output.periodic_time[1] = str(output.periodic_time[1].lower())
+					print 'ERROR: time unit in output.periodic_time[1] is invalid. Valid time units are:', time_units_allowed, '\n'
+				outfile.write('  '+'PERIODIC TIME ')
+				outfile.write(strD(output.periodic_time[0])+' ')
+				outfile.write(output.periodic_time[1]+'\n')
+			except:
+				print 'ERROR: output.periodic_time: \''+str(output.periodic_time)+'\' is not [float, str].\n'
+		if output.periodic_timestep:
+			try: # Error checking to ensure periodic_timestep is [float, str].
+				output.periodic_timestep[0] = floatD(output.periodic_timestep[0])
+				if output.periodic_timestep[1].lower() in time_units_allowed:
+					output.periodic_timestep[1] = str(output.periodic_timestep[1].lower())
+				else:
+					output.periodic_timestep[1] = str(output.periodic_timestep[1].lower())
+					print 'ERROR: time unit in output.periodic_timestep[1] is invalid. Valid time units are:', time_units_allowed, '\n'
+				outfile.write('  '+'PERIODIC TIMESTEP ')
+				outfile.write(strD(output.periodic_timestep[0])+' ')
+				outfile.write(output.periodic_timestep[1]+'\n')
+			except:
+				print 'ERROR: output.periodic_timestep: \''+str(output.periodic_timestep)+'\' is not [float, str].\n'
+		if output.periodic_observation_time:
+			try: 
+				# Error checking to ensure periodic_observation_time is [float, str].
+				output.periodic_observation_time[0] = floatD(output.periodic_observation_time[0])
+				if output.periodic_observation_time[1].lower() in time_units_allowed:
+					output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
+				else:
+					output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
+					print 'ERROR: time unit in output.periodic_observation_time[1] is invalid. Valid time units are:', time_units_allowed, '\n'
+					
+				# Writing out results
+				outfile.write('  '+'PERIODIC_OBSERVATION TIME ')
+				outfile.write(strD(output.periodic_observation_time[0])+' ')
+				outfile.write(output.periodic_observation_time[1]+'\n')
+			except:
+				print 'ERROR: output.periodic_observation_time: \''+str(output.periodic_observation_time)+'\' is not [float, str].\n'
 		if output.periodic_observation_timestep:
 			outfile.write('  PERIODIC_OBSERVATION TIMESTEP '+
 					str(output.periodic_observation_timestep)+'\n')
 		if output.print_column_ids:
 			outfile.write('  '+'PRINT_COLUMN_IDS'+'\n')
-#		for i in range(0, len(output.format)):
 		for format in output.format_list:
 			if format.upper() in output_formats_allowed:
 				outfile.write('  FORMAT ')
@@ -2018,16 +2178,14 @@ class pdata(object):
 			else:
 				print 'ERROR: output.format: \''+ format +'\' is invalid.'
 				print '       valid output.format:', output_formats_allowed, '\n'
+		if output.permeability:
+			outfile.write('  '+'PERMEABILITY'+'\n')
+		if output.porosity:
+			outfile.write('  '+'POROSITY'+'\n')
 		if output.velocities:
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
 			outfile.write('  '+'MASS_BALANCE'+'\n')
-		if output.screen_periodic:
-			try: # Error checking to ensure screen_periodic is an integer.
-				output.screen_periodic = int(output.screen_periodic)
-				outfile.write('  '+'SCREEN PERIODIC '+str(output.screen_periodic)+'\n')
-			except(ValueError):
-				print 'ERROR: output.screen_periodic '+output.screen_periodic+' is not an int (integer).\n'
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):
@@ -2060,17 +2218,9 @@ class pdata(object):
 		outfile.write('END\n\n')
 		
 	def _read_saturation(self,infile,line):
-		np_name = line.split()[-1].lower()	# saturation function name, passed in.
-		p = psaturation()	# assign defaults before reading in values
-		np_permeability_function_type = p.permeability_function_type
-		np_saturation_function_type = p.saturation_function_type
-		np_residual_saturation_liquid = p.residual_saturation_liquid
-		np_residual_saturation_gas = p.residual_saturation_gas
-		np_a_lambda = p.a_lambda
-		np_alpha = p.alpha
-		np_max_capillary_pressure = p.max_capillary_pressure
-		np_betac = p.betac
-		np_power = p.power
+		
+		saturation = psaturation()	# assign defaults before reading in values
+		saturation.name = line.split()[-1].lower() # saturation function name, passed in.
 		
 		keepReading = True
 		
@@ -2079,39 +2229,35 @@ class pdata(object):
 			key = line.strip().split()[0].lower()	# take first  key word
 			
 			if key == 'permeability_function_type':
-				np_permeability_function_type = line.split()[-1]
+				saturation.permeability_function_type = line.split()[-1]
 			elif key == 'saturation_function_type':
-				np_saturation_function_type = line.split()[-1]
+				saturation.saturation_function_type = line.split()[-1]
 			elif key == 'residual_saturation_liquid':
-				np_residual_saturation_liquid = floatD(line.split()[-1])
+				saturation.residual_saturation_liquid = floatD(line.split()[-1])
 			elif key == 'residual_saturation_gas':
-				np_residual_saturation_gas = floatD(line.split()[-1])
+				saturation.residual_saturation_gas = floatD(line.split()[-1])
 			elif key == 'residual_saturation':	# Alternative to check
 				tstring = line.strip().split()[1].lower()	# take 2nd key word
 				if tstring == 'liquid_phase':
-					np_residual_saturation_liquid = floatD(line.split()[-1])
+					saturation.residual_saturation_liquid = floatD(line.split()[-1])
 				elif tstring == 'gas_phase':
-					np_residual_saturation_gas = floatD(line.split()[-1])
+					saturation.residual_saturation_gas = floatD(line.split()[-1])
+				else: # if no 2nd word exists
+					saturation.residual_saturation = floatD(line.split()[-1])
 			elif key == 'lambda':
-				np_a_lambda = floatD(line.split()[-1])
+				saturation.a_lambda = floatD(line.split()[-1])
 			elif key == 'alpha':
-				np_alpha = floatD(line.split()[-1])
+				saturation.alpha = floatD(line.split()[-1])
 			elif key == 'max_capillary_pressure':
-				np_max_capillary_pressure = floatD(line.split()[-1])
+				saturation.max_capillary_pressure = floatD(line.split()[-1])
 			elif key == 'betac':
-				np_betac = floatD(line.split()[-1])
+				saturation.betac = floatD(line.split()[-1])
 			elif key == 'power':
-				np_power = floatD(line.split()[-1])
+				saturation.power = floatD(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty saturation function and assign the values read in
-		new_saturation = psaturation(np_name,np_permeability_function_type,
-						np_saturation_function_type,
-						np_residual_saturation_liquid,
-						np_residual_saturation_gas,np_a_lambda,
-						np_alpha,np_max_capillary_pressure,
-						np_betac,np_power)
-		self._saturation = new_saturation
+		self._saturation = saturation
 		
 	def _write_saturation(self,outfile):
 		self._header(outfile,headers['saturation_function'])
@@ -2137,6 +2283,9 @@ class pdata(object):
 			else:
 				print 'ERROR: saturation.saturation_function_type: \'' + saturation.saturation_function_type +'\' is invalid.'
 				print '       valid saturation.permeability_function_types', saturation_function_types_allowed, '\n'
+		if saturation.residual_saturation or saturation.residual_saturation==0:
+			outfile.write('  RESIDUAL_SATURATION ' + 
+					strD(saturation.residual_saturation) + '\n')
 		if saturation.residual_saturation_liquid or saturation.residual_saturation_liquid ==0:
 			outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' + 
 					strD(saturation.residual_saturation_liquid) + '\n')
@@ -2734,6 +2883,76 @@ class pdata(object):
 			else:
 				print 'ERROR: strata.material is required\n'
 			outfile.write('END\n\n')
+	
+	def _read_checkpoint(self, infile, line):
+		checkpoint = pcheckpoint()
+		
+		checkpoint.frequency = line.split()[-1].lower() # checkpoint int passed in.
+		
+		self._checkpoint = checkpoint
+		
+	def _write_checkpoint(self, outfile):
+		self._header(outfile,headers['checkpoint'])
+		checkpoint = self.checkpoint
+		
+		try:
+			# error-checking to make sure checkpoint.frequency is int (integer)
+			checkpoint.frequency = int(checkpoint.frequency)
+			
+			# write results
+			outfile.write('CHECKPOINT ')
+			outfile.write(str(checkpoint.frequency))
+			outfile.write('\n')
+		except(ValueError):
+			print 'ERROR: checkpoint.frequency is not int (integer).\n'
+			
+			# write results
+			outfile.write('CHECKPOINT ')
+			outfile.write(str(checkpoint.frequency))
+			outfile.write('\n')
+			
+		outfile.write('\n')
+		
+	def _read_restart(self, infile, line):
+		restart = prestart()
+		
+		tstring = line.split()[1:] # 1st line for restart passed in
+		
+		restart.file_name = tstring[0]
+		restart.time_value = floatD(tstring[1])
+		restart.time_unit = tstring[2]
+		
+		self._restart = restart
+		
+	def _write_restart(self, outfile):
+		self._header(outfile,headers['restart'])
+		restart = self.restart
+		
+		# write file name
+		outfile.write('RESTART ' + str(restart.file_name) + ' ')
+		
+		# Write time value
+		try:
+			# error-checking
+			restart.time_value = floatD(restart.time_value)
+			
+			# writing
+			outfile.write(strD(restart.time_value) + ' ')
+		except:
+			print 'ERROR: restart.time_value is not float.'
+			
+			# writing
+			outfile.write(strD(restart.time_value) + ' ')
+		
+		# Write time unit of measurement
+		restart.time_unit = str(restart.time_unit).lower()
+		if restart.time_unit in time_units_allowed:
+			outfile.write(restart.time_unit)
+		else:
+			print 'ERROR: restart.time_unit \'',restart.time_unit,'\' is invalid. Valid times units are:',time_units_allowed,'\n'
+			outfile.write(restart.time_unit)
+			
+		outfile.write('\n\n')
 		
 	def _read_chemistry(self, infile):
 		chem = pchemistry()
@@ -3250,6 +3469,14 @@ class pdata(object):
 	def _get_strata(self):
 		return dict([strata.region,strata] for strata in self.strata_list if strata.region)
 	strata = property(_get_strata)#: (*dict[pstrata]*) Dictionary of strata objects, indexed by strata region.
+	
+	def _get_checkpoint(self): return self._checkpoint
+	def _set_checkpoint(self, object): self._checkpoint = object
+	checkpoint = property(_get_checkpoint, _set_checkpoint) #: (**)
+	
+	def _get_restart(self): return self._restart
+	def _set_restart(self, object): self._restart = object
+	restart = property(_get_restart, _set_restart) #: (**)
 	
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object

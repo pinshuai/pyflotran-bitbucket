@@ -33,6 +33,7 @@ def floatD(string):
 	:param string: Number in string format.
 	:type string: str
 	"""
+	if not isinstance(string, str): string = strD(string) # Convert to string if not string.
 	return float(string.lower().replace('d','e'))
 	
 def strD(number):

@@ -38,6 +38,20 @@ dat.mode = m
 dat.co2_database = del_extra_slash(pflotran_dir + '/database/co2data0.dat')
 #--------------------------------------------------------------
 
+# set checkpoint # testing
+#--------------------------------------------------------------
+#dat.checkpoint.frequency = 1000 # testing
+#--------------------------------------------------------------
+
+# set restart - Has not been tested with PFLOTRAN - testing
+#--------------------------------------------------------------
+#restart = prestart() # testing
+#restart.file_name = 'restart.chk' # testing
+#restart.time_value = 5.e0 # testing
+#restart.time_unit = 'y' # testing
+#dat.restart = restart # testing
+#--------------------------------------------------------------
+
 # set grid
 #--------------------------------------------------------------
 grid = pgrid()
@@ -116,12 +130,17 @@ dat.add(newton_solver)
 # set output
 #--------------------------------------------------------------
 output = poutput()
-output.mass_balance = True
 output.print_column_ids = True
+#output.screen_periodic = 2 # testing
+#output.periodic_time = [4.e1, 'y'] # testing
+#output.periodic_timestep = [4.e1, 'y'] # testing - Does not work in PFLOTRAN
+#output.periodic_observation_time = [3.2e1, 'y']# testing
+#output.permeability = True # testing
+#output.porosity = True # testing
+output.mass_balance = True
 output.periodic_observation_timestep = 1
 output.format_list.append('TECPLOT POINT')
 output.format_list.append('HDF5')
-#output.screen_periodic = 5
 dat.output = output
 #--------------------------------------------------------------
 
@@ -138,6 +157,7 @@ saturation = psaturation('','')
 saturation.name = 'sf2'
 saturation.permeability_function_type = 'NMT_EXP'
 saturation.saturation_function_type = 'NMT_EXP'
+#saturation.residual_saturation = 0.03 # float - testing - does not work with pflotran with this deck.
 saturation.residual_saturation_liquid = 0.1
 saturation.residual_saturation_gas = 0.0
 saturation.a_lambda = 0.762
@@ -192,6 +212,7 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
+flow.datum = [3., 5., 2., 'file_name'] # testing - not tested with PFLOTRAN
 flow.varlist = [] 	# Assigning for this done below
 dat.add(flow)
 # adding flow_variable to inital flow_condition

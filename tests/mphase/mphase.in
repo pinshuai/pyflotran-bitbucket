@@ -2,6 +2,12 @@ MODE MPHASE
 
 CO2_DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat
 
+:=========================== checkpoint =======================================
+:CHECKPOINT 1000
+
+:=========================== RESTART =======================================
+:RESTART restart.chk 5.0 y
+
 :=========================== discretization ===================================
 GRID
 TYPE structured
@@ -62,6 +68,10 @@ skip
 OUTPUT
 MASS_BALANCE
 PRINT_COLUMN_IDS
+:SCREEN PERIODIC 2
+:PERIODIC TIME 4.e1 y
+:PERIODIC TIMESTEP 4.e1 y
+:PERIODIC_OBSERVATION TIME 3.2d1 y
 PERIODIC_OBSERVATION TIMESTEP 1
 :TIMES y 0.01 0.1 0.25 0.5 0.75 1.0 2.5 5. 7.5 10. \
 :25. 50. 75. 100. 250. 500. 750. 1000. 2500. 5000. \
@@ -70,6 +80,8 @@ PERIODIC_OBSERVATION TIMESTEP 1
 :750000. 1000000.
 FORMAT TECPLOT POINT
 FORMAT HDF5
+:PERMEABILITY
+:POROSITY
 :VELOCITIES
 /
 noskip
@@ -99,6 +111,7 @@ PERM_Z 1.d-17
 SATURATION_FUNCTION sf2
 PERMEABILITY_FUNCTION_TYPE NMT_EXP
 SATURATION_FUNCTION_TYPE NMT_EXP
+:RESIDUAL_SATURATION 0.03
 RESIDUAL_SATURATION LIQUID_PHASE 0.1
 RESIDUAL_SATURATION GAS_PHASE 0.0
 LAMBDA 0.762d0

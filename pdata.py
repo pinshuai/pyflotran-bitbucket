@@ -23,7 +23,7 @@ time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week',
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'th', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -2676,8 +2676,8 @@ class pdata(object):
 						outfile.write('      DATA_UNITS ' + flow.varlist[i].data_unit_type + '\n')
 					for k in flow.varlist[i].list:
 						outfile.write('        ' + strD(k.time_unit_value))
-						outfile.write('  ' + strD(k.data_unit_value_list[0]))
-						outfile.write('  ' + strD(k.data_unit_value_list[1]))
+						for p in range(len(k.data_unit_value_list)):
+							outfile.write('  ' + strD(k.data_unit_value_list[p]))
 						outfile.write('\n')
 					outfile.write('    /\n')
 				i += 1

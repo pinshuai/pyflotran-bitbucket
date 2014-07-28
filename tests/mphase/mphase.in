@@ -168,6 +168,11 @@ FLOW_CONDITION initial
     CONCENTRATION zero_gradient
     ENTHALPY dirichlet
   /
+:  DATUM
+:    3.0 5.0 2.0
+:    2.0 1.0 6.0
+:  DATUM
+:    FILE file_name
 IPHASE 1
 PRESSURE 2D7 2D7
 TEMPERATURE 50 C

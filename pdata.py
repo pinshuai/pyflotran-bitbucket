@@ -666,13 +666,17 @@ class pflow(object):
 	:type iphase: int
 	:param sync_timestep_with_update: Flag that indicates whether to use sync_timestep_with_update. Default: False.
 	:type sync_timestep_with_update: bool - True or False
+	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
+	:type data_unit_type: str
+	:param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name' with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both. If both are used, then only the file name will be written to the input deck.
+	:type datum: Multiple [float, float, float] or str.
 	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g. dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
 	:type varlist: [pflow_variable]
 
 	"""
 	
 	def __init__(self,name='',units_list=None,
-			iphase=None,sync_timestep_with_update=False,
+			iphase=None,sync_timestep_with_update=False, datum=[], 
 			varlist=[]):
 		self._name = name.lower()	# Include initial, top, source
 		self._units_list = units_list	# Specify type of units to display such as
@@ -681,6 +685,7 @@ class pflow(object):
 						# May be used to determine each variable unit
 		self._iphase = iphase			# Holds 1 int
 		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
+		self._datum = datum	# x, y, z, and a file name. [float,float,float,str]
 		self._varlist = varlist
 		
 	def _get_name(self): return self._name
@@ -695,6 +700,9 @@ class pflow(object):
 	def _get_sync_timestep_with_update(self): return self._sync_timestep_with_update
 	def _set_sync_timestep_with_update(self,value): self._sync_timestep_with_update = value
 	sync_timestep_with_update = property(_get_sync_timestep_with_update, _set_sync_timestep_with_update)
+	def _get_datum(self): return self._datum
+	def _set_datum(self,value): self._datum = value
+	datum = property(_get_datum, _set_datum)
 	def _get_varlist(self): return self._varlist
 	def _set_varlist(self,value): self._varlist = value
 	varlist = property(_get_varlist, _set_varlist)
@@ -744,12 +752,10 @@ class pflow_variable(object):
 	:type type: str
 	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional.
 	:type valuelist: [float, float]
-	:param unit: Currently not supported. Non-list alternative, do not use with list alternative.
+	:param unit: Non-list alternative, do not use with list alternative. Specify unit of measurement.
 	:type unit: str
 	:param time_unit_type: List alternative, do not use with non-list alternative attributes/parameters. 
 	:type time_unit_type: str
-	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
-	:type data_unit_type: str
 	:param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g. variable.list.append(var_list) if var_list=pflow_variable_list.
 	:type list: [pflow_variable_list]
 	"""
@@ -1213,10 +1219,25 @@ class pdata(object):
 				 self._read_constraint]
 				 
 				 ))  # associate each card name with a read function, defined further below
+				 
+		skip_readline = False	
+		line = ''		# Memorizes the most recent line read in.
+		
+		def get_next_line(skip_readline=skip_readline, line=line):
+			"""Used by read function to avoid skipping a line in cases where a particular read function might read an extra line.
+			"""
+			
+			if skip_readline:
+				skip_readline = False
+				return line
+			else:
+				line = infile.readline()
+				return line
+			
 		with open(self._filename,'r') as infile:
 			keepReading = True
 			while keepReading:
-				line = infile.readline()
+				line = get_next_line()
 				if not line: keepReading = False
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
@@ -1231,6 +1252,15 @@ class pdata(object):
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
+		
+#	def _get_skip_readline(self): return self._skip_readline
+#	def _set_skip_readline(self, object): self._skip_readline = object
+#	skip_readline = property(_get_skip_readline, _set_skip_readline) #: (**)
+
+	# Memorizes the most recent line read in.
+#	def _get_line(self): return self._line
+#	def _set_line(self, object): self._line = object
+#	line = property(_get_line, _set_line) #: (**)
 	
 	def write(self, filename=None):
 		"""Write pdata object to pflotran input file.
@@ -2403,6 +2433,7 @@ class pdata(object):
 				
 	def _read_flow(self,infile,line):
 		flow = pflow()
+		flow.datum = []
 		flow.varlist = []
 		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
 		
@@ -2411,7 +2442,6 @@ class pdata(object):
 		end_count = 0
 		total_end_count = 1
 		while keepReading:	# Read through all cards
-			
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'type':
@@ -2493,6 +2523,31 @@ class pdata(object):
 				flow.iphase = int(line.split()[-1])
 			elif key == 'sync_timestep_with_update':
 				flow.sync_timestep_with_update = True
+			elif key == 'datum':
+				line = infile.readline() # get next line
+				
+				# Assign file_name with list of d_dx, d_dy, d_dz values.
+				if line.strip().split()[0].upper() == 'FILE':
+					flow.datum = line.split()[1]
+				# Assign d_dx, d_dy, d_dz values
+				else:
+					# try is used to determine when to stop reading.
+					# skip_readline signals the read function not to
+					# read the next line again. This is being because
+					# there is no / or end telling the script to stop.
+					# The script knows there are no more floats to read
+					# because an error is produced if the first substring
+					# cannot be converted into a float.
+					while True:
+						try:
+							temp_list = []
+							temp_list.append(floatD(line.split()[0]))
+							temp_list.append(floatD(line.split()[1]))
+							temp_list.append(floatD(line.split()[2]))
+							flow.datum.append(temp_list)
+							line = infile.readline() # get next line
+						except(ValueError): break
+					self.skip_readline = True
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
 			# Alternative method of count implemented by Satish
@@ -2627,10 +2682,27 @@ class pdata(object):
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
 			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
+			
 			if flow.sync_timestep_with_update:
 				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
-			outfile.write('  TYPE\n')
-			
+				
+			if flow.datum:	# error-checking not yet added
+				
+				outfile.write('  DATUM')
+				
+				if isinstance(flow.datum, str):
+					outfile.write('\n    FILE ')
+					outfile.write(flow.datum)
+				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
+					# write out d_dx, d_dy, d_dz
+					for line in flow.datum:
+						outfile.write('\n    ')
+						outfile.write(strD(line[0])+' ')
+						outfile.write(strD(line[1])+' ')
+						outfile.write(strD(line[2]))
+				outfile.write('\n')
+				
+			outfile.write('  TYPE\n') # Following code is paired w/ this statement.
 			# variable name and type from lists go here
 			i = 0
 			while i< len(flow.varlist):
@@ -3504,4 +3576,3 @@ class pdata(object):
 	def _get_constraint_concentration(self, constraint=pconstraint()):
 		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
 	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies
-	

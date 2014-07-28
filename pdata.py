@@ -23,7 +23,7 @@ time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week',
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'th', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -84,7 +84,7 @@ with transport problem when not coupling with a flow mode.
 	:type value_list: [float,float,float,str]
 	"""
 	
-	def __init__(self, value_list=[0.0,0.0,0.0]):
+	def __init__(self, value_list=[]):
 		self._value_list = value_list
 		
 	def _get_value_list(self): return self._value_list
@@ -2870,10 +2870,11 @@ class pdata(object):
 	def _write_strata(self,outfile):
 		self._header(outfile,headers['strata'])
 #		strata = self.strata
-		outfile.write('STRATA\n')
 		
 		# Write out strata condition variables
 		for strata in self.strata_list:
+	
+			outfile.write('STRATA\n')
 			if strata.region:
 				outfile.write('  REGION ' + strata.region.lower() + '\n')
 			else:

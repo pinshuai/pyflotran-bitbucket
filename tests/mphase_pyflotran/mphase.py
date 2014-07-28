@@ -377,9 +377,9 @@ dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # Test write
-dat.write('mphase.in')
+#dat.write('mphase.in')
 
-#pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
+pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
-#dat.run(input='mphase.in',exe=pflotran_exe)
+dat.run(input='mphase.in',exe=pflotran_exe)
 

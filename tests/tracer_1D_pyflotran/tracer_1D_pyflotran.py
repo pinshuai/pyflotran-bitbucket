@@ -157,7 +157,7 @@ dat.add(region)
 #--------------------------------------------------------------
 observation = pobservation()
 observation.region = 'obs'
-dat.observation = observation
+dat.add(observation)
 #--------------------------------------------------------------
 
 # set transport conditions

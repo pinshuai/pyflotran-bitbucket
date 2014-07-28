@@ -1117,7 +1117,7 @@ class pdata(object):
 		self._fluid = pfluid()
 		self._saturation = None
 		self._regionlist = []	# There are multiple regions
-		self._observation = None
+		self._observation_list = []
 		self._flowlist = []
 		self._transportlist = []
 		self._initial_condition = pinitial_condition()
@@ -1318,7 +1318,8 @@ class pdata(object):
 		if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
-		if self.observation: self._write_observation(outfile)
+		if self.observation_list: self._write_observation(outfile)
+		else: print 'info: observation_list not detect\n'
 		
 		if self.flowlist: self._write_flow(outfile)
 		else: print 'info: flowlist not detected\n'
@@ -1359,6 +1360,7 @@ class pdata(object):
 		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
 		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
 		if isinstance(obj,pregion): self._add_region(obj,overwrite)
+		if isinstance(obj,pobservation): self._add_observation(obj, overwrite)
 		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
 		if isinstance(obj, pflow_variable): 
 			self._add_flow_variable(obj,index,overwrite)
@@ -1391,6 +1393,11 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):
 				if isinstance(obji,pnsolver): self._delete_nsolver(obji)
+				
+		if isinstance(obj,pobservation): self._delete_observation(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pobservation): self._delete_observation(obji)
 		
 		if isinstance(obj,pregion): self._delete_region(obj)
 		elif isinstance(obj,list):
@@ -2406,30 +2413,45 @@ class pdata(object):
 			outfile.write('END\n\n')
 			
 	def _read_observation(self,infile):
-		p = pobservation()
-		np_region = p.region
-		 
+		observation = pobservation()
+		
 		keepReading = True
 		
 		while keepReading:
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
 			if key == 'region':
-				np_region = line.split()[-1]
+				observation.region = line.split()[-1]
 			elif key in ['/','end']: keepReading = False
 			
-		new_observation = pobservation(np_region)
+		self._observation_list.append(observation)
 		
-		self._observation = new_observation
+	def _add_observation(self,observation=pobservation(),overwrite=False):	#Adds a Observation object.
+		# check if observation already exists
+		if isinstance(observation,pobservation):
+			if observation.region in self.observation.keys():
+				if not overwrite:
+					warning = 'WARNING: A observation with region \''+str(observation.region)+'\' already exists. Observation will not be defined, use overwrite = True in add() to overwrite the old observation.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else:
+					self.delete(self.observation[observation.region])
+					
+		if observation not in self._observation_list:
+			self._observation_list.append(observation)
+			
+	def _delete_observation(self,observation=pobservation()):
+		self._observation_list.remove(observation)
 		
 	def _write_observation(self,outfile):
 		self._header(outfile,headers['observation'])
-		observation = self.observation
 		
-		outfile.write('OBSERVATION\n')
-		if observation.region:
-			outfile.write('  REGION '+observation.region.lower()+'\n')
-		outfile.write('END\n\n')
+		for observation in self.observation_list:
+			outfile.write('OBSERVATION\n')
+			if observation.region:
+				outfile.write('  REGION '+observation.region.lower()+'\n')
+			outfile.write('END\n\n')
 				
 	def _read_flow(self,infile,line):
 		flow = pflow()
@@ -3506,9 +3528,12 @@ class pdata(object):
 		return dict([region.name.lower(),region] for region in self.regionlist if region.name)
 	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.
 	
-	def _get_observation(self): return self._observation
-	def _set_observation(self, object): self._observation = object
-	observation = property(_get_observation, _set_observation) #: (**)
+	def _get_observation_list(self): return self._observation_list
+	def _set_observation_list(self, object): self._observation_list = object
+	observation_list = property(_get_observation_list, _set_observation_list) #: (**)
+	def _get_observation(self):
+		return dict([observation.region.lower(),observation] for observation in self.observation_list if observation.region)
+	observation = property(_get_observation)#: (*dict[pobservation]*) Dictionary of observation objects, indexed by observation region.
 	
 	def _get_flowlist(self): return self._flowlist
 	def _set_flowlist(self, object): self._flowlist = object

@@ -69,6 +69,20 @@ dat.add(mineral_kinetic)       # append mineral kinetic object to chemistry
 dat.co2_database = del_extra_slash(pflotran_dir + '/database/co2data0.dat')
 #--------------------------------------------------------------
 
+# set checkpoint
+#--------------------------------------------------------------
+dat.checkpoint.frequency = None
+#--------------------------------------------------------------
+
+# set restart
+#--------------------------------------------------------------
+restart = prestart()	# new restart object
+restart.file_name = ''
+restart.time_value = None
+restart.time_unit = ''
+dat.restart = restart	# assign restart object
+#--------------------------------------------------------------
+
 # set grid
 #--------------------------------------------------------------
 grid = pgrid()  # new grid object
@@ -89,10 +103,7 @@ time = ptime()  # new time object
 time.tf = []
 time.dti = []
 time.dtf = []
-time.dtf_lv = []
-time.dtf_lv_unit = [] 
-time.dtf_li = []
-time.dtf_li_unit = []
+time.dtf_list.append([])
 dat.time = time # assign time object
 #--------------------------------------------------------------
 
@@ -158,6 +169,13 @@ output = poutput()  # new output object
 output.time_list = []
 output.mass_balance = False
 output.print_column_ids = False
+output.screen_periodic = None
+output.periodic_time = []
+output.periodic_timestep = []
+output.periodic_observation_time = []
+output.permeability = False
+output.porosity = False
+
 output.periodic_observation_timestep = None
 output.format_list = []
 output.velocities = False
@@ -177,6 +195,7 @@ saturation = psaturation()  # new saturation object
 saturation.name = ''
 saturation.permeability_function_type = ''
 saturation.saturation_function_type = ''
+saturation.residual_saturation = None
 saturation.residual_saturation_liquid = None
 saturation.residual_saturation_gas = None
 saturation.a_lambda = None
@@ -189,9 +208,9 @@ dat.saturation = saturation # assign saturation object
 
 # set observation
 #--------------------------------------------------------------
-observation = pobservation()  # new observation object
+observation = pobservation()	# new observation object
 observation.region = ''
-dat.observation = observation # append observation object
+dat.add(observation)		# append observation object
 #--------------------------------------------------------------
 
 # set regions
@@ -222,6 +241,8 @@ flow.name = ''
 flow.units_list = None
 flow.iphase = None
 flow.sync_timestep_with_update = False
+flow.datum.append([])
+flow.datum = 'file_name'
 flow.varlist = [] # variable objects are appended to this list
 dat.add(flow)	  # append flow object
 variable = pflow_variable('') # new variable object, sub-class of flow object

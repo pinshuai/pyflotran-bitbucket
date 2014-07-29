@@ -639,7 +639,7 @@ class pregion(object):
 	face = property(_get_face, _set_face)
 	
 class pobservation(object):
-	"""Class for observation card.
+	"""Class for observation card. Multiple observation objects can be created.
 	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g. pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
 	Currently, only region is supported in PyFLOTRAN.
 	
@@ -710,7 +710,7 @@ class pflow(object):
 	# Code below is an attempt to change the way sub-classes are added.
 	# it's not necessary. (Attempting to make it possible to do a flow.add(variable)
 	# instead of dat.add(variable). Current way of specifying which flow object to
-	# add to is dat.add(variable,flow)
+	# add to is dat.add(variable,flow) (e.g. Rate List instead of Rate)
 	'''
 	# Definitions for sub-class of pflow object
 	
@@ -799,8 +799,12 @@ class pflow_variable(object):
 	
 class pflow_variable_list(object):
 	"""Sub-class of pflow_variable.
-	Used for pflow_variables that are lists instead of standalone. 
-	(e.g. Rate List instead of Rate)
+	Used for pflow_variables that are lists instead of standalone. Each of these list objects can hold multiple lines (from an input deck) with each line holding one time_unit_value and a data_unit_value_list that can hold multiple values.
+	
+	:param time_unit_value: 
+	:type time_unit_value: float
+	:param data_unit_value_list: 
+	:type data_unit_value_list: [float]
 
 	"""
 	
@@ -816,8 +820,14 @@ class pflow_variable_list(object):
 	data_unit_value_list = property(_get_data_unit_value_list, _set_data_unit_value_list)
 
 class pinitial_condition(object):
-	"""Class for initial condition - a condition coupler
-
+	"""Class for initial condition card - a condition coupler between regions and flow and transport conditions.
+	
+	:param flow: Specify condition_name for key word FLOW_CONDITION.
+	:type flow: str
+	:param transport: Specify condition_name for key word TRANSPORT_CONDITION.
+	:type transport: str
+	:param region: Specify condition_name for key word REGION.
+	:type region: str
 	"""
 	
 	def __init__(self,flow=None,transport=None,region=None):
@@ -836,11 +846,21 @@ class pinitial_condition(object):
 	region = property(_get_region, _set_region)
 	
 class pboundary_condition(object):
-	"""Class for boundary conditions - a condition coupler
-
+	"""Class for boundary conditions card - a condition coupler. 
+	Multiple observation objects can be created.
+	The BOUNDARY_CONDITION keyword couples conditions specified under the FLOW_CONDITION and/or TRANSPORT_CONDITION keywords to a REGION in the problem domain. The use of this keyword enables the use/reuse of flow and transport conditions and regions within multiple boundary and initial conditions and source/sinks in the input deck.
+	
+	:param name: Name of boundary condition. (e.g. west, east)
+	:type name: str
+	:param flow: Defines the name of the flow condition to be linked to this boundary condition.
+	:type flow: str
+	:param transport: Defines the name of the transport condition to be linked to this boundary condition
+	:type transport: str
+	:param region: Defines the name of the region to which the conditions are linked
+	:type region: str
 	"""
 	
-	def __init__(self,name='',flow=None,transport=None,region=None):
+	def __init__(self,name='',flow='',transport='',region=''):
 		self._name = name	# Name of boundary condition. (e.g. west, east)
 		self._flow = flow	# Flow Condition (e.g. initial)
 		self._transport = transport	# Transport Condition (e.g. river_chemistry)
@@ -860,8 +880,12 @@ class pboundary_condition(object):
 	region = property(_get_region, _set_region)
 
 class psource_sink(object):
-	"""Class for source sink - a condition coupler
-
+	"""Class for source sink card - a condition coupler
+	
+	:param flow: Name of the flow condition the source/sink term is applied to.
+	:type flow: str
+	:param region: Name of the region the source/sink term is applied to.
+	:type region: str
 	"""
 	
 	def __init__(self,flow=None,region=None):
@@ -876,8 +900,12 @@ class psource_sink(object):
 	region = property(_get_region, _set_region)
 	
 class pstrata(object):
-	"""Class for stratigraphy couplers
-
+	"""Class for stratigraphy couplers card. Multiple stratigraphy couplers can be created. Couples material IDs and/or properties with a region in the problem domain.
+	
+	:param region: Name of the material property to be associated with a region.
+	:type region: str
+	:param material: Name of region associated with a material property.
+	:type material: str
 	"""
 	
 	def __init__(self,region=None,material=None):

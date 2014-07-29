@@ -9,10 +9,10 @@ PyFLOTRAN is a set of classes and methods that the enable use of the massively p
 
 3. Scripting tools that supports Python's built-in multi-processing capabilities for batch simulations. This reduces the time spent in creating separate input files either for multiple realizations or multiple simulations for comparison.
 
-4. Streamlined workflow from pre-processing to post-processing. Typical workflow with PFLOTRAN involves - pre-processing in Python or MATLAB, writing input files, executing the input files and then post-processing using matplotlib, VisIt or Paraview. PyFLOTRAN allows to perform all these steps using one Python script.
+4. Streamlined workflow from pre-processing to post-processing. Typical workflow with PFLOTRAN involves -- pre-processing in Python or MATLAB, writing input files, executing the input files and then post-processing using matplotlib, VisIt or Paraview. PyFLOTRAN allows users to perform all these steps using one Python script.
 
 
-Introductory :ref:`tutorials <ftutorial-chapter>` to PyFLOTRAN are also provided.
+Introductory tutorials (see Chapter :ref:`5 <tutorials-chapter>`) to PyFLOTRAN are also provided.
 
 Installation
 ------------

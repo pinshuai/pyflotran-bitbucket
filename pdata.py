@@ -226,13 +226,15 @@ class pgrid(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[50.0,50.0,50.0], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dxyz=[5,5,5], gravity=[0.0,0.0,-9.8068], filename=''):
+	def __init__(self, type='structured', lower_bounds=[], upper_bounds=[], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
 		self._origin = origin
 		self._nxyz = nxyz
-		self._dxyz = dxyz
+		self._dx = dx
+		self._dy = dy
+		self._dz = dz
 		self._gravity = gravity
 		self._filename = filename
 
@@ -251,9 +253,15 @@ class pgrid(object):
 	def _get_nxyz(self): return self._nxyz
 	def _set_nxyz(self,value): self._nxyz = value
 	nxyz = property(_get_nxyz, _set_nxyz) #: (**)
-	def _get_dxyz(self): return self._dxyz
-	def _set_dxyz(self,value): self._dxyz = value
-	dxyz = property(_get_dxyz, _set_dxyz) #: (**)
+	def _get_dx(self): return self._dx
+	def _set_dx(self,value): self._dx = value
+	def _get_dy(self): return self._dy
+	def _set_dy(self,value): self._dy = value
+	def _get_dz(self): return self._dz
+	def _set_dz(self,value): self._dz = value
+	dx = property(_get_dx, _set_dx) #: (**)
+	dy = property(_get_dy, _set_dy) #: (**)
+	dz = property(_get_dz, _set_dz) #: (**)
 	def _get_gravity(self): return self._gravity
 	def _set_gravity(self,value): self._gravity = value
 	gravity = property(_get_gravity, _set_gravity) #: (**)
@@ -1230,13 +1238,15 @@ class pdata(object):
 		else:
 			return
 
-	def run(self,input='', exe=pdflt().pflotran_path):
+	def run(self,input='', num_procs=1, exe=pdflt().pflotran_path):
 		'''Run a pflotran simulation for a given input file.
 	
 		:param input: Name of input file. 
 		:type input: str
 		:param exe: Path to PFLOTRAN executable.
 		:type exe: str
+		:param num_procs: Number of processors
+		:type num_procs: int
 		'''
 		
 		# set up and check path to executable
@@ -1265,14 +1275,19 @@ class pdata(object):
 		# RUN SIMULATION
 		cwd = os.getcwd()
 		if self.work_dir: os.chdir(self.work_dir)
-		subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
+		subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
 		
 		# After executing simulation, go back to the parent directory
 		if self.work_dir: os.chdir(cwd)
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
-	def read(self, filename):
+	def read(self, filename=''):
+		'''Read a given PFLOTRAN input file.
+	
+		:param filename: Name of input file. 
+		:type filename: str
+		'''
 		if not os.path.isfile(filename): print filename + ' not found...'
 		self._filename = filename 	# assign filename attribute
 		read_fn = dict(zip(cards, 	
@@ -1345,7 +1360,7 @@ class pdata(object):
 #	def _set_line(self, object): self._line = object
 #	line = property(_get_line, _set_line) #: (**)
 	
-	def write(self, filename=None):
+	def write(self, filename=''):
 		"""Write pdata object to pflotran input file.
 
 		:param filename: Name of pflotran input file.
@@ -1643,9 +1658,22 @@ class pdata(object):
 			outfile.write('\n  /\n') # / marks end of writing out bounds
 		else:	# DXYZ is only written if no bounds are provided
 			outfile.write('  DXYZ\n')
-			for i in range(3):
-				outfile.write('    ' + strD(grid.dxyz[i]) + '\n')
-			outfile.write('  /\n')
+			for j in range(len(grid.dx)):
+				outfile.write('    ' + strD(grid.dx[j]))
+				if (j%5 == 4):
+					outfile.write('   ' + '\\' + '\n')
+			outfile.write('\n')
+			for j in range(len(grid.dy)):
+				outfile.write('    ' + strD(grid.dy[j]))
+				if (j%5 == 4):
+					outfile.write('   ' + '\\' + '\n')
+			outfile.write('\n')
+			for j in range(len(grid.dz)):
+				outfile.write('    ' + strD(grid.dz[j]))
+				if (j%5 == 4):
+					outfile.write('   ' + '\\' + '\n')
+			outfile.write('\n')
+		outfile.write('  END\n')
 		outfile.write('  ORIGIN' + ' ')
 		for i in range(3):
 			outfile.write(strD(grid.origin[i]) + ' ')

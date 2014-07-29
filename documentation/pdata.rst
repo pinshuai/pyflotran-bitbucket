@@ -9,15 +9,19 @@ and methods to read, manipulate, write and execute PFLOTRAN input files.
 pdata class
 -----------
 
-The :class:`.pdata` is the main class that does the reading, writing, manipulation and execution of the PFLOTRAN input files.
+The :class:`.pdata` is the main class that does the reading, writing, manipulation and execution of the PFLOTRAN input files. The other classes discussed in this section are defined to increase modularity and are used to set the attributes of :class:`.pdata`.
 
 .. autoclass:: pdata.pdata
 
 Attributes
 ^^^^^^^^^^
+.. autoattribute:: pdata.pdata.filename
+.. autoattribute:: pdata.pdata.work_dir
 
 Methods
 ^^^^^^^
+.. automethod:: pdata.pdata.read
+.. automethod:: pdata.pdata.write
 .. automethod:: pdata.pdata.run
 
 

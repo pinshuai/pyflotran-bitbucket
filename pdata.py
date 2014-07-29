@@ -647,7 +647,7 @@ class pregion(object):
 	face = property(_get_face, _set_face)
 	
 class pobservation(object):
-	"""Class for observation card.
+	"""Class for observation card. Multiple observation objects can be created.
 	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g. pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
 	Currently, only region is supported in PyFLOTRAN.
 	
@@ -674,13 +674,17 @@ class pflow(object):
 	:type iphase: int
 	:param sync_timestep_with_update: Flag that indicates whether to use sync_timestep_with_update. Default: False.
 	:type sync_timestep_with_update: bool - True or False
+	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
+	:type data_unit_type: str
+	:param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name' with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both. If both are used, then only the file name will be written to the input deck.
+	:type datum: Multiple [float, float, float] or str.
 	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g. dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
 	:type varlist: [pflow_variable]
 
 	"""
 	
 	def __init__(self,name='',units_list=None,
-			iphase=None,sync_timestep_with_update=False,
+			iphase=None,sync_timestep_with_update=False, datum=[], 
 			varlist=[]):
 		self._name = name.lower()	# Include initial, top, source
 		self._units_list = units_list	# Specify type of units to display such as
@@ -689,6 +693,7 @@ class pflow(object):
 						# May be used to determine each variable unit
 		self._iphase = iphase			# Holds 1 int
 		self._sync_timestep_with_update = sync_timestep_with_update	# Boolean
+		self._datum = datum	# x, y, z, and a file name. [float,float,float,str]
 		self._varlist = varlist
 		
 	def _get_name(self): return self._name
@@ -703,6 +708,9 @@ class pflow(object):
 	def _get_sync_timestep_with_update(self): return self._sync_timestep_with_update
 	def _set_sync_timestep_with_update(self,value): self._sync_timestep_with_update = value
 	sync_timestep_with_update = property(_get_sync_timestep_with_update, _set_sync_timestep_with_update)
+	def _get_datum(self): return self._datum
+	def _set_datum(self,value): self._datum = value
+	datum = property(_get_datum, _set_datum)
 	def _get_varlist(self): return self._varlist
 	def _set_varlist(self,value): self._varlist = value
 	varlist = property(_get_varlist, _set_varlist)
@@ -710,7 +718,7 @@ class pflow(object):
 	# Code below is an attempt to change the way sub-classes are added.
 	# it's not necessary. (Attempting to make it possible to do a flow.add(variable)
 	# instead of dat.add(variable). Current way of specifying which flow object to
-	# add to is dat.add(variable,flow)
+	# add to is dat.add(variable,flow) (e.g. Rate List instead of Rate)
 	'''
 	# Definitions for sub-class of pflow object
 	
@@ -752,12 +760,10 @@ class pflow_variable(object):
 	:type type: str
 	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional.
 	:type valuelist: [float, float]
-	:param unit: Currently not supported. Non-list alternative, do not use with list alternative.
+	:param unit: Non-list alternative, do not use with list alternative. Specify unit of measurement.
 	:type unit: str
 	:param time_unit_type: List alternative, do not use with non-list alternative attributes/parameters. 
 	:type time_unit_type: str
-	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
-	:type data_unit_type: str
 	:param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g. variable.list.append(var_list) if var_list=pflow_variable_list.
 	:type list: [pflow_variable_list]
 	"""
@@ -801,8 +807,12 @@ class pflow_variable(object):
 	
 class pflow_variable_list(object):
 	"""Sub-class of pflow_variable.
-	Used for pflow_variables that are lists instead of standalone. 
-	(e.g. Rate List instead of Rate)
+	Used for pflow_variables that are lists instead of standalone. Each of these list objects can hold multiple lines (from an input deck) with each line holding one time_unit_value and a data_unit_value_list that can hold multiple values.
+	
+	:param time_unit_value: 
+	:type time_unit_value: float
+	:param data_unit_value_list: 
+	:type data_unit_value_list: [float]
 
 	"""
 	
@@ -818,8 +828,14 @@ class pflow_variable_list(object):
 	data_unit_value_list = property(_get_data_unit_value_list, _set_data_unit_value_list)
 
 class pinitial_condition(object):
-	"""Class for initial condition - a condition coupler
-
+	"""Class for initial condition card - a condition coupler between regions and flow and transport conditions.
+	
+	:param flow: Specify condition_name for key word FLOW_CONDITION.
+	:type flow: str
+	:param transport: Specify condition_name for key word TRANSPORT_CONDITION.
+	:type transport: str
+	:param region: Specify condition_name for key word REGION.
+	:type region: str
 	"""
 	
 	def __init__(self,flow=None,transport=None,region=None):
@@ -838,11 +854,21 @@ class pinitial_condition(object):
 	region = property(_get_region, _set_region)
 	
 class pboundary_condition(object):
-	"""Class for boundary conditions - a condition coupler
-
+	"""Class for boundary conditions card - a condition coupler. 
+	Multiple observation objects can be created.
+	The BOUNDARY_CONDITION keyword couples conditions specified under the FLOW_CONDITION and/or TRANSPORT_CONDITION keywords to a REGION in the problem domain. The use of this keyword enables the use/reuse of flow and transport conditions and regions within multiple boundary and initial conditions and source/sinks in the input deck.
+	
+	:param name: Name of boundary condition. (e.g. west, east)
+	:type name: str
+	:param flow: Defines the name of the flow condition to be linked to this boundary condition.
+	:type flow: str
+	:param transport: Defines the name of the transport condition to be linked to this boundary condition
+	:type transport: str
+	:param region: Defines the name of the region to which the conditions are linked
+	:type region: str
 	"""
 	
-	def __init__(self,name='',flow=None,transport=None,region=None):
+	def __init__(self,name='',flow='',transport='',region=''):
 		self._name = name	# Name of boundary condition. (e.g. west, east)
 		self._flow = flow	# Flow Condition (e.g. initial)
 		self._transport = transport	# Transport Condition (e.g. river_chemistry)
@@ -862,8 +888,12 @@ class pboundary_condition(object):
 	region = property(_get_region, _set_region)
 
 class psource_sink(object):
-	"""Class for source sink - a condition coupler
-
+	"""Class for source sink card - a condition coupler
+	
+	:param flow: Name of the flow condition the source/sink term is applied to.
+	:type flow: str
+	:param region: Name of the region the source/sink term is applied to.
+	:type region: str
 	"""
 	
 	def __init__(self,flow=None,region=None):
@@ -878,8 +908,12 @@ class psource_sink(object):
 	region = property(_get_region, _set_region)
 	
 class pstrata(object):
-	"""Class for stratigraphy couplers
-
+	"""Class for stratigraphy couplers card. Multiple stratigraphy couplers can be created. Couples material IDs and/or properties with a region in the problem domain.
+	
+	:param region: Name of the material property to be associated with a region.
+	:type region: str
+	:param material: Name of region associated with a material property.
+	:type material: str
 	"""
 	
 	def __init__(self,region=None,material=None):
@@ -1119,7 +1153,7 @@ class pdata(object):
 		self._fluid = pfluid()
 		self._saturation = None
 		self._regionlist = []	# There are multiple regions
-		self._observation = None
+		self._observation_list = []
 		self._flowlist = []
 		self._transportlist = []
 		self._initial_condition = pinitial_condition()
@@ -1223,10 +1257,25 @@ class pdata(object):
 				 self._read_constraint]
 				 
 				 ))  # associate each card name with a read function, defined further below
+				 
+		skip_readline = False	
+		line = ''		# Memorizes the most recent line read in.
+		
+		def get_next_line(skip_readline=skip_readline, line=line):
+			"""Used by read function to avoid skipping a line in cases where a particular read function might read an extra line.
+			"""
+			
+			if skip_readline:
+				skip_readline = False
+				return line
+			else:
+				line = infile.readline()
+				return line
+			
 		with open(self._filename,'r') as infile:
 			keepReading = True
 			while keepReading:
-				line = infile.readline()
+				line = get_next_line()
 				if not line: keepReading = False
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
@@ -1241,6 +1290,15 @@ class pdata(object):
 						read_fn[card](infile,line)
 					else:
 						read_fn[card](infile)
+		
+#	def _get_skip_readline(self): return self._skip_readline
+#	def _set_skip_readline(self, object): self._skip_readline = object
+#	skip_readline = property(_get_skip_readline, _set_skip_readline) #: (**)
+
+	# Memorizes the most recent line read in.
+#	def _get_line(self): return self._line
+#	def _set_line(self, object): self._line = object
+#	line = property(_get_line, _set_line) #: (**)
 	
 	def write(self, filename=None):
 		"""Write pdata object to pflotran input file.
@@ -1298,7 +1356,8 @@ class pdata(object):
 		if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
-		if self.observation: self._write_observation(outfile)
+		if self.observation_list: self._write_observation(outfile)
+		else: print 'info: observation_list not detect\n'
 		
 		if self.flowlist: self._write_flow(outfile)
 		else: print 'info: flowlist not detected\n'
@@ -1339,6 +1398,7 @@ class pdata(object):
 		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
 		if isinstance(obj,pnsolver): self._add_nsolver(obj,overwrite)
 		if isinstance(obj,pregion): self._add_region(obj,overwrite)
+		if isinstance(obj,pobservation): self._add_observation(obj, overwrite)
 		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
 		if isinstance(obj, pflow_variable): 
 			self._add_flow_variable(obj,index,overwrite)
@@ -1371,6 +1431,11 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):
 				if isinstance(obji,pnsolver): self._delete_nsolver(obji)
+				
+		if isinstance(obj,pobservation): self._delete_observation(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pobservation): self._delete_observation(obji)
 		
 		if isinstance(obj,pregion): self._delete_region(obj)
 		elif isinstance(obj,list):
@@ -2399,33 +2464,49 @@ class pdata(object):
 			outfile.write('END\n\n')
 			
 	def _read_observation(self,infile):
-		p = pobservation()
-		np_region = p.region
-		 
+		observation = pobservation()
+		
 		keepReading = True
 		
 		while keepReading:
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
 			if key == 'region':
-				np_region = line.split()[-1]
+				observation.region = line.split()[-1]
 			elif key in ['/','end']: keepReading = False
 			
-		new_observation = pobservation(np_region)
+		self._observation_list.append(observation)
 		
-		self._observation = new_observation
+	def _add_observation(self,observation=pobservation(),overwrite=False):	#Adds a Observation object.
+		# check if observation already exists
+		if isinstance(observation,pobservation):
+			if observation.region in self.observation.keys():
+				if not overwrite:
+					warning = 'WARNING: A observation with region \''+str(observation.region)+'\' already exists. Observation will not be defined, use overwrite = True in add() to overwrite the old observation.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else:
+					self.delete(self.observation[observation.region])
+					
+		if observation not in self._observation_list:
+			self._observation_list.append(observation)
+			
+	def _delete_observation(self,observation=pobservation()):
+		self._observation_list.remove(observation)
 		
 	def _write_observation(self,outfile):
 		self._header(outfile,headers['observation'])
-		observation = self.observation
 		
-		outfile.write('OBSERVATION\n')
-		if observation.region:
-			outfile.write('  REGION '+observation.region.lower()+'\n')
-		outfile.write('END\n\n')
+		for observation in self.observation_list:
+			outfile.write('OBSERVATION\n')
+			if observation.region:
+				outfile.write('  REGION '+observation.region.lower()+'\n')
+			outfile.write('END\n\n')
 				
 	def _read_flow(self,infile,line):
 		flow = pflow()
+		flow.datum = []
 		flow.varlist = []
 		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
 		
@@ -2434,7 +2515,6 @@ class pdata(object):
 		end_count = 0
 		total_end_count = 1
 		while keepReading:	# Read through all cards
-			
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'type':
@@ -2516,6 +2596,31 @@ class pdata(object):
 				flow.iphase = int(line.split()[-1])
 			elif key == 'sync_timestep_with_update':
 				flow.sync_timestep_with_update = True
+			elif key == 'datum':
+				line = infile.readline() # get next line
+				
+				# Assign file_name with list of d_dx, d_dy, d_dz values.
+				if line.strip().split()[0].upper() == 'FILE':
+					flow.datum = line.split()[1]
+				# Assign d_dx, d_dy, d_dz values
+				else:
+					# try is used to determine when to stop reading.
+					# skip_readline signals the read function not to
+					# read the next line again. This is being because
+					# there is no / or end telling the script to stop.
+					# The script knows there are no more floats to read
+					# because an error is produced if the first substring
+					# cannot be converted into a float.
+					while True:
+						try:
+							temp_list = []
+							temp_list.append(floatD(line.split()[0]))
+							temp_list.append(floatD(line.split()[1]))
+							temp_list.append(floatD(line.split()[2]))
+							flow.datum.append(temp_list)
+							line = infile.readline() # get next line
+						except(ValueError): break
+					self.skip_readline = True
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
 			# Alternative method of count implemented by Satish
@@ -2650,10 +2755,27 @@ class pdata(object):
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
 			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
+			
 			if flow.sync_timestep_with_update:
 				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
-			outfile.write('  TYPE\n')
-			
+				
+			if flow.datum:	# error-checking not yet added
+				
+				outfile.write('  DATUM')
+				
+				if isinstance(flow.datum, str):
+					outfile.write('\n    FILE ')
+					outfile.write(flow.datum)
+				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
+					# write out d_dx, d_dy, d_dz
+					for line in flow.datum:
+						outfile.write('\n    ')
+						outfile.write(strD(line[0])+' ')
+						outfile.write(strD(line[1])+' ')
+						outfile.write(strD(line[2]))
+				outfile.write('\n')
+				
+			outfile.write('  TYPE\n') # Following code is paired w/ this statement.
 			# variable name and type from lists go here
 			i = 0
 			while i< len(flow.varlist):
@@ -3457,9 +3579,12 @@ class pdata(object):
 		return dict([region.name.lower(),region] for region in self.regionlist if region.name)
 	region = property(_get_region)#: (*dict[pregion]*) Dictionary of region objects, indexed by region name.
 	
-	def _get_observation(self): return self._observation
-	def _set_observation(self, object): self._observation = object
-	observation = property(_get_observation, _set_observation) #: (**)
+	def _get_observation_list(self): return self._observation_list
+	def _set_observation_list(self, object): self._observation_list = object
+	observation_list = property(_get_observation_list, _set_observation_list) #: (**)
+	def _get_observation(self):
+		return dict([observation.region.lower(),observation] for observation in self.observation_list if observation.region)
+	observation = property(_get_observation)#: (*dict[pobservation]*) Dictionary of observation objects, indexed by observation region.
 	
 	def _get_flowlist(self): return self._flowlist
 	def _set_flowlist(self, object): self._flowlist = object
@@ -3528,4 +3653,3 @@ class pdata(object):
 	def _get_constraint_concentration(self, constraint=pconstraint()):
 		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
 	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies
-	

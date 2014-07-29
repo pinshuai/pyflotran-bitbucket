@@ -212,8 +212,10 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
-flow.datum = [3., 5., 2., 'file_name'] # testing - not tested with PFLOTRAN
-flow.varlist = [] 	# Assigning for this done below
+#flow.datum.append([3., 5., 2.])	 # testing - not tested with PFLOTRAN
+#flow.datum.append([2., 1., 6.])	 # testing - not tested with PFLOTRAN
+#flow.datum = 'file_name' 		 # testing - not tested with PFLOTRAN
+#flow.varlist = [] 	# Assigning for this done below
 dat.add(flow)
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('')	# new flow var object
@@ -246,6 +248,7 @@ dat.add(variable,index='initial')# alternative, specify flow object by its' name
 flow = pflow()
 flow.name = 'top'
 flow.iphase = 1
+flow.datum = []
 flow.varlist = [] 	# Assigning for this done below
 dat.add(flow)
 # adding flow_variable to top flow_condition
@@ -280,6 +283,7 @@ flow.name = 'source'
 flow.units_list = None
 flow.iphase = None
 flow.sync_timestep_with_update = True
+flow.datum = []
 flow.varlist = [] # Assigning for this done below
 dat.add(flow)	# Assigning for flow condition done here
 # adding flow_variable to source flow_condition

@@ -153,11 +153,11 @@ region.coordinates_upper = [0.04e0, 1.e0, 1.e0]
 dat.add(region)
 #--------------------------------------------------------------
 
-# set observation
+# set observations
 #--------------------------------------------------------------
 observation = pobservation()
 observation.region = 'obs'
-dat.observation = observation
+dat.add(observation)
 #--------------------------------------------------------------
 
 # set transport conditions

@@ -965,8 +965,29 @@ class prestart(object):
 	time_unit = property(_get_time_unit, _set_time_unit)
 	
 class pchemistry(object):
-	"""Class for chemistry
-	m_kinetics_list (RATE_CONSTANT) is not complete
+	"""Class for chemistry card. The CHEMISTRY keyword invokes the reactive transport mode and provides input for primary species, secondary species, minerals, gases, colloids and colloid-facilitated transport, and sorption including ion exchange and surface complexation. Mineral reactions are described through a kinetic rate law based on transition state theory and surface complexation reactions may involve equilibrium, kinetic (reversible or irreversible) or a multirate formulation.
+	
+	:param pspecies_list: List of primary species that fully describe the chemical composition of the fluid. The set of primary species must form an independent set of species in terms of which all homogeneous aqueous equilibrium reactions can be expressed.
+	:type pspecies_list: [str]
+	:param sec_species_list: List of aqueous species in equilibrium with primary species.
+	:type sec_species_list: [str]
+	:param gas_species_list: List of gas species.
+	:type gas_species_list: [str]
+	:param minerals_list: List of mineral names.
+	:type minerals_list: [str]
+	:param m_kinetics_list: List of pchemistry_m_kinetic objects. Holds kinetics information about a specified mineral name. Works with add function so that m_kinetics_list does not need to be remembered. e.g. dat.add(mineral_kinetic).
+	:type m_kinetics_list: [pchemistry_m_kinetic]
+	:param log_formulation: 
+	:type log_formulation: bool - True or False
+	:param database: 
+	:type database: str
+	:param activity_coefficients: Options include: 'LAG', 'NEWTON', 'TIMESTEP', 'NEWTON_ITERATION'.
+	:type activity_coefficients: str
+	:param molal: 
+	:type molal: bool - True or False
+	:param output_list: To print secondary aqueous complex concentrations, either add the names of the secondary species of interest or the keyword 'SECONDARY_SPECIES' for all secondary species to the CHEMISTRY OUTPUT card. e.g. output_list = 'SECONDARY_SPECIES' or output_list = ['CO2(aq), 'PH']. By default, if ALL or MINERALS are listed under CHEMISTRY OUTPUT, the volume fractions and rates of kinetic minerals are printed. To print out the saturation indices of minerals listed under the MINERAL keyword, add the name of the mineral to the OUTPUT specification.
+	:type output_list: [str]
+
 	"""
 	
 	def __init__(self, pspecies_list=[], sec_species_list=[], gas_species_list=[],
@@ -1016,7 +1037,12 @@ class pchemistry(object):
 
 class pchemistry_m_kinetic(object):
 	"""Sub-class for pchemistry. 
-	mineral kinetics are assigned to m_kinetics_list in pchemistry.
+	mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g. dat.add(mineral_kinetic).
+	
+	:param name: Mineral name.
+	:type name: str
+	:param rate_constant_list: Value, Unit of Measurement. e.g. rate_constant_list=[1.e-6, 'mol/m^2-sec']
+	:type rate_constant_list: [float, str] 
 	"""
 	
 	def __init__(self, name=None, rate_constant_list=[]):
@@ -1031,11 +1057,20 @@ class pchemistry_m_kinetic(object):
 	rate_constant_list = property(_get_rate_constant_list, _set_rate_constant_list)
 	
 class ptransport(object):
-	"""Class for transport conditions
-
+	"""Class for transport conditions card. Multiple transport objects can be created.
+	Specifies a geochemical solution composition based on various user defined constraints with minerals, gases, pH, charge balance, free ion, and total concentrations.
+	
+	:param name: Transport condition name.
+	:type name: str
+	:param type: Options include: 'dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 'neumann', 'mole', 'mole_rate', 'zero_gradient'.
+	:type type: str
+	:param constraint_list_value: List of constraint values. The position of each value in the list correlates with the position of each type in constraint_list_type.
+	:type constraint_list_value: [float]
+	:param constraint_list_type: List of constraint types. The position of each value in the list correlates with the position of each value in constraint_list_value. Options include: 'initial_constraint', 'inlet_constraint'.
+	:type constraint_list_type: [str]
 	"""
 	
-	def __init__(self, name='', type=None, constraint_list_value=[],
+	def __init__(self, name='', type='', constraint_list_value=[],
 		     constraint_list_type=[]):
 		self._name = name	# e.g. initial, west, east
 		self._type = type	# e.g. dirichlet, zero_gradient
@@ -1056,8 +1091,15 @@ class ptransport(object):
 	constraint_list_type = property(_get_constraint_list_type, _set_constraint_list_type)
 	
 class pconstraint(object):
-	"""Class for constraints
+	"""Class for constraints card. Multiple constraint objects can be created.
+	The keyword CONSTRAINT sets up fluid compositions based on various constraint conditions chosen by the user. Use SECONDARY_CONSTRAINT for constraining secondary continual initial concentrations.
 
+	:param name: Constraint name.
+	:type name: str
+	:param concentration_list: List of pconstraint_concentration objects.
+	:type concentration_list: [pconstraint_concentration]. Works with add function so that concentration_list does not need to be remembered. e.g. dat.add(concentration). Used for key word CONC or CONCENTRATIONS
+	:param mineral_list: List of pconstraint_mineral objects. Currently does not work with add function. Used for key word MNRL OR MINERALS.
+	:type mineral_list: [pconstraint_mineral]
 	"""
 	
 	def __init__(self, name='', concentration_list=[], mineral_list=[]):
@@ -1076,9 +1118,16 @@ class pconstraint(object):
 	mineral_list = property(_get_mineral_list, _set_mineral_list)
 		
 class pconstraint_concentration(object):
-	"""Concentration unit
-	Sub-class for constraints
-
+	"""Concentration unit, Sub-class for constraint. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Works with add function so that concentration_list in pconstraint does not need to be remembered. e.g. dat.add(concentration) instead of dat.constraint.concentration_list.append(concentration).
+	
+	:param pspecies: Primary species name for concentration.
+	:type pspecies: str
+	:param value: Concentration value.
+	:type value: float
+	:param constraint: Constraint name for concentration. Options include: 'F', 'FREE', 'T', 'TOTAL', 'TOTAL_SORB', 'P', 'pH', 'L', 'LOG', 'M', 'MINERAL', 'MNRL', 'G', 'GAS', 'SC', 'CONSTRAINT_SUPERCRIT_CO2
+	:type constraint: str
+	:param element: Name of mineral of gas.
+	:type element: str
 	"""
 	
 	def __init__(self, pspecies='', value=None, constraint='', element=''):
@@ -1101,8 +1150,14 @@ class pconstraint_concentration(object):
 	element = property(_get_element, _set_element)
     
 class pconstraint_mineral(object):
-	"""Class for mineral in a constraint with vol. fraction and surface area
+	"""Class for mineral in a constraint with vol. fraction and surface area. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add function. pconstraint_mineral can be manually appended to minerals_list in a pconstraint object. e.g. 'constraint.mineral_list.append(mineral)'.
 
+	:param name: Mineral name.
+	:type name: str
+	:param volume_fraction: Volume fraction. [--]
+	:type volume_fraction: float
+	:param surface_area: Surface area. [m^-1]
+	:type surface_area: float
 	"""
 
 	def __init__(self, name='', volume_fraction=None, surface_area=None):

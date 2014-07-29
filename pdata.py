@@ -1149,13 +1149,15 @@ class pdata(object):
 		else:
 			return
 
-	def run(self,input='', exe=pdflt().pflotran_path):
+	def run(self,input='', num_procs=1, exe=pdflt().pflotran_path):
 		'''Run a pflotran simulation for a given input file.
 	
 		:param input: Name of input file. 
 		:type input: str
 		:param exe: Path to PFLOTRAN executable.
 		:type exe: str
+		:param num_procs: Number of processors
+		:type num_procs: int
 		'''
 		
 		# set up and check path to executable
@@ -1184,7 +1186,7 @@ class pdata(object):
 		# RUN SIMULATION
 		cwd = os.getcwd()
 		if self.work_dir: os.chdir(self.work_dir)
-		subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
+		subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
 		
 		# After executing simulation, go back to the parent directory
 		if self.work_dir: os.chdir(cwd)

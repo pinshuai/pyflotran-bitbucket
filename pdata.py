@@ -1227,7 +1227,12 @@ class pdata(object):
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
-	def read(self, filename):
+	def read(self, filename=''):
+		'''Read a given PFLOTRAN input file.
+	
+		:param filename: Name of input file. 
+		:type filename: str
+		'''
 		if not os.path.isfile(filename): print filename + ' not found...'
 		self._filename = filename 	# assign filename attribute
 		read_fn = dict(zip(cards, 	
@@ -1300,7 +1305,7 @@ class pdata(object):
 #	def _set_line(self, object): self._line = object
 #	line = property(_get_line, _set_line) #: (**)
 	
-	def write(self, filename=None):
+	def write(self, filename=''):
 		"""Write pdata object to pflotran input file.
 
 		:param filename: Name of pflotran input file.

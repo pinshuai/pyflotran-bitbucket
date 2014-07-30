@@ -1288,7 +1288,7 @@ class pdata(object):
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
-	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10,xlabel='',ylabel='',xtype='linear',ytype='linear',xrange=(),yrange=()):
+	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10,xlabel='',ylabel='',xtype='linear',ytype='linear',xrange=(),yrange=(),xfactor=1.0,yfactor=1.0):
 		''' Plot time-series data from observation files at a given set of observation points.
 
 		:param variable_list: List of the variables to be plotted
@@ -1349,7 +1349,9 @@ class pdata(object):
 		for item in combined_var_obs_list:
 			for key in combined_dict.keys():
 				if item[0] in key and item[1] in key:
-					ln, = ax.plot(time,combined_dict[key])
+					time_new = [t*xfactor for t in time]
+					var_new = [v*yfactor for v in combined_dict[key]]
+					ln, = ax.plot(time_new,var_new)
 					lns.append(ln)
 		ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
 		fig.savefig(plot_filename)

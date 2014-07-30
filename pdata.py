@@ -1319,7 +1319,6 @@ class pdata(object):
 		for item in combined_var_obs_list:
 			for key in combined_dict.keys():
 				if item[0] in key and item[1] in key:
-					print key
 					ln, = ax.plot(time,combined_dict[key])
 					lns.append(ln)
 		ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)}) 

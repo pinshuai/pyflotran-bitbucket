@@ -173,10 +173,14 @@ latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
 #'papersize': 'letterpaper',
 
+'classoptions': ',oneside',
+'babel': '\\usepackage[english]{babel}',
 # The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
-'fontpkg':''
-
+'pointsize': '11pt',
+'fontpkg':'\\usepackage{palatino}',
+#'fontpkg':'',
+'fncychap':'\\usepackage[Sonny]{fncychap}',
+'fontenc':'\\usepackage[T1]{fontenc}',
 # Additional stuff for the LaTeX preamble.
 #'preamble': '',
 }

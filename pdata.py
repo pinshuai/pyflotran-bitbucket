@@ -1286,7 +1286,7 @@ class pdata(object):
 	def __repr__(self): return self.filename 	# print to screen when called
 	
 	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10,xlabel='',ylabel='',xtype='linear',ytype='linear',xrange=(),yrange=()):
-		''' Plot data from observation files.
+		''' Plot time-series data from observation files at a given set of observation points.
 
 		:param variable_list: List of the variables to be plotted
 		:param observation_list: List of observation names to be plotted

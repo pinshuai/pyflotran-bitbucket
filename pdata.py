@@ -83,7 +83,7 @@ class puniform_velocity(object):
 	""" Class for uniform velocity card for transport observation. Optional
 with transport problem when not coupling with a flow mode.
 	
-	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g. [14.4e0, 0.e0, 0.e0, 'm/yr']
+	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
 	:type value_list: [float,float,float,str]
 	"""
 	
@@ -95,29 +95,29 @@ with transport problem when not coupling with a flow mode.
 	value_list = property(_get_value_list, _set_value_list) #: (**)
 
 class pmaterial(object):
-	""" Class for material property card. 
-	Syntax to instantiate/create default class object is 'pmaterial()'. 
+	""" Class for defining a material property. 
+	Syntax to instantiate default class object is 'pmaterial()'. 
 	Multiple material property objects can be created.
 	
 	:param id: Unique identifier of material property.
 	:type id: int
-	:param name: Name of material property. e.g. 'soil1'
+	:param name: Name of material property. e.g., 'soil1'.
 	:type name: str
-	:param porosity: Porosity of material property.
+	:param porosity: Porosity of material.
 	:type porosity: float
-	:param tortuosity: Tortuosity of material property.
+	:param tortuosity: Tortuosity of material.
 	:type tortuosity: float
-	:param density: Rock density of material property in kg/m^3.
+	:param density: Rock density of material in kg/m^3.
 	:type density: float
-	:param specific_heat: Specific heat of material property in J/kg/K.
+	:param specific_heat: Specific heat of material in J/kg/K.
 	:type specific_heat: float
-	:param cond_dry: Thermal dry conductivity of material property in W/m/K.
+	:param cond_dry: Thermal dry conductivity of material in W/m/K.
 	:type cond_dry: float
-	:param cond_wet: Thermal wet conductivity of material property in W/m/K.
+	:param cond_wet: Thermal wet conductivity of material in W/m/K.
 	:type cond_wet: float
-	:param saturation: Saturation function of material property. e.g. 'sf2'
+	:param saturation: Saturation function of material property. e.g., 'sf2'
 	:type saturation: str
-	:param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g. [1.e-15,1.e-15,1.e-17]
+	:param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
 	:type permeability: [float]*3
 	"""
 
@@ -166,19 +166,19 @@ class pmaterial(object):
 	permeability = property(_get_permeability, _set_permeability) #: (**)
 
 class ptime(object):
-	""" Class for time property card. 
-	Time works by using time values and by specifying its' unit of measurement. 
+	""" Class for time. Used to specify final time of simulation, initial timestep size, maximum timestep size (throughout the simulation or a particular instant of time). 
+	Time values and units need to be specified.
 	Acceptable time units are: (s, m, h, d, mo, y). 
 	Syntax to instantiate/create default class object is 'ptime()'. 
 	List length (# of variables assigned to a parameter/attribute) of dtf_lv, dtf_lv_unit, dtf_li, dtf_li_unit should all be equal.
 	
-	:param tf: time final. 1st variable is time value. 2nd variable specifies time unit. e.g. [0.25e0, 'y']
+	:param tf: time final. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
 	:type tf: [float, str]
-	:param dti: delta (change) time initial a.k.a. initial timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g. [0.25e0, 'y']
+	:param dti: delta (change) time initial a.k.a. initial timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
 	:type dti: [float, str]
-	:param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g. [50.e0, 'y']
+	:param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g., [50.e0, 'y']
 	:type dtf: [float, str]
-	:param dtf_list: delta (change) time final list a.ka. maximum timestep size. The dtf lists are for multiple max time step entries at specified time intervals. Uses key word 'at'. Input is a list that can have multiple lists appended to it. e.g. time.dtf_list.append([1.e2, 's', 5.e3, 's'])
+	:param dtf_list: delta (change) time final list a.ka. maximum timestep size. The dtf lists are for multiple max time step entries at specified time intervals. Uses key word 'at'. Input is a list that can have multiple lists appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
 	:type dtf_list: [ [float, str, float, str] ]
 	"""
 	
@@ -207,22 +207,25 @@ class ptime(object):
 	dtf_list = property(_get_dtf_list, _set_dtf_list) #: (**)
 	
 class pgrid(object):
-	""" Class for grid property card. *Required. 
-	Defines the discretization scheme, the type of grid and resolution, and the geometry employed in the simulation.
+	""" Class for defining a grid. Used to define type, resolution and geometry of the gird
 	
-	:param type: Grid type. Valid entries include: 'structured', 'structured_mimetic', 'unstructured', 'amr'. e.g. 'structured'
+	:param type: Grid type. Valid entries include: 'structured', 'unstructured'. 
 	:type type: str
-	:param lower_bounds: Lower/Minimum 3D boundaries coordinates in order of x_min, y_min, z_min. Input is a list of 3 floats. e.g. [0.e0, 0.e0, 0.e0]
+	:param lower_bounds: Lower/Minimum 3D boundaries coordinates in order of x_min, y_min, z_min. Input is a list of 3 floats. e.g., [0.e0, 0.e0, 0.e0].
 	:type lower_bounds: [float]*3
-	:param upper_bounds: Upper/Maximum 3D boundaries coordinates in order of x_max, y_max, z_max. Input is a list of 3 floats. e.g. [321.e0, 1.e0, 51.e0]
+	:param upper_bounds: Upper/Maximum 3D boundaries coordinates in order of x_max, y_max, z_max. Input is a list of 3 floats. e.g., [321.e0, 1.e0, 51.e0].
 	:type lower_bounds: [float]*3
-	:param origin: Coordinates of grid origin. Optional. Input is a list of 3 floats. Default: [0.e0, 0.e0, 0.e0]
+	:param origin: Coordinates of grid origin. Optional. Input is a list of 3 floats. Default: [0.e0, 0.e0, 0.e0].
 	:type origin: [float]*3
-	:param nxyz: Number of grid cells in x,y,z directions. Only works with type='structured'. Input is a list of 3 floats. e.g. [107, 1, 51]
+	:param nxyz: Number of grid cells in x,y,z directions. Only works with type='structured'. Input is a list of 3 floats. e.g., [107, 1, 51].
 	:type nxyz: [float]*3
-	:param dxyz: Specifies grid spacing of structured cartesian grid in order of dx, dy, dz. Input is a list of 3 floats. e.g. [5, 5, 5]
-	:type dxyz: [float]*3
-	:param gravity: Specifies gravity vector in unit 'm/s^2'. Input is a list of 3 floats. Default: [0, 0, 9.8068]
+	:param dx: Specifies grid spacing of structured cartesian grid in the x-direction. e.g., [0.1, 0.2, 0.3, 0.4, 1, 1, 1, 1]. 
+	:type dx: [float]
+	:param dy: Specifies grid spacing of structured cartesian grid in the y-direction. 
+	:type dy: [float]
+	:param dz: Specifies grid spacing of structured cartesian grid in the z-direction
+	:type dz: [float]
+	:param gravity: Specifies gravity vector in m/s^2. Input is a list of 3 floats. 
 	:type gravity: [float]*3
 	:param filename: Specify name of file containing grid information. Only works with type='unstructured'.
 	:type filename: str
@@ -294,7 +297,7 @@ class pmode(object):
 class ptimestepper(object):
 	""" Class for time stepper card. Controls time stepping.
 	
-	:param ts_acceleration: Integer indexing time step acceleration ramp (expert users only) [5]. Timestepper acceleration. e.g. 8
+	:param ts_acceleration: Integer indexing time step acceleration ramp (expert users only) [5]. Timestepper acceleration. e.g., 8
 	:type ts_acceleration: int
 	:param num_steps_after_cut: Number of time steps after a time step cut that the time step size is held constant [5].
 	:type num_steps_after_cut: int
@@ -543,7 +546,7 @@ class pfluid(object):
 class psaturation(object):
 	"""Class for saturation functions
 	
-	:param name: Saturation function name. e.g. 'sf2'
+	:param name: Saturation function name. e.g., 'sf2'
 	:type name: str
 	:param permeability_function_type: Options include: 'VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 'NMT_EXP', 'PRUESS_1'.
 	:type permeability_function_type: str
@@ -617,13 +620,13 @@ class psaturation(object):
 	
 class pregion(object):
 	"""Class for regions. Multiple region objects can be created.
-	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g. a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region. Please note there is currently a minor glitch when using the add function for pregion. A false WARNING may print to console stating a region with name 'user_value' already exists when reading another input deck. This can occur as a result of a region name being used in another key words such as INITIAL_CONDITION. In cases where WARNING messages are produced due to this glitch, it will not affect the outcome of the program and can be ignored. The pdata script is incorrectly reading pregion key words more than once and automatically correcting itself which produces the warning message.
+	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g., a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region. Please note there is currently a minor glitch when using the add function for pregion. A false WARNING may print to console stating a region with name 'user_value' already exists when reading another input deck. This can occur as a result of a region name being used in another key words such as INITIAL_CONDITION. In cases where WARNING messages are produced due to this glitch, it will not affect the outcome of the program and can be ignored. The pdata script is incorrectly reading pregion key words more than once and automatically correcting itself which produces the warning message.
 
 	:param name: Region name. Options include: 'all', 'top', 'west', 'east', 'well'.
 	:type name: str
-	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x1, y1, z1. e.g. [0.e0, 0.e0, 0.e0]
+	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x1, y1, z1. e.g., [0.e0, 0.e0, 0.e0]
 	:type coordinates_lower: [float]*3
-	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g.[321.e0, 1.e0,  51.e0]
+	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g.,[321.e0, 1.e0,  51.e0]
 	:type coordinates_upper: [float]*3
 	:param face: Defines the face of the grid cell to which boundary conditions are connected. Options include: 'west', 'east', 'north', 'south', 'bottom', 'top'. (structured grids only).
 	:type face: str
@@ -651,10 +654,10 @@ class pregion(object):
 	
 class pobservation(object):
 	"""Class for observation card. Multiple observation objects can be created.
-	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g. pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
+	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g., pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
 	Currently, only region is supported in PyFLOTRAN.
 	
-	:param region: Defines the name of the region (usually a point in space) to which the observation point is linked. e.g. 'obs'.
+	:param region: Defines the name of the region (usually a point in space) to which the observation point is linked. e.g., 'obs'.
 	:type region: str
 	"""
 	
@@ -767,7 +770,7 @@ class pflow_variable(object):
 	:type unit: str
 	:param time_unit_type: List alternative, do not use with non-list alternative attributes/parameters. 
 	:type time_unit_type: str
-	:param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g. variable.list.append(var_list) if var_list=pflow_variable_list.
+	:param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g., variable.list.append(var_list) if var_list=pflow_variable_list.
 	:type list: [pflow_variable_list]
 	"""
 	
@@ -777,13 +780,13 @@ class pflow_variable(object):
 		self._type = type	# hydrostatic, zero_gradient, dirichlet ...(String)
 		
 		# The Following attributes are a stand alone single list w/out lists
-		# (e.g. Rate instead of Rate List)
+		# (e.g., Rate instead of Rate List)
 		self._valuelist = valuelist	# Holds 2 floats - 2nd is optional
 		self._unit = unit	# Possible to overide Parent class? - sorda?
 		
 		# Following attributes are used with lists (eg. Rate Lists instead of Rate)
-		self._time_unit_type = time_unit_type # e.g. 'y'
-		self._data_unit_type = data_unit_type # e.g. 'kg/s'
+		self._time_unit_type = time_unit_type # e.g., 'y'
+		self._data_unit_type = data_unit_type # e.g., 'kg/s'
 		self._list = list	# Holds a list of pflow_variable_lists objects
 		
 	def _get_name(self): return self._name
@@ -842,9 +845,9 @@ class pinitial_condition(object):
 	"""
 	
 	def __init__(self,flow=None,transport=None,region=None):
-		self._flow = flow	# Flow Condition (e.g. initial)
+		self._flow = flow	# Flow Condition (e.g., initial)
 		self._transport = transport
-		self._region = region	# Define region (e.g. west, east, well)
+		self._region = region	# Define region (e.g., west, east, well)
 		
 	def _get_flow(self): return self._flow
 	def _set_flow(self,value): self._flow = value
@@ -861,7 +864,7 @@ class pboundary_condition(object):
 	Multiple observation objects can be created.
 	The BOUNDARY_CONDITION keyword couples conditions specified under the FLOW_CONDITION and/or TRANSPORT_CONDITION keywords to a REGION in the problem domain. The use of this keyword enables the use/reuse of flow and transport conditions and regions within multiple boundary and initial conditions and source/sinks in the input deck.
 	
-	:param name: Name of boundary condition. (e.g. west, east)
+	:param name: Name of boundary condition. (e.g., west, east)
 	:type name: str
 	:param flow: Defines the name of the flow condition to be linked to this boundary condition.
 	:type flow: str
@@ -872,10 +875,10 @@ class pboundary_condition(object):
 	"""
 	
 	def __init__(self,name='',flow='',transport='',region=''):
-		self._name = name	# Name of boundary condition. (e.g. west, east)
-		self._flow = flow	# Flow Condition (e.g. initial)
-		self._transport = transport	# Transport Condition (e.g. river_chemistry)
-		self._region = region	# Define region (e.g. west, east, well)
+		self._name = name	# Name of boundary condition. (e.g., west, east)
+		self._flow = flow	# Flow Condition (e.g., initial)
+		self._transport = transport	# Transport Condition (e.g., river_chemistry)
+		self._region = region	# Define region (e.g., west, east, well)
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
@@ -900,8 +903,8 @@ class psource_sink(object):
 	"""
 	
 	def __init__(self,flow=None,region=None):
-		self._flow = flow	# Flow Condition (e.g. initial)
-		self._region = region	# Define region (e.g. west, east, well)
+		self._flow = flow	# Flow Condition (e.g., initial)
+		self._region = region	# Define region (e.g., west, east, well)
 		
 	def _get_flow(self): return self._flow
 	def _set_flow(self,value): self._flow = value
@@ -986,7 +989,7 @@ class pchemistry(object):
 	:type gas_species_list: [str]
 	:param minerals_list: List of mineral names.
 	:type minerals_list: [str]
-	:param m_kinetics_list: List of pchemistry_m_kinetic objects. Holds kinetics information about a specified mineral name. Works with add function so that m_kinetics_list does not need to be remembered. e.g. dat.add(mineral_kinetic).
+	:param m_kinetics_list: List of pchemistry_m_kinetic objects. Holds kinetics information about a specified mineral name. Works with add function so that m_kinetics_list does not need to be remembered. e.g., dat.add(mineral_kinetic).
 	:type m_kinetics_list: [pchemistry_m_kinetic]
 	:param log_formulation: 
 	:type log_formulation: bool - True or False
@@ -996,7 +999,7 @@ class pchemistry(object):
 	:type activity_coefficients: str
 	:param molal: 
 	:type molal: bool - True or False
-	:param output_list: To print secondary aqueous complex concentrations, either add the names of the secondary species of interest or the keyword 'SECONDARY_SPECIES' for all secondary species to the CHEMISTRY OUTPUT card. e.g. output_list = 'SECONDARY_SPECIES' or output_list = ['CO2(aq), 'PH']. By default, if ALL or MINERALS are listed under CHEMISTRY OUTPUT, the volume fractions and rates of kinetic minerals are printed. To print out the saturation indices of minerals listed under the MINERAL keyword, add the name of the mineral to the OUTPUT specification.
+	:param output_list: To print secondary aqueous complex concentrations, either add the names of the secondary species of interest or the keyword 'SECONDARY_SPECIES' for all secondary species to the CHEMISTRY OUTPUT card. e.g., output_list = 'SECONDARY_SPECIES' or output_list = ['CO2(aq), 'PH']. By default, if ALL or MINERALS are listed under CHEMISTRY OUTPUT, the volume fractions and rates of kinetic minerals are printed. To print out the saturation indices of minerals listed under the MINERAL keyword, add the name of the mineral to the OUTPUT specification.
 	:type output_list: [str]
 
 	"""
@@ -1048,11 +1051,11 @@ class pchemistry(object):
 
 class pchemistry_m_kinetic(object):
 	"""Sub-class for pchemistry. 
-	mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g. dat.add(mineral_kinetic).
+	mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g., dat.add(mineral_kinetic).
 	
 	:param name: Mineral name.
 	:type name: str
-	:param rate_constant_list: Value, Unit of Measurement. e.g. rate_constant_list=[1.e-6, 'mol/m^2-sec']
+	:param rate_constant_list: Value, Unit of Measurement. e.g., rate_constant_list=[1.e-6, 'mol/m^2-sec']
 	:type rate_constant_list: [float, str] 
 	"""
 	
@@ -1083,8 +1086,8 @@ class ptransport(object):
 	
 	def __init__(self, name='', type='', constraint_list_value=[],
 		     constraint_list_type=[]):
-		self._name = name	# e.g. initial, west, east
-		self._type = type	# e.g. dirichlet, zero_gradient
+		self._name = name	# e.g., initial, west, east
+		self._type = type	# e.g., dirichlet, zero_gradient
 		self._constraint_list_value = constraint_list_value
 		self._constraint_list_type = constraint_list_type
 		
@@ -1108,7 +1111,7 @@ class pconstraint(object):
 	:param name: Constraint name.
 	:type name: str
 	:param concentration_list: List of pconstraint_concentration objects.
-	:type concentration_list: [pconstraint_concentration]. Works with add function so that concentration_list does not need to be remembered. e.g. dat.add(concentration). Used for key word CONC or CONCENTRATIONS
+	:type concentration_list: [pconstraint_concentration]. Works with add function so that concentration_list does not need to be remembered. e.g., dat.add(concentration). Used for key word CONC or CONCENTRATIONS
 	:param mineral_list: List of pconstraint_mineral objects. Currently does not work with add function. Used for key word MNRL OR MINERALS.
 	:type mineral_list: [pconstraint_mineral]
 	"""
@@ -1129,7 +1132,7 @@ class pconstraint(object):
 	mineral_list = property(_get_mineral_list, _set_mineral_list)
 		
 class pconstraint_concentration(object):
-	"""Concentration unit, Sub-class for constraint. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Works with add function so that concentration_list in pconstraint does not need to be remembered. e.g. dat.add(concentration) instead of dat.constraint.concentration_list.append(concentration).
+	"""Concentration unit, Sub-class for constraint. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Works with add function so that concentration_list in pconstraint does not need to be remembered. e.g., dat.add(concentration) instead of dat.constraint.concentration_list.append(concentration).
 	
 	:param pspecies: Primary species name for concentration.
 	:type pspecies: str
@@ -1161,7 +1164,7 @@ class pconstraint_concentration(object):
 	element = property(_get_element, _set_element)
     
 class pconstraint_mineral(object):
-	"""Class for mineral in a constraint with vol. fraction and surface area. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add function. pconstraint_mineral can be manually appended to minerals_list in a pconstraint object. e.g. 'constraint.mineral_list.append(mineral)'.
+	"""Class for mineral in a constraint with vol. fraction and surface area. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add function. pconstraint_mineral can be manually appended to minerals_list in a pconstraint object. e.g., 'constraint.mineral_list.append(mineral)'.
 
 	:param name: Mineral name.
 	:type name: str
@@ -1289,17 +1292,29 @@ class pdata(object):
 		''' Plot time-series data from observation files at a given set of observation points.
 
 		:param variable_list: List of the variables to be plotted
+		:type variable_list: [str]
 		:param observation_list: List of observation names to be plotted
+		:type observation_list: [str]
 		:param observation_filenames: List of observation filenames that are to be used for extracting data
+		:type observation_filenames: [str]
 		:param plot_filename: Name of the file to which the plot is saved
+		:type plot_filename: str
 		:param legend_list: List of legend
+		:type legend_list: [str]
 		:param fontsize: size of the legend font
+		:type fontsize: float
 		:param xlabel: label on the x-axis
+		:type xlabel: str
 		:param ylabel: label on the y-axis
+		:type ylabel: str
 		:param xtype: type of plot in the x-direction, e.g., 'log', 'linear', 'symlog'
+		:type xtype: str
 		:param ytype: type of plot in the y-direction, e.g., 'log', 'linear', 'symlog'
+		:type ytype: str
 		:param xrange: limits on the x-axis range, e.g., (0,100)
+		:type xrange: (float,float)
 		:param yrange: limits on the y-axis range, e.g., (0,100)
+		:type yrange: (float,float)
 		'''
 		combined_dict = {}
 		for file in observation_filenames:
@@ -1498,7 +1513,7 @@ class pdata(object):
 		outfile.close()
         
 	def add(self,obj,index='',overwrite=False):	#Adds a new object to the file
-		'''Attach an object associated w/ list (e.g. region) to the data file.
+		'''Attach an object associated w/ list (e.g., region) to the data file.
 		
 		:param obj: Object to be added to the data file.
 		:type obj: object(eg. pregion)
@@ -2707,7 +2722,7 @@ class pdata(object):
 								if tstring2name.lower() == var.name.lower():
 									try:
 										var.valuelist.append(floatD(substring))
-									# If a string (e.g. C for temp.), assign to unit
+									# If a string (e.g., C for temp.), assign to unit
 									except(ValueError):
 										var.unit = substring
 			elif key == 'iphase':

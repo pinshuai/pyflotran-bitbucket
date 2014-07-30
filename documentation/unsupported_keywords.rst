@@ -9,8 +9,6 @@ PFLOTRAN keywords not currently supported by PyFLOTRAN:
 
 * BRINE
 
-* CHECKPOINT
-
 * COMPUTE_STATISTICS
 
 * DATASET
@@ -48,8 +46,6 @@ PFLOTRAN keywords not currently supported by PyFLOTRAN:
 * OVERWRITE_RESTART_TRANSPORT
 
 * PROC
-
-* RESTART
 
 * USE_TOUCH_OPTIONS
 
@@ -103,23 +99,14 @@ Keywords that are supported, but not 100%, listing attributes for keywords that 
 
 * OUTPUT
 	- SCREEN OFF
-	- SCREEN PERIODIC
-	- PERIODIC TIME
-	- PERIODIC TIMESTEP
-	- PERIODIC_OBSERVATION TIME
 	- NO_PRINT_INITIAL
 	- NO_PRINT_FINAL
 	- VOLUME
-	- PERMEABILITY
-	- POROSITY
 	- FLUXES
 
 * FLUID
 	- PHASE
 	- DIFFUSION_ACTIVATION_ENERGY
-
-* SATURATION
-	- RESIDUAL_SATURATION
 
 * OBSERVATION
 	- Only REGION works
@@ -136,7 +123,6 @@ Keywords that are supported, but not 100%, listing attributes for keywords that 
 	- CYCLIC
 	- INTERPOLATION
 	- TIME
-	- DATUM
 	- GRADIENT, GRAD
 	- FLUX, VELOCITY, VEL
 	- SAT, SATURATION

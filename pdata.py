@@ -26,7 +26,7 @@ time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week',
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'flash2', 'thc', 'th no_freezing', 'th freezing', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2', 'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -80,10 +80,10 @@ def _buildWarnings(s):
 	buildWarnings.append(s)
 	
 class puniform_velocity(object):
-	""" Class for uniform velocity card for transport observation. Optional
-with transport problem when not coupling with a flow mode.
+	""" Class for specifiying uniform velocity with transport. Optional
+with transport problem when not coupling with any flow mode. If not specified, assumes diffusion transport only.
 	
-	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit(dist./time) e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
+	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit.  e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
 	:type value_list: [float,float,float,str]
 	"""
 	
@@ -96,7 +96,6 @@ with transport problem when not coupling with a flow mode.
 
 class pmaterial(object):
 	""" Class for defining a material property. 
-	Syntax to instantiate default class object is 'pmaterial()'. 
 	Multiple material property objects can be created.
 	
 	:param id: Unique identifier of material property.
@@ -169,16 +168,14 @@ class ptime(object):
 	""" Class for time. Used to specify final time of simulation, initial timestep size, maximum timestep size (throughout the simulation or a particular instant of time). 
 	Time values and units need to be specified.
 	Acceptable time units are: (s, m, h, d, mo, y). 
-	Syntax to instantiate/create default class object is 'ptime()'. 
-	List length (# of variables assigned to a parameter/attribute) of dtf_lv, dtf_lv_unit, dtf_li, dtf_li_unit should all be equal.
 	
-	:param tf: time final. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
+	:param tf: final tim. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
 	:type tf: [float, str]
 	:param dti: delta (change) time initial a.k.a. initial timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
 	:type dti: [float, str]
 	:param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable specifies time unit. e.g., [50.e0, 'y']
 	:type dtf: [float, str]
-	:param dtf_list: delta (change) time final list a.ka. maximum timestep size. The dtf lists are for multiple max time step entries at specified time intervals. Uses key word 'at'. Input is a list that can have multiple lists appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
+	:param dtf_list: delta (change) time starting at a given time instant.  Input is a list that can have multiple lists appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
 	:type dtf_list: [ [float, str, float, str] ]
 	"""
 	
@@ -277,13 +274,12 @@ class pgrid(object):
 
 
 class pmode(object):
-	""" Class for mode card. Determines the flow mode. 
+	""" Class for specifying flow mode. Available modes include: 
 	Richards (variably saturated porous media); 
-	MPH, MPHASE, FLASH2 (CO_2 + H_2O); 
-	THC (Thermal-Hydrologic-Chemical, in progress); 
-	IMMIS, THS(Immisible).
+	IMMIS, MPHASE, FLASH2 (all involve CO2 + H2O); 
+	TH (freezing/no_freezing) 
 	
-	:param name: Specify mode name. Options include: 'richards', 'mphase', 'mph','flash2', 'thc', 'immis', 'ims', 'ths'.
+	:param name: Specify mode name. Options include: 'richards', 'mphase', 'mph','flash2', 'th', 'immis'
 	:type name: str
 	"""
 
@@ -536,7 +532,7 @@ class pfluid(object):
 	:type diffusion_coefficient: float
 	"""
 	
-	def __init__(self, diffusion_coefficient=None):
+	def __init__(self, diffusion_coefficient=1.e-9):
 		self._diffusion_coefficient = diffusion_coefficient
 		
 	def _get_diffusion_coefficient(self): return self._diffusion_coefficient

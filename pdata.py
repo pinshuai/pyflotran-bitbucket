@@ -8,6 +8,9 @@ import os,time
 import platform
 #from subprocess import Popen, PIPE
 import subprocess
+import matplotlib
+import matplotlib.pyplot as plt
+import itertools as it
 
 from ptool import*
 from pdflt import*
@@ -1282,6 +1285,61 @@ class pdata(object):
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
+	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10,xlabel='',ylabel='',xtype='linear',ytype='linear',xrange=(),yrange=()):
+		''' Plot time-series data from observation files at a given set of observation points.
+
+		:param variable_list: List of the variables to be plotted
+		:param observation_list: List of observation names to be plotted
+		:param observation_filenames: List of observation filenames that are to be used for extracting data
+		:param plot_filename: Name of the file to which the plot is saved
+		:param legend_list: List of legend
+		:param fontsize: size of the legend font
+		:param xlabel: label on the x-axis
+		:param ylabel: label on the y-axis
+		:param xtype: type of plot in the x-direction, e.g., 'log', 'linear', 'symlog'
+		:param ytype: type of plot in the y-direction, e.g., 'log', 'linear', 'symlog'
+		:param xrange: limits on the x-axis range, e.g., (0,100)
+		:param yrange: limits on the y-axis range, e.g., (0,100)
+		'''
+		combined_dict = {}
+		for file in observation_filenames:
+			variable = []
+			var_values_dict = {}
+			f = open(file,'r')
+			title = f.readline()
+			title = title.split(',')
+			for i in title:
+				variable.append(i.strip('"'))
+			data = np.genfromtxt(file,skip_header=1)
+			data = data.T.tolist()
+			var_values_dict = dict(zip(variable,data))
+			combined_dict.update(var_values_dict)	
+
+		for key in combined_dict.keys():
+			if 'Time' in key:
+				time = combined_dict[key]
+		
+		combined_var_obs_list = [variable_list,observation_list]
+		combined_var_obs_list = list(it.product(*combined_var_obs_list))
+		
+		fig = plt.figure()
+		ax = fig.add_subplot(1,1,1)
+		ax.set_xlabel(xlabel)
+		ax.set_ylabel(ylabel)
+		ax.set_xscale(xtype)
+		ax.set_yscale(ytype)
+		if xrange: ax.set_xlim(xrange)
+		if yrange: ax.set_ylim(yrange)
+		lns = []
+		for item in combined_var_obs_list:
+			for key in combined_dict.keys():
+				if item[0] in key and item[1] in key:
+					ln, = ax.plot(time,combined_dict[key])
+					lns.append(ln)
+		ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
+		fig.savefig(plot_filename)
+
+
 	def read(self, filename=''):
 		'''Read a given PFLOTRAN input file.
 	

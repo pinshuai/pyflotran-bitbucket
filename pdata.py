@@ -8,6 +8,9 @@ import os,time
 import platform
 #from subprocess import Popen, PIPE
 import subprocess
+import matplotlib
+import matplotlib.pyplot as plt
+import itertools as it
 
 from ptool import*
 from pdflt import*
@@ -1227,6 +1230,47 @@ class pdata(object):
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
+	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10):
+		''' Plot data from observation files.
+
+		:param variable_list: List of the variables to be plotted
+		:param observation_list: List of observation names to be plotted
+		:param observation_filenames: List of observation filenames that are to be used for extracting data
+		'''
+		combined_dict = {}
+		for file in observation_filenames:
+			variable = []
+			var_values_dict = {}
+			f = open(file,'r')
+			title = f.readline()
+			title = title.split(',')
+			for i in title:
+				variable.append(i.strip('"'))
+			data = np.genfromtxt(file,skip_header=1)
+			data = data.T.tolist()
+			var_values_dict = dict(zip(variable,data))
+			combined_dict.update(var_values_dict)	
+
+		for key in combined_dict.keys():
+			if 'Time' in key:
+				time = combined_dict[key]
+		
+		combined_var_obs_list = [variable_list,observation_list]
+		combined_var_obs_list = list(it.product(*combined_var_obs_list))
+		
+		fig = plt.figure()
+		ax = fig.add_subplot(1,1,1)
+		lns = []
+		for item in combined_var_obs_list:
+			for key in combined_dict.keys():
+				if item[0] in key and item[1] in key:
+					print key
+					ln, = ax.plot(time,combined_dict[key])
+					lns.append(ln)
+		ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)}) 
+		fig.savefig(plot_filename)
+
+
 	def read(self, filename=''):
 		'''Read a given PFLOTRAN input file.
 	

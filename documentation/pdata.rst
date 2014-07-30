@@ -178,3 +178,45 @@ Restart
 
 Attributes
 ^^^^^^^^^^
+
+Chemistry
+------
+.. autoclass:: pdata.pchemistry
+
+Attributes
+^^^^^^^^^^
+
+Chemistry Mineral Kinetic
+------
+.. autoclass:: pdata.pchemistry_m_kinetic
+
+Attributes
+^^^^^^^^^^
+
+Transport Condition
+------
+.. autoclass:: pdata.ptransport
+
+Attributes
+^^^^^^^^^^
+
+Constraint Condition
+------
+.. autoclass:: pdata.pconstraint
+
+Attributes
+^^^^^^^^^^
+
+Constraint Condition Concentration
+------
+.. autoclass:: pdata.pconstraint_concentration
+
+Attributes
+^^^^^^^^^^
+
+Constraint Condition Mineral
+------
+.. autoclass:: pdata.pconstraint_mineral
+
+Attributes
+^^^^^^^^^^

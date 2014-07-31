@@ -291,29 +291,29 @@ class pmode(object):
 	name = property(_get_name, _set_name)
 
 class ptimestepper(object):
-	""" Class for time stepper card. Controls time stepping.
+	""" Class for controling time stepping.
 	
-	:param ts_acceleration: Integer indexing time step acceleration ramp (expert users only) [5]. Timestepper acceleration. e.g., 8
+	:param ts_acceleration: Integer for time step acceleration ramp. 
 	:type ts_acceleration: int
-	:param num_steps_after_cut: Number of time steps after a time step cut that the time step size is held constant [5].
+	:param num_steps_after_cut: Number of time steps after a time step cut that the time step size is held constant. 
 	:type num_steps_after_cut: int
-	:param max_steps: Maximum time step after which the simulation will be terminated [999999].
+	:param max_steps: Maximum time step after which the simulation will be terminated. 
 	:type max_steps: int
-	:param max_ts_cuts: Maximum number of consecutive time step cuts before the simulation is terminated with plot of the current solution printed to a XXX_cut_to_failure.tec file for debugging [16].
+	:param max_ts_cuts: Maximum number of consecutive time step cuts before the simulation is terminated.
 	:type max_ts_cuts: int
-	:param cfl_limiter: The maximum CFL number allowed for transport. Enables Courant (CFL) number lim-iting on the transport time step.
+	:param cfl_limiter: CFL number for transport. 
 	:type cfl_limiter: float
-	:param initialize_to_steady_state: Boolean flag indicating that the simulation is to be run as steady state (Warning: not robust).
+	:param initialize_to_steady_state: Boolean flag to initialize a simulation to steady state 
 	:type initialize_to_steady_state: bool - True or False
-	:param run_as_steady_state: Boolean flag requesting that a steady state solution be computed based on boundary and initial conditions at the beginning of the simulation (Warning: not robust).
+	:param run_as_steady_state: Boolean flag to run a simulation to steady state 
 	:type run_as_steady_state: bool - True or False
-	:param max_pressure_change: Maximum change in pressure for a time step [5.d4 Pa].
+	:param max_pressure_change: Maximum change in pressure for a time step. Default: 5.d4 Pa.
 	:type max_pressure_change: float
-	:param max_temperature_change: Maximum change in temperature for a time step [5 C].
+	:param max_temperature_change: Maximum change in temperature for a time step. Default: 5 C.
 	:type max_temperature_change: float
-	:param max_concentration_change: Maximum change in pressure for a time step [1. mol/L].
+	:param max_concentration_change: Maximum change in pressure for a time step. Default: 1. mol/L.
 	:type max_concentration_change: float
-	:param max_saturation_change: Maximum change in pressure for a time step [0.5].
+	:param max_saturation_change: Maximum change in saturation for a time step. Default: 0.5.
 	:type max_saturation_change: float
 	"""
 	
@@ -366,9 +366,9 @@ class ptimestepper(object):
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
 
 class plsolver(object):
-	""" Class for linear solver card. Multiple linear solver objects can be created.
+	""" Class for specifying linear solver. Multiple linear solver objects can be created one for flow and one for transport.
 	
-	:param name: Specify linear solver to use. Options include: 'tran', 'transport','flow'.
+	:param name: Specify name of the physics for which the linear solver is being defined. Options include: 'tran', 'transport','flow'.
 	:type name: str
 	:param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
 	:type solver: str
@@ -386,23 +386,23 @@ class plsolver(object):
 	solver = property(_get_solver, _set_solver)
 
 class pnsolver(object):
-	""" Class for newton solver card. Multiple newton solver objects can be created.
+	""" Class for newton solver card. Multiple newton solver objects can be created, one for flow and one for transport.
 	
 	:param name: Specify newton solver to use: Options include: 'tran', 'transport', 'tran_solver', 'flow_solver'. Default: 'flow_solver'
 	:type name: str
-	:param atol: 
+	:param atol: Absolute tolerance.
 	:type atol: float
-	:param rtol: 
+	:param rtol: Relative tolerance w.r.t previous iteration. 
 	:type rtol: float
-	:param stol: 
+	:param stol: Relative tolerance of the update w.r.t previous iteration. 
 	:type stol: float
-	:param dtol: 
+	:param dtol: Divergence tolerance.
 	:type dtol: float
-	:param itol: 
+	:param itol: Tolerance compared to infinity norm. 
 	:type itol: float
 	:param max_it: Cuts time step if the number of iterations exceed this value.
 	:type max_it: int
-	:param max_f: 
+	:param max_f: Maximum function evaluations (useful with linesearch methods.)
 	:type max_f: int
 	"""
 
@@ -443,7 +443,7 @@ class pnsolver(object):
 	max_f = property(_get_max_f, _set_max_f)
 	
 class poutput(object):
-	"""Class for output options card.
+	"""Class for dumping simulation output.
 	Acceptable time units (units of measurements) are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
 	
 	:param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats.
@@ -460,15 +460,15 @@ class poutput(object):
 	:type periodic_observation_time: [float, str]
 	:param periodic_observation_timestep: Outputs the results at observation points and mass balance output at specified time steps.
 	:type periodic_observation_timestep: int
-	:param format_list: Specify file format options to use for specifying the snapshop in time file type.. Input is a list of strings. Multiple formats can be specified. File format input options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file named pflotran.h5, 'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file at each output time, 'MAD' - (not supported), 'VTK' - VTK format.
+	:param format_list: Specify the file format for time snapshot of the simulation in time file type. Input is a list of strings. Multiple formats can be specified. File format options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file and xml for unstructured grids,  'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file at each output time, 'VTK' - VTK format.
 	:type format_list: [str]
-	:param permeability: 
+	:param permeability: Turn permeability output  on/off. 
 	:type permeability: bool - True or False
-	:param porosity: 
+	:param porosity: Turn porosity output on/off. 
 	:type porosity: bool - True or False
-	:param velocities: 
+	:param velocities: Turn velocity output on/off. 
 	:type velocities: bool - True or False
-	:param mass_balance: Flag to indicate whether to output the mass balance of the system if this card is activated. It includes global mass balance as well as fluxes at all boundaries for water and chemical species specified for output in the CHEMISTRY card. For the MPHASE mode only global mass balances are provided including supercritical CO_2. Output times are controlled by PERIODIC_OBSERVATION TIMESTEP and TIME, and printout times. Default: False
+	:param mass_balance: Flag to indicate whether to output the mass balance of the system. 
 	:type mass_balance: bool - True or False
 	"""
 	
@@ -526,9 +526,9 @@ class poutput(object):
 	velocities = property(_get_velocities, _set_velocities)
 	
 class pfluid(object):
-	"""Class for fluid properties card.
+	"""Class for specifying fluid properties.
 	
-	:param diffusion_coefficient: Unit of measurement is [m^2/s]. Default: 1.0000000e-09
+	:param diffusion_coefficient: Unit of measurement is [m^2/s]. Default: 1e-09
 	:type diffusion_coefficient: float
 	"""
 	
@@ -540,7 +540,7 @@ class pfluid(object):
 	diffusion_coefficient = property(_get_diffusion_coefficient, _set_diffusion_coefficient)
 	
 class psaturation(object):
-	"""Class for saturation functions
+	"""Class for specifying saturation functions
 	
 	:param name: Saturation function name. e.g., 'sf2'
 	:type name: str

@@ -65,67 +65,67 @@ Region
 .. autoclass:: pdata.pregion
 
 Observation
-------
+-----------
 .. autoclass:: pdata.pobservation
 
 Flow
-------
+----
 .. autoclass:: pdata.pflow
 
 Flow Variable
-------
+-------------
 .. autoclass:: pdata.pflow_variable
 
 Flow Variable List
-------
+------------------
 .. autoclass:: pdata.pflow_variable_list
 
 Initial Condition
-------
+-----------------
 .. autoclass:: pdata.pinitial_condition
 
 Boundary Condition
-------
+------------------
 .. autoclass:: pdata.pboundary_condition
 
 Source Sink
-------
+-----------
 .. autoclass:: pdata.psource_sink
 
 Stratigraphy Coupler
-------
+--------------------
 .. autoclass:: pdata.pstrata
 
 Checkpoint
-------
+----------
 .. autoclass:: pdata.pcheckpoint
 
 Restart
-------
+-------
 .. autoclass:: pdata.prestart
 
 Chemistry
-------
+---------
 .. autoclass:: pdata.pchemistry
 
 Chemistry Mineral Kinetic
-------
+-------------------------
 .. autoclass:: pdata.pchemistry_m_kinetic
 
 Transport Condition
-------
+-------------------
 .. autoclass:: pdata.ptransport
 
 Constraint Condition
-------
+--------------------
 .. autoclass:: pdata.pconstraint
 
 Constraint Condition Concentration
-------
+----------------------------------
 .. autoclass:: pdata.pconstraint_concentration
 
 Constraint Condition Mineral
-------
+----------------------------
 .. autoclass:: pdata.pconstraint_mineral
 
 Methods
@@ -133,4 +133,6 @@ Methods
 .. automethod:: pdata.pdata.read
 .. automethod:: pdata.pdata.write
 .. automethod:: pdata.pdata.run
+.. automethod:: pdata.pdata.add
+.. automethod:: pdata.pdata.delete
 .. automethod:: pdata.pdata.plot_observation

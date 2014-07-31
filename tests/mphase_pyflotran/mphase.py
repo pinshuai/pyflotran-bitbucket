@@ -60,7 +60,6 @@ grid.lower_bounds = [0.e0, 0.e0, 0.e0]
 grid.upper_bounds = [321.e0, 1.e0, 51.e0]
 grid.orign = [0.e0, 0.e0, 0.e0]
 grid.nxyz = [107, 1, 51]
-grid.dxyz = [5, 5, 5]	# Should not write
 grid.gravity =  [0.0, 0.0, -9.8068]	# Should not write
 grid.filename =  ''
 dat.grid = grid

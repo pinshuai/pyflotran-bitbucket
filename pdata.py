@@ -4,7 +4,7 @@ print	# Makes console output a little easier to read
 import numpy as np
 from copy import deepcopy
 from copy import copy
-import os,time
+import os,time,sys
 import platform
 #from subprocess import Popen, PIPE
 import subprocess
@@ -229,7 +229,7 @@ class pgrid(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, type='structured', lower_bounds=[], upper_bounds=[], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
+	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -540,7 +540,7 @@ class pfluid(object):
 	diffusion_coefficient = property(_get_diffusion_coefficient, _set_diffusion_coefficient)
 	
 class psaturation(object):
-	"""Class for specifying saturation functions
+	"""Class for specifying saturation functions.
 	
 	:param name: Saturation function name. e.g., 'sf2'
 	:type name: str
@@ -615,14 +615,13 @@ class psaturation(object):
 	power = property(_get_power, _set_power)
 	
 class pregion(object):
-	"""Class for regions. Multiple region objects can be created.
-	The REGION keyword defines a set of grid cells encompassed by a volume or intersected by a plane or point, or a list of grid cell ids. The REGION name can then be used to link this set of grid cells to material properties, strata, boundary and initial conditions, source sinks, observation points, etc. Although a region may be defined though the use of (I, J, K) indices using the BLOCK keyword, the user is encouraged to define regions either through COORDINATES or lists read in from an HDF5 file in order to minimize the dependence of the input file on grid resolution. In the case of the FILE keyword, a list of grid cell ids is read from an HDF5 file where the region_name defines the HDF5 data set. It should be noted that given a region defined by a plane or point shared by two grid cells (e.g., a plane defining the surface between two grid cells), PFLOTRAN will select the upwind cell(s) as the region. Please note there is currently a minor glitch when using the add function for pregion. A false WARNING may print to console stating a region with name 'user_value' already exists when reading another input deck. This can occur as a result of a region name being used in another key words such as INITIAL_CONDITION. In cases where WARNING messages are produced due to this glitch, it will not affect the outcome of the program and can be ignored. The pdata script is incorrectly reading pregion key words more than once and automatically correcting itself which produces the warning message.
+	"""Class for specifying a PFLOTRAN region. Multiple region objects can be created.
 
-	:param name: Region name. Options include: 'all', 'top', 'west', 'east', 'well'.
+	:param name: Region name. 
 	:type name: str
 	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x1, y1, z1. e.g., [0.e0, 0.e0, 0.e0]
 	:type coordinates_lower: [float]*3
-	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g.,[321.e0, 1.e0,  51.e0]
+	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g., [321.e0, 1.e0,  51.e0]
 	:type coordinates_upper: [float]*3
 	:param face: Defines the face of the grid cell to which boundary conditions are connected. Options include: 'west', 'east', 'north', 'south', 'bottom', 'top'. (structured grids only).
 	:type face: str
@@ -649,11 +648,10 @@ class pregion(object):
 	face = property(_get_face, _set_face)
 	
 class pobservation(object):
-	"""Class for observation card. Multiple observation objects can be created.
-	The OBSERVATION card specifies a location (REGION) at which flow and transport results (e.g., pressure, saturation, flow velocities, solute concentrations, etc.) will be monitored in the output. The user must specify either a region or boundary condition to which the observation object is linked. The velocity keyword toggles on the printing of velocities at a point in space.
+	"""Class for specifying an observation region. Multiple observation objects may be added.
 	Currently, only region is supported in PyFLOTRAN.
 	
-	:param region: Defines the name of the region (usually a point in space) to which the observation point is linked. e.g., 'obs'.
+	:param region: Defines the name of the region to which the observation object is linked.
 	:type region: str
 	"""
 	
@@ -665,10 +663,9 @@ class pobservation(object):
 	region = property(_get_region, _set_region) 
 	
 class pflow(object):
-	"""Class for flow conditions card. There can be multiple flow condition objects.
-	The FLOW_CONDITION keyword specifies scalar or vector data sets to be associated with a given boundary or initial condition. For instance, to specify a hydrostatic boundary condition, the user would specify a condition with a pressure associated with a point in space (i.e. datum) in space and a gradient, both vector quantities. Note that in the case of a hydrostatic boundary condition, the vertical gradient specified in the input deck must be zero in order to enable the hydrostatic pressure calculation. Otherwise, the specified vertical gradient overrides the hydrostatic pressure. Transient pressures, temperatures, concentrations, datums, gradients, etc. are specified using the FILE filename combination for the name of the data set.
+	"""Class for specifying a PFLOTRAN flow condition. There can be multiple flow condition objects.
 	
-	:param name: Options include: 'initial', 'top', 'source'.
+	:param name: Name of the flow condition.  
 	:type name: str
 	:param units_list: Not currently supported.
 	:type units_list: [str]
@@ -680,7 +677,7 @@ class pflow(object):
 	:type data_unit_type: str
 	:param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name' with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both. If both are used, then only the file name will be written to the input deck.
 	:type datum: Multiple [float, float, float] or str.
-	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g. dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
+	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g., dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
 	:type varlist: [pflow_variable]
 
 	"""
@@ -754,13 +751,13 @@ class pflow(object):
 	'''
 	
 class pflow_variable(object):
-	"""Sub-class of pflow for each kind of variable (Includes type and value). There can be multiple pflow_variable objects appended to a single pflow object.
+	"""Sub-class of pflow for each kind of variable (includes type and value) such as pressure, temperature, etc. There can be multiple pflow_variable objects appended to a single pflow object.
 	
-	:param name: Indicates name for keyword TYPE under keyword FLOW_CONDITION. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
+	:param name: Indicates name of the flow variable. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
 	:type name: str
 	:param type: Indicates type that is associated with name under keyword TYPE. Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage'. Options for RATE include: 'mass_rate', 'volumetric_rate', 'scaled_volumetric_rate'. Options for FLUX include: 'dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance', 'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'. Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
 	:type type: str
-	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional.
+	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional and is needed for multiphase simulations.
 	:type valuelist: [float, float]
 	:param unit: Non-list alternative, do not use with list alternative. Specify unit of measurement.
 	:type unit: str
@@ -809,7 +806,7 @@ class pflow_variable(object):
 	
 class pflow_variable_list(object):
 	"""Sub-class of pflow_variable.
-	Used for pflow_variables that are lists instead of standalone. Each of these list objects can hold multiple lines (from an input deck) with each line holding one time_unit_value and a data_unit_value_list that can hold multiple values.
+	Used for pflow_variables that are lists (as function of time) instead of a single value. Each of these list objects can hold multiple lines (from a Python input file) with each line holding one time_unit_value and a data_unit_value_list that can hold multiple values.
 	
 	:param time_unit_value: 
 	:type time_unit_value: float
@@ -830,13 +827,13 @@ class pflow_variable_list(object):
 	data_unit_value_list = property(_get_data_unit_value_list, _set_data_unit_value_list)
 
 class pinitial_condition(object):
-	"""Class for initial condition card - a condition coupler between regions and flow and transport conditions.
+	"""Class for initial condition - a coupler between regions and initial flow and transport conditions.
 	
-	:param flow: Specify condition_name for key word FLOW_CONDITION.
+	:param flow: Specify flow condition name
 	:type flow: str
-	:param transport: Specify condition_name for key word TRANSPORT_CONDITION.
+	:param transport: Specify transport condition name
 	:type transport: str
-	:param region: Specify condition_name for key word REGION.
+	:param region: Specify region to apply the above specified flow and transport conditions as initial conditions.
 	:type region: str
 	"""
 	
@@ -856,9 +853,8 @@ class pinitial_condition(object):
 	region = property(_get_region, _set_region)
 	
 class pboundary_condition(object):
-	"""Class for boundary conditions card - a condition coupler. 
-	Multiple observation objects can be created.
-	The BOUNDARY_CONDITION keyword couples conditions specified under the FLOW_CONDITION and/or TRANSPORT_CONDITION keywords to a REGION in the problem domain. The use of this keyword enables the use/reuse of flow and transport conditions and regions within multiple boundary and initial conditions and source/sinks in the input deck.
+	"""Class for boundary conditions - performs coupling between a region and a flow/transport condition which are to be set as boundary conditions to that region.
+	Multiple objects can be created.
 	
 	:param name: Name of boundary condition. (e.g., west, east)
 	:type name: str
@@ -890,7 +886,7 @@ class pboundary_condition(object):
 	region = property(_get_region, _set_region)
 
 class psource_sink(object):
-	"""Class for source sink card - a condition coupler
+	"""Class for specifying source sink - this is also a condition coupler that links a region to the source sink condition.
 	
 	:param flow: Name of the flow condition the source/sink term is applied to.
 	:type flow: str
@@ -910,7 +906,7 @@ class psource_sink(object):
 	region = property(_get_region, _set_region)
 	
 class pstrata(object):
-	"""Class for stratigraphy couplers card. Multiple stratigraphy couplers can be created. Couples material IDs and/or properties with a region in the problem domain.
+	"""Class for specifying stratigraphy coupler. Multiple stratigraphy couplers can be created. Couples material properties with a region. 
 	
 	:param region: Name of the material property to be associated with a region.
 	:type region: str
@@ -930,26 +926,27 @@ class pstrata(object):
 	material = property(_get_material, _set_material)
 	
 class pcheckpoint(object):
-	"""Class for checkpoint card. 
-	Checkpoint files enable the restart of a simulation at any discrete point in simulation where a checkpoint file has been printed. When the CHECKPOINT card is included in the input deck, checkpoint files are printed every N time steps, where N is the checkpoint frequency, and at the end of the simulation, should the simulation finish or the be shut down properly mid-simulation using the WALL_CLOCK_STOP card. Checkpoint files are named pflotran.chkN, where N is the number of the timestep when the checkpoint file was printed. A file named restart.chk will also be written when PFLOTRAN properly terminates execution. One use of this file is to pick up from where the simulation stopped by increasing the final time. Checkpointing can be used to start from an initial steady-state solution, but note that porosity and permeability are checkpointed as there are scenarios where they can change over time. To override this behavior add: OVERWRITE_RESTART_FLOW_PARAMS to the input file to set porosity/permeability to their read-in values
+	"""Class for specifying checkpoint options. 
 	
-	:param frequency: checkpoint_frequency.
+	:param frequency: Checkpoint dump frequency.
 	:type frequency: int
-	:param overwrite: Currently not supported. Intended to be used with OVERWRITE_RESTART_FLOW_PARAMS.
+	:param overwrite: Intended to be used for the PFLOTRAN keyword OVERWRITE_RESTART_FLOW_PARAMS.
 	:type overwrite: bool - True or False
 	"""
 	
 	def __init__(self, frequency=None, overwrite=False):
 		self._frequency = frequency # int
 		self._overwrite = overwrite # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how to write it.
-		
+
 	def _get_frequency(self): return self._frequency
 	def _set_frequency(self,value): self._frequency = value
 	frequency = property(_get_frequency, _set_frequency)
+	def _get_overwrite(self): return self._overwrite
+	def _set_overwrite(self,value): self._overwrite = value
+	overwrite = property(_get_overwrite, _set_overwrite)
 	
 class prestart(object):
-	"""Class for restart card.
-	The RESTART card defines a checkpoint file from which the current simulation should be restarted. If a time is specified after the file name, the initial simulation time is set to that time. Defines the checkpoint filename to be read in to restart a simulation at the specified time.
+	"""Class for restarting a simulation.
 	
 	:param file_name: Specify file path and name for restart.chk file.
 	:type file_name: str
@@ -975,9 +972,9 @@ class prestart(object):
 	time_unit = property(_get_time_unit, _set_time_unit)
 	
 class pchemistry(object):
-	"""Class for chemistry card. The CHEMISTRY keyword invokes the reactive transport mode and provides input for primary species, secondary species, minerals, gases, colloids and colloid-facilitated transport, and sorption including ion exchange and surface complexation. Mineral reactions are described through a kinetic rate law based on transition state theory and surface complexation reactions may involve equilibrium, kinetic (reversible or irreversible) or a multirate formulation.
-	
-	:param pspecies_list: List of primary species that fully describe the chemical composition of the fluid. The set of primary species must form an independent set of species in terms of which all homogeneous aqueous equilibrium reactions can be expressed.
+	"""Class for specifying chemistry.
+
+ 	:param pspecies_list: List of primary species that fully describe the chemical composition of the fluid. The set of primary species must form an independent set of species in terms of which all homogeneous aqueous equilibrium reactions can be expressed.
 	:type pspecies_list: [str]
 	:param sec_species_list: List of aqueous species in equilibrium with primary species.
 	:type sec_species_list: [str]
@@ -1046,8 +1043,7 @@ class pchemistry(object):
 	output_list = property(_get_output_list, _set_output_list)
 
 class pchemistry_m_kinetic(object):
-	"""Sub-class for pchemistry. 
-	mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g., dat.add(mineral_kinetic).
+	"""Sub-class of pchemistry. Mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g., dat.add(mineral_kinetic).
 	
 	:param name: Mineral name.
 	:type name: str
@@ -1067,8 +1063,8 @@ class pchemistry_m_kinetic(object):
 	rate_constant_list = property(_get_rate_constant_list, _set_rate_constant_list)
 	
 class ptransport(object):
-	"""Class for transport conditions card. Multiple transport objects can be created.
-	Specifies a geochemical solution composition based on various user defined constraints with minerals, gases, pH, charge balance, free ion, and total concentrations.
+	"""Class for specifying a transport condition. Multiple transport objects can be created.
+	Specifies a transport condition based on various user defined constraints with minerals, gases, pH, charge balance, free ion, and total concentrations.
 	
 	:param name: Transport condition name.
 	:type name: str
@@ -1076,7 +1072,7 @@ class ptransport(object):
 	:type type: str
 	:param constraint_list_value: List of constraint values. The position of each value in the list correlates with the position of each type in constraint_list_type.
 	:type constraint_list_value: [float]
-	:param constraint_list_type: List of constraint types. The position of each value in the list correlates with the position of each value in constraint_list_value. Options include: 'initial_constraint', 'inlet_constraint'.
+	:param constraint_list_type: List of constraint types. The position of each value in the list correlates with the position of each value in constraint_list_value. E.g., 'initial_constraint', 'inlet_constraint'.
 	:type constraint_list_type: [str]
 	"""
 	
@@ -1101,8 +1097,7 @@ class ptransport(object):
 	constraint_list_type = property(_get_constraint_list_type, _set_constraint_list_type)
 	
 class pconstraint(object):
-	"""Class for constraints card. Multiple constraint objects can be created.
-	The keyword CONSTRAINT sets up fluid compositions based on various constraint conditions chosen by the user. Use SECONDARY_CONSTRAINT for constraining secondary continual initial concentrations.
+	"""Class for specifying a transport constraint.  Multiple constraint objects can be created.
 
 	:param name: Constraint name.
 	:type name: str
@@ -1136,7 +1131,7 @@ class pconstraint_concentration(object):
 	:type value: float
 	:param constraint: Constraint name for concentration. Options include: 'F', 'FREE', 'T', 'TOTAL', 'TOTAL_SORB', 'P', 'pH', 'L', 'LOG', 'M', 'MINERAL', 'MNRL', 'G', 'GAS', 'SC', 'CONSTRAINT_SUPERCRIT_CO2
 	:type constraint: str
-	:param element: Name of mineral of gas.
+	:param element: Name of mineral or gas.
 	:type element: str
 	"""
 	
@@ -1241,7 +1236,7 @@ class pdata(object):
 			return
 
 	def run(self,input='', num_procs=1, exe=pdflt().pflotran_path):
-		'''Run a pflotran simulation for a given input file.
+		'''Run a pflotran simulation for a given input file with specified number of processors.
 	
 		:param input: Name of input file. 
 		:type input: str
@@ -1354,7 +1349,7 @@ class pdata(object):
 
 
 	def read(self, filename=''):
-		'''Read a given PFLOTRAN input file.
+		'''Read a given PFLOTRAN input file. This method is useful for reading an existing a PFLOTRAN input deck and all the corresponding PyFLOTRAN objects and data structures are autmatically created.
 	
 		:param filename: Name of input file. 
 		:type filename: str
@@ -1432,9 +1427,9 @@ class pdata(object):
 #	line = property(_get_line, _set_line) #: (**)
 	
 	def write(self, filename=''):
-		"""Write pdata object to pflotran input file.
+		"""Write pdata object to PFLOTRAN input file. Does not execute the input file - only writes a corresponding PFLOTRAN input file.
 
-		:param filename: Name of pflotran input file.
+		:param filename: Name of PFLOTRAN input file.
 		:type filename: str
 		"""
 		if filename: self._filename = filename
@@ -1511,17 +1506,27 @@ class pdata(object):
 		outfile.close()
         
 	def add(self,obj,index='',overwrite=False):	#Adds a new object to the file
-		'''Attach an object associated w/ list (e.g., region) to the data file.
+		'''Attach an object associated w/ a list (e.g., pregion) that belongs to a pdata object. 
 		
 		:param obj: Object to be added to the data file.
-		:type obj: object(eg. pregion)
+		:type obj: object(e.g., pregion)
 		:param index: (Optional) Used to find an object that is using a string as an index in a dictionary. Intended for the super class object. (E.g. Index represents flow.name if instance is pflow_variable.) Default if not specified is to use the last super-class object added to pdata.
 		:type index: String
-		:param overwrite: Flag to overwrite macro if already exists for a particular zone.
+		:param overwrite: Flag to overwrite an object if it already exists in a pdata object. 
 		:type overwrite: bool
 		'''
-		
-		# Always make index lower case if it's being used as a string
+	
+		add_checklist = [pmaterial,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,pstrata,ptransport,pconstraint,pconstraint_concentration]
+
+	 	# Check if obj first is an object that belongs to add_checklist
+		checklist_bool = [isinstance(obj,item) for item in add_checklist]
+		if True in checklist_bool:
+			pass	
+		else:
+			print 'pdata.add used incorrectly! Cannot use pdata.add with one of the specificed object.'
+			sys.exit()
+	
+		# Always make index lower case if it is being used as a string
 		if isinstance(index,str): index=index.lower()
 		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
 		if isinstance(obj,pchemistry_m_kinetic): 
@@ -1542,10 +1547,10 @@ class pdata(object):
 			self._add_constraint_concentration(obj,index,overwrite)
 		
 	def delete(self,obj,super_obj=None):	#Deletes an object from the file
-		'''Delete an object that is assigned to a list e.g.(region) from the data file.
+		'''Delete an object that is assigned to a list of objects belong to a pdata object, e.g., pregion. 
 		
 		:param obj: Object to be deleted from the data file. Can be a list of objects.
-		:type obj: object(eg. pregion), list
+		:type obj: Object (e.g., pregion), list
 		'''
 
 		if isinstance(obj,pmaterial): self._delete_prop(obj)
@@ -1744,7 +1749,7 @@ class pdata(object):
 				if (j%5 == 4):
 					outfile.write('   ' + '\\' + '\n')
 			outfile.write('\n')
-		outfile.write('  END\n')
+			outfile.write('  END\n')
 		outfile.write('  ORIGIN' + ' ')
 		for i in range(3):
 			outfile.write(strD(grid.origin[i]) + ' ')

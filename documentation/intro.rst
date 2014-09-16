@@ -89,4 +89,4 @@ Acknowledgements
 ----------------
 
 PyFLOTRAN was partly developed as part of Cory Kitay's undergraduate internship in the Computational Earth Science Group (EES-16) at the Los Alamos National Laboratory in summer 2014. He was supported through U.S. DOE's Student Undergraduate Laboratory Internship (SULI) program and through LANL LDRD project 20140002DR. 
-David Dempsey's guidance and help in developing PyFLOTRAN is highly appreciated. 
+David Dempsey's guidance and help in developing PyFLOTRAN is highly appreciated. The motivation behind PyFLOTRAN has been the cool capabilities that Dempsey developed in PyFEHM (http://pyfehm.lanl.gov).

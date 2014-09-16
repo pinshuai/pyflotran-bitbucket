@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyFLOTRAN'
-copyright = u'2014, Satish Karra, David Dempsey, Cory Kitay'
+copyright = u'2014, Satish Karra, Cory Kitay'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -189,7 +189,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'PyFLOTRAN.tex', u'PyFLOTRAN Documentation',
-   u'Satish Karra, David Dempsey, Cory Kitay', 'manual'),
+   u'Satish Karra, Cory Kitay', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

@@ -11,6 +11,8 @@ import subprocess
 import matplotlib
 import matplotlib.pyplot as plt
 import itertools as it
+from matplotlib import rc
+rc('text',usetex=True)
 
 from ptool import*
 from pdflt import*
@@ -1279,6 +1281,47 @@ class pdata(object):
 		
 	def __repr__(self): return self.filename 	# print to screen when called
 	
+	def plot_data_from_tec(self,direction='X',variable_list=[],tec_filenames=[],legend_list=[],plot_filename='',fontsize=10,xlabel='',ylabel_list=[],xtype='linear',ytype='linear',xrange=(),yrange=(),xfactor=1.0,yfactor=1.0):
+	    
+		for var,ylabel in zip(variable_list,ylabel_list):
+			fig = plt.figure()
+			ax = fig.add_subplot(1,1,1)
+			ax.set_xlabel(xlabel)
+			ax.set_ylabel(ylabel)
+			ax.set_xscale(xtype)
+			ax.set_yscale(ytype)
+			if xrange: ax.set_xlim(xrange)
+			if yrange: ax.set_ylim(yrange)
+			lns = []
+			for file in tec_filenames:
+				variable = []
+				var_values_dict = {}
+				f = open(file,'r')
+				time = f.readline().split('"')[1]
+				title = f.readline()
+				title = title.split(',')
+				for i in title:
+					variable.append(i.strip('"'))
+				data = np.genfromtxt(file,skip_header=3)
+				data = data.T.tolist()
+				var_values_dict = dict(zip(variable,data))
+				for key in var_values_dict.keys():
+					if direction.upper() in key:
+						xval = [val*xfactor for val in var_values_dict[key]]
+					if var in key: 
+						dat = [val*yfactor for val in var_values_dict[key]]					
+						ln, = ax.plot(xval,dat)
+						lns.append(ln)
+			ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
+			if '.pdf' in plot_filename:
+				plot_filename = plot_filename.replace(".pdf","")
+			if ' ' in var:
+				var = var.replace(" ","_")
+			print 'Plotting variable [' + var + '] in [' + direction +'] direction'
+			fig.savefig(plot_filename + '_' + var + '.pdf')
+
+		return 0
+	
 	def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[],plot_filename='',legend_list=[],fontsize=10,xlabel='',ylabel='',xtype='linear',ytype='linear',xrange=(),yrange=(),xfactor=1.0,yfactor=1.0):
 		''' Plot time-series data from observation files at a given set of observation points.
 
@@ -1346,7 +1389,8 @@ class pdata(object):
 					lns.append(ln)
 		ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
 		fig.savefig(plot_filename)
-
+        
+		return 0
 
 	def read(self, filename=''):
 		'''Read a given PFLOTRAN input file. This method is useful for reading an existing a PFLOTRAN input deck and all the corresponding PyFLOTRAN objects and data structures are autmatically created.

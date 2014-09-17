@@ -1601,7 +1601,12 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):	# obji = object index
 				if isinstance(obji,pmaterial): self._delete_prop(obji)
-				
+
+		if isinstance(obj,pchemistry_m_kinetic): self._delete_pchemistry_m_kinetic(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pchemistry_m_kinetic): self._delete_pchemistry_m_kinetic(obji)
+			
 		if isinstance(obj,plsolver): self._delete_lsolver(obj)
 		elif isinstance(obj,list):
 			for obji in copy(obj):
@@ -3386,13 +3391,16 @@ class pdata(object):
 					_buildWarnings(warning)
 					return # exit function
 				else: # Executes if overwrite = True
-					self.delete(self._get_m_kinetic()[m_kinetic.name], chemistry)
+					self.delete(self._get_m_kinetic()[m_kinetic.name])
 					
 		# Add m_kinetic to chemistry (as a sub-class) if that specific 
 		# m_kinetic does not exist in chemistry object
 		if m_kinetic not in chemistry.m_kinetics_list:
 			chemistry.m_kinetics_list.append(m_kinetic)
-			
+
+	def _delete_pchemistry_m_kinetic(self,m_kinetic=pchemistry_m_kinetic()):
+		self._chemistry._m_kinetics_list.remove(m_kinetic)	
+
 	def _write_chemistry(self,outfile):
 		self._header(outfile,headers['chemistry'])
 		c = self.chemistry

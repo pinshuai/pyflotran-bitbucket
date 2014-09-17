@@ -27,7 +27,7 @@ import multiprocessing
 
 ###############################################################
 
-procs = 4
+procs = 2
 rate_realizations = [1.e-6, 1.e-8, 1.e-10, 1e-12]
 realizations = range(1,5)
 
@@ -62,7 +62,7 @@ def simulation(i,rate):
 	mineral_kinetic = pchemistry_m_kinetic()	# new mineral kinetic object
 	mineral_kinetic.name = 'Calcite'
 	mineral_kinetic.rate_constant_list = [rate, 'mol/m^2-sec']
-	dat.add(mineral_kinetic)		# append mineral kinetic object to chemistry object
+	dat.add(mineral_kinetic,overwrite=True)		# append mineral kinetic object to chemistry object
 	#--------------------------------------------------------------
 
 	# set grid

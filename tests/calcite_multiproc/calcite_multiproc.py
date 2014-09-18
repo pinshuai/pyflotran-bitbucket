@@ -109,6 +109,7 @@ def simulation(i,rate):
 	output = poutput()
 	output.time_list = ['y', 5.0, 10.0, 15.0, 20.0]
 	output.format_list.append('tecplot point')
+	output.screen_output = False
 	dat.output = output
 	#--------------------------------------------------------------
 

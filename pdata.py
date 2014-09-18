@@ -452,6 +452,8 @@ class poutput(object):
 	:type time_list: [str, float*]
 	:param print_column_ids: Flag to indicate whether to print column numbers in observation and mass balance output files. Default: False
 	:type print_column_ids: bool - True or False
+	:param screen_output: Turn the screen output on/off.
+	:type screen_periodic: bool 
 	:param screen_periodic: Print to screen every <integer> time steps.
 	:type screen_periodic: int
 	:param periodic_time: 1st variable is value, 2nd variable is time unit.
@@ -475,9 +477,10 @@ class poutput(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, periodic_time=[],periodic_timestep=[], periodic_observation_time=[], periodic_observation_timestep=None, format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
+	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, screen_output=True, periodic_time=[],periodic_timestep=[], periodic_observation_time=[], periodic_observation_timestep=None, format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
 		self._time_list = time_list
 		self._print_column_ids = print_column_ids
+		self._screen_output = screen_output # Bool
 		self._screen_periodic = screen_periodic	# int
 		self._periodic_time = periodic_time	# [float, str]
 		self._periodic_timestep = periodic_timestep # [float, str]
@@ -502,6 +505,9 @@ class poutput(object):
 	def _get_screen_periodic(self): return self._screen_periodic
 	def _set_screen_periodic(self,value): self._screen_periodic = value
 	screen_periodic = property(_get_screen_periodic, _set_screen_periodic)
+	def _get_screen_output(self): return self._screen_output
+	def _set_screen_output(self,value): self._screen_output = value
+	screen_output = property(_get_screen_output, _set_screen_output)
 	def _get_periodic_time(self): return self._periodic_time
 	def _set_periodic_time(self,value): self._periodic_time = value
 	periodic_time = property(_get_periodic_time, _set_periodic_time)
@@ -2391,6 +2397,13 @@ class pdata(object):
 		#if output.periodic_observation_time:
 			#outfile.write('  PERIODIC_OBSERVATION TIME  '+
 					#str(output.periodic_observation_time)+'\n')
+		if not output.screen_output:
+			try: # Error checking to ensure screen_output is Bool.
+				output.screen_output = bool(output.screen_output)
+				outfile.write('  '+'SCREEN OFF'+'\n')
+			except(ValueError):
+				print 'ERROR: output.screen_output: \''+output.screen_output+'\' is not bool.\n'
+
 		if output.screen_periodic:
 			try: # Error checking to ensure screen_periodic is int (integer).
 				output.screen_periodic = int(output.screen_periodic)

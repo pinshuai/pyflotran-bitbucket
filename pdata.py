@@ -24,11 +24,13 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 # Multiple classes/key words - allowed strings
-time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week', 'mo', 'month', 'y']
+time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 
+		      'day', 'w', 'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2', 'th no_freezing', 'th freezing', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2',
+		      'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -44,7 +46,9 @@ saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_C
 permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 
 				       'NMT_EXP', 'PRUESS_1']
 
-# material_property, region, initial_condition, boundary_condition, source_sink, stratigraphy_couplers - manual does not appear to document all valid entries
+# material_property, region, initial_condition, boundary_condition, 
+# source_sink, stratigraphy_couplers - manual does not appear to document 
+# all valid entries
 
 # flow_conditions - allowed strings
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 
@@ -83,9 +87,12 @@ def _buildWarnings(s):
 	
 class puniform_velocity(object):
 	""" Class for specifiying uniform velocity with transport. Optional
-with transport problem when not coupling with any flow mode. If not specified, assumes diffusion transport only.
+	    with transport problem when not coupling with any flow mode. 
+	    If not specified, assumes diffusion transport only.
 	
-	:param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit.  e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
+	:param value_list: List of variables of uniform_velocity.
+	 First 3 variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies unit.
+	  e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
 	:type value_list: [float,float,float,str]
 	"""
 	
@@ -123,7 +130,8 @@ class pmaterial(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, id=None, name='', porosity=None, tortuosity=None, density=None, specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[]):
+	def __init__(self, id=None, name='', porosity=None, tortuosity=None, density=None,
+		     specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[]):
 		self._id = id
 		self._name = name
 		self._porosity = porosity
@@ -167,9 +175,10 @@ class pmaterial(object):
 	permeability = property(_get_permeability, _set_permeability) #: (**)
 
 class ptime(object):
-	""" Class for time. Used to specify final time of simulation, initial timestep size, maximum timestep size (throughout the simulation or a particular instant of time). 
-	Time values and units need to be specified.
-	Acceptable time units are: (s, m, h, d, mo, y). 
+	""" Class for time. Used to specify final time of simulation, 
+	   initial timestep size, maximum timestep size (throughout the 
+	   simulation or a particular instant of time). Time values and 
+	   units need to be specified. Acceptable time units are: (s, m, h, d, mo, y). 
 	
 	:param tf: final tim. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
 	:type tf: [float, str]
@@ -231,7 +240,8 @@ class pgrid(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0], origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
+	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0],
+		     origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -320,7 +330,10 @@ class ptimestepper(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, ts_acceleration=None, num_steps_after_cut=None, max_steps=None, max_ts_cuts=None, cfl_limiter=None, initialize_to_steady_state=False, run_as_steady_state=False, max_pressure_change=None, max_temperature_change=None, max_concentration_change=None, max_saturation_change=None):
+	def __init__(self, ts_acceleration=None, num_steps_after_cut=None, max_steps=None,
+		     max_ts_cuts=None, cfl_limiter=None, initialize_to_steady_state=False,
+		     run_as_steady_state=False, max_pressure_change=None, max_temperature_change=None,
+		     max_concentration_change=None, max_saturation_change=None):
 		self._ts_acceleration = ts_acceleration
 		self._num_steps_after_cut = num_steps_after_cut 
 		self._max_steps = max_steps
@@ -368,9 +381,11 @@ class ptimestepper(object):
 	max_saturation_change = property(_get_max_saturation_change, _set_max_saturation_change)
 
 class plsolver(object):
-	""" Class for specifying linear solver. Multiple linear solver objects can be created one for flow and one for transport.
+	""" Class for specifying linear solver. Multiple linear solver objects
+	    can be created one for flow and one for transport.
 	
-	:param name: Specify name of the physics for which the linear solver is being defined. Options include: 'tran', 'transport','flow'.
+	:param name: Specify name of the physics for which the linear solver is
+	 being defined. Options include: 'tran', 'transport','flow'.
 	:type name: str
 	:param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
 	:type solver: str
@@ -388,9 +403,11 @@ class plsolver(object):
 	solver = property(_get_solver, _set_solver)
 
 class pnsolver(object):
-	""" Class for newton solver card. Multiple newton solver objects can be created, one for flow and one for transport.
+	""" Class for newton solver card. Multiple newton solver objects 
+	    can be created, one for flow and one for transport.
 	
-	:param name: Specify newton solver to use: Options include: 'tran', 'transport', 'tran_solver', 'flow_solver'. Default: 'flow_solver'
+	:param name: Specify newton solver to use: Options include: 'tran',
+	 'transport', 'tran_solver', 'flow_solver'. Default: 'flow_solver'
 	:type name: str
 	:param atol: Absolute tolerance.
 	:type atol: float
@@ -450,7 +467,8 @@ class poutput(object):
 	
 	:param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats.
 	:type time_list: [str, float*]
-	:param print_column_ids: Flag to indicate whether to print column numbers in observation and mass balance output files. Default: False
+	:param print_column_ids: Flag to indicate whether to print column numbers in observation
+	 and mass balance output files. Default: False
 	:type print_column_ids: bool - True or False
 	:param screen_output: Turn the screen output on/off.
 	:type screen_periodic: bool 
@@ -460,11 +478,18 @@ class poutput(object):
 	:type periodic_time: [float, str]
 	:param periodic_timestep: 1st variable is value, 2nd variable is time unit.
 	:type periodic_timestep: [float, str]
-	:param periodic_observation_time: Output the results at observation points and mass balance output at specified output time. 1st variable is value, 2nd variable is time unit.
+	:param periodic_observation_time: Output the results at observation points and mass balance
+	 output at specified output time. 1st variable is value, 2nd variable is time unit.
 	:type periodic_observation_time: [float, str]
-	:param periodic_observation_timestep: Outputs the results at observation points and mass balance output at specified time steps.
+	:param periodic_observation_timestep: Outputs the results at observation points and mass 
+	balance output at specified time steps.
 	:type periodic_observation_timestep: int
-	:param format_list: Specify the file format for time snapshot of the simulation in time file type. Input is a list of strings. Multiple formats can be specified. File format options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file and xml for unstructured grids,  'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file at each output time, 'VTK' - VTK format.
+	:param format_list: Specify the file format for time snapshot of the simulation in
+	 time file type. Input is a list of strings. Multiple formats can be specified. 
+	 File format options include: 'TECPLOT BLOCK' - TecPlot block format, 'TECPLOT POINT' - 
+	 TecPlot point format (requires a single processor), 'HDF5' - produces single HDF5 file
+	 and xml for unstructured grids,  'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file
+	 at each output time, 'VTK' - VTK format.
 	:type format_list: [str]
 	:param permeability: Turn permeability output  on/off. 
 	:type permeability: bool - True or False
@@ -477,7 +502,10 @@ class poutput(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, screen_output=True, periodic_time=[],periodic_timestep=[], periodic_observation_time=[], periodic_observation_timestep=None, format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
+	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, 
+		     screen_output=True, periodic_time=[],periodic_timestep=[],
+		     periodic_observation_time=[], periodic_observation_timestep=None, 
+		     format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
 		self._time_list = time_list
 		self._print_column_ids = print_column_ids
 		self._screen_output = screen_output # Bool
@@ -554,7 +582,8 @@ class psaturation(object):
 	:type name: str
 	:param permeability_function_type: Options include: 'VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 'NMT_EXP', 'PRUESS_1'.
 	:type permeability_function_type: str
-	:param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1'.
+	:param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY',
+	 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1'.
 	:type saturation_function_type: str
 	:param residual_saturation: MODES: RICHARDS, TH, THC
 	:type residual_saturation: float
@@ -575,7 +604,10 @@ class psaturation(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, name='', permeability_function_type=None, saturation_function_type=None, residual_saturation=None, residual_saturation_liquid=None, residual_saturation_gas=None, a_lambda=None, alpha=None, max_capillary_pressure=None, betac=None, power=None):
+	def __init__(self, name='', permeability_function_type=None, saturation_function_type=None,
+		     residual_saturation=None, residual_saturation_liquid=None,
+		     residual_saturation_gas=None, a_lambda=None, alpha=None, 
+		     max_capillary_pressure=None, betac=None, power=None):
 		self._name = name
 		self._permeability_function_type = permeability_function_type
 		self._saturation_function_type = saturation_function_type
@@ -627,11 +659,14 @@ class pregion(object):
 
 	:param name: Region name. 
 	:type name: str
-	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x1, y1, z1. e.g., [0.e0, 0.e0, 0.e0]
+	:param coordinates_lower: Lower/minimum 3D coordinates for defining a volumetric, 
+	 planar, or point region between two points in space in order of x1, y1, z1. e.g., [0.e0, 0.e0, 0.e0]
 	:type coordinates_lower: [float]*3
-	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, planar, or point region between two points in space in order of x2, y2, z2. e.g., [321.e0, 1.e0,  51.e0]
+	:param coordinates_upper: Upper/maximum 3D coordinates for defining a volumetric, 
+	 planar, or point region between two points in space in order of x2, y2, z2. e.g., [321.e0, 1.e0,  51.e0]
 	:type coordinates_upper: [float]*3
-	:param face: Defines the face of the grid cell to which boundary conditions are connected. Options include: 'west', 'east', 'north', 'south', 'bottom', 'top'. (structured grids only).
+	:param face: Defines the face of the grid cell to which boundary conditions are connected.
+	 Options include: 'west', 'east', 'north', 'south', 'bottom', 'top'. (structured grids only).
 	:type face: str
 	"""
 	
@@ -683,9 +718,16 @@ class pflow(object):
 	:type sync_timestep_with_update: bool - True or False
 	:param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
 	:type data_unit_type: str
-	:param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name' with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both. If both are used, then only the file name will be written to the input deck.
+	:param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name' 
+	 with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both.
+	 If both are used, then only the file name will be written to the input deck.
 	:type datum: Multiple [float, float, float] or str.
-	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow. It is recommended to use dat.add(obj=pflow_variable) for easy appending. Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to specify pflow object to add pflow_variable to. If no pflow object is specified, pflow_variable will be appended to the last pflow object appended to pdata. E.g., dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
+	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow.
+	 It is recommended to use dat.add(obj=pflow_variable) for easy appending. 
+	 Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to 
+	 specify pflow object to add pflow_variable to. If no pflow object is specified, 
+	 pflow_variable will be appended to the last pflow object appended to pdata.
+	 E.g., dat.add(variable, 'initial') if variable = pflow_variable and pflow.name='initial'.
 	:type varlist: [pflow_variable]
 
 	"""
@@ -759,11 +801,20 @@ class pflow(object):
 	'''
 	
 class pflow_variable(object):
-	"""Sub-class of pflow for each kind of variable (includes type and value) such as pressure, temperature, etc. There can be multiple pflow_variable objects appended to a single pflow object.
+	"""Sub-class of pflow for each kind of variable (includes type and value) such as
+ 	   pressure, temperature, etc. There can be multiple pflow_variable objects appended 
+	   to a single pflow object.
 	
 	:param name: Indicates name of the flow variable. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
 	:type name: str
-	:param type: Indicates type that is associated with name under keyword TYPE. Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage'. Options for RATE include: 'mass_rate', 'volumetric_rate', 'scaled_volumetric_rate'. Options for FLUX include: 'dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance', 'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'. Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'. Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
+	:param type: Indicates type that is associated with name under keyword TYPE.
+	 Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance',
+	 'seepage'. Options for RATE include: 'mass_rate', 'volumetric_rate', 'scaled_volumetric_rate'.
+	 Options for FLUX include: 'dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance', 
+	 'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'. 
+  	 Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'. 
+	 Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'.
+ 	 Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
 	:type type: str
 	:param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional and is needed for multiphase simulations.
 	:type valuelist: [float, float]

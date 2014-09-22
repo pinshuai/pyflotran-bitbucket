@@ -13,8 +13,9 @@ Contents:
 
    intro 
    pdata
-   tutorials
    unsupported_keywords
+..   tutorials
+ 
 
 Indices and tables
 ==================

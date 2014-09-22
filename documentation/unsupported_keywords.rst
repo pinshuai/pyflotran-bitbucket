@@ -98,7 +98,6 @@ Keywords that are supported, but not 100%, listing attributes for keywords that 
 	- MAX_NORM
 
 * OUTPUT
-	- SCREEN OFF
 	- NO_PRINT_INITIAL
 	- NO_PRINT_FINAL
 	- VOLUME

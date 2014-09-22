@@ -1,5 +1,15 @@
 """ Class for pflotran data """
-print	# Makes console output a little easier to read
+
+__author__ = "Satish Karra, Cory Kitay"
+__version__ = "1.0.0"
+__maintainer__ = "Satish Karra"
+__email__ = "satkarra@lanl.gov"
+
+print('=========================================')
+print('PyFLOTRAN ' + __version__)	# Makes console output a little easier to read
+print('Authors: ' + __author__)
+print('Contact: ' + __email__ + ' (' + __maintainer__ + ')') 
+print('=========================================')
 
 import numpy as np
 from copy import deepcopy

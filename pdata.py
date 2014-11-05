@@ -1376,7 +1376,9 @@ class pdata(object):
 					if direction.upper() in key:
 						xval = [val*xfactor for val in var_values_dict[key]]
 					if var in key: 
-						dat = [val*yfactor for val in var_values_dict[key]]					
+						dat = [val*yfactor for val in var_values_dict[key]]				
+					else:
+						print 'Variable ' + var + ' not found in the tec files.'	
 				ln, = ax.plot(xval,dat)
 				lns.append(ln)
 			ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 

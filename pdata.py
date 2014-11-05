@@ -1377,8 +1377,8 @@ class pdata(object):
 						xval = [val*xfactor for val in var_values_dict[key]]
 					if var in key: 
 						dat = [val*yfactor for val in var_values_dict[key]]					
-						ln, = ax.plot(xval,dat)
-						lns.append(ln)
+				ln, = ax.plot(xval,dat)
+				lns.append(ln)
 			ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
 			if '.pdf' in plot_filename:
 				plot_filename = plot_filename.replace(".pdf","")

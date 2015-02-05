@@ -17,6 +17,7 @@ from copy import copy
 import os,time,sys
 import platform
 #from subprocess import Popen, PIPE
+import pudb
 import subprocess
 import matplotlib
 import matplotlib.pyplot as plt
@@ -77,12 +78,12 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
 				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
-cards = ['co2_database','uniform_velocity','mode','checkpoint','restart','chemistry','grid',
-		'timestepper','material_property','time','linear_solver','newton_solver',
+cards = ['co2_database','uniform_velocity','mode','checkpoint','restart', 'dataset','chemistry','grid',  
+		'timestepper', 'material_property','time','linear_solver','newton_solver',
 		'output','fluid_property','saturation_function','region','observation',
 		'flow_condition','transport_condition','initial_condition',
 		'boundary_condition','source_sink','strata','constraint']
-headers = ['co2 database path','uniform velocity','mode','checkpoint','restart','chemistry','grid',
+headers = ['co2 database path','uniform velocity','mode','checkpoint','restart', 'dataset', 'chemistry','grid',
 	   'time stepping','material properties','time','linear solver','newton solver','output',
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
@@ -1040,6 +1041,50 @@ class prestart(object):
 	def _set_time_unit(self,value): self._time_unit = value
 	time_unit = property(_get_time_unit, _set_time_unit)
 	
+class pdataset(object):
+	"""Class for incorporating data within a model.
+	:param dataset_name: Opens the card block with the name of the data set in the string. I name is not given the NAME entry is required.
+	:type dataset_name: str
+	:param dataset_mapped_name: Adds the MAPPED flag to the DATASET and allows for the dataset to be named.
+	:type dataset_name: str
+	:param name: Name of the data set if not included with DATASET card. Note: this string overwrites the name specified with DATASET
+	:type name: str
+	:param file_name: Name of the file containing the data
+	:type file_name: str
+	:param hdf5_dataset_name: Name of the group within the hdf5 file where the data resides
+	:type hdf5_dataset_name: str
+	:param hdf5_dataset_name: Name of the group within the hdf5 file where the data resides
+	:type hdf5_dataset_name: str
+	"""
+	
+	def __init__(self, dataset_name='', dataset_mapped_name='',name='', file_name='', hdf5_dataset_name='', map_hdf5_dataset_name=''):
+		
+		self._dataset_name = dataset_name # name of dataset
+		self._dataset_mapped_name = dataset_mapped_name
+		self._name = name	# name of dataset (overwrites dataset_name)
+		self._file_name = file_name	# name of file containing the data
+		self._hdf5_dataset_name = hdf5_dataset_name	# name of hdf5 group
+		self._map_hdf5_dataset_name = map_hdf5_dataset_name
+
+	def _get_dataset_name(self): return self._dataset_name
+	def _set_dataset_name(self,value): self._dataset_name = value
+	dataset_name = property(_get_dataset_name, _set_dataset_name)
+	def _get_dataset_mapped_name(self): return self._dataset_mapped_name
+	def _set_dataset_mapped_name(self,value): self._dataset_mapped_name = value
+	dataset_mapped_name = property(_get_dataset_mapped_name, _set_dataset_mapped_name)
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_file_name(self): return self._file_name
+	def _set_file_name(self,value): self._file_name = value
+	file_name = property(_get_file_name, _set_file_name)	
+	def _get_hdf5_dataset_name(self): return self._hdf5_dataset_name
+	def _set_hdf5_dataset_name(self,value): self._hdf5_dataset_name = value
+	hdf5_dataset_name = property(_get_hdf5_dataset_name, _set_hdf5_dataset_name)
+	def _get_map_hdf5_dataset_name(self): return self._map_hdf5_dataset_name
+	def _set_map_hdf5_dataset_name(self,value): self._map_hdf5_dataset_name = value
+	map_hdf5_dataset_name = property(_get_map_hdf5_dataset_name, _set_map_hdf5_dataset_name)
+
 class pchemistry(object):
 	"""Class for specifying chemistry.
 
@@ -1263,6 +1308,7 @@ class pdata(object):
 		self._mode = pmode()
 		self._checkpoint = pcheckpoint()
 		self._restart = prestart()
+		self._dataset = pdataset()
 		self._chemistry = None
 		self._grid = pgrid()
 		self._timestepper = None
@@ -1473,6 +1519,7 @@ class pdata(object):
 				 self._read_mode,
 				 self._read_checkpoint,
 				 self._read_restart,
+				 self._read_dataset,
 				 self._read_chemistry,
 				 self._read_grid,
 				 self._read_timestepper,
@@ -1517,7 +1564,7 @@ class pdata(object):
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
-					if card in ['co2_database','checkpoint','restart','material_property',
+					if card in ['co2_database','checkpoint','restart','dataset','material_property',
 					 'mode','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
@@ -1559,6 +1606,9 @@ class pdata(object):
 		
 		if self.restart.file_name: self._write_restart(outfile)
 		else: print 'info: restart not detected\n'
+
+		if self.dataset.name: self._write_dataset(outfile)
+		else: print 'info: dataset not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'info: chemistry not detected\n'
@@ -2762,26 +2812,25 @@ class pdata(object):
 			if observation.region:
 				outfile.write('  REGION '+observation.region.lower()+'\n')
 			outfile.write('END\n\n')
-				
-	def _read_flow(self,infile,line):
+
+	def _read_flow(self,infile,line):		
 		flow = pflow()
 		flow.datum = []
-		flow.varlist = []
-		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
-		
+		flow.varlist = []	
+		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.	
 		keepReading = True
 		isValid = False # Used so that entries outside flow conditions are ignored
 		end_count = 0
-		total_end_count = 1
+		total_end_count = 1	
 		while keepReading:	# Read through all cards
+
 			line = infile.readline()	# get next line
 			key = line.strip().split()[0].lower()	# take first keyword
 			if key == 'type':
 				total_end_count = 2 # Basically ensures that both read ifs for
 						    # the varlist will execute 
 						    # This # indicates how many time a / or 'end' 
-						    # can be read before loop terminates.
-				
+						    # can be read before loop terminates.	
 			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
 				if end_count == 0:
 					'''
@@ -2795,11 +2844,9 @@ class pdata(object):
 					var.name = key
 					var.type = line.strip().split()[-1].lower()
 					var.valuelist = []
-					var.list = []
-					
+					var.list = []	
 					isValid = True	# Indicates the entries read here should be written so that entries outside flow conditions are ignored.
 					tstring = line.split()[0:] # Convert string into list
-					
 					flow.varlist.append(var)
 								
 				elif end_count == 1:			
@@ -2808,8 +2855,7 @@ class pdata(object):
 					tstring2name = line.strip().split()[0]	# Assigns the 1st word on a line
 					tstring2 = line.split()[1:] 	# Assigns the rest of the line
 					# #2 used because this is the 2nd reading of the variables
-					
-					# Deterine if variable is a list or stand-alone
+					# Determine if variable is a list or stand-alone
 					if tstring2[0].lower() == 'list': # Executes only if 2nd word on line == 'list'
 						
 						# for each list in a pflow_variable object, check all
@@ -3013,22 +3059,22 @@ class pdata(object):
 			
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
+
 			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
 			
 			if flow.sync_timestep_with_update:
 				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
 				
-			if flow.datum:	# error-checking not yet added
-				
+			if flow.datum:	# error-checking not yet added	
 				outfile.write('  DATUM')
 				
 				if isinstance(flow.datum, str):
-					outfile.write('\n    FILE ')
+					outfile.write(' FILE ')
 					outfile.write(flow.datum)
 				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
 					# write out d_dx, d_dy, d_dz
 					for line in flow.datum:
-						outfile.write('\n    ')
+						outfile.write(' ')
 						outfile.write(strD(line[0])+' ')
 						outfile.write(strD(line[1])+' ')
 						outfile.write(strD(line[2]))
@@ -3056,17 +3102,24 @@ class pdata(object):
 				
 			# variable name and values from lists along with units go here
 			i = 0
+
 			while i< len(flow.varlist):
 				# Write if using non-list format (Single line)
 				if flow.varlist[i].valuelist:	
-					outfile.write('    ' + flow.varlist[i].name.upper())
-					j = 0
-					while j < len(flow.varlist[i].valuelist):
-						try:
+					outfile.write('    ' + flow.varlist[i].name.upper())	
+#GDL - Added ability to print DATASET as a string 
+					if isinstance(flow.varlist[i].valuelist, str):
+				        	 outfile.write(' DATASET '+ flow.varlist[i].valuelist)
+					else:
+				        	j = 0	
+						while j < len(flow.varlist[i].valuelist):
 							outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
-						except:
-							print 'error: writing flow.varlist should only contain floats, not strings'
-						j += 1
+					#	try:
+					#		outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
+					#	except:
+					#		outfile.write(' DATASET ' + (flow.varlist[i].valuelist[j]))
+						
+							j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
 						outfile.write(' ' + flow.varlist[i].unit.upper())
@@ -3110,7 +3163,7 @@ class pdata(object):
 		# Create an empty initial condition and assign the values read in
 		new_initial_condition = pinitial_condition(np_flow,np_transport,np_region)
 		self._initial_condition = new_initial_condition
-		
+
 	def _write_initial_condition(self,outfile):
 		self._header(outfile,headers['initial_condition'])
 		initial_condition = self.initial_condition
@@ -3358,7 +3411,61 @@ class pdata(object):
 			outfile.write(restart.time_unit)
 			
 		outfile.write('\n\n')
+# GDL - Added dataset card 		
+	def _read_dataset(self, infile, line):
+		dataset = pdataset()	 
+                data_dataset_name = dataset.dataset_name
+		data_dataset_mapped_name = dataset.dataset_mapped_name
+                data_name = dataset.name 
+                data_file_name = dataset.file_name
+                data_hdf5_dataset_name = dataset.hdf5_dataset_name
+		data_map_hdf5_dataset_name = dataset.map_hdf5_dataset_name
+                keepReading = True
+                while keepReading:      # Read through all cards
+                        line = infile.readline()        # get next line
+                        key = line.strip().split()[0]   # take first  key word
+
+                        if key == 'dataset_name':
+                                data_dataset_name = line.split()[-1]
+                        elif key == 'dataset_mapped_name':
+                                data_dataset_mapped_name = line.split()[-1]
+                        elif key == 'name':
+                                data_name = line.split()[-1]
+                        elif key == 'file_name':
+                                data_file_name = line.split()[-1]
+                        elif key == 'hdf5_dataset_name':
+                                data_hdf5_dataset_name = line.split()[-1]
+                        elif key == 'map_hdf5_dataset_name':
+                                data_map_hdf5_dataset_name = line.split()[-1]
+                        elif key in ['/','end']: keepReading = False
+
+                # Create an empty dataset and assign the values read in
+                new_dataset = pdataset(data_dataset_name,data_dataset_mapped_name, data_name,data_file_name, data_hdf5_dataset_name, data_map_hdf5_dataset_name)
+                self._dataset = new_dataset
 		
+	def _write_dataset(self, outfile):
+		self._header(outfile,headers['dataset'])
+		dataset = self.dataset
+        
+                # Write out dataset variables
+                if dataset.dataset_name:
+                        outfile.write('DATASET ' + dataset.dataset_name + '\n')
+               
+ 		if dataset.dataset_mapped_name:
+                        outfile.write('DATASET MAPPED ' + dataset.dataset_mapped_name + '\n')
+		if dataset.dataset_name and dataset.dataset_mapped_name:
+			print 'ERROR: Cannot use both DATASET and DATASET MAPPED'
+                if dataset.name:
+                        outfile.write('  NAME '+dataset.name+'\n')
+
+                if dataset.file_name:
+                        outfile.write('  FILENAME ' + dataset.file_name + '\n')
+                if dataset.hdf5_dataset_name:
+			outfile.write('  HDF5_DATASET_NAME ' + dataset.hdf5_dataset_name + '\n')
+                if dataset.map_hdf5_dataset_name:
+			outfile.write('  MAP_HDF5_DATASET_NAME ' + dataset.map_hdf5_dataset_name + '\n')
+                outfile.write('END\n\n')
+       
 	def _read_chemistry(self, infile):
 		chem = pchemistry()
 		
@@ -3889,6 +3996,10 @@ class pdata(object):
 	def _set_restart(self, object): self._restart = object
 	restart = property(_get_restart, _set_restart) #: (**)
 	
+        def _get_dataset(self): return self._dataset
+	def _set_dataset(self, object): self._dataset = object
+	dataset = property(_get_dataset, _set_dataset) #: (**)
+	
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object
 	chemistry = property(_get_chemistry, _set_chemistry) #: (**)
@@ -3914,4 +4025,4 @@ class pdata(object):
 	
 	def _get_constraint_concentration(self, constraint=pconstraint()):
 		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
-	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies
+	

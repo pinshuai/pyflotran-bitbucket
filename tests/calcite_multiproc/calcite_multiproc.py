@@ -8,7 +8,7 @@ import sys,os
 try:
   pyflotran_dir = os.environ['PYFLOTRAN_DIR']
 except KeyError:
-  print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+  print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
 sys.path.append(pyflotran_dir)
 from pdata import*

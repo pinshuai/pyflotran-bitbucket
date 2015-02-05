@@ -1,6 +1,13 @@
 import sys
 sys.path.append('../../.')
 from pdata import*
+import os
+try:
+  pflotran_dir = os.environ['PFLOTRAN_DIR']
+except KeyError:
+  print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pflotran_dir + '/src/python')
 
 
 print '\nTEST EXECUTED\n'	# console header
@@ -26,7 +33,7 @@ dat.uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
 c = pchemistry()
 c.pspecies_list = ['A(aq)']
 c.molal = True
-c.output_list = ['All']
+c.output_list = ['All','Free_ion']
 dat.chemistry = c
 #--------------------------------------------------------------
 
@@ -261,4 +268,4 @@ dat.add(concentration,constraint)		# assign_concentration - alternative
 #dat.write('tracer_1D.in')
 
 # Write to File
-dat.run(input='tracer_1D.in',exe='/home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/src/pflotran/pflotran')
+dat.run(input='tracer_1D.in',exe=pflotran_dir + '/src/pflotran/pflotran')

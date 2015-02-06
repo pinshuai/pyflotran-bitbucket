@@ -2,6 +2,16 @@
 # S. Karra/P.C. Lichtner
 # PFLOTRAN shortcourse
 
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_TRANSPORT transport
+    /
+  /
+END
+
+SUBSURFACE
+
 UNIFORM_VELOCITY 14.4d0 0.d0 0.d0 m/yr
 
 #=========================== chemistry ========================================
@@ -194,3 +204,4 @@ CONSTRAINT east
   /
 /
 
+END_SUBSURFACE

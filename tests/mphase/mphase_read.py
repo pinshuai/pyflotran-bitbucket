@@ -16,6 +16,7 @@ dat = pdata('mphase.in')
 # Test write
 #dat.write('mphase2.in')
 
+dat.co2_database = pflotran_dir + '/database/co2data0.dat'
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.run(input='mphase2.in',exe=pflotran_exe)

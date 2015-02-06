@@ -1615,15 +1615,17 @@ class pdata(object):
 		if filename: self._filename = filename
 		outfile = open(self.filename,'w')
 		
-		# Presumes uniform_velocity.value_list is required
-		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
-		
 		# Presumes simulation.simulation_type is required
 		if self.simulation.simulation_type: self._write_simulation(outfile)
-		else: print 'ERROR: simulation is required, it is currently reading as empty\n'
+		else: 
+			print 'ERROR: simulation is required, it is currently reading as empty\n'
+			return
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_begin(outfile)
+
+		# Presumes uniform_velocity.value_list is required
+		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 
 		if self.co2_database: self._write_co2_database(outfile)
 		
@@ -1634,7 +1636,7 @@ class pdata(object):
 		else: print 'info: restart not detected\n'
 
 		if self.dataset.dataset_name or self.dataset.name: self._write_dataset(outfile)
-		else: print 'ERROR: dataset name not detected\n'
+		else: print 'info: dataset name not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'info: chemistry not detected\n'
@@ -1848,8 +1850,8 @@ class pdata(object):
                         elif key == 'subsurface_transport':
 				simulation.subsurface_transport = line.split()[-1] 
                         elif key == 'mode':
-				simulation.mode = line.split()[-1]                                
-			elif key in ['/','end']: keepReading = Falise
+				simulation.mode = line.split()[-1].lower()                                
+			elif key in ['/','end']: keepReading = False
 
 		self._simulation = simulation                               
                               
@@ -1866,6 +1868,7 @@ class pdata(object):
 		if simulation.subsurface_flow and simulation.subsurface_transport:
                         outfile.write('  PROCESS_MODELS' +'\n')		
                         outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n')
+			print simulation.mode
 			if simulation.mode in mode_names_allowed:		
 	                        outfile.write('      MODE '+ simulation.mode +'\n')		
                         else:

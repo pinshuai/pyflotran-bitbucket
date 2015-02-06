@@ -19,4 +19,5 @@ dat = pdata('calcite_tran_only.in')
 #dat.write('calcite_tran_only_2.in')
 
 # Write to file and execute that input file
+dat.chemistry.database = pflotran_dir + '/database/hanford.dat'
 dat.run(input='calcite_tran_only_2.in',exe=pflotran_exe)

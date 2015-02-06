@@ -1,4 +1,13 @@
-MODE MPHASE
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_FLOW flow
+      MODE MPHASE 
+    /
+  /
+END
+
+SUBSURFACE
 
 CO2_DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat
 
@@ -245,3 +254,5 @@ STRATA
 REGION all
 MATERIAL soil1
 END
+
+END_SUBSURFACE

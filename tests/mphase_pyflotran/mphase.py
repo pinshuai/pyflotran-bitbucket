@@ -25,12 +25,15 @@ Some classes (when set to None at the initializer of pdata) need to be instantia
 #--------------------------------------------------------------
 dat = pdata('')
 #--------------------------------------------------------------
-
-# set mode
+#set simulation
 #--------------------------------------------------------------
-m = pmode()
-m.name = 'mphase'
-dat.mode = m
+simulation = psimulation()
+simulation.simulation_type = 'subsurface'
+simulation.subsurface_flow = 'flow'
+simulation.mode = 'mphase'
+dat.simulation = simulation
+
+
 #--------------------------------------------------------------
 
 # set co2 database
@@ -114,16 +117,6 @@ newton_solver.max_it = 25
 newton_solver.max_f = 100
 dat.add(newton_solver)
 
-newton_solver = pnsolver('')
-newton_solver.name = 'TRAN'
-newton_solver.atol = 1e-12
-newton_solver.rtol = 1e-12
-newton_solver.stol = 1e-30
-newton_solver.dtol = 1e15
-newton_solver.itol = 1e-8
-newton_solver.max_it = 25
-newton_solver.max_f = 100
-dat.add(newton_solver)
 #--------------------------------------------------------------
 
 # set output
@@ -211,7 +204,7 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
-#flow.datum.append([3., 5., 2.])	 # testing - not tested with PFLOTRAN
+flow.datum.append([3., 5., 2.])	 # testing - not tested with PFLOTRAN
 #flow.datum.append([2., 1., 6.])	 # testing - not tested with PFLOTRAN
 #flow.datum = 'file_name' 		 # testing - not tested with PFLOTRAN
 #flow.varlist = [] 	# Assigning for this done below

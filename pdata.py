@@ -329,7 +329,9 @@ class psimulation(object):
 
 class ptimestepper(object):
 	""" Class for controling time stepping.
-	
+        
+        :param ts_mode: FLOW or TRAN mode
+	:type ts_mode: string	
 	:param ts_acceleration: Integer for time step acceleration ramp. 
 	:type ts_acceleration: int
 	:param num_steps_after_cut: Number of time steps after a time step cut that the time step size is held constant. 
@@ -355,10 +357,11 @@ class ptimestepper(object):
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, ts_acceleration=None, num_steps_after_cut=None, max_steps=None,
+	def __init__(self, ts_mode='flow',ts_acceleration=None, num_steps_after_cut=None, max_steps=None,
 		     max_ts_cuts=None, cfl_limiter=None, initialize_to_steady_state=False,
 		     run_as_steady_state=False, max_pressure_change=None, max_temperature_change=None,
 		     max_concentration_change=None, max_saturation_change=None):
+		self._ts_mode = ts_mode
 		self._ts_acceleration = ts_acceleration
 		self._num_steps_after_cut = num_steps_after_cut 
 		self._max_steps = max_steps
@@ -371,6 +374,9 @@ class ptimestepper(object):
 		self._max_concentration_change = max_concentration_change
 		self._max_saturation_change = max_saturation_change
 
+	def _get_ts_mode(self): return self._ts_mode
+	def _set_ts_mode(self,value): self._ts_mode= value
+	ts_mode= property(_get_ts_mode, _set_ts_mode)
 	def _get_ts_acceleration(self): return self._ts_acceleration
 	def _set_ts_acceleration(self,value): self._ts_acceleration = value
 	ts_acceleration = property(_get_ts_acceleration, _set_ts_acceleration)
@@ -1437,6 +1443,8 @@ class pdata(object):
 						xval = [val*xfactor for val in var_values_dict[key]]
 					if var in key: 
 						dat = [val*yfactor for val in var_values_dict[key]]				
+					else:
+						print 'Variable ' + var + ' not found in the tec files.'	
 				ln, = ax.plot(xval,dat)
 				lns.append(ln)
 			ax.legend(lns,legend_list,ncol=1,fancybox=True,shadow=False,prop={'size':str(fontsize)},loc='best') 
@@ -1613,6 +1621,10 @@ class pdata(object):
 		# Presumes simulation.simulation_type is required
 		if self.simulation.simulation_type: self._write_simulation(outfile)
 		else: print 'ERROR: simulation is required, it is currently reading as empty\n'
+		
+		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
+			self._write_subsurface_simulation_begin(outfile)
+
 		if self.co2_database: self._write_co2_database(outfile)
 		
 		if self.checkpoint.frequency: self._write_checkpoint(outfile)
@@ -1621,8 +1633,8 @@ class pdata(object):
 		if self.restart.file_name: self._write_restart(outfile)
 		else: print 'info: restart not detected\n'
 
-		if self.dataset.name: self._write_dataset(outfile)
-		else: print 'info: dataset not detected\n'
+		if self.dataset.dataset_name or self.dataset.name: self._write_dataset(outfile)
+		else: print 'ERROR: dataset name not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'info: chemistry not detected\n'
@@ -1678,6 +1690,10 @@ class pdata(object):
 		else: print 'info: (stratigraphy_coupler) strata is required, it is currently reading as empty\n'
 		
 		if self.constraint_list: self._write_constraint(outfile)
+		
+		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
+			self._write_subsurface_simulation_end(outfile)
+
 		outfile.close()
         
 	def add(self,obj,index='',overwrite=False):	#Adds a new object to the file
@@ -1878,6 +1894,14 @@ class pdata(object):
                         outfile.write('  / '+'\n')
                         outfile.write('END'+'\n\n')
 
+        def _write_subsurface_simulation_begin(self,outfile):
+		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
+                        outfile.write('SUBSURFACE\n\n')		
+
+        def _write_subsurface_simulation_end(self,outfile):
+		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
+                        outfile.write('END_SUBSURFACE\n\n')		
+
 	def _read_co2_database(self,infile,line):
 		self._co2_database = del_extra_slash(line.split()[-1])
 	
@@ -1995,6 +2019,7 @@ class pdata(object):
 	
 	def _read_timestepper(self,infile,line):
 		p = ptimestepper()
+                np_ts_mode = p.ts_mode
 		np_ts_acceleration = p.ts_acceleration
 		np_num_steps_after_cut = p.num_steps_after_cut 
 		np_max_steps = p.max_steps
@@ -2012,6 +2037,8 @@ class pdata(object):
 		while keepReading: 			# read through all cards
 			line = infile.readline() 			# get next line
 			key = line.strip().split()[0].lower() 		# take first keyword
+			if key == 'ts_mode':
+				np_ts_mode= str(line.split()[-1])
 			if key == 'ts_acceleration':
 				np_ts_acceleration = int(line.split()[-1])
 			elif key == 'num_steps_after_cut':
@@ -2036,7 +2063,7 @@ class pdata(object):
 				np_max_saturation_change = floatD(line.split()[-1])
 			elif key in ['/','end']: keepReading = False
 
-		new_timestep = ptimestepper(np_ts_acceleration,np_num_steps_after_cut,np_max_steps,
+		new_timestep = ptimestepper(np_ts_mode,np_ts_acceleration,np_num_steps_after_cut,np_max_steps,
 					    np_max_ts_cuts,np_cfl_limiter,np_initialize_to_steady_state,
 					    np_run_as_steady_state,np_max_pressure_change,
 					    np_max_temperature_change,np_max_concentration_change,
@@ -2046,7 +2073,7 @@ class pdata(object):
 	
 	def _write_timestepper(self,outfile):
 		self._header(outfile,headers['timestepper'])
-		outfile.write('TIMESTEPPER\n')
+		outfile.write('TIMESTEPPER ' + self.timestepper.ts_mode + '\n')
 		if self.timestepper.ts_acceleration:
 			outfile.write('  ' + 'TS_ACCELERATION ' + 
                                 str(self.timestepper.ts_acceleration) + '\n')
@@ -2872,16 +2899,17 @@ class pdata(object):
 			if observation.region:
 				outfile.write('  REGION '+observation.region.lower()+'\n')
 			outfile.write('END\n\n')
-
-	def _read_flow(self,infile,line):		
+				
+	def _read_flow(self,infile,line):
 		flow = pflow()
 		flow.datum = []
-		flow.varlist = []	
-		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.	
+		flow.varlist = []
+		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
+		
 		keepReading = True
 		isValid = False # Used so that entries outside flow conditions are ignored
 		end_count = 0
-		total_end_count = 1	
+		total_end_count = 1
 		while keepReading:	# Read through all cards
 
 			line = infile.readline()	# get next line
@@ -2890,7 +2918,8 @@ class pdata(object):
 				total_end_count = 2 # Basically ensures that both read ifs for
 						    # the varlist will execute 
 						    # This # indicates how many time a / or 'end' 
-						    # can be read before loop terminates.	
+						    # can be read before loop terminates.
+				
 			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
 				if end_count == 0:
 					'''
@@ -2904,9 +2933,11 @@ class pdata(object):
 					var.name = key
 					var.type = line.strip().split()[-1].lower()
 					var.valuelist = []
-					var.list = []	
+					var.list = []
+					
 					isValid = True	# Indicates the entries read here should be written so that entries outside flow conditions are ignored.
 					tstring = line.split()[0:] # Convert string into list
+					
 					flow.varlist.append(var)
 								
 				elif end_count == 1:			
@@ -2915,7 +2946,8 @@ class pdata(object):
 					tstring2name = line.strip().split()[0]	# Assigns the 1st word on a line
 					tstring2 = line.split()[1:] 	# Assigns the rest of the line
 					# #2 used because this is the 2nd reading of the variables
-					# Determine if variable is a list or stand-alone
+					
+					# Deterine if variable is a list or stand-alone
 					if tstring2[0].lower() == 'list': # Executes only if 2nd word on line == 'list'
 						
 						# for each list in a pflow_variable object, check all
@@ -3125,7 +3157,8 @@ class pdata(object):
 			if flow.sync_timestep_with_update:
 				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
 				
-			if flow.datum:	# error-checking not yet added	
+			if flow.datum:	# error-checking not yet added
+				
 				outfile.write('  DATUM')
 				
 				if isinstance(flow.datum, str):
@@ -3484,7 +3517,7 @@ class pdata(object):
                         line = infile.readline()        # get next line
                         key = line.strip().split()[0]   # take first  key word
 
-                        if key == 'dataset_name':
+			if key == 'dataset_name':
                                 data_dataset_name = line.split()[-1]
                         elif key == 'dataset_mapped_name':
                                 data_dataset_mapped_name = line.split()[-1]
@@ -3497,6 +3530,7 @@ class pdata(object):
                         elif key == 'map_hdf5_dataset_name':
                                 data_map_hdf5_dataset_name = line.split()[-1]
                         elif key in ['/','end']: keepReading = False
+ 
 
                 # Create an empty dataset and assign the values read in
                 new_dataset = pdataset(data_dataset_name,data_dataset_mapped_name, data_name,data_file_name, data_hdf5_dataset_name, data_map_hdf5_dataset_name)
@@ -4084,4 +4118,4 @@ class pdata(object):
 	
 	def _get_constraint_concentration(self, constraint=pconstraint()):
 		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
-	
+	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies

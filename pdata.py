@@ -38,7 +38,8 @@ else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 
 		      'day', 'w', 'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
-
+# simulation type - allowed strings
+simulation_types_allowed = ['subsurface','surface_subsurface']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2',
 		      'th no_freezing', 'th freezing', 'immis']
@@ -78,12 +79,12 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
 				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
-cards = ['co2_database','uniform_velocity','mode','checkpoint','restart', 'dataset','chemistry','grid',  
+cards = ['co2_database','uniform_velocity','simulation','checkpoint','restart', 'dataset','chemistry','grid',  
 		'timestepper', 'material_property','time','linear_solver','newton_solver',
 		'output','fluid_property','saturation_function','region','observation',
 		'flow_condition','transport_condition','initial_condition',
 		'boundary_condition','source_sink','strata','constraint']
-headers = ['co2 database path','uniform velocity','mode','checkpoint','restart', 'dataset', 'chemistry','grid',
+headers = ['co2 database path','uniform velocity','simulation','checkpoint','restart', 'dataset', 'chemistry','grid',
 	   'time stepping','material properties','time','linear solver','newton solver','output',
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
@@ -296,22 +297,35 @@ class pgrid(object):
 	filename = property(_get_filename, _set_filename) #: (**)
 
 
-class pmode(object):
-	""" Class for specifying flow mode. Available modes include: 
-	Richards (variably saturated porous media); 
-	IMMIS, MPHASE, FLASH2 (all involve CO2 + H2O); 
-	TH (freezing/no_freezing) 
-	
-	:param name: Specify mode name. Options include: 'richards', 'mphase', 'mph','flash2', 'th', 'immis'
-	:type name: str
+class psimulation(object):
+	""" Class for specifying simulation type and simulation mode. 
+	:param simulation_type: Specify simulation type. Options include: 'surface','subsurface.
+	:type simulation_type: str
+	:param subsurface_flow: Specify the process model. 
+	:type subsurface_flow: str
+	:param subsurface_transport: Specify the process model. 
+	:type subsurface_transport: str
+	:param mode: Specify the mode for the subsurface flow model
+	:type mode: str
 	"""
+	def __init__(self, simulation_type='', subsurface_flow='', subsurface_transport='', mode=''):
+		self._simulation_type = simulation_type
+		self._subsurface_flow = subsurface_flow
+		self._subsurface_transport = subsurface_transport
+		self._mode = mode
 
-	def __init__(self, name=''):
-		self._name = name
-
-	def _get_name(self): return self._name
-	def _set_name(self,value): self._name = value
-	name = property(_get_name, _set_name)
+	def _get_simulation_type(self): return self._simulation_type
+	def _set_simulation_type(self,value): self._simulation_type = value
+	simulation_type = property(_get_simulation_type, _set_simulation_type)
+	def _get_subsurface_flow(self): return self._subsurface_flow
+	def _set_subsurface_flow(self,value): self._subsurface_flow = value
+	subsurface_flow = property(_get_subsurface_flow, _set_subsurface_flow)
+	def _get_subsurface_transport(self): return self._subsurface_transport
+	def _set_subsurface_transport(self,value): self._subsurface_transport = value
+	subsurface_transport = property(_get_subsurface_transport, _set_subsurface_transport)
+	def _get_mode(self): return self._mode
+	def _set_mode(self,value): self._mode = value
+	mode = property(_get_mode, _set_mode)
 
 class ptimestepper(object):
 	""" Class for controling time stepping.
@@ -1305,7 +1319,7 @@ class pdata(object):
 		# None here.
 		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
-		self._mode = pmode()
+		self._simulation = psimulation()
 		self._checkpoint = pcheckpoint()
 		self._restart = prestart()
 		self._dataset = pdataset()
@@ -1516,7 +1530,7 @@ class pdata(object):
 		read_fn = dict(zip(cards, 	
 				[self._read_co2_database,
 				 self._read_uniform_velocity,
-				 self._read_mode,
+				 self._read_simulation,
 				 self._read_checkpoint,
 				 self._read_restart,
 				 self._read_dataset,
@@ -1565,7 +1579,7 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','checkpoint','restart','dataset','material_property',
-					 'mode','grid',
+					 'simulation','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
 					 'boundary_condition','transport_condition','constraint',
@@ -1596,9 +1610,9 @@ class pdata(object):
 		# Presumes uniform_velocity.value_list is required
 		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 		
-		# Presumes mode.name is required
-		if self.mode.name: self._write_mode(outfile)
-		
+		# Presumes simulation.simulation_type is required
+		if self.simulation.simulation_type: self._write_simulation(outfile)
+		else: print 'ERROR: simulation is required, it is currently reading as empty\n'
 		if self.co2_database: self._write_co2_database(outfile)
 		
 		if self.checkpoint.frequency: self._write_checkpoint(outfile)
@@ -1802,22 +1816,68 @@ class pdata(object):
 		for v in self.uniform_velocity.value_list:	# value in value_list
 			outfile.write(strD(v) + ' ')
 		outfile.write('\n\n')
+
+	def _read_simulation(self,infile,line):
+		simulation = psimulation()
+		keepReading = True
 		
-	def _read_mode(self,infile,line):
-		mode_name = line.split()[-1]
-		new_mode = pmode(mode_name)
-		self._mode = new_mode
-	
-	def _write_mode(self,outfile):
-		self._header(outfile,headers['mode'])
-		mode = self.mode
-		if mode.name.lower() in mode_names_allowed:
-			outfile.write('MODE ')
-			outfile.write(mode.name.lower()+'\n\n')
+		while keepReading: #Read through all cards
+                        line = infile.readline()        # get next line
+                        key = line.strip().split()[0].lower()   # take first key word
+
+			if key == 'simulation_type':
+				simulation.simulation_type = line.split()[-1]
+                        elif key == 'subsurface_flow':
+				simulation.subsurface_flow = line.split()[-1] 
+                        elif key == 'subsurface_transport':
+				simulation.subsurface_transport = line.split()[-1] 
+                        elif key == 'mode':
+				simulation.mode = line.split()[-1]                                
+			elif key in ['/','end']: keepReading = Falise
+
+		self._simulation = simulation                               
+                              
+	def _write_simulation(self,outfile):
+		self._header(outfile,headers['simulation'])
+		simulation = self.simulation
+		#Write out simulation header
+		outfile.write('SIMULATION' +'\n')
+		if simulation.simulation_type.lower() in simulation_types_allowed:
+			outfile.write('  SIMULATION_TYPE '+ simulation.simulation_type.upper() + '\n' )
 		else:
-			print 'ERROR: mode.name: \''+ mode.name +'\' is invalid.'
-			print '       valid mode.names:', mode_names_allowed, '\n'
-			
+			print 'ERROR: simulation.simulation_type: \''+ simulation.simulation_type +'\' is invalid.'
+			print '       valid simulation.simulation_type:', simulation_types_allowed, '\n'
+		if simulation.subsurface_flow and simulation.subsurface_transport:
+                        outfile.write('  PROCESS_MODELS' +'\n')		
+                        outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n')
+			if simulation.mode in mode_names_allowed:		
+	                        outfile.write('      MODE '+ simulation.mode +'\n')		
+                        else:
+				print 'ERROR: simulation.mode: \''+ simulation.mode +'\' is invalid.'
+				print '       valid simulation.mode:', mode_names_allowed, '\n'
+			outfile.write('    / '+'\n')
+                        outfile.write('    SUBSURFACE_TRANSPORT '+ simulation.subsurface_transport +'\n')
+                        outfile.write('    / '+'\n')
+                        outfile.write('  / '+'\n')
+                        outfile.write('END'+'\n\n')
+		elif simulation.subsurface_flow:
+                        outfile.write('  PROCESS_MODELS' +'\n')		
+                        outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n') 
+			if simulation.mode in mode_names_allowed:		
+	                        outfile.write('      MODE '+ simulation.mode +'\n')		
+                        else:
+				print 'ERROR: simulation.mode: \''+ simulation.mode +'\' is invalid.'
+				print '       valid simulation.mode:', mode_names_allowed, '\n'
+                        outfile.write('    / '+'\n')
+                        outfile.write('  / '+'\n')
+                        outfile.write('END'+'\n\n')
+		elif simulation.subsurface_transport:
+                        outfile.write('  PROCESS_MODELS' +'\n')		
+                        outfile.write('    SUBSURFACE_TRANSPORT '+ simulation.subsurface_transport +'\n')
+                        outfile.write('    / '+'\n')
+                        outfile.write('  / '+'\n')
+                        outfile.write('END'+'\n\n')
+
 	def _read_co2_database(self,infile,line):
 		self._co2_database = del_extra_slash(line.split()[-1])
 	
@@ -3107,7 +3167,6 @@ class pdata(object):
 				# Write if using non-list format (Single line)
 				if flow.varlist[i].valuelist:	
 					outfile.write('    ' + flow.varlist[i].name.upper())	
-#GDL - Added ability to print DATASET as a string 
 					if isinstance(flow.varlist[i].valuelist, str):
 				        	 outfile.write(' DATASET '+ flow.varlist[i].valuelist)
 					else:
@@ -3411,7 +3470,7 @@ class pdata(object):
 			outfile.write(restart.time_unit)
 			
 		outfile.write('\n\n')
-# GDL - Added dataset card 		
+
 	def _read_dataset(self, infile, line):
 		dataset = pdataset()	 
                 data_dataset_name = dataset.dataset_name
@@ -3889,9 +3948,9 @@ class pdata(object):
 	def _set_uniform_velocity(self, object): self._uniform_velocity = object
 	uniform_velocity = property(_get_uniform_velocity, _set_uniform_velocity) #: (**)
 	
-	def _get_mode(self): return self._mode
-	def _set_mode(self, object): self._mode = object
-	mode = property(_get_mode, _set_mode) #: (**)	
+	def _get_simulation(self): return self._simulation
+	def _set_simulation(self, object): self._simulation = object
+	simulation = property(_get_simulation, _set_simulation) #: (**)	
 	
 	def _get_grid(self): return self._grid
 	def _set_grid(self, object): self._grid = object

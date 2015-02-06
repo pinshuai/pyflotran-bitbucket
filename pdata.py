@@ -17,7 +17,7 @@ from copy import copy
 import os,time,sys
 import platform
 #from subprocess import Popen, PIPE
-import pudb
+import pdb
 import subprocess
 import matplotlib
 import matplotlib.pyplot as plt

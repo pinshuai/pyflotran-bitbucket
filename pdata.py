@@ -52,6 +52,8 @@ grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical'] # cartes
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 
 			  'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
+output_variables_allowed = ['liquid_pressure','liquid_saturation','liquid_density','liquid_mobility','liquid_energy','liquid_mole_fractions','gas_pressure','gas_saturation','gas_density','gas_mobility','gas_mole_fractions','air_pressure','capillary_pressure','thermodynamic_state','temperature','residual','porosity','mineral_porosity']
+
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 
 				     'NMT_EXP', 'PRUESS_1']
@@ -89,6 +91,10 @@ headers = ['co2 database path','uniform velocity','simulation','checkpoint','res
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
 	   'stratigraphy couplers','constraints']
+
+
+
+
 headers = dict(zip(cards,headers))
 
 buildWarnings = []
@@ -530,13 +536,15 @@ class poutput(object):
 	:type velocities: bool - True or False
 	:param mass_balance: Flag to indicate whether to output the mass balance of the system. 
 	:type mass_balance: bool - True or False
+	:param variables_list: List of variables to be printed in the output file
+	:type variables_list: [str]
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
 	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, 
 		     screen_output=True, periodic_time=[],periodic_timestep=[],
 		     periodic_observation_time=[], periodic_observation_timestep=None, 
-		     format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False):
+		     format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False, variables_list = []):
 		self._time_list = time_list
 		self._print_column_ids = print_column_ids
 		self._screen_output = screen_output # Bool
@@ -550,7 +558,7 @@ class poutput(object):
 		self._porosity = porosity
 		self._velocities = velocities
 		self._mass_balance = mass_balance
-		
+		self._variables_list = variables_list
 		
 	def _get_time_list(self): return self._time_list
 	def _set_time_list(self,value): self._time_list = value
@@ -590,8 +598,11 @@ class poutput(object):
 	porosity = property(_get_porosity, _set_porosity)
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
-	velocities = property(_get_velocities, _set_velocities)
-	
+	velocities = property(_get_velocities, _set_velocities)	
+	def _get_variables_list(self): return self._variables_list
+	def _set_variables_list(self,value): self._variables_list = value
+	variables_list = property(_get_variables_list, _set_variables_list)
+
 class pfluid(object):
 	"""Class for specifying fluid properties.
 	
@@ -2571,6 +2582,10 @@ class pdata(object):
 				output.velocities = True
 			elif key == 'mass_balance':
 				output.mass_balance = True
+			elif key == 'variable':	
+				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
+				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
+				output.variables_list.append(tstring)	# assign
 			elif key in ['/','end']: keepReading = False
 			
 		self._output = output
@@ -2673,6 +2688,16 @@ class pdata(object):
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
 			outfile.write('  '+'MASS_BALANCE'+'\n')
+		if output.variables_list:
+			outfile.write('  VARIABLES \n')
+			for variable in output.variables_list:
+				if variable.lower() in output_variables_allowed:
+					outfile.write('    ' + variable.upper() + '\n')
+				else:
+					print 'ERROR: output.variable: \''+ variable +'\' is invalid.'
+					print '       valid output.variable:', output_variables_allowed, '\n'
+			outfile.write('END\n\n')
+
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):

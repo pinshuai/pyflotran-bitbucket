@@ -32,6 +32,11 @@ print('******************************************')
 dat = pdata('')
 #--------------------------------------------------------------
 
+simulation = psimulation()
+simulation.simulation_type = 'subsurface'
+simulation.subsurface_transport = 'transport'
+dat.simulation = simulation
+
 # set uniform_velocity
 #--------------------------------------------------------------
 dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']

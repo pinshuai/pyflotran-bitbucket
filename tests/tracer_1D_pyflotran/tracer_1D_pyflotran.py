@@ -19,6 +19,12 @@ print '\nTEST EXECUTED\n'	# console header
 dat = pdata('')
 #--------------------------------------------------------------
 
+simulation = psimulation()
+simulation.simulation_type = 'subsurface'
+simulation.subsurface_transport = 'transport'
+dat.simulation = simulation
+
+
 # set uniform_velocity
 #--------------------------------------------------------------
 # Comments are alternative way of doing the same thing

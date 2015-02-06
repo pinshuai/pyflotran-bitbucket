@@ -38,9 +38,15 @@ def simulation(i,rate):
 	# initialize without reading in test data
 	work_dir = 'multi_' + str(i)
 
+	# initialize without reading in test data
 	#--------------------------------------------------------------
 	dat = pdata(work_dir=work_dir)
 	#--------------------------------------------------------------
+	simulation = psimulation()
+	simulation.simulation_type = 'subsurface'
+	simulation.subsurface_transport = 'transport'
+	dat.simulation = simulation
+
 
 	# set uniform_velocity
 	#--------------------------------------------------------------

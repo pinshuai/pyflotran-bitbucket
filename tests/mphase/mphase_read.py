@@ -1,17 +1,25 @@
 import sys
-sys.path.append('../../.')
-from pdata import*
 import os
 try:
   pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
   print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
-sys.path.append(del_extra_slash(pflotran_dir + '/src/python'))
+sys.path.append(pflotran_dir + '/src/python')
 import pflotran as pft
 
+try:
+  pyflotran_dir = os.environ['PYFLOTRAN_DIR']
+except KeyError:
+  print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pyflotran_dir)
+from pdata import*
+
+test_dir = '/tests/mphase/'
+
 # Read input file
-dat = pdata('mphase.in')
+dat = pdata(pyflotran_dir + test_dir + 'mphase.in')
 
 # Test write
 #dat.write('mphase2.in')
@@ -19,4 +27,4 @@ dat = pdata('mphase.in')
 dat.co2_database = pflotran_dir + '/database/co2data0.dat'
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
-dat.run(input='mphase2.in',exe=pflotran_exe)
+dat.run(input=pyflotran_dir + test_dir + 'mphase2.in',exe=pflotran_exe)

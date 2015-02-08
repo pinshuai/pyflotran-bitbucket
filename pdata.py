@@ -81,12 +81,12 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
 				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
-cards = ['co2_database','uniform_velocity','simulation','checkpoint','restart', 'dataset','chemistry','grid',  
+cards = ['co2_database','uniform_velocity','simulation','regression','checkpoint','restart', 'dataset','chemistry','grid',  
 		'timestepper', 'material_property','time','linear_solver','newton_solver',
 		'output','fluid_property','saturation_function','region','observation',
 		'flow_condition','transport_condition','initial_condition',
 		'boundary_condition','source_sink','strata','constraint']
-headers = ['co2 database path','uniform velocity','simulation','checkpoint','restart', 'dataset', 'chemistry','grid',
+headers = ['co2 database path','uniform velocity','simulation','regression','checkpoint','restart', 'dataset', 'chemistry','grid',
 	   'time stepping','material properties','time','linear solver','newton solver','output',
 	   'fluid properties','saturation functions','regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
@@ -332,6 +332,24 @@ class psimulation(object):
 	def _get_mode(self): return self._mode
 	def _set_mode(self,value): self._mode = value
 	mode = property(_get_mode, _set_mode)
+
+class pregression(object):
+	""" Class for specifying regression detailse. 
+	:param cells: Specify cells for regression. 
+	:type cells: list of int 
+	:param cells_per_process: Specify the number cells per process. 
+	:type cells_per_process: int 
+	"""
+	def __init__(self, cells=[], cells_per_process=2): 
+		self._cells = cells 
+		self._cells_per_process = cells_per_process 
+
+	def _get_cells(self): return self._cells
+	def _set_cells(self,value): self._cells = value
+	cells = property(_get_cells, _set_cells)
+	def _get_cells_per_process(self): return self._cells_per_process
+	def _set_cells_per_process(self,value): self._cells_per_process = value
+	cells_per_process = property(_get_cells_per_process, _set_cells_per_process)
 
 class ptimestepper(object):
 	""" Class for controling time stepping.
@@ -1336,6 +1354,7 @@ class pdata(object):
 		# None here.
 		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
+		self._regression = pregression()
 		self._simulation = psimulation()
 		self._checkpoint = pcheckpoint()
 		self._restart = prestart()
@@ -1550,6 +1569,7 @@ class pdata(object):
 				[self._read_co2_database,
 				 self._read_uniform_velocity,
 				 self._read_simulation,
+				 self._read_regression,
 				 self._read_checkpoint,
 				 self._read_restart,
 				 self._read_dataset,
@@ -1598,7 +1618,7 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','checkpoint','restart','dataset','material_property',
-					 'simulation','grid',
+					 'simulation','regression','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
 					 'boundary_condition','transport_condition','constraint',
@@ -1631,6 +1651,8 @@ class pdata(object):
 		else: 
 			print 'ERROR: simulation is required, it is currently reading as empty\n'
 			return
+	
+		if self.regression.cells: self._write_regression(outfile)
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_begin(outfile)
@@ -1923,6 +1945,45 @@ class pdata(object):
 		self._header(outfile,headers['co2_database'])
 		outfile.write('CO2_DATABASE ' + self._co2_database + '\n\n')
 		
+	def _read_regression(self,infile,line):
+		regression = pregression()
+		keepReading = True
+		
+		while keepReading: #Read through all cards
+                        line = infile.readline()        # get next line
+                        key = line.strip().split()[0].lower()   # take first key word
+
+			if key == 'cells':
+				keepReading2 = True
+				while keepReading2:
+					cell_list = []
+					for i in range(100):
+						line1 = infile.readline()
+						if line1.strip().split()[0].lower() in ['/','end']:
+							keepReading2 = False
+							break
+						cell_list.append(int(line1))
+				regression.cells = cell_list 
+                        elif key == 'cells_per_process':
+				regression.cells_per_process= line.split()[-1] 
+			elif key in ['/','end']: keepReading = False
+
+		self._regression = regression 
+
+	def _write_regression(self,outfile):
+		self._header(outfile,headers['regression'])
+		regression = self.regression
+		outfile.write('REGRESSION' +'\n')
+		if regression.cells:
+			outfile.write('  CELLS' + '\n' )
+			for cell in regression.cells:
+				outfile.write('    ' + str(cell) + '\n')
+			outfile.write('  /' + '\n' )
+		if regression.cells_per_process:
+			outfile.write('  CELLS_PER_PROCESS' + ' ' + str(regression.cells_per_process) + '\n' )
+		outfile.write('END'+'\n\n')
+	
+
 	def _read_grid(self,infile,line):
 		grid = pgrid()				# assign defaults before reading in values
 
@@ -4010,6 +4071,10 @@ class pdata(object):
 	def _set_uniform_velocity(self, object): self._uniform_velocity = object
 	uniform_velocity = property(_get_uniform_velocity, _set_uniform_velocity) #: (**)
 	
+	def _get_regression(self): return self._regression
+	def _set_regression(self, object): self._regression = object
+	regression = property(_get_regression, _set_regression) #: (**)	
+
 	def _get_simulation(self): return self._simulation
 	def _set_simulation(self, object): self._simulation = object
 	simulation = property(_get_simulation, _set_simulation) #: (**)	

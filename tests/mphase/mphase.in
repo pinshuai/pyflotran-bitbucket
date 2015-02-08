@@ -11,11 +11,13 @@ SUBSURFACE
 
 CO2_DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat
 
-!=========================== checkpoint =======================================
-!CHECKPOINT 1000
-
-!=========================== RESTART =======================================
-!RESTART restart.chk 5.0 y
+!=========================== regression ===================================
+REGRESSION
+  CELLS
+    2086
+  /
+  CELLS_PER_PROCESS 2
+END
 
 !=========================== discretization ===================================
 GRID

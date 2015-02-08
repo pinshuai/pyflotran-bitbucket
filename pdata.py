@@ -1652,11 +1652,12 @@ class pdata(object):
 			print 'ERROR: simulation is required, it is currently reading as empty\n'
 			return
 	
-		if self.regression.cells: self._write_regression(outfile)
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_begin(outfile)
 
+		if self.regression.cells: self._write_regression(outfile)
+		
 		# Presumes uniform_velocity.value_list is required
 		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 

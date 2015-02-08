@@ -14,10 +14,10 @@ import pflotran as pft
 # Read and execute input file
 dat = pdata(filename='mphase.in', work_dir='./mphase-run1')
 dat.co2_database = pflotran_dir + '/database/co2data0.dat'
-dat.run(input='mphase2.in',exe=pflotran_dir + '/src/pflotran/pflotran')
+dat.run(input='mphase.in',exe=pflotran_dir + '/src/pflotran/pflotran')
 
 # Write to a different workdir
 dat = pdata(filename='mphase.in', work_dir='./mphase-run2')
 dat.co2_database = pflotran_dir + '/database/co2data0.dat'
-dat.run(input='mphase2.in',exe=pflotran_dir + '/src/pflotran/pflotran')
+dat.run(input='mphase.in',exe=pflotran_dir + '/src/pflotran/pflotran')
 

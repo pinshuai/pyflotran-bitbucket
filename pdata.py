@@ -2595,6 +2595,7 @@ class pdata(object):
 	def _read_output(self,infile):
 		output = poutput()
 		output.time_list = []
+		output.format_list = []
 		
 		keepReading = True
 		

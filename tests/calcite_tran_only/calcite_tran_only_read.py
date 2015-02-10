@@ -1,6 +1,4 @@
 import sys
-sys.path.append('../../.')
-from pdata import*
 import os
 try:
   pflotran_dir = os.environ['PFLOTRAN_DIR']
@@ -9,6 +7,16 @@ except KeyError:
   sys.exit(1)
 sys.path.append(pflotran_dir + '/src/python')
 import pflotran as pft
+
+try:
+  pyflotran_dir = os.environ['PYFLOTRAN_DIR']
+except KeyError:
+  print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pyflotran_dir)
+
+
+from pdata import*
 
 pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 

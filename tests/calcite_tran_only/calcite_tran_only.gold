@@ -1,0 +1,161 @@
+SIMULATION
+  SIMULATION_TYPE SUBSURFACE
+  PROCESS_MODELS
+    SUBSURFACE_TRANSPORT transport
+    / 
+  / 
+END
+
+SUBSURFACE
+
+UNIFORM_VELOCITY 1.0 0.0 0.0 m/yr 
+
+CHEMISTRY
+  PRIMARY_SPECIES
+    H+
+    HCO3-
+    Ca++
+  /
+  SECONDARY_SPECIES
+    OH-
+    CO3--
+    CO2(aq)
+    CaCO3(aq)
+    CaHCO3+
+    CaOH+
+  /
+  GAS_SPECIES
+    CO2(g)
+  /
+  MINERALS
+    Calcite
+  /
+  MINERAL_KINETICS
+    Calcite
+      RATE_CONSTANT 1.0000000d-06 mol/m^2-sec 
+    /
+  /
+  DATABASE /Users/satkarra/pflotran-dev/database/hanford.dat
+  LOG_FORMULATION
+  ACTIVITY_COEFFICIENTS TIMESTEP
+  OUTPUT
+    PH
+    all
+    FREE_ION
+  /
+END
+
+GRID
+  TYPE structured
+  BOUNDS
+    0.0 0.0 0.0 
+    100.0 1.0 1.0 
+  /
+  ORIGIN 0.0 0.0 0.0 
+  NXYZ 100 1 1 
+  GRAVITY 0.0 0.0 -9.8068 
+END
+
+TIME
+  FINAL_TIME 25.0 y
+  INITIAL_TIMESTEP_SIZE 1.0 h
+  MAXIMUM_TIMESTEP_SIZE 0.25 y
+END
+
+MATERIAL_PROPERTY soil1
+  ID 1
+  POROSITY 0.25
+  TORTUOSITY 1.0
+END
+
+LINEAR_SOLVER transport
+  SOLVER direct
+END
+
+OUTPUT
+  TIMES  y 5.0 10.0 15.0 20.0
+  FORMAT TECPLOT POINT
+END
+
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.0000000d-09
+END
+
+REGION all
+  COORDINATES
+    0.0 0.0 0.0 
+    100.0 1.0 1.0 
+  END
+END
+
+REGION west
+  FACE west
+  COORDINATES
+    0.0 0.0 0.0 
+    0.0 1.0 1.0 
+  END
+END
+
+REGION east
+  FACE east
+  COORDINATES
+    100.0 0.0 0.0 
+    100.0 1.0 1.0 
+  END
+END
+
+TRANSPORT_CONDITION background_conc
+  TYPE zero_gradient
+  CONSTRAINT_LIST
+    0.0  initial_constraint
+  END
+END
+
+TRANSPORT_CONDITION inlet_conc
+  TYPE dirichlet_zero_gradient
+  CONSTRAINT_LIST
+    0.0  inlet_constraint
+  END
+END
+
+INITIAL_CONDITION
+  TRANSPORT_CONDITION  background_conc
+  REGION all
+END
+
+BOUNDARY_CONDITION outlet
+  TRANSPORT_CONDITION background_conc
+  REGION east
+END
+
+BOUNDARY_CONDITION inlet
+  TRANSPORT_CONDITION inlet_conc
+  REGION west
+END
+
+STRATA
+  REGION all
+  MATERIAL soil1
+END
+
+CONSTRAINT initial_constraint
+  CONCENTRATIONS
+    H+  1.0000000d-08  F
+    HCO3-  0.001  G  CO2(g)
+    Ca++  0.0005  M  Calcite
+  /
+  MINERALS
+    Calcite  1.0000000d-05  1.0
+  /
+END
+
+CONSTRAINT inlet_constraint
+  CONCENTRATIONS
+    H+  5.0  P
+    HCO3-  0.001  T
+    Ca++  1.0000000d-06  Z
+  /
+END
+
+END_SUBSURFACE
+

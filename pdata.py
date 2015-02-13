@@ -82,7 +82,7 @@ permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
 # flow_conditions - allowed strings
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 
 				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
-pressure_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
+pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
 flux_types_allowed = ['dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance',
 		      'zero_gradient', 'production_well', 'seepage', 'volumetric',
@@ -1117,11 +1117,13 @@ class pdataset(object):
 	:type file_name: str
 	:param hdf5_dataset_name: Name of the group within the hdf5 file where the data resides
 	:type hdf5_dataset_name: str
-	:param hdf5_dataset_name: Name of the group within the hdf5 file where the data resides
-	:type hdf5_dataset_name: str
+	:param map_hdf5_dataset_name: Name of the group within the hdf5 file where the map information for the data resides
+	:type map_hdf5_dataset_name: str
+	:param max_buffer_size: size of internal buffer for storing transient data
+	:type max_buffer_size: float
 	"""
 	
-	def __init__(self, dataset_name='', dataset_mapped_name='',name='', file_name='', hdf5_dataset_name='', map_hdf5_dataset_name=''):
+	def __init__(self, dataset_name='', dataset_mapped_name='',name='', file_name='', hdf5_dataset_name='', map_hdf5_dataset_name='', max_buffer_size =''):
 		
 		self._dataset_name = dataset_name # name of dataset
 		self._dataset_mapped_name = dataset_mapped_name
@@ -1129,6 +1131,7 @@ class pdataset(object):
 		self._file_name = file_name	# name of file containing the data
 		self._hdf5_dataset_name = hdf5_dataset_name	# name of hdf5 group
 		self._map_hdf5_dataset_name = map_hdf5_dataset_name
+		self._max_buffer_size = max_buffer_size
 
 	def _get_dataset_name(self): return self._dataset_name
 	def _set_dataset_name(self,value): self._dataset_name = value
@@ -1148,6 +1151,9 @@ class pdataset(object):
 	def _get_map_hdf5_dataset_name(self): return self._map_hdf5_dataset_name
 	def _set_map_hdf5_dataset_name(self,value): self._map_hdf5_dataset_name = value
 	map_hdf5_dataset_name = property(_get_map_hdf5_dataset_name, _set_map_hdf5_dataset_name)
+	def _get_max_buffer_size(self): return self._max_buffer_size
+	def _set_max_buffer_size(self,value): self._max_buffer_size = value
+	max_buffer_size = property(_get_max_buffer_size, _set_max_buffer_size)
 
 class pchemistry(object):
 	"""Class for specifying chemistry.
@@ -3618,6 +3624,7 @@ class pdata(object):
                 data_file_name = dataset.file_name
                 data_hdf5_dataset_name = dataset.hdf5_dataset_name
 		data_map_hdf5_dataset_name = dataset.map_hdf5_dataset_name
+		data_max_buffer_size = dataset.max_buffer_size
                 keepReading = True
                 while keepReading:      # Read through all cards
                         line = infile.readline()        # get next line
@@ -3635,11 +3642,13 @@ class pdata(object):
                                 data_hdf5_dataset_name = line.split()[-1]
                         elif key == 'map_hdf5_dataset_name':
                                 data_map_hdf5_dataset_name = line.split()[-1]
+			elif key == 'max_buffer_size':
+				data_max_buffer_size = floatD(line.split()[-1])
                         elif key in ['/','end']: keepReading = False
  
 
                 # Create an empty dataset and assign the values read in
-                new_dataset = pdataset(data_dataset_name,data_dataset_mapped_name, data_name,data_file_name, data_hdf5_dataset_name, data_map_hdf5_dataset_name)
+                new_dataset = pdataset(data_dataset_name,data_dataset_mapped_name, data_name, data_file_name, data_hdf5_dataset_name, data_map_hdf5_dataset_name, data_max_buffer_size)
                 self._dataset = new_dataset
 		
 	def _write_dataset(self, outfile):
@@ -3663,6 +3672,8 @@ class pdata(object):
 			outfile.write('  HDF5_DATASET_NAME ' + dataset.hdf5_dataset_name + '\n')
                 if dataset.map_hdf5_dataset_name:
 			outfile.write('  MAP_HDF5_DATASET_NAME ' + dataset.map_hdf5_dataset_name + '\n')
+                if dataset.max_buffer_size:
+			outfile.write('  MAX_BUFFER_SIZE ' + strD(dataset.max_buffer_size) + '\n')
                 outfile.write('END\n\n')
        
 	def _read_chemistry(self, infile):

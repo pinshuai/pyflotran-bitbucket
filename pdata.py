@@ -2249,7 +2249,9 @@ class pdata(object):
 				while keepReading2:
 					line = infile.readline() 			# get next line
 					key = line.split()[0].lower() 		# take first keyword
-					if key == 'perm_x':
+					if key == 'perm_iso':
+						np_permeability.append(floatD(line.split()[-1]))
+					elif key == 'perm_x':
 						np_permeability.append(floatD(line.split()[-1]))
 					elif key == 'perm_y':
 						np_permeability.append(floatD(line.split()[-1]))
@@ -2304,9 +2306,12 @@ class pdata(object):
 				outfile.write('  SATURATION_FUNCTION '+prop.saturation+'\n')
 			if prop.permeability:
 				outfile.write('  PERMEABILITY\n')
-				outfile.write('    PERM_X '+strD(prop.permeability[0])+'\n')
-				outfile.write('    PERM_Y '+strD(prop.permeability[1])+'\n')
-				outfile.write('    PERM_Z '+strD(prop.permeability[2])+'\n')
+				if len(prop.permeability) == 1:
+					outfile.write('    PERM_ISO '+strD(prop.permeability[0])+'\n')
+				else:	
+					outfile.write('    PERM_X '+strD(prop.permeability[0])+'\n')
+					outfile.write('    PERM_Y '+strD(prop.permeability[1])+'\n')
+					outfile.write('    PERM_Z '+strD(prop.permeability[2])+'\n')
 				outfile.write('  /\n')
 			outfile.write('END\n\n')
 	

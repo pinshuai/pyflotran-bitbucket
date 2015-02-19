@@ -168,6 +168,8 @@ htmlhelp_basename = 'PyFLOTRANdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
+PREAMBLE = '\\usepackage{sectsty}'
+#\\allsectionsfont{\\fontfamily{times}\selectfont}'
 
 latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
@@ -181,15 +183,18 @@ latex_elements = {
 #'fontpkg':'',
 'fncychap':'\\usepackage[Sonny]{fncychap}',
 'fontenc':'\\usepackage[T1]{fontenc}',
+'preamble': PREAMBLE
 # Additional stuff for the LaTeX preamble.
-#'preamble': '',
+#'preamble': 
 }
+
+latex_additional_documents = ['sphinxbook.cls' ]
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'PyFLOTRAN.tex', u'PyFLOTRAN Documentation',
-   u'Satish Karra, Cory Kitay', 'manual'),
+   u'Satish Karra, Cory Kitay', 'book'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -198,10 +203,10 @@ latex_documents = [
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+latex_use_parts = False
 
 # If true, show page references after internal links.
-#latex_show_pagerefs = False
+latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
 #latex_show_urls = False

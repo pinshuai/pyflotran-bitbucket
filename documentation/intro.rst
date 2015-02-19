@@ -12,8 +12,6 @@ PyFLOTRAN is a set of classes and methods that the enable use of the massively p
 4. Streamlined workflow from pre-processing to post-processing. Typical workflow with PFLOTRAN involves -- pre-processing in Python or MATLAB, writing input files, executing the input files and then post-processing using matplotlib, VisIt or Paraview. PyFLOTRAN allows users to perform all these steps using one Python script.
 
 
-Introductory tutorials (see Chapter :ref:`5 <tutorials-chapter>`) to PyFLOTRAN are also provided.
-
 Installation
 ------------
 
@@ -26,7 +24,7 @@ found at http://www.python.org. PyFLOTRAN requires NumPy, SciPy, Matplotlib modu
 PyFLOTRAN
 ^^^^^^
 
-A download link for the latest release version of PyFLOTRAN_ can be found at http://www.pyflotran.lanl.gov
+A download link for the latest release version 1.0.0 of PyFLOTRAN_ can be found at https://bitbucket.org/satkarra/pyflotran-release-v1.0.0 
 
 .. _PyFLOTRAN: http://pyflotran.lanl.gov
 
@@ -84,6 +82,12 @@ About thise  manual
 
 This manual comprises sections for each of the important PyFLOTRAN modules: :ref:`pdata <pdata-chapter>` In these, the important
 classes and their methods are documented, and example usage provided. Examples can be found in the 'tests' directory of the PyFLOTRAN repository. One can get a feel for setting up, running and visualizing PFLOTRAN simulations (both flow and reactive transport) through these examples.
+
+Contributors
+------------
+
+Greg Lackey, CU Boulder -- Added the dataset and simulation related keywords.
+
 
 Acknowledgements
 ----------------

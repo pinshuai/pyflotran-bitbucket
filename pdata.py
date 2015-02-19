@@ -320,6 +320,7 @@ class pgrid(object):
 
 class psimulation(object):
 	""" Class for specifying simulation type and simulation mode. 
+
 	:param simulation_type: Specify simulation type. Options include: 'surface','subsurface.
 	:type simulation_type: str
 	:param subsurface_flow: Specify the process model. 
@@ -349,7 +350,8 @@ class psimulation(object):
 	mode = property(_get_mode, _set_mode)
 
 class pregression(object):
-	""" Class for specifying regression detailse. 
+	""" Class for specifying regression details. 
+
 	:param cells: Specify cells for regression. 
 	:type cells: list of int 
 	:param cells_per_process: Specify the number cells per process. 
@@ -797,6 +799,8 @@ class pflow(object):
 	 with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both.
 	 If both are used, then only the file name will be written to the input deck.
 	:type datum: Multiple [float, float, float] or str.
+	:param datum_type: file or dataset
+	:type datum_type: str
 	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow.
 	 It is recommended to use dat.add(obj=pflow_variable) for easy appending. 
 	 Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to 
@@ -808,7 +812,8 @@ class pflow(object):
 	"""
 	
 	def __init__(self,name='',units_list=None,
-			iphase=None,sync_timestep_with_update=False, datum=[], 
+			iphase=None,sync_timestep_with_update=False,
+			datum=[],datum_type='',
 			varlist=[]):
 		self._name = name.lower()	# Include initial, top, source
 		self._units_list = units_list	# Specify type of units to display such as
@@ -835,6 +840,9 @@ class pflow(object):
 	def _get_datum(self): return self._datum
 	def _set_datum(self,value): self._datum = value
 	datum = property(_get_datum, _set_datum)
+	def _get_datum_type(self): return self._datum_type
+	def _set_datum_type(self,value): self._datum_type = value
+	datum_type = property(_get_datum_type, _set_datum_type)
 	def _get_varlist(self): return self._varlist
 	def _set_varlist(self,value): self._varlist = value
 	varlist = property(_get_varlist, _set_varlist)
@@ -1107,6 +1115,7 @@ class prestart(object):
 	
 class pdataset(object):
 	"""Class for incorporating data within a model.
+
 	:param dataset_name: Opens the card block with the name of the data set in the string. I name is not given the NAME entry is required.
 	:type dataset_name: str
 	:param dataset_mapped_name: Adds the MAPPED flag to the DATASET and allows for the dataset to be named.
@@ -3016,6 +3025,7 @@ class pdata(object):
 		flow = pflow()
 		flow.datum = []
 		flow.varlist = []
+		flow.datum_type = ''
 		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
 		
 		keepReading = True
@@ -3106,30 +3116,20 @@ class pdata(object):
 			elif key == 'sync_timestep_with_update':
 				flow.sync_timestep_with_update = True
 			elif key == 'datum':
-				line = infile.readline() # get next line
-				
 				# Assign file_name with list of d_dx, d_dy, d_dz values.
-				if line.strip().split()[0].upper() == 'FILE':
+				if line.strip().split()[1].upper() == 'FILE':
+					flow.datum_type = 'file'
+					flow.datum = line.split()[1]
+				if line.strip().split()[1].upper() == '':
+					flow.datum_type = 'DATASET'
 					flow.datum = line.split()[1]
 				# Assign d_dx, d_dy, d_dz values
 				else:
-					# try is used to determine when to stop reading.
-					# skip_readline signals the read function not to
-					# read the next line again. This is being because
-					# there is no / or end telling the script to stop.
-					# The script knows there are no more floats to read
-					# because an error is produced if the first substring
-					# cannot be converted into a float.
-					while True:
-						try:
-							temp_list = []
-							temp_list.append(floatD(line.split()[0]))
-							temp_list.append(floatD(line.split()[1]))
-							temp_list.append(floatD(line.split()[2]))
-							flow.datum.append(temp_list)
-							line = infile.readline() # get next line
-						except(ValueError): break
-					self.skip_readline = True
+					temp_list = []
+					temp_list.append(floatD(line.split()[1]))
+					temp_list.append(floatD(line.split()[2]))
+					temp_list.append(floatD(line.split()[3]))
+					flow.datum.append(temp_list)
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
 			# Alternative method of count implemented by Satish
@@ -3274,7 +3274,10 @@ class pdata(object):
 				outfile.write('  DATUM')
 				
 				if isinstance(flow.datum, str):
-					outfile.write(' FILE ')
+					if flow.datum_type == 'file':
+						outfile.write(' FILE ')
+					if flow.datum_type == 'dataset':
+						outfile.write(' DATASET ')
 					outfile.write(flow.datum)
 				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
 					# write out d_dx, d_dy, d_dz

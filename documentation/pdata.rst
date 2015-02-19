@@ -16,6 +16,10 @@ The :class:`.pdata` is the main class that does the reading, writing, manipulati
 Attributes
 ^^^^^^^^^^
 
+Simulation
+----------
+.. autoclass:: pdata.psimulation
+
 Grid
 ----
 .. autoclass:: pdata.pgrid
@@ -31,10 +35,6 @@ Time
 Uniform Velocity
 ----------------
 .. autoclass:: pdata.puniform_velocity
-
-Mode
-----
-.. autoclass:: pdata.pmode
 
 Timestepper
 -----------
@@ -127,6 +127,14 @@ Constraint Condition Concentration
 Constraint Condition Mineral
 ----------------------------
 .. autoclass:: pdata.pconstraint_mineral
+
+Regression
+----------
+.. autoclass:: pdata.pregression
+
+Dataset
+----------
+.. autoclass:: pdata.pdataset
 
 Methods
 ^^^^^^^

@@ -2938,8 +2938,8 @@ class pdata(object):
 			elif key == 'face':
 				region.face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
-			
-			self.add(region)
+				
+		self.add(region)
 
 	def _add_region(self,region=pregion(),overwrite=False):		#Adds a Region object.
 		# check if region already exists

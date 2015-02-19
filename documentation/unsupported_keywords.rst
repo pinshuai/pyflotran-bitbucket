@@ -3,15 +3,13 @@
 Unsupported PFLOTRAN keywords
 =============================
 
-As of July 30, 2014
+As of Feb 18, 2015
 
 PFLOTRAN keywords not currently supported by PyFLOTRAN:
 
 * BRINE
 
 * COMPUTE_STATISTICS
-
-* DATASET
 
 * DEBUG
 
@@ -126,3 +124,5 @@ Keywords that are supported, but not 100%, listing attributes for keywords that 
 	- FLUX, VELOCITY, VEL
 	- SAT, SATURATION
 	- CONDUCTANCE
+
+* Additionally, we are currently in the process of adding keywords for the GENERAL MODE that is being developed in PFLOTRAN.

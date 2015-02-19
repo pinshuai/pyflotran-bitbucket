@@ -84,7 +84,7 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
 				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
-flux_types_allowed = ['dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance',
+flux_types_allowed = ['dirichlet', 'neumann','mass_rate', 'hydrostatic, conductance',
 		      'zero_gradient', 'production_well', 'seepage', 'volumetric',
 		      'volumetric_rate', 'equilibrium']
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
@@ -3042,7 +3042,7 @@ class pdata(object):
 						    # This # indicates how many time a / or 'end' 
 						    # can be read before loop terminates.
 				
-			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
+			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy' or key == 'flux':
 				if end_count == 0:
 					'''
 					Appending and instantiation of new 
@@ -3223,7 +3223,7 @@ class pdata(object):
 					print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'	
 				return 0 # Break out of function
 			elif condition_name.upper() == 'FLUX':
-				if condition_type.lower() in flux_types_allowed: 
+				if condition_type.lower() in flux_types_allowed:
 					outfile.write(condition_type.lower())
 				else:
 					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
@@ -3329,7 +3329,7 @@ class pdata(object):
 							j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
-						outfile.write(' ' + flow.varlist[i].unit.upper())
+						outfile.write(' ' + flow.varlist[i].unit.lower())
 					outfile.write('\n')
 				# Write if using list format (multiple lines)
 				elif flow.varlist[i].list:	

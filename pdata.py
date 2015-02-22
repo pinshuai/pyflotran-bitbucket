@@ -69,7 +69,7 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
 				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
-flux_types_allowed = ['dirichlet', 'neumann, mass_rate', 'hydrostatic, conductance',
+flux_types_allowed = ['dirichlet', 'neumann',' mass_rate', 'hydrostatic, conductance',
 		      'zero_gradient', 'production_well', 'seepage', 'volumetric',
 		      'volumetric_rate', 'equilibrium']
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
@@ -1387,11 +1387,13 @@ class pdata(object):
 		else:
 			return
 
-	def run(self,input='', num_procs=1, exe=pdflt().pflotran_path):
+	def run(self,input='', input_prefix = '', num_procs=1, exe=pdflt().pflotran_path):
 		'''Run a pflotran simulation for a given input file with specified number of processors.
 	
-		:param input: Name of input file. 
-		:type input: str
+		:param input: Name of input file. Uses default -pflotranin flag 
+		:type input: str	
+		:param input_prefix: Name of input file prefix. Uses the -input_prefix flag.
+		:type input_prefix: str
 		:param exe: Path to PFLOTRAN executable.
 		:type exe: str
 		:param num_procs: Number of processors
@@ -1408,7 +1410,9 @@ class pdata(object):
 		
 		# option to write input file to new name
 		if input: self._path.filename = input
-		
+		if input_prefix: self._path.filename = input_prefix
+
+	
 		# ASSEMBLE FILES IN CORRECT DIRECTORIES
 		if self.work_dir: wd = self.work_dir + os.sep
 		else: wd = os.getcwd() + os.sep
@@ -1423,9 +1427,17 @@ class pdata(object):
 	
 		# RUN SIMULATION
 		cwd = os.getcwd()
-		if self.work_dir: os.chdir(self.work_dir)
-		subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
-		
+		if self.work_dir: os.chdir(self.work_dir)	
+		if input and input_prefix:
+			print('ERROR: Cannot specify both input and input_prefix')
+			return
+		if input: 
+			subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
+		if input_prefix:
+			subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -input_prefix ' + self._path.filename,shell=True)
+
+
+
 		# After executing simulation, go back to the parent directory
 		if self.work_dir: os.chdir(cwd)
 		

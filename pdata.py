@@ -1,5 +1,20 @@
 """ Class for pflotran data """
 
+"""
+PyFLOTRAN v1.0.0 LA-CC-14-094 
+
+Copyright (c) 2014, Los Alamos National Security, LLC.  
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 __author__ = "Satish Karra, Cory Kitay"
 __version__ = "1.0.0"
 __maintainer__ = "Satish Karra"
@@ -60,6 +75,11 @@ saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_C
 permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 
 				       'NMT_EXP', 'PRUESS_1']
 
+# characteristic_curves - allowed strings - saturation & permeability functions
+characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY']
+characteristic_curves_gas_permeability_function_types_allowed = ['MAULEM_VG_GAS','BURDINE_BC_GAS']
+characteristic_curves_liquid_permeability_function_types_allowed = ['MAULEM','BURDINE']
+
 # material_property, region, initial_condition, boundary_condition, 
 # source_sink, stratigraphy_couplers - manual does not appear to document 
 # all valid entries
@@ -69,7 +89,7 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
 				'CONCENTRATION', 'SATURATION', 'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance', 'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
-flux_types_allowed = ['dirichlet', 'neumann',' mass_rate', 'hydrostatic, conductance',
+flux_types_allowed = ['dirichlet', 'neumann','mass_rate', 'hydrostatic, conductance',
 		      'zero_gradient', 'production_well', 'seepage', 'volumetric',
 		      'volumetric_rate', 'equilibrium']
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
@@ -81,14 +101,15 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 
 				     'neumann', 'mole', 'mole_rate', 'zero_gradient']
 
-cards = ['co2_database','uniform_velocity','simulation','checkpoint','restart', 'dataset','chemistry','grid',  
-		'timestepper', 'material_property','time','linear_solver','newton_solver',
-		'output','fluid_property','saturation_function','region','observation',
-		'flow_condition','transport_condition','initial_condition',
-		'boundary_condition','source_sink','strata','constraint']
-headers = ['co2 database path','uniform velocity','simulation','checkpoint','restart', 'dataset', 'chemistry','grid',
+cards = ['co2_database','uniform_velocity','simulation','regression','checkpoint','restart', 'dataset','chemistry','grid',
+                'timestepper', 'material_property','time','linear_solver','newton_solver',
+                'output','fluid_property','saturation_function', 'characteristic_curves','region','observation',
+                'flow_condition','transport_condition','initial_condition',
+                'boundary_condition','source_sink','strata','constraint']
+
+headers = ['co2 database path','uniform velocity','simulation','regression','checkpoint','restart', 'dataset', 'chemistry','grid',
 	   'time stepping','material properties','time','linear solver','newton solver','output',
-	   'fluid properties','saturation functions','regions','observation','flow conditions',
+	   'fluid properties','saturation functions', 'characteristic curves', 'regions','observation','flow conditions',
 	   'transport conditions','initial condition','boundary conditions','source sink',
 	   'stratigraphy couplers','constraints']
 
@@ -129,6 +150,8 @@ class pmaterial(object):
 	:type id: int
 	:param name: Name of material property. e.g., 'soil1'.
 	:type name: str
+        :param characteristic_curves: Unique identifier of material characteristic curves
+        :type characteristic_curves: str
 	:param porosity: Porosity of material.
 	:type porosity: float
 	:param tortuosity: Tortuosity of material.
@@ -148,11 +171,12 @@ class pmaterial(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, id=None, name='', porosity=None, tortuosity=None, density=None,
+	def __init__(self, id=None, name='', characteristic_curves = '', porosity=None, tortuosity=None, density=None,
 		     specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[]):
 		self._id = id
 		self._name = name
-		self._porosity = porosity
+		self._characteristic_curves = characteristic_curves
+                self._porosity = porosity
 		self._tortuosity = tortuosity
 		self._density = density
 		self._specific_heat = specific_heat
@@ -169,7 +193,10 @@ class pmaterial(object):
 	name = property(_get_name, _set_name) #: (**)
 	def _get_porosity(self): return self._porosity
 	def _set_porosity(self,value): self._porosity = value
-	porosity = property(_get_porosity, _set_porosity) #: (**)
+        porosity = property(_get_porosity, _set_porosity) #: (**)
+        def _get_characteristic_curves(self): return self._characteristic_curves
+	def _set_characteristic_curves(self,value): self._characteristic_curves = value
+	characteristic_curves = property(_get_characteristic_curves, _set_characteristic_curves) #: (**)
 	def _get_tortuosity(self): return self._tortuosity
 	def _set_tortuosity(self,value): self._tortuosity = value
 	tortuosity = property(_get_tortuosity, _set_tortuosity) #: (**)
@@ -305,6 +332,7 @@ class pgrid(object):
 
 class psimulation(object):
 	""" Class for specifying simulation type and simulation mode. 
+
 	:param simulation_type: Specify simulation type. Options include: 'surface','subsurface.
 	:type simulation_type: str
 	:param subsurface_flow: Specify the process model. 
@@ -332,6 +360,25 @@ class psimulation(object):
 	def _get_mode(self): return self._mode
 	def _set_mode(self,value): self._mode = value
 	mode = property(_get_mode, _set_mode)
+
+class pregression(object):
+	""" Class for specifying regression details. 
+
+	:param cells: Specify cells for regression. 
+	:type cells: list of int 
+	:param cells_per_process: Specify the number cells per process. 
+	:type cells_per_process: int 
+	"""
+	def __init__(self, cells=[], cells_per_process=2): 
+		self._cells = cells 
+		self._cells_per_process = cells_per_process 
+
+	def _get_cells(self): return self._cells
+	def _set_cells(self,value): self._cells = value
+	cells = property(_get_cells, _set_cells)
+	def _get_cells_per_process(self): return self._cells_per_process
+	def _set_cells_per_process(self,value): self._cells_per_process = value
+	cells_per_process = property(_get_cells_per_process, _set_cells_per_process)
 
 class ptimestepper(object):
 	""" Class for controling time stepping.
@@ -696,6 +743,136 @@ class psaturation(object):
 	def _set_power(self,value): self._power = value
 	power = property(_get_power, _set_power)
 	
+
+class pcharacteristic_curves(object):
+	"""Class for specifying characteristic curves. This card is used only in GENERAL mode; the SATURATION_FUNCTION card should be used in RICHARDS mode.
+	
+	:param name: Characteristic curve name. e.g., 'cc1'
+	:type name: str
+	:param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY'.
+	:type saturation_function_type: str
+        :param sf_alpha: Pa^-1 
+        :type sf_alpha: float
+        :param sf_m: Van Genutchen m
+        :type sf_m: float
+        :param sf_lambda: lambda: Brooks Corey lambda
+        :type sf_lambda: float
+        :param sf_liquid_residual_saturation: Residual saturation for liquid phase
+        :type sf_liquid_residual_saturation: float 
+        :param sf_gas_residual_saturation: Residual saturation for gas phase
+        :type sf_gas_residual_saturation: float
+        :param max_capillary_pressure: Pa 
+        :type max_capillary_pressure: float
+        :param smooth: Recommended for BROOKS_COREY
+        :type smooth: No value, just a flag. Input 1 to turn flag on
+	:param power: Placeholder. Currently not used
+	:type power: float
+	:param default: sets up dummy saturation and permeability functions for saturated single phase flow
+	:type default: No value, just a flag. Input 1 to turn flag on
+	:param liquid_permeability_function_type: Options include: 'MAULEM', 'BURDINE'.
+	:type liquid_permeability_function_type: str
+        :param lpf_m: Van Genutchen m
+        :type lpf_m: float
+        :param lpf_lambda: lambda: Brooks Corey lambda
+        :type lpf_lambda: float
+        :param lpf_liquid_residual_saturation: Residual saturation for liquid phase
+        :type lpf_liquid_residual_saturation: float  
+	:param gas_permeability_function_type: Options include: 'MAULEM_VG_GAS', 'BURDINE_BC_GAS'.
+	:type gas_permeability_function_type: str
+        :param gpf_m: Van Genutchen m
+        :type gpf_m: float
+        :param gpf_lambda: lambda: Brooks Corey lambda
+        :type gpf_lambda: float
+        :param gpf_liquid_residual_saturation: Residual saturation for liquid phase
+        :type gpf_liquid_residual_saturation: float 
+        :param gf_gas_residual_saturation: Residual saturation for gas phase
+        :type gf_gas_residual_saturation: float
+
+	"""
+	
+	# definitions are put on one line to work better with rst/latex/sphinx.
+	def __init__(self, name='', saturation_function_type=None, sf_alpha=None, sf_m=None, sf_lambda=None, sf_liquid_residual_saturation=None, sf_gas_residual_saturation=None, max_capillary_pressure=None, smooth='', power=None, default = None,  liquid_permeability_function_type=None, lpf_m=None, lpf_lambda=None, lpf_liquid_residual_saturation=None, gas_permeability_function_type=None, gpf_m=None, gpf_lambda=None, gpf_liquid_residual_saturation=None, gpf_gas_residual_saturation=None):
+		self._name = name
+		self._saturation_function_type = saturation_function_type
+                self._sf_alpha = sf_alpha
+                self._sf_m = sf_m
+                self._sf_lambda = sf_lambda
+		self._sf_liquid_residual_saturation = sf_liquid_residual_saturation # float
+		self._sf_gas_residual_saturation = sf_gas_residual_saturation # float
+		self._max_capillary_pressure = max_capillary_pressure
+		self._smooth = smooth 
+		self._power = power
+		self._default = default
+		self._liquid_permeability_function_type = liquid_permeability_function_type
+		self._lpf_m = lpf_m
+		self._lpf_lambda = lpf_lambda
+		self._lpf_liquid_residual_saturation = lpf_liquid_residual_saturation
+		self._gas_permeability_function_type =  gas_permeability_function_type
+		self._gpf_m = gpf_m
+		self._gpf_lambda = gpf_lambda
+		self._gpf_liquid_residual_saturation = gpf_liquid_residual_saturation
+		self._gpf_gas_residual_saturation = gpf_gas_residual_saturation	
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)
+	def _get_saturation_function_type(self): return self._saturation_function_type
+	def _set_saturation_function_type(self,value): self._saturation_function_type = value
+	saturation_function_type = property(_get_saturation_function_type, _set_saturation_function_type)	
+	def _get_sf_alpha(self): return self._sf_alpha
+	def _set_sf_alpha(self,value): self._sf_alpha = value
+	sf_alpha = property(_get_sf_alpha, _set_sf_alpha)
+	def _get_sf_m(self): return self._sf_m
+	def _set_sf_m(self,value): self._sf_m = value
+	sf_m = property(_get_sf_m, _set_sf_m)
+	def _get_sf_lambda(self): return self._sf_lambda
+	def _set_sf_lambda(self,value): self._sf_lambda = value
+	sf_lambda = property(_get_sf_lambda, _set_sf_lambda)
+	def _get_sf_liquid_residual_saturation(self): return self._sf_liquid_residual_saturation
+	def _set_sf_liquid_residual_saturation(self,value): self._sf_liquid_residual_saturation = value
+	sf_liquid_residual_saturation = property(_get_sf_liquid_residual_saturation, _set_sf_liquid_residual_saturation)
+	def _get_sf_gas_residual_saturation(self): return self._sf_gas_residual_saturation
+	def _set_sf_gas_residual_saturation(self,value): self._sf_gas_residual_saturation = value
+	sf_gas_residual_saturation = property(_get_sf_gas_residual_saturation, _set_sf_gas_residual_saturation)
+	def _get_max_capillary_pressure(self): return self._max_capillary_pressure
+	def _set_max_capillary_pressure(self,value): self._max_capillary_pressure = value
+	max_capillary_pressure = property(_get_max_capillary_pressure, _set_max_capillary_pressure)
+	def _get_smooth(self): return self._smooth
+	def _set_smooth(self,value): self._smooth = value
+	smooth = property(_get_smooth, _set_smooth)
+	def _get_power(self): return self._power
+	def _set_power(self,value): self._power = value
+	power = property(_get_power, _set_power)
+	def _get_default(self): return self._default
+	def _set_default(self,value): self._default = value
+	default = property(_get_default, _set_default)
+	def _get_liquid_permeability_function_type(self): return self._liquid_permeability_function_type
+	def _set_liquid_permeability_function_type(self,value): self._liquid_permeability_function_type = value
+	liquid_permeability_function_type = property(_get_liquid_permeability_function_type, _set_liquid_permeability_function_type)	
+	def _get_lpf_m(self): return self._lpf_m
+	def _set_lpf_m(self,value): self._lpf_m = value
+	lpf_m = property(_get_lpf_m, _set_lpf_m)
+	def _get_lpf_lambda(self): return self._lpf_lambda
+	def _set_lpf_lambda(self,value): self._lpf_lambda = value
+	lpf_lambda = property(_get_lpf_lambda, _set_lpf_lambda)
+	def _get_lpf_liquid_residual_saturation(self): return self._lpf_liquid_residual_saturation
+	def _set_lpf_liquid_residual_saturation(self,value): self._lpf_liquid_residual_saturation = value
+	lpf_liquid_residual_saturation = property(_get_lpf_liquid_residual_saturation, _set_lpf_liquid_residual_saturation)
+	def _get_gas_permeability_function_type(self): return self._gas_permeability_function_type
+	def _set_gas_permeability_function_type(self,value): self._gas_permeability_function_type = value
+	gas_permeability_function_type = property(_get_gas_permeability_function_type, _set_gas_permeability_function_type)	
+	def _get_gpf_m(self): return self._gpf_m
+	def _set_gpf_m(self,value): self._gpf_m = value
+	gpf_m = property(_get_gpf_m, _set_gpf_m)
+	def _get_gpf_lambda(self): return self._gpf_lambda
+	def _set_gpf_lambda(self,value): self._gpf_lambda = value
+	gpf_lambda = property(_get_gpf_lambda, _set_gpf_lambda)
+	def _get_gpf_liquid_residual_saturation(self): return self._gpf_liquid_residual_saturation
+	def _set_gpf_liquid_residual_saturation(self,value): self._gpf_liquid_residual_saturation = value
+	gpf_liquid_residual_saturation = property(_get_gpf_liquid_residual_saturation, _set_gpf_liquid_residual_saturation)
+	def _get_gpf_gas_residual_saturation(self): return self._gpf_gas_residual_saturation
+	def _set_gpf_gas_residual_saturation(self,value): self._gpf_gas_residual_saturation = value
+	gpf_gas_residual_saturation = property(_get_gpf_gas_residual_saturation, _set_gpf_gas_residual_saturation)
+
 class pregion(object):
 	"""Class for specifying a PFLOTRAN region. Multiple region objects can be created.
 
@@ -764,6 +941,8 @@ class pflow(object):
 	 with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both.
 	 If both are used, then only the file name will be written to the input deck.
 	:type datum: Multiple [float, float, float] or str.
+	:param datum_type: file or dataset
+	:type datum_type: str
 	:param varlist: Input is a list of pflow_variable objects. Sub-class of pflow.
 	 It is recommended to use dat.add(obj=pflow_variable) for easy appending. 
 	 Use dat.add(index='pflow_variable.name' or dat.add(index=pflow_variable) to 
@@ -802,6 +981,9 @@ class pflow(object):
 	def _get_datum(self): return self._datum
 	def _set_datum(self,value): self._datum = value
 	datum = property(_get_datum, _set_datum)
+	def _get_datum_type(self): return self._datum_type
+	def _set_datum_type(self,value): self._datum_type = value
+	datum_type = property(_get_datum_type, _set_datum_type)
 	def _get_varlist(self): return self._varlist
 	def _set_varlist(self,value): self._varlist = value
 	varlist = property(_get_varlist, _set_varlist)
@@ -1074,6 +1256,7 @@ class prestart(object):
 	
 class pdataset(object):
 	"""Class for incorporating data within a model.
+
 	:param dataset_name: Opens the card block with the name of the data set in the string. I name is not given the NAME entry is required.
 	:type dataset_name: str
 	:param dataset_mapped_name: Adds the MAPPED flag to the DATASET and allows for the dataset to be named.
@@ -1342,6 +1525,7 @@ class pdata(object):
 		# None here.
 		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
+		self._regression = pregression()
 		self._simulation = psimulation()
 		self._checkpoint = pcheckpoint()
 		self._restart = prestart()
@@ -1356,7 +1540,8 @@ class pdata(object):
 		self._output = poutput()
 		self._fluid = pfluid()
 		self._saturation = None
-		self._regionlist = []	# There are multiple regions
+	        self._charlist = []
+         	self._regionlist = []	# There are multiple regions
 		self._observation_list = []
 		self._flowlist = []
 		self._transportlist = []
@@ -1568,6 +1753,7 @@ class pdata(object):
 				[self._read_co2_database,
 				 self._read_uniform_velocity,
 				 self._read_simulation,
+				 self._read_regression,
 				 self._read_checkpoint,
 				 self._read_restart,
 				 self._read_dataset,
@@ -1581,6 +1767,7 @@ class pdata(object):
 				 self._read_output,
 				 self._read_fluid,
 				 self._read_saturation,
+				 self._read_characteristic_curves,
 				 self._read_region,
 				 self._read_observation,
 				 self._read_flow,
@@ -1653,6 +1840,8 @@ class pdata(object):
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_begin(outfile)
 
+		if self.regression.cells or self.regression.cells_per_process: self._write_regression(outfile)
+		
 		# Presumes uniform_velocity.value_list is required
 		if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
 
@@ -1697,7 +1886,10 @@ class pdata(object):
 		if self.saturation: self._write_saturation(outfile)
 		else: print 'info: saturation not detected\n'
 		
-		if self.regionlist: self._write_region(outfile)
+		if self.charlist: self._write_characteristic_curves(outfile)
+		else: print 'info: characteristic curves not detected\n'
+		
+                if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
 		if self.observation_list: self._write_observation(outfile)
@@ -1738,7 +1930,7 @@ class pdata(object):
 		:type overwrite: bool
 		'''
 	
-		add_checklist = [pmaterial,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,pstrata,ptransport,pconstraint,pconstraint_concentration]
+		add_checklist = [pmaterial, pcharacteristic_curves, pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,pstrata,ptransport,pconstraint,pconstraint_concentration]
 
 	 	# Check if obj first is an object that belongs to add_checklist
 		checklist_bool = [isinstance(obj,item) for item in add_checklist]
@@ -1751,6 +1943,7 @@ class pdata(object):
 		# Always make index lower case if it is being used as a string
 		if isinstance(index,str): index=index.lower()
 		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
+		if isinstance(obj,pcharacteristic_curves): self._add_characteristic_curves(obj,overwrite)
 		if isinstance(obj,pchemistry_m_kinetic): 
 			self._add_chemistry_m_kinetic(obj,overwrite)
 		if isinstance(obj,plsolver): self._add_lsolver(obj,overwrite)
@@ -1779,6 +1972,11 @@ class pdata(object):
 		elif isinstance(obj,list):
 			for obji in copy(obj):	# obji = object index
 				if isinstance(obji,pmaterial): self._delete_prop(obji)
+
+		if isinstance(obj,pcharacteristic_curves): self._delete_characteristic_curves(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):	# obji = object index
+				if isinstance(obji,pcharacteristic_curves): self._delete_characteristic_curves(obji)
 
 		if isinstance(obj,pchemistry_m_kinetic): self._delete_pchemistry_m_kinetic(obj)
 		elif isinstance(obj,list):
@@ -1941,6 +2139,45 @@ class pdata(object):
 		self._header(outfile,headers['co2_database'])
 		outfile.write('CO2_DATABASE ' + self._co2_database + '\n\n')
 		
+	def _read_regression(self,infile,line):
+		regression = pregression()
+		keepReading = True
+		
+		while keepReading: #Read through all cards
+                        line = infile.readline()        # get next line
+                        key = line.strip().split()[0].lower()   # take first key word
+
+			if key == 'cells':
+				keepReading2 = True
+				while keepReading2:
+					cell_list = []
+					for i in range(100):
+						line1 = infile.readline()
+						if line1.strip().split()[0].lower() in ['/','end']:
+							keepReading2 = False
+							break
+						cell_list.append(int(line1))
+				regression.cells = cell_list 
+                        elif key == 'cells_per_process':
+				regression.cells_per_process= line.split()[-1] 
+			elif key in ['/','end']: keepReading = False
+
+		self._regression = regression 
+
+	def _write_regression(self,outfile):
+		self._header(outfile,headers['regression'])
+		regression = self.regression
+		outfile.write('REGRESSION' +'\n')
+		if regression.cells:
+			outfile.write('  CELLS' + '\n' )
+			for cell in regression.cells:
+				outfile.write('    ' + str(cell) + '\n')
+			outfile.write('  /' + '\n' )
+		if regression.cells_per_process:
+			outfile.write('  CELLS_PER_PROCESS' + ' ' + str(regression.cells_per_process) + '\n' )
+		outfile.write('END'+'\n\n')
+	
+
 	def _read_grid(self,infile,line):
 		grid = pgrid()				# assign defaults before reading in values
 
@@ -2139,6 +2376,7 @@ class pdata(object):
 	def _read_prop(self,infile,line):
 		np_name = line.split()[-1] 		# property name
 		np_id = None
+                np_characteristic_curves = line.split()[-1] 
 		p = pmaterial(0,'')				# assign defaults before reading in values
 		np_porosity=p.porosity
 		np_tortuosity=p.tortuosity
@@ -2156,6 +2394,8 @@ class pdata(object):
 			key = line.strip().split()[0].lower() 		# take first keyword
 			if key == 'id':
 				np_id = int(line.split()[-1])
+                        elif key == 'characteristic_curves':
+                                np_characteristic_curves = line.split()[-1]
 			elif key == 'porosity':
 				np_porosity = floatD(line.split()[-1])
 			elif key == 'tortuosity':
@@ -2175,7 +2415,9 @@ class pdata(object):
 				while keepReading2:
 					line = infile.readline() 			# get next line
 					key = line.split()[0].lower() 		# take first keyword
-					if key == 'perm_x':
+					if key == 'perm_iso':
+						np_permeability.append(floatD(line.split()[-1]))
+					elif key == 'perm_x':
 						np_permeability.append(floatD(line.split()[-1]))
 					elif key == 'perm_y':
 						np_permeability.append(floatD(line.split()[-1]))
@@ -2183,7 +2425,7 @@ class pdata(object):
 						np_permeability.append(floatD(line.split()[-1]))
 					elif key in ['/','end']: keepReading2 = False
 			elif key in ['/','end']: keepReading = False
-		new_prop = pmaterial(np_id,np_name,np_porosity,np_tortuosity,np_density,
+		new_prop = pmaterial(np_id,np_name,np_characteristic_curves,np_porosity,np_tortuosity,np_density,
 		                     np_specific_heat,np_cond_dry,np_cond_wet,
 				             np_saturation,np_permeability) 		# create an empty material property
 
@@ -2214,6 +2456,8 @@ class pdata(object):
 				outfile.write('MATERIAL_PROPERTY ' + prop.name + '\n')
 			if prop.id:
 				outfile.write('  ID '+str(prop.id)+'\n')
+                        if prop.characteristic_curves:
+                                outfile.write('  CHARACTERISTIC_CURVES '+prop.characteristic_curves+'\n')
 			if prop.porosity:
 				outfile.write('  POROSITY '+strD(prop.porosity)+'\n')
 			if prop.tortuosity:
@@ -2230,9 +2474,12 @@ class pdata(object):
 				outfile.write('  SATURATION_FUNCTION '+prop.saturation+'\n')
 			if prop.permeability:
 				outfile.write('  PERMEABILITY\n')
-				outfile.write('    PERM_X '+strD(prop.permeability[0])+'\n')
-				outfile.write('    PERM_Y '+strD(prop.permeability[1])+'\n')
-				outfile.write('    PERM_Z '+strD(prop.permeability[2])+'\n')
+				if len(prop.permeability) == 1:
+					outfile.write('    PERM_ISO '+strD(prop.permeability[0])+'\n')
+				else:	
+					outfile.write('    PERM_X '+strD(prop.permeability[0])+'\n')
+					outfile.write('    PERM_Y '+strD(prop.permeability[1])+'\n')
+					outfile.write('    PERM_Z '+strD(prop.permeability[2])+'\n')
 				outfile.write('  /\n')
 			outfile.write('END\n\n')
 	
@@ -2551,6 +2798,7 @@ class pdata(object):
 	def _read_output(self,infile):
 		output = poutput()
 		output.time_list = []
+		output.format_list = []
 		
 		keepReading = True
 		
@@ -2835,6 +3083,157 @@ class pdata(object):
 			outfile.write('  POWER ' + strD(saturation.power) + '\n')
 		outfile.write('END\n\n')
 		
+	
+        def _read_characteristic_curves(self,infile,line):
+		
+		characteristic_curves = pcharacteristic_curves()	# assign defaults before reading in values 
+        	characteristic_curves.name = line.split()[-1].lower() # Characteristic curve name, passed in.
+		
+		keepReading = True
+
+		while keepReading:	# Read through all cards
+			line = infile.readline()	# get next line
+			key = line.strip().split()[0].lower()	# take first  key word
+			
+			if key == 'saturation_function_type':
+				characteristic_curves.saturation_function_type = line.split()[-1]
+			elif key == 'sf_alpha':
+				characteristic_curves.sf_alpha = floatD(line.split()[-1])
+			elif key == 'sf_m':
+				characteristic_curves.sf_m = floatD(line.split()[-1])
+			elif key == 'sf_lambda':
+				characteristic_curves.sf_lambda = floatD(line.split()[-1])
+			elif key == 'sf_liquid_residual_saturation':
+				characteristic_curves.sf_liquid_residual_saturation = floatD(line.split()[-1])
+			elif key == 'sf_gas_residual_saturation':
+				characteristic_curves.sf_gas_residual_saturation = floatD(line.split()[-1])
+			elif key == 'max_capillary_pressure':
+				characteristic_curves.max_capillary_pressure = floatD(line.split()[-1])
+			elif key == 'smooth':
+				characteristic_curves.smooth = floatD(line.split()[-1])  
+			elif key == 'power':
+				characteristic_curves.power = floatD(line.split()[-1])
+			elif key == 'default':
+				characteristic_curves.default = floatD(line.split()[-1])
+			elif key == 'liquid_permeability_function_type':
+				characteristic_curves.liquid_permeability_function_type = line.split()[-1]
+			elif key == 'lpf_m':
+				characteristic_curves.lpf_m = floatD(line.split()[-1])
+			elif key == 'lpf_lambda':
+				characteristic_curves.lpf_lambda = floatD(line.split()[-1])
+			elif key == 'lpf_liquid_residual_saturation':
+				characteristic_curves.lpf_liquid_residual_saturation = floatD(line.split()[-1])
+			elif key == 'gas_permeability_function_type':
+				characteristic_curves.gas_permeability_function_type = line.split()[-1]
+			elif key == 'gpf_m':
+				characteristic_curves.gpf_m = floatD(line.split()[-1])
+			elif key == 'gpf_lambda':
+				characteristic_curves.gpf_lambda = floatD(line.split()[-1])
+			elif key == 'gpf_liquid_residual_saturation':
+				characteristic_curves.gpf_liquid_residual_saturation = floatD(line.split()[-1])
+			elif key == 'gpf_gas_residual_saturation':
+				characteristic_curves.gpf_gas_residual_saturation = floatD(line.split()[-1])
+             		elif key in ['/','end']: keepReading = False
+
+		new_cc = pcharacteristic_curves(characteristic_curves.name, characteristic_curves.saturation_function_type,characteristic_curves.sf_alpha, characteristic_curves.sf_m, characteristic_curves.sf_lambda, characteristic_curves.sf_liquid_residual_saturation, characteristic_curves.sf_gas_residual_saturation, characteristic_curves.max_capillary_pressure, characteristic_curves.smooth, characteristic_curves.power, characteristic_curves.default, characteristic_curves.liquid_permeability_function_type, characteristic_curves.lpf_m, characteristic_curves.lpf_lambda, characteristic_curves.lpf_liquid_residual_saturation, characteristic_curves.gas_permeability_function_type, characteristic_curves.gpf_m, characteristic_curves.gpf_lambda, characteristic_curves.gpf_liquid_residual_saturation, characteristic_curves.gpf_gas_residual_saturation)     
+      		
+	        self.add(new_cc)
+
+        def _add_characteristic_curves(self,char=pcharacteristic_curves(),overwrite=False):   #Adds a char object.
+                # check if char already exists
+                if isinstance(char,pcharacteristic_curves):
+                        if char.name in self.char.keys():
+                                if not overwrite:
+                                        warning = 'WARNING: A Characteristic Curve with name \''+str(char.name)+'\' already exists. Characteristic curve will not be defined, use overwrite = True in add() to overwrite the old characteristic curve.'
+                                        print warning; print
+                                        _buildWarnings(warning)
+                                        return
+                                else: # Executes if overwrite = True
+                                        self.delete(self.char[char.name])
+
+                if char not in self._charlist:
+                        self._charlist.append(char)
+
+        def _delete_char(self,char=pcharacteristic_curves()):
+                self._charlist.remove(char)
+		
+	def _write_characteristic_curves(self,outfile): 
+		pudb.set_trace()
+		self._header(outfile,headers['characteristic_curves'])
+		characteristic_curves = pcharacteristic_curves()
+		for char in self.charlist:		
+			# Write out characteristic curve properties that exist
+			if char.name:
+				outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')		
+			if char.saturation_function_type:
+				if char.saturation_function_type in characteristic_curves_saturation_function_types_allowed:
+					outfile.write('  SATURATION_FUNCTION ' +
+						char.saturation_function_type + '\n')
+				else:
+					print 'ERROR: char.saturation_function_type: \'' + char.saturation_function_type +'\' is invalid.'
+					print '       valid  char.saturation_function_types', characteristic_curves_saturation_function_types_allowed, '\n'	
+				if char.sf_alpha:
+					outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
+				if char.sf_m:
+					outfile.write('   M ' + strD(char.sf_m) + '\n')
+				if char.sf_lambda:
+					outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
+				if char.sf_liquid_residual_saturation or char.sf_liquid_residual_saturation==0:
+					outfile.write('   LIQUID_RESIDUAL_SATURATION ' + 
+							strD(char.sf_liquid_residual_saturation) + '\n')
+				if char.sf_gas_residual_saturation or char.sf_gas_residual_saturation==0:
+					outfile.write('   GAS_RESIDUAL_SATURATION ' + 
+							strD(char.sf_gas_residual_saturation) + '\n')
+				if char.max_capillary_pressure:
+					outfile.write('   MAX_CAPILLARY_PRESSURE ' + 
+							strD(char.max_capillary_pressure) + '\n')
+				if char.smooth:
+					outfile.write('   SMOOTH ' + '\n') # This just prints the SMOOTH flag
+				outfile.write('  / '+'\n')
+
+			if char.power:
+				outfile.write('  POWER ' + strD(char.power) + '\n')
+			if char.default:
+				outfile.write('  DEFAULT ' + '\n') # This just prints the DEFAULT flag
+			if char.liquid_permeability_function_type:
+				if char.liquid_permeability_function_type in characteristic_curves_liquid_permeability_function_types_allowed:
+					outfile.write('  PERMEABILITY_FUNCTION ' +
+						char.liquid_permeability_function_type + '\n')
+					outfile.write('   PHASE LIQUID' + '\n')
+				else:
+					print 'ERROR: char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type +'\' is invalid.'
+					print '       valid  char.liquid_permeability_function_types', characteristic_curves_liquid_permeability_function_types_allowed, '\n'	
+				if char.lpf_m:
+					outfile.write('   M ' + strD(char.lpf_m) + '\n')
+				if char.lpf_lambda:
+					outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
+				if char.lpf_liquid_residual_saturation or char.lpf_liquid_residual_saturation==0:
+					outfile.write('   LIQUID_RESIDUAL_SATURATION ' + 
+							strD(char.lpf_liquid_residual_saturation) + '\n')
+				outfile.write('  / ' + '\n')
+
+			if char.gas_permeability_function_type:
+				if char.gas_permeability_function_type in characteristic_curves_gas_permeability_function_types_allowed:	
+					outfile.write('  PERMEABILITY_FUNCTION ' +
+						char.gas_permeability_function_type + '\n')
+					outfile.write('   PHASE GAS' + '\n')
+				else:
+					print 'ERROR: char.gas_permeability_function_type: \'' + char.gas_permeability_function_type +'\' is invalid.'
+					print '       valid  char.gas_permeability_function_types', characteristic_curves_gas_permeability_function_types_allowed, '\n'	
+				if char.gpf_m:
+					outfile.write('   M ' + strD(char.gpf_m) + '\n')
+				if char.gpf_lambda:
+					outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
+				if char.gpf_liquid_residual_saturation or char.gpf_liquid_residual_saturation==0:
+					outfile.write('   LIQUID_RESIDUAL_SATURATION ' + 
+							strD(char.gpf_liquid_residual_saturation) + '\n')	
+				if char.gpf_gas_residual_saturation or char.gpf_gas_residual_saturation==0:
+					outfile.write('   GAS_RESIDUAL_SATURATION ' + 
+							strD(char.gpf_gas_residual_saturation) + '\n')
+				outfile.write('  / ' + '\n')
+
+			outfile.write('END\n\n')
+
 	def _read_region(self,infile,line):
 		
 		region = pregion()
@@ -2863,8 +3262,8 @@ class pdata(object):
 			elif key == 'face':
 				region.face = line.strip().split()[-1].lower()
 			elif key in ['/','end']: keepReading = False
-			
-			self.add(region)
+				
+		self.add(region)
 
 	def _add_region(self,region=pregion(),overwrite=False):		#Adds a Region object.
 		# check if region already exists
@@ -2950,6 +3349,7 @@ class pdata(object):
 		flow = pflow()
 		flow.datum = []
 		flow.varlist = []
+		flow.datum_type = ''
 		flow.name = line.split()[-1].lower()	# Flow Condition name passed in.
 		
 		keepReading = True
@@ -2966,7 +3366,7 @@ class pdata(object):
 						    # This # indicates how many time a / or 'end' 
 						    # can be read before loop terminates.
 				
-			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy':
+			elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy' or key == 'flux':
 				if end_count == 0:
 					'''
 					Appending and instantiation of new 
@@ -3040,30 +3440,20 @@ class pdata(object):
 			elif key == 'sync_timestep_with_update':
 				flow.sync_timestep_with_update = True
 			elif key == 'datum':
-				line = infile.readline() # get next line
-				
 				# Assign file_name with list of d_dx, d_dy, d_dz values.
-				if line.strip().split()[0].upper() == 'FILE':
+				if line.strip().split()[1].upper() == 'FILE':
+					flow.datum_type = 'file'
+					flow.datum = line.split()[1]
+				if line.strip().split()[1].upper() == '':
+					flow.datum_type = 'DATASET'
 					flow.datum = line.split()[1]
 				# Assign d_dx, d_dy, d_dz values
 				else:
-					# try is used to determine when to stop reading.
-					# skip_readline signals the read function not to
-					# read the next line again. This is being because
-					# there is no / or end telling the script to stop.
-					# The script knows there are no more floats to read
-					# because an error is produced if the first substring
-					# cannot be converted into a float.
-					while True:
-						try:
-							temp_list = []
-							temp_list.append(floatD(line.split()[0]))
-							temp_list.append(floatD(line.split()[1]))
-							temp_list.append(floatD(line.split()[2]))
-							flow.datum.append(temp_list)
-							line = infile.readline() # get next line
-						except(ValueError): break
-					self.skip_readline = True
+					temp_list = []
+					temp_list.append(floatD(line.split()[1]))
+					temp_list.append(floatD(line.split()[2]))
+					temp_list.append(floatD(line.split()[3]))
+					flow.datum.append(temp_list)
 					
 			# Detect if there is carriage return after '/' or 'end' to end loop
 			# Alternative method of count implemented by Satish
@@ -3157,7 +3547,7 @@ class pdata(object):
 					print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'	
 				return 0 # Break out of function
 			elif condition_name.upper() == 'FLUX':
-				if condition_type.lower() in flux_types_allowed: 
+				if condition_type.lower() in flux_types_allowed:
 					outfile.write(condition_type.lower())
 				else:
 					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
@@ -3208,7 +3598,10 @@ class pdata(object):
 				outfile.write('  DATUM')
 				
 				if isinstance(flow.datum, str):
-					outfile.write(' FILE ')
+					if flow.datum_type == 'file':
+						outfile.write(' FILE ')
+					if flow.datum_type == 'dataset':
+						outfile.write(' DATASET ')
 					outfile.write(flow.datum)
 				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
 					# write out d_dx, d_dy, d_dz
@@ -3260,7 +3653,7 @@ class pdata(object):
 							j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
-						outfile.write(' ' + flow.varlist[i].unit.upper())
+						outfile.write(' ' + flow.varlist[i].unit.lower())
 					outfile.write('\n')
 				# Write if using list format (multiple lines)
 				elif flow.varlist[i].list:	
@@ -4033,6 +4426,10 @@ class pdata(object):
 	def _set_uniform_velocity(self, object): self._uniform_velocity = object
 	uniform_velocity = property(_get_uniform_velocity, _set_uniform_velocity) #: (**)
 	
+	def _get_regression(self): return self._regression
+	def _set_regression(self, object): self._regression = object
+	regression = property(_get_regression, _set_regression) #: (**)	
+
 	def _get_simulation(self): return self._simulation
 	def _set_simulation(self, object): self._simulation = object
 	simulation = property(_get_simulation, _set_simulation) #: (**)	
@@ -4085,6 +4482,12 @@ class pdata(object):
 	def _set_saturation(self, object): self._saturation = object
 	saturation = property(_get_saturation, _set_saturation) #: (**)
 	
+	def _get_charlist(self): return self._charlist
+	charlist = property(_get_charlist)
+	def _get_char(self): 
+		return dict([(characteristic_curves.name.lower(),characteristic_curves) for characteristic_curves in self.charlist]+[(characteristic_curves.name.lower(),characteristic_curves) for characteristic_curves in self.charlist])
+	char = property(_get_char) #: (**) dictionary of material properties, indexable by ID or name
+
 	def _get_regionlist(self): return self._regionlist
 	def _set_regionlist(self, object): self._regionlist = object
 	regionlist = property(_get_regionlist, _set_regionlist) #: (**)

@@ -32,7 +32,7 @@ from copy import copy
 import os,time,sys
 import platform
 #from subprocess import Popen, PIPE
-import pudb
+import pdb
 import subprocess
 import matplotlib
 import matplotlib.pyplot as plt
@@ -954,7 +954,8 @@ class pflow(object):
 	"""
 	
 	def __init__(self,name='',units_list=None,
-			iphase=None,sync_timestep_with_update=False, datum=[], 
+			iphase=None,sync_timestep_with_update=False,
+			datum=[],datum_type='',
 			varlist=[]):
 		self._name = name.lower()	# Include initial, top, source
 		self._units_list = units_list	# Specify type of units to display such as
@@ -1803,7 +1804,7 @@ class pdata(object):
 				card = line.split()[0].lower() 		# make card lower case
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','checkpoint','restart','dataset','material_property',
-					 'simulation','grid',
+					 'simulation','regression','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
 					 'boundary_condition','transport_condition','constraint',
@@ -1836,6 +1837,7 @@ class pdata(object):
 		else: 
 			print 'ERROR: simulation is required, it is currently reading as empty\n'
 			return
+	
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_begin(outfile)
@@ -2142,7 +2144,7 @@ class pdata(object):
 	def _read_regression(self,infile,line):
 		regression = pregression()
 		keepReading = True
-		
+	
 		while keepReading: #Read through all cards
                         line = infile.readline()        # get next line
                         key = line.strip().split()[0].lower()   # take first key word
@@ -3158,7 +3160,7 @@ class pdata(object):
                 self._charlist.remove(char)
 		
 	def _write_characteristic_curves(self,outfile): 
-		pudb.set_trace()
+		
 		self._header(outfile,headers['characteristic_curves'])
 		characteristic_curves = pcharacteristic_curves()
 		for char in self.charlist:		

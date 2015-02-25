@@ -15,6 +15,10 @@ class vsat_pulse(unittest.TestCase):
     def test_vsat_pulse_read(self):
         """Test for writing to PFLOTRAN input from PyFLOTRAN input for vsat 1D pulse"""
         self.assertTrue(compare_vsat_pulse())
+	os.system('rm -f ' + dir + '/vsat_flow2.in')
+	os.system('rm -f ' + dir + '/vsat_flow2*.tec')
+	os.system('rm -f ' + dir + '/vsat_flow2*.out')
+	os.system('rm -f ' + dir + '/vsat_flow2*.regression')
 
 if __name__ == '__main__':
     unittest.main()

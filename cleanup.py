@@ -9,4 +9,7 @@ for file in glob.glob('tests/*/*out'):
 
 for file in glob.glob('tests/*/*h5'):
 	os.system('rm -f' + ' ' + file)	
+
+for file in glob.glob('tests/*/*.regression'):
+	os.system('rm -f' + ' ' + file)	
 	

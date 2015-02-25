@@ -1027,8 +1027,7 @@ class pflow(object):
 	
 class pflow_variable(object):
 	"""Sub-class of pflow for each kind of variable (includes type and value) such as
- 	   pressure, temperature, etc. There can be multiple pflow_variable objects appended 
-	   to a single pflow object.
+ 	   pressure, temperature, etc. There can be multiple pflow_variable objects appended to a single pflow object.
 	
 	:param name: Indicates name of the flow variable. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
 	:type name: str
@@ -3406,9 +3405,7 @@ class pdata(object):
 							line = infile.readline() # get next line
 							tstring2 = line.split()[:] # split the whole string/line
 							
-							var.list = [] # list needs to be reset
 							for var in flow.varlist: # var represents a pflow_variable object
-							
 								if tstring2name.lower() == var.name.lower():
 									if line[0] == ':' or line[0] == '#' or line[0] == '/':
 										pass	# ignore a commented line
@@ -3417,14 +3414,14 @@ class pdata(object):
 										var.time_unit_type = tstring2[1]
 									elif tstring2[0].lower() == 'data_units':
 											var.data_unit_type = tstring2[1]
+									elif line.split()[0] in ['/','end']: keepReadingList = False
 									else:
 										tvarlist = pflow_variable_list()
 										tvarlist.time_unit_value = floatD(tstring2[0])
 										tvarlist.data_unit_value_list = []
 										tvarlist.data_unit_value_list.append(floatD(tstring2[1]))
-										tvarlist.data_unit_value_list.append(floatD(tstring2[2]))
+										if len(tstring2) > 2:tvarlist.data_unit_value_list.append(floatD(tstring2[2]))
 										var.list.append(tvarlist)
-							if line.split()[0] in ['/','end']: keepReadingList = False
 					else:
 						# for each single variable in a pflow_variable object, check all
 						# pflow_variable object by name to determine correct assignment
@@ -3540,6 +3537,13 @@ class pdata(object):
 					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
 					print '       valid flow_condition pressure_types_allowed:', pressure_types_allowed, '\n'	
 				return 0 # Break out of function
+			elif condition_name.upper() == 'FLUX':
+				if condition_type.lower() in flux_types_allowed: 
+					outfile.write(condition_type.lower())
+				else:
+					print 'ERROR: flow.varlist.type: \'' + condition_type +'\' is invalid.'
+					print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'	
+				return 0 # Break out of function
 			elif condition_name.upper() == 'RATE':
 				if condition_type.lower() in rate_types_allowed: 
 					outfile.write(condition_type.lower())
@@ -3636,7 +3640,7 @@ class pdata(object):
 			# variable name and values from lists along with units go here
 			i = 0
 
-			while i< len(flow.varlist):
+			for i in range(len(flow.varlist)):
 				# Write if using non-list format (Single line)
 				if flow.varlist[i].valuelist:	
 					outfile.write('    ' + flow.varlist[i].name.upper())	
@@ -3669,8 +3673,7 @@ class pdata(object):
 							outfile.write('  ' + strD(k.data_unit_value_list[p]))
 						outfile.write('\n')
 					outfile.write('    /\n')
-				i += 1
-			outfile.write('  END\n\n')
+			outfile.write('END\n\n')
 			
 	def _read_initial_condition(self,infile):
 		p = pinitial_condition()

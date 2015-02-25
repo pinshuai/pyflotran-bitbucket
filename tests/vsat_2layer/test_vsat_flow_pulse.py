@@ -15,6 +15,7 @@ class vsat_2layer(unittest.TestCase):
     def test_vsat_2layer_read(self):
         """Test for writing to PFLOTRAN input from PyFLOTRAN input for vsat 1D 2layer"""
         self.assertTrue(compare_vsat_2layer())
+	os.system('rm -f ' + dir + '/vsat_flow2.in')
 
 if __name__ == '__main__':
     unittest.main()

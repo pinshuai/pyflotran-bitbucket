@@ -26,4 +26,4 @@ dat = pdata('vsat_flow_pulse_2layer.in')
 dat.write('vsat_flow2.in')
 	
 # Writing to a different file and executing that file
-dat.run(input='vsat_flow2.in',exe=pflotran_dir + '/src/pflotran/pflotran') 
+#dat.run(input='vsat_flow2.in',exe=pflotran_dir + '/src/pflotran/pflotran') 

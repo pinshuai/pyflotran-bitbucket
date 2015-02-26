@@ -3705,7 +3705,7 @@ class pdata(object):
 							j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
-						outfile.write(' ' + flow.varlist[i].unit.lower())
+						outfile.write(' ' + flow.varlist[i].unit.upper())
 					outfile.write('\n')
 				# Write if using list format (multiple lines)
 				elif flow.varlist[i].list:	

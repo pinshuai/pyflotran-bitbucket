@@ -157,7 +157,7 @@ saturation.alpha = 7.5e-4
 saturation.max_capillary_pressure = 1.e6
 saturation.betac = 2.e0
 saturation.power = 7.e0
-dat.saturation = saturation
+dat.add(saturation) 
 #--------------------------------------------------------------
 
 # set regions

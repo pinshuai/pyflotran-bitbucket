@@ -367,7 +367,7 @@ class pregression(object):
 	:param cells_per_process: Specify the number cells per process. 
 	:type cells_per_process: int 
 	"""
-	def __init__(self, cells=[], cells_per_process=2): 
+	def __init__(self, cells=[], cells_per_process=''): 
 		self._cells = cells 
 		self._cells_per_process = cells_per_process 
 

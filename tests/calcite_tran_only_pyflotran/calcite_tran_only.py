@@ -309,4 +309,4 @@ f.subplots_adjust(hspace=0.2,wspace=0.2,
                   left=.12,right=.9)
 
 #plt.show()
-plt.savefig('pH_tran_only.pdf')
+plt.savefig('pH_tran_only.eps')

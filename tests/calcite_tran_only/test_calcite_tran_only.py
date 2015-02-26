@@ -15,6 +15,11 @@ class calcitetranonly_read(unittest.TestCase):
     def test_calcitetranonly_read(self):
         """Test for reading calcite tran only"""
         self.assertTrue(compare_calcitetranonly())
+	os.system('rm -f ' + dir + '/calcite_tran_only_2.in')
+	os.system('rm -f ' + dir + '/calcite_tran_only_2.out')
+	os.system('rm -f ' + dir + '/calcite_tran_only_2*.tec')
+	os.system('rm -f ' + dir + '/calcite_tran_only_2*.regression')
+
 
 if __name__ == '__main__':
     unittest.main()

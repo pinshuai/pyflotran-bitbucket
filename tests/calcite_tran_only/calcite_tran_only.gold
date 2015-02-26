@@ -35,7 +35,7 @@ CHEMISTRY
       RATE_CONSTANT 1.0000000d-06 mol/m^2-sec 
     /
   /
-  DATABASE /Users/satkarra/pflotran-dev/database/hanford.dat
+  DATABASE /Users/satkarra/src/pflotran-dev/database/hanford.dat
   LOG_FORMULATION
   ACTIVITY_COEFFICIENTS TIMESTEP
   OUTPUT

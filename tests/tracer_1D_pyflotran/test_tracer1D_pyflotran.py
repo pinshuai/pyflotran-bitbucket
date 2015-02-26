@@ -15,6 +15,11 @@ class tracer1D_read(unittest.TestCase):
     def test_tracer1D_read(self):
         """Test for writing to PFLOTRAN input from PyFLOTRAN input for tracer 1D"""
         self.assertTrue(compare_tracer1D())
+	os.system('rm -f ' +  dir + '/tracer_1D.in')
+	os.system('rm -f ' +  dir + '/tracer_1D.out')
+	os.system('rm -f ' +  dir + '/tracer_1D*.tec')
+	os.system('rm -f ' +  dir + '/tracer_1D*.regression')
+
 
 if __name__ == '__main__':
     unittest.main()

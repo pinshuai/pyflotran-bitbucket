@@ -13,6 +13,7 @@ except KeyError:
   print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
 sys.path.append(pyflotran_dir)
+
 from pdata import*
 
 print '\nTEST EXECUTED\n'	# console header
@@ -137,7 +138,7 @@ saturation.residual_saturation_gas = 0.0
 saturation.a_lambda = 0.762e0
 saturation.alpha = 7.5e-4
 saturation.max_capillary_pressure = 1.e6
-dat.saturation = saturation
+dat.add(saturation)
 #--------------------------------------------------------------
 
 # set regions

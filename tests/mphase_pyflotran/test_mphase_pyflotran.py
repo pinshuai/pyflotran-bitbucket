@@ -18,6 +18,8 @@ class mphase_read(unittest.TestCase):
 	os.system('rm -f ' + dir + '/mphase.in')
 	os.system('rm -f ' + dir + '/mphase.out')
 	os.system('rm -f ' + dir + '/mphase*.tec')
+	os.system('rm -f ' + dir + '/mphase*.dat')
+	os.system('rm -f ' + dir + '/mphase*.h5')
 
 
 if __name__ == '__main__':

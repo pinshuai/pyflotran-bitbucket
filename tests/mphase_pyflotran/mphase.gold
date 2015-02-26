@@ -9,7 +9,7 @@ END
 
 SUBSURFACE
 
-CO2_DATABASE /Users/satkarra/pflotran-dev/database/co2data0.dat
+CO2_DATABASE /Users/satkarra/src/pflotran-dev/database/co2data0.dat
 
 GRID
   TYPE structured
@@ -137,7 +137,7 @@ FLOW_CONDITION  initial
     TEMPERATURE 50.0 C
     CONCENTRATION 1.0000000d-06 M
     ENTHALPY 0.0 0.0
-  END
+END
 
 FLOW_CONDITION  top
   TYPE
@@ -151,7 +151,7 @@ FLOW_CONDITION  top
     TEMPERATURE 60.0
     CONCENTRATION 1.0000000d-06
     ENTHALPY 0.0 0.0
-  END
+END
 
 FLOW_CONDITION  source
   SYNC_TIMESTEP_WITH_UPDATE
@@ -172,7 +172,7 @@ FLOW_CONDITION  source
     TEMPERATURE 70.0
     CONCENTRATION 0.0
     ENTHALPY 0.0 0.0
-  END
+END
 
 INITIAL_CONDITION
   FLOW_CONDITION initial

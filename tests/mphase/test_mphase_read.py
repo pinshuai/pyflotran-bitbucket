@@ -15,6 +15,10 @@ class mphase_read(unittest.TestCase):
     def test_mphase_read(self):
         """Test for reading mphase"""
         self.assertTrue(compare_mphase())
+	os.system('rm -f ' + dir + '/mphase2.in')
+	os.system('rm -f ' + dir + '/mphase2.out')
+	os.system('rm -f ' + dir + '/mphase2*.tec')
+	os.system('rm -f ' + dir + '/mphase2*.regression')
 
 if __name__ == '__main__':
     unittest.main()

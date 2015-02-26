@@ -15,7 +15,7 @@ class tracer1D_read(unittest.TestCase):
     def test_tracer1D_read(self):
         """Test for reading tracer 1D"""
         self.assertTrue(compare_tracer1D())
-	os.system('rm -f ' + dir + 'tracer_1D_SC_2.in')
+	os.system('rm -f ' + dir + '/tracer_1D_SC_2.in')
 	os.system('rm -f ' + dir + '/tracer_1D_SC_2*.tec')
 	os.system('rm -f ' + dir + '/tracer_1D_SC_2*.out')
 	os.system('rm -f ' + dir + '/tracer_1D_SC_2*.regression')

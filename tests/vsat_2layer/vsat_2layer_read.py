@@ -13,17 +13,16 @@ except KeyError:
   print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
 sys.path.append(pyflotran_dir)
-print sys.path
 from pdata import*
 
-
+test_dir = '/tests/vsat_2layer/'
 ###############################################################
 
 # Read Test Data
-dat = pdata('vsat_flow_pulse_2layer.in')
+dat = pdata(pyflotran_dir + test_dir + 'vsat_flow_pulse_2layer.in')
 
 # Test write
-dat.write('vsat_flow2.in')
+dat.write(pyflotran_dir + test_dir + 'vsat_flow2.in')
 	
 # Writing to a different file and executing that file
 #dat.run(input='vsat_flow2.in',exe=pflotran_dir + '/src/pflotran/pflotran') 

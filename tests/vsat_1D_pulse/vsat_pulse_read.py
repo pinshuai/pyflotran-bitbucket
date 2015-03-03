@@ -16,14 +16,14 @@ sys.path.append(pyflotran_dir)
 print sys.path
 from pdata import*
 
-
+test_dir = '/tests/vsat_1D_pulse/'
 ###############################################################
 
 # Read Test Data
-dat = pdata('vsat_flow_pulse.in')
+dat = pdata(pyflotran_dir + test_dir + 'vsat_flow_pulse.in')
 
 # Test write
-dat.write('vsat_flow2.in')
+dat.write(pyflotran_dir + test_dir + 'vsat_flow2.in')
 	
 # Writing to a different file and executing that file
-dat.run(input='vsat_flow2.in',exe=pflotran_dir + '/src/pflotran/pflotran') 
+#dat.run(input='vsat_flow2.in',exe=pflotran_dir + '/src/pflotran/pflotran') 

@@ -94,7 +94,7 @@ FLOW_CONDITION  recharge
   TYPE
     FLUX  neumann
   END
-    FLUX 10.0 cm/y
+    FLUX 10.0 CM/Y
 END
 
 INITIAL_CONDITION

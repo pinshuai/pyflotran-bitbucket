@@ -10,12 +10,12 @@ def compare_mphase():
     dir1 = '/mphase-run1'
     dir2 = '/mphase-run2'
 
-    res1 =  filecmp.cmp(dir + dir1 + '/mphase.in', dir + '/mphase.gold')
-    res2 =  filecmp.cmp(dir + dir2 + '/mphase.in', dir + '/mphase.gold')
-
+    res1 =  filecmp.cmp(dir + dir1 + '/mphase2.in', dir + '/mphase.gold')
+    res2 =  filecmp.cmp(dir + dir2 + '/mphase2.in', dir + '/mphase.gold')
     os.system('rm -rf ' +  dir + dir1)
     os.system('rm -rf ' +  dir + dir2)
 
+    print res1, res2
     res = res1 and res2
  
     return res

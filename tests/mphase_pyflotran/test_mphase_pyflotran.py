@@ -3,10 +3,10 @@ import unittest
 import os
 
 dir = os.path.dirname(os.path.realpath(__file__))
-
 def compare_mphase():
     """Return True if pyflotran reads mphase.in correctly."""
-    os.system('python ' + dir + '/mphase.py >& /dev/null')
+
+    os.system('python ' + dir + '/mphase.py  >& /dev/null')
     return  filecmp.cmp(dir + '/mphase.in', dir + '/mphase.gold')
 
 class mphase_read(unittest.TestCase):

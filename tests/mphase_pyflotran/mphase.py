@@ -1,29 +1,28 @@
 import sys
-sys.path.append('../../.')
-
-from pdata import*
 import os
 try:
   pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
   print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
-sys.path.append(del_extra_slash(pflotran_dir + '/src/python'))
-
+sys.path.append(pflotran_dir + '/src/python')
 import pflotran as pft
 
-'''
-Floats can be inputted directly as a float using 'e' or 'E' - E.g. - 0.e0
-or can be inserted via FORTRAN way as a string using 'd' or 'D' E.g. - '0.d0'
+try:
+  pyflotran_dir = os.environ['PYFLOTRAN_DIR']
+except KeyError:
+  print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+  sys.exit(1)
+sys.path.append(pyflotran_dir)
+from pdata import*
 
-Some classes (when set to None at the initializer of pdata) need to be instantiated here.
-'''
+test_dir = '/tests/mphase_pyflotran'
 
 ###############################################################
 
 # initialize without reading in test data
 #--------------------------------------------------------------
-dat = pdata('')
+dat = pdata('',work_dir=pyflotran_dir + test_dir)
 #--------------------------------------------------------------
 #set simulation
 #--------------------------------------------------------------
@@ -369,7 +368,7 @@ dat.add(stratigraphy_coupler)
 #--------------------------------------------------------------
 
 # Test write
-#dat.write('mphase.in')
+dat.write('mphase.in')
 
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file

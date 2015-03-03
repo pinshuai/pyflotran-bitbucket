@@ -28,8 +28,6 @@ import matplotlib.pyplot as plt
 import math
 import pflotran as pft
 
-print '\nTEST EXECUTED\n'	# console header
-
 print('******************************************')
 print('Using PyFLOTRAN')
 print('******************************************')

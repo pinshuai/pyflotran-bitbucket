@@ -18,10 +18,11 @@ sys.path.append(pyflotran_dir)
 
 from pdata import*
 
+test_dir = 'tests/calcite_tran_only'
 pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 
 # Read input file
-dat = pdata('calcite_tran_only.in')
+dat = pdata(pyflotran_dir + test_dir + '/calcite_tran_only.in')
 
 # Testing write
 #dat.write('calcite_tran_only_2.in')

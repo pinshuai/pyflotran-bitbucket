@@ -6,7 +6,7 @@ dir = os.path.dirname(os.path.realpath(__file__))
 
 def compare_calcitetranonly():
     """Return True if pyflotran runs calcite_tran_read.py in correctly."""
-    os.system('python ' + dir + '/calcite_tran_only_read.py >& /dev/null ')
+    os.system('python ' + dir + '/calcite_tran_only_read.py >& /dev/null')
     return  filecmp.cmp(dir + '/calcite_tran_only_2.in', dir + '/calcite_tran_only.gold')
 
 class calcitetranonly_read(unittest.TestCase):

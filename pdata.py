@@ -67,7 +67,8 @@ grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical'] # cartes
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 
 			  'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
-output_variables_allowed = ['liquid_pressure','liquid_saturation','liquid_density','liquid_mobility','liquid_energy','liquid_mole_fractions','gas_pressure','gas_saturation','gas_density','gas_mobility','gas_mole_fractions','air_pressure','capillary_pressure','thermodynamic_state','temperature','residual','porosity','mineral_porosity']
+output_variables_allowed = ['liquid_pressure','liquid_saturation','liquid_density','liquid_mobility','liquid_energy','liquid_mole_fractions','gas_pressure','gas_saturation','gas_density','gas_mobility','gas_mole_fractions','air_pressure','capillary_pressure','thermodynamic_state','temperature','residual','porosity','mineral_porosity','permeability',
+'mineral_porosity']
 
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 
@@ -339,11 +340,14 @@ class psimulation(object):
 	:type subsurface_transport: str
 	:param mode: Specify the mode for the subsurface flow model
 	:type mode: str
+	:param flowtran_coupling: Specify the type for the flow transport coupling 
+	:type mode: str
 	"""
-	def __init__(self, simulation_type='', subsurface_flow='', subsurface_transport='', mode=''):
+	def __init__(self, simulation_type='', subsurface_flow='', subsurface_transport='', mode='',flowtran_coupling=''):
 		self._simulation_type = simulation_type
 		self._subsurface_flow = subsurface_flow
 		self._subsurface_transport = subsurface_transport
+		self._flowtran_coupling = flowtran_coupling
 		self._mode = mode
 
 	def _get_simulation_type(self): return self._simulation_type
@@ -357,7 +361,9 @@ class psimulation(object):
 	subsurface_transport = property(_get_subsurface_transport, _set_subsurface_transport)
 	def _get_mode(self): return self._mode
 	def _set_mode(self,value): self._mode = value
-	mode = property(_get_mode, _set_mode)
+	def _get_flowtran_coupling(self): return self._flowtran_coupling
+	def _set_flowtran_coupling(self,value): self._flowtran_coupling = value
+	flowtran_coupling = property(_get_flowtran_coupling, _set_flowtran_coupling)
 
 class pregression(object):
 	""" Class for specifying regression details. 
@@ -573,10 +579,6 @@ class poutput(object):
 	 and xml for unstructured grids,  'HDF5 MULTIPLE_FILES' - produces a separate HDF5 file
 	 at each output time, 'VTK' - VTK format.
 	:type format_list: [str]
-	:param permeability: Turn permeability output  on/off. 
-	:type permeability: bool - True or False
-	:param porosity: Turn porosity output on/off. 
-	:type porosity: bool - True or False
 	:param velocities: Turn velocity output on/off. 
 	:type velocities: bool - True or False
 	:param mass_balance: Flag to indicate whether to output the mass balance of the system. 
@@ -589,7 +591,8 @@ class poutput(object):
 	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, 
 		     screen_output=True, periodic_time=[],periodic_timestep=[],
 		     periodic_observation_time=[], periodic_observation_timestep=None, 
-		     format_list=[], permeability=False, porosity=False, velocities=False,  mass_balance=False, variables_list = []):
+		     format_list=[], permeability=False, porosity=False, velocities=False,
+		      mass_balance=False, variables_list = []):
 		self._time_list = time_list
 		self._print_column_ids = print_column_ids
 		self._screen_output = screen_output # Bool
@@ -635,12 +638,6 @@ class poutput(object):
 	def _get_format_list(self): return self._format_list
 	def _set_format_list(self,value): self._format_list = value
 	format_list = property(_get_format_list, _set_format_list)
-	def _get_permeability(self): return self._permeability
-	def _set_permeability(self,value): self._permeability = value
-	permeability = property(_get_permeability, _set_permeability)	
-	def _get_porosity(self): return self._porosity
-	def _set_porosity(self,value): self._porosity = value
-	porosity = property(_get_porosity, _set_porosity)
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
 	velocities = property(_get_velocities, _set_velocities)	
@@ -1338,6 +1335,10 @@ class pchemistry(object):
 	:type m_kinetics_list: [pchemistry_m_kinetic]
 	:param log_formulation: 
 	:type log_formulation: bool - True or False
+	:param update_porosity: 
+	:type update_porosity: bool - True or False
+	:param update_permeability: 
+	:type update_permeability: bool - True or False
 	:param database: 
 	:type database: str
 	:param activity_coefficients: Options include: 'LAG', 'NEWTON', 'TIMESTEP', 'NEWTON_ITERATION'.
@@ -1351,13 +1352,15 @@ class pchemistry(object):
 	
 	def __init__(self, pspecies_list=[], sec_species_list=[], gas_species_list=[],
 		     minerals_list=[], m_kinetics_list=[], log_formulation=False,
-		     database=None, activity_coefficients=None, molal=False, output_list=[] ):
+		     database=None, activity_coefficients=None, molal=False, output_list=[],update_permeability=False,update_porosity=False ):
 		self.pspecies_list = pspecies_list	# primary_species (eg. 'A(aq') - string
 		self._sec_species_list = sec_species_list # Secondary_species (E.g. 'OH-' - string
 		self._gas_species_list = gas_species_list # E.g. 'CO2(g)'
 		self._minerals_list = minerals_list	# E.g. 'Calcite'
 		self._m_kinetics_list = m_kinetics_list	# has pchemistry_m_kinetic assigned to it
 		self._log_formulation = log_formulation
+		self._update_permeability = update_permeability
+		self._update_porosity = update_porosity
 		self._database = database		# Database path (String)
 		self._activity_coefficients = activity_coefficients
 		self._molal = molal		# boolean
@@ -1381,6 +1384,12 @@ class pchemistry(object):
 	def _get_log_formulation(self): return self._log_formulation
 	def _set_log_formulation(self,value): self._log_formulation = value
 	log_formulation = property(_get_log_formulation, _set_log_formulation)
+	def _get_update_permeability(self): return self._update_permeability
+	def _set_update_permeability(self,value): self._update_permeability= value
+	update_permeability= property(_get_update_permeability, _set_update_permeability)
+	def _get_update_porosity(self): return self._update_porosity
+	def _set_update_porosity(self,value): self._update_porosity= value
+	update_porosity = property(_get_update_porosity, _set_update_porosity)
 	def _get_database(self): return self._database
 	def _set_database(self,value): self._database = value
 	database = property(_get_database, _set_database)
@@ -1547,7 +1556,7 @@ class pdata(object):
 		self._simulation = psimulation()
 		self._checkpoint = pcheckpoint()
 		self._restart = prestart()
-		self._dataset = pdataset()
+		self._datasetlist = [] 
 		self._chemistry = None
 		self._grid = pgrid()
 		self._timestepper = None
@@ -1864,13 +1873,13 @@ class pdata(object):
 
 		if self.co2_database: self._write_co2_database(outfile)
 		
-		if self.checkpoint.frequency: self._write_checkpoint(outfile)
-		else: print 'info: checkpoint not detected\n'
+#		if self.checkpoint.frequency: self._write_checkpoint(outfile)
+#		else: print 'info: checkpoint not detected\n'
 		
-		if self.restart.file_name: self._write_restart(outfile)
-		else: print 'info: restart not detected\n'
+#		if self.restart.file_name: self._write_restart(outfile)
+#		else: print 'info: restart not detected\n'
 
-		if self.dataset.dataset_name or self.dataset.name: self._write_dataset(outfile)
+		if self.datasetlist: self._write_dataset(outfile)
 		else: print 'info: dataset name not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
@@ -1879,8 +1888,8 @@ class pdata(object):
 		if self.grid: self._write_grid(outfile)
 		else: print 'ERROR: grid is required, it is currently reading as empty\n'
 		
-		if self.timestepper : self._write_timestepper(outfile)
-		else: print 'info: timestepper not detected\n'
+#		if self.timestepper : self._write_timestepper(outfile)
+#		else: print 'info: timestepper not detected\n'
 		
 		if self.time: self._write_time(outfile)
 		else: print 'ERROR: time is required, it is currently reading as empty\n'
@@ -1903,17 +1912,17 @@ class pdata(object):
 		if self.saturationlist: self._write_saturation(outfile)
 		else: print 'ERROR: saturationlist is required, it is currently reading as empty\n'
 				
-		if self.charlist: self._write_characteristic_curves(outfile)
-		else: print 'info: characteristic curves not detected\n'
+#		if self.charlist: self._write_characteristic_curves(outfile)
+#		else: print 'info: characteristic curves not detected\n'
 		
                 if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
-		if self.observation_list: self._write_observation(outfile)
-		else: print 'info: observation_list not detect\n'
+#		if self.observation_list: self._write_observation(outfile)
+#		else: print 'info: observation_list not detect\n'
 		
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'info: flowlist not detected\n'
+		else: print 'ERROR: flowlist not detected\n'
 		
 		if self.transportlist: self._write_transport(outfile)
 		
@@ -1923,11 +1932,11 @@ class pdata(object):
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'ERROR: boundary_condition_list is required, it is currently reading as empty\n'
 		
-		if self.source_sink: self._write_source_sink(outfile)
-		else: print 'info: source_sink not detected\n'
+#		if self.source_sink: self._write_source_sink(outfile)
+#		else: print 'info: source_sink not detected\n'
 
 		if self.strata_list: self._write_strata(outfile)
-		else: print 'info: (stratigraphy_coupler) strata is required, it is currently reading as empty\n'
+		else: print 'ERROR: (stratigraphy_coupler) strata is required, it is currently reading as empty\n'
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		
@@ -1947,7 +1956,7 @@ class pdata(object):
 		:type overwrite: bool
 		'''
 	
-		add_checklist = [pmaterial,psaturation,pcharacteristic_curves,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,pstrata,ptransport,pconstraint,pconstraint_concentration]
+		add_checklist = [pmaterial,pdataset,psaturation,pcharacteristic_curves,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,pstrata,ptransport,pconstraint,pconstraint_concentration]
 
 	 	# Check if obj first is an object that belongs to add_checklist
 		checklist_bool = [isinstance(obj,item) for item in add_checklist]
@@ -1960,6 +1969,7 @@ class pdata(object):
 		# Always make index lower case if it is being used as a string
 		if isinstance(index,str): index=index.lower()
 		if isinstance(obj,pmaterial): self._add_prop(obj,overwrite)
+		if isinstance(obj,pdataset): self._add_dataset(obj,overwrite)
 		if isinstance(obj,psaturation): self._add_saturation(obj,overwrite)
 		if isinstance(obj,pcharacteristic_curves): self._add_characteristic_curves(obj,overwrite)
 		if isinstance(obj,pchemistry_m_kinetic): 
@@ -2087,16 +2097,28 @@ class pdata(object):
 		while keepReading: #Read through all cards
                         line = infile.readline()        # get next line
                         key = line.strip().split()[0].lower()   # take first key word
-
 			if key == 'simulation_type':
 				simulation.simulation_type = line.split()[-1]
                         elif key == 'subsurface_flow':
 				simulation.subsurface_flow = line.split()[-1] 
-                        elif key == 'subsurface_transport':
+       				keepReading1 = True
+				while keepReading1:
+					line = infile.readline()
+					key1 = line.strip().split()[0].lower()	
+					if key1== 'mode':
+						simulation.mode = line.split()[-1].lower()                         
+					elif key1 in ['/','end']:keepReading1 = False
+					else:
+						print('ERROR: mode is missing!')
+                	elif key == 'subsurface_transport':
 				simulation.subsurface_transport = line.split()[-1] 
-                        elif key == 'mode':
-				simulation.mode = line.split()[-1].lower()                                
-			elif key in ['/','end']: keepReading = False
+#				keepReading2 = True
+#				if key == 'global_implicit':
+#					simulation.flowtran_coupling = key
+#				elif key in ['/','end']:keepReading2 = False
+#				else:
+#					print('ERROR: flow tran coupling type missing!')
+			elif key in ['/','end']: keepReading = False 
 
 		self._simulation = simulation                               
                               
@@ -2113,7 +2135,6 @@ class pdata(object):
 		if simulation.subsurface_flow and simulation.subsurface_transport:
                         outfile.write('  PROCESS_MODELS' +'\n')		
                         outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n')
-			print simulation.mode
 			if simulation.mode in mode_names_allowed:		
 	                        outfile.write('      MODE '+ simulation.mode +'\n')		
                         else:
@@ -2121,7 +2142,9 @@ class pdata(object):
 				print '       valid simulation.mode:', mode_names_allowed, '\n'
 			outfile.write('    / '+'\n')
                         outfile.write('    SUBSURFACE_TRANSPORT '+ simulation.subsurface_transport +'\n')
-                        outfile.write('    / '+'\n')
+			if simulation.flowtran_coupling:
+				outfile.write('      ' + simulation.flowtran_coupling + '\n')
+			outfile.write('    / '+'\n')
                         outfile.write('  / '+'\n')
                         outfile.write('END'+'\n\n')
 		elif simulation.subsurface_flow:
@@ -2816,7 +2839,8 @@ class pdata(object):
 		output = poutput()
 		output.time_list = []
 		output.format_list = []
-		
+		output.variables_list = []
+	
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
@@ -2857,18 +2881,20 @@ class pdata(object):
 				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
 				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
 				output.format_list.append(tstring)	# assign
-			elif key == 'permeability':
-				output.permeability = True
-			elif key == 'porosity':
-				output.porosity = True
 			elif key == 'velocities':
 				output.velocities = True
 			elif key == 'mass_balance':
 				output.mass_balance = True
-			elif key == 'variable':	
-				tstring = (line.strip().split()[1:]) # Do not include 1st sub-string
-				tstring = ' '.join(tstring).lower()	# Convert list into a string seperated by a space
-				output.variables_list.append(tstring)	# assign
+			elif key == 'variables':	
+				keepReading1 = True
+				while keepReading1:
+					line1 = infile.readline()
+					key1 = line1.strip().split()[0].lower()
+					if key1 in output_variables_allowed:
+						output.variables_list.append(key1)
+					elif key1 in ['/','end']: keepReading1 = False
+					else:
+						print('ERROR: variable ' + str(key1) + ' cannot be an output variable.')
 			elif key in ['/','end']: keepReading = False
 			
 		self._output = output
@@ -2963,10 +2989,6 @@ class pdata(object):
 			else:
 				print 'ERROR: output.format: \''+ format +'\' is invalid.'
 				print '       valid output.format:', output_formats_allowed, '\n'
-		if output.permeability:
-			outfile.write('  '+'PERMEABILITY'+'\n')
-		if output.porosity:
-			outfile.write('  '+'POROSITY'+'\n')
 		if output.velocities:
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.mass_balance:
@@ -2979,8 +3001,7 @@ class pdata(object):
 				else:
 					print 'ERROR: output.variable: \''+ variable +'\' is invalid.'
 					print '       valid output.variable:', output_variables_allowed, '\n'
-			outfile.write('END\n\n')
-
+			outfile.write('  /\n')
 		outfile.write('END\n\n')
 		
 	def _read_fluid(self,infile):
@@ -3705,7 +3726,7 @@ class pdata(object):
 							j += 1
 					# Write out possible unit here
 					if flow.varlist[i].unit:
-						outfile.write(' ' + flow.varlist[i].unit.upper())
+						outfile.write(' ' + flow.varlist[i].unit.lower())
 					outfile.write('\n')
 				# Write if using list format (multiple lines)
 				elif flow.varlist[i].list:	
@@ -3996,64 +4017,68 @@ class pdata(object):
 
 	def _read_dataset(self, infile, line):
 		dataset = pdataset()	 
-                data_dataset_name = dataset.dataset_name
-		data_dataset_mapped_name = dataset.dataset_mapped_name
-                data_name = dataset.name 
-                data_file_name = dataset.file_name
-                data_hdf5_dataset_name = dataset.hdf5_dataset_name
-		data_map_hdf5_dataset_name = dataset.map_hdf5_dataset_name
-		data_max_buffer_size = dataset.max_buffer_size
                 keepReading = True
+		dataset.dataset_name = line.split()[-1]
                 while keepReading:      # Read through all cards
                         line = infile.readline()        # get next line
-                        key = line.strip().split()[0]   # take first  key word
-
-			if key == 'dataset_name':
-                                data_dataset_name = line.split()[-1]
-                        elif key == 'dataset_mapped_name':
-                                data_dataset_mapped_name = line.split()[-1]
+                	key = line.strip().split()[0].lower()   # take first  key word
+                        if key == 'dataset_mapped_name':
+                                dataset.dataset_mapped_name = line.split()[-1]
                         elif key == 'name':
-                                data_name = line.split()[-1]
-                        elif key == 'file_name':
-                                data_file_name = line.split()[-1]
+                                dataset.name= line.split()[-1]
+                        elif key == 'filename':
+                                dataset.file_name = line.split()[-1]
                         elif key == 'hdf5_dataset_name':
-                                data_hdf5_dataset_name = line.split()[-1]
+                                dataset.hdf5_dataset_name = line.split()[-1]
                         elif key == 'map_hdf5_dataset_name':
-                                data_map_hdf5_dataset_name = line.split()[-1]
+                                dataset.map_hdf5_dataset_name = line.split()[-1]
 			elif key == 'max_buffer_size':
-				data_max_buffer_size = floatD(line.split()[-1])
+				dataset.max_buffer_size = floatD(line.split()[-1])
                         elif key in ['/','end']: keepReading = False
+			
+		self.add(dataset)
  
 
-                # Create an empty dataset and assign the values read in
-                new_dataset = pdataset(data_dataset_name,data_dataset_mapped_name, data_name, data_file_name, data_hdf5_dataset_name, data_map_hdf5_dataset_name, data_max_buffer_size)
-                self._dataset = new_dataset
-		
 	def _write_dataset(self, outfile):
 		self._header(outfile,headers['dataset'])
-		dataset = self.dataset
-        
-                # Write out dataset variables
-                if dataset.dataset_name:
-                        outfile.write('DATASET ' + dataset.dataset_name + '\n')
-               
- 		if dataset.dataset_mapped_name:
-                        outfile.write('DATASET MAPPED ' + dataset.dataset_mapped_name + '\n')
-		if dataset.dataset_name and dataset.dataset_mapped_name:
-			print 'ERROR: Cannot use both DATASET and DATASET MAPPED'
-                if dataset.name:
-                        outfile.write('  NAME '+dataset.name+'\n')
-
-                if dataset.file_name:
-                        outfile.write('  FILENAME ' + dataset.file_name + '\n')
-                if dataset.hdf5_dataset_name:
-			outfile.write('  HDF5_DATASET_NAME ' + dataset.hdf5_dataset_name + '\n')
-                if dataset.map_hdf5_dataset_name:
-			outfile.write('  MAP_HDF5_DATASET_NAME ' + dataset.map_hdf5_dataset_name + '\n')
-                if dataset.max_buffer_size:
-			outfile.write('  MAX_BUFFER_SIZE ' + strD(dataset.max_buffer_size) + '\n')
-                outfile.write('END\n\n')
-       
+		for dataset in self._datasetlist:
+			# Write out dataset variables
+			if dataset.dataset_name:
+				outfile.write('DATASET ' + dataset.dataset_name + '\n')
+			if dataset.dataset_mapped_name:
+				outfile.write('DATASET MAPPED ' + dataset.dataset_mapped_name + '\n')
+			if dataset.dataset_name and dataset.dataset_mapped_name:
+				print 'ERROR: Cannot use both DATASET and DATASET MAPPED'
+			if dataset.name:
+				outfile.write('  NAME '+dataset.name+'\n')
+			if dataset.file_name:
+				outfile.write('  FILENAME ' + dataset.file_name + '\n')
+			if dataset.hdf5_dataset_name:
+				outfile.write('  HDF5_DATASET_NAME ' + dataset.hdf5_dataset_name + '\n')
+			if dataset.map_hdf5_dataset_name:
+				outfile.write('  MAP_HDF5_DATASET_NAME ' + dataset.map_hdf5_dataset_name + '\n')
+			if dataset.max_buffer_size:
+				outfile.write('  MAX_BUFFER_SIZE ' + strD(dataset.max_buffer_size) + '\n')
+			outfile.write('END\n\n')
+      
+	def _add_dataset(self,dat=pdataset(),overwrite=False):	#Adds a dataset object.
+		# check if dataset already exists
+		if isinstance(dat,pdataset):		
+			if dat.name in self.dataset.keys():
+				if not overwrite:
+					warning = 'WARNING: A dataset with name \''+str(dat.name)+'\' already exists. Use overwrite = True in add() to overwrite the old dataset.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else: # Executes if overwrite = True
+					self.delete(self.dat[dataset.name])
+					
+		if dat not in self._datasetlist:
+			self._datasetlist.append(dat)
+			
+	def _delete_dataset(self,dat=pdataset()):
+		self._datasetlist.remove(dat)
+ 
 	def _read_chemistry(self, infile):
 		chem = pchemistry()
 		
@@ -4127,6 +4152,10 @@ class pdata(object):
 				chem.database = line.split()[-1]	# take last word
 			elif key == 'log_formulation':
 				chem.log_formulation = True
+			elif key == 'update_porosity':
+				chem.update_porosity = True
+			elif key == 'update_permeability':
+				chem.update_permeability = True
 			elif key == 'activity_coefficients':
 				chem.activity_coefficients = line.split()[-1]
 			elif key == 'molal':
@@ -4214,6 +4243,10 @@ class pdata(object):
 			outfile.write('  DATABASE ' + c.database + '\n')
 		if c.log_formulation:
 			outfile.write('  LOG_FORMULATION\n')
+		if c.update_permeability:
+			outfile.write('  UPDATE_PERMEABILITY\n')
+		if c.update_porosity:
+			outfile.write('  UPDATE_POROSITY\n')
 		if c.activity_coefficients:
 			outfile.write('  ACTIVITY_COEFFICIENTS ' + c.activity_coefficients.upper() + '\n')
 		if c.molal:
@@ -4499,6 +4532,13 @@ class pdata(object):
 		return dict([(p.id,p) for p in self.proplist]+[(p.id,p) for p in self.proplist])
 	prop = property(_get_prop) #: (**) dictionary of material properties, indexable by ID or name
 
+	def _get_datasetlist(self): return self._datasetlist
+	datasetlist = property(_get_datasetlist) #: (**) list of datasets 
+	def _get_dataset(self): 
+		return dict([(p.dataset_name,p) for p in self.datasetlist])
+	dataset = property(_get_dataset) #: (**) dictionary of datasets, indexable by ID or name
+	
+
 	def _get_saturationlist(self): return self._saturationlist
 	saturationlist = property(_get_saturationlist) #: (**) list of saturation functions 
 	def _get_saturation(self): 
@@ -4595,10 +4635,6 @@ class pdata(object):
 	def _get_restart(self): return self._restart
 	def _set_restart(self, object): self._restart = object
 	restart = property(_get_restart, _set_restart) #: (**)
-	
-        def _get_dataset(self): return self._dataset
-	def _set_dataset(self, object): self._dataset = object
-	dataset = property(_get_dataset, _set_dataset) #: (**)
 	
 	def _get_chemistry(self): return self._chemistry
 	def _set_chemistry(self, object): self._chemistry = object

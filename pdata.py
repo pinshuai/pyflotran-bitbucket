@@ -1,4 +1,4 @@
-"l"" Class for pflotran data """
+""" Class for pflotran data """
 
 """
 PyFLOTRAN v1.0.0 LA-CC-14-094 

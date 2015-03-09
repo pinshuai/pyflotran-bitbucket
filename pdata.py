@@ -1,4 +1,4 @@
-""" Class for pflotran data """
+"l"" Class for pflotran data """
 
 """
 PyFLOTRAN v1.0.0 LA-CC-14-094 
@@ -477,11 +477,14 @@ class plsolver(object):
 	:type name: str
 	:param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
 	:type solver: str
+	:param preconditioner: Specify preconditioner type: Options include: 'ilu' 
+	:type solver: str
 	"""
 	
-	def __init__(self, name='', solver=''):
+	def __init__(self, name='', solver='',preconditioner=''):
 		self._name = name	# TRAN, TRANSPORT / FLOW
 		self._solver = solver	# Solver Type
+		self._preconditioner = preconditioner
 		
 	def _get_name(self): return self._name
 	def _set_name(self,value): self._name = value
@@ -489,6 +492,9 @@ class plsolver(object):
 	def _get_solver(self): return self._solver
 	def _set_solver(self,value): self._solver = value
 	solver = property(_get_solver, _set_solver)
+	def _get_preconditioner(self): return self._preconditioner
+	def _set_preconditioner(self,value): self._preconditioner= value
+	preconditioner = property(_get_preconditioner, _set_preconditioner)
 
 class pnsolver(object):
 	""" Class for newton solver card. Multiple newton solver objects 
@@ -581,6 +587,8 @@ class poutput(object):
 	:type format_list: [str]
 	:param velocities: Turn velocity output on/off. 
 	:type velocities: bool - True or False
+	:param velocity_at_center: Turn velocity output on/off. 
+	:type velocity_at_center: bool - True or False
 	:param mass_balance: Flag to indicate whether to output the mass balance of the system. 
 	:type mass_balance: bool - True or False
 	:param variables_list: List of variables to be printed in the output file
@@ -591,7 +599,7 @@ class poutput(object):
 	def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None, 
 		     screen_output=True, periodic_time=[],periodic_timestep=[],
 		     periodic_observation_time=[], periodic_observation_timestep=None, 
-		     format_list=[], permeability=False, porosity=False, velocities=False,
+		     format_list=[], permeability=False, porosity=False, velocities=False,velocity_at_center=False,
 		      mass_balance=False, variables_list = []):
 		self._time_list = time_list
 		self._print_column_ids = print_column_ids
@@ -607,7 +615,8 @@ class poutput(object):
 		self._velocities = velocities
 		self._mass_balance = mass_balance
 		self._variables_list = variables_list
-		
+		self._velocity_at_center = velocity_at_center
+	
 	def _get_time_list(self): return self._time_list
 	def _set_time_list(self,value): self._time_list = value
 	time_list = property(_get_time_list, _set_time_list)
@@ -641,6 +650,9 @@ class poutput(object):
 	def _get_velocities(self): return self._velocities
 	def _set_velocities(self,value): self._velocities = value
 	velocities = property(_get_velocities, _set_velocities)	
+	def _get_velocity_at_center(self): return self._velocity_at_center
+	def _set_velocity_at_center(self,value): self._velocity_at_center= value
+	velocity_at_center= property(_get_velocity_at_center, _set_velocity_at_center)	
 	def _get_variables_list(self): return self._variables_list
 	def _set_variables_list(self,value): self._variables_list = value
 	variables_list = property(_get_variables_list, _set_variables_list)
@@ -1552,6 +1564,7 @@ class pdata(object):
 		# None here.
 		self._co2_database = ''
 		self._uniform_velocity = puniform_velocity()
+		self._overwrite_restart_flow_params = False
 		self._regression = pregression()
 		self._simulation = psimulation()
 		self._checkpoint = pcheckpoint()
@@ -1826,6 +1839,8 @@ class pdata(object):
 				if not line: keepReading = False
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
+				if card == 'overwrite_restart_flow_params': self._overwrite_restart_flow_params = True
+
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','checkpoint','restart','dataset','material_property',
 					 'simulation','regression','grid',
@@ -1873,14 +1888,16 @@ class pdata(object):
 
 		if self.co2_database: self._write_co2_database(outfile)
 		
-#		if self.checkpoint.frequency: self._write_checkpoint(outfile)
+		if self._overwrite_restart_flow_params: self._write_overwrite_restart(outfile)
+		
+		if self.checkpoint.frequency: self._write_checkpoint(outfile)
 #		else: print 'info: checkpoint not detected\n'
 		
-#		if self.restart.file_name: self._write_restart(outfile)
+		if self.restart.file_name: self._write_restart(outfile)
 #		else: print 'info: restart not detected\n'
 
 		if self.datasetlist: self._write_dataset(outfile)
-		else: print 'info: dataset name not detected\n'
+#		else: print 'info: dataset name not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
 		else: print 'info: chemistry not detected\n'
@@ -1888,7 +1905,7 @@ class pdata(object):
 		if self.grid: self._write_grid(outfile)
 		else: print 'ERROR: grid is required, it is currently reading as empty\n'
 		
-#		if self.timestepper : self._write_timestepper(outfile)
+		if self.timestepper : self._write_timestepper(outfile)
 #		else: print 'info: timestepper not detected\n'
 		
 		if self.time: self._write_time(outfile)
@@ -2112,10 +2129,13 @@ class pdata(object):
 						print('ERROR: mode is missing!')
                 	elif key == 'subsurface_transport':
 				simulation.subsurface_transport = line.split()[-1] 
-#				keepReading2 = True
-#				if key == 'global_implicit':
-#					simulation.flowtran_coupling = key
-#				elif key in ['/','end']:keepReading2 = False
+				keepReading2 = True
+				while keepReading2:
+					line1 = infile.readline()
+					key1 = line1.strip().split()[0].lower()
+					if key1 == 'global_implicit':
+						simulation.flowtran_coupling = key1
+					elif key1 in ['/','end']:keepReading2 = False
 #				else:
 #					print('ERROR: flow tran coupling type missing!')
 			elif key in ['/','end']: keepReading = False 
@@ -2143,7 +2163,7 @@ class pdata(object):
 			outfile.write('    / '+'\n')
                         outfile.write('    SUBSURFACE_TRANSPORT '+ simulation.subsurface_transport +'\n')
 			if simulation.flowtran_coupling:
-				outfile.write('      ' + simulation.flowtran_coupling + '\n')
+				outfile.write('      ' + simulation.flowtran_coupling.upper() + '\n')
 			outfile.write('    / '+'\n')
                         outfile.write('  / '+'\n')
                         outfile.write('END'+'\n\n')
@@ -2175,11 +2195,14 @@ class pdata(object):
 
 	def _read_co2_database(self,infile,line):
 		self._co2_database = del_extra_slash(line.split()[-1])
-	
+		
+	def _write_overwrite_restart(self,outfile):
+		outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
+
 	def _write_co2_database(self,outfile):
 		self._header(outfile,headers['co2_database'])
 		outfile.write('CO2_DATABASE ' + self._co2_database + '\n\n')
-		
+
 	def _read_regression(self,infile,line):
 		regression = pregression()
 		keepReading = True
@@ -2437,7 +2460,10 @@ class pdata(object):
                         elif key == 'characteristic_curves':
                                 np_characteristic_curves = line.split()[-1]
 			elif key == 'porosity':
-				np_porosity = floatD(line.split()[-1])
+				if line.split()[1].lower() == 'dataset':
+					np_porosity = line.split()[-1]
+				else:	
+					np_porosity = floatD(line.split()[-1])
 			elif key == 'tortuosity':
 				np_tortuosity = floatD(line.split()[-1])
 			elif key == 'rock_density':
@@ -2499,7 +2525,10 @@ class pdata(object):
                         if prop.characteristic_curves:
                                 outfile.write('  CHARACTERISTIC_CURVES '+prop.characteristic_curves+'\n')
 			if prop.porosity:
-				outfile.write('  POROSITY '+strD(prop.porosity)+'\n')
+				if type(prop.porosity) is str:
+					outfile.write('  POROSITY DATASET '+ prop.porosity +'\n')
+				else:
+					outfile.write('  POROSITY '+strD(prop.porosity)+'\n')
 			if prop.tortuosity:
 				outfile.write('  TORTUOSITY '+strD(prop.tortuosity)+'\n')
 			if prop.density:
@@ -2721,6 +2750,8 @@ class pdata(object):
 			
 			if key == 'solver':
 				lsolver.solver = line.split()[-1] # Assign last word
+			if key == 'preconditioner':
+				lsolver.preconditioner = line.split()[-1]
 			elif key in ['/','end']: keepReading = False
 		
 		self.add(lsolver) # Assign object
@@ -2753,7 +2784,9 @@ class pdata(object):
 				print 'ERROR: lsolver.name: \''+ lsolver.name +'\' is invalid.'
 				print '       valid solver.names', solver_names_allowed, '\n'
 			if lsolver.solver:
-				outfile.write('  SOLVER ' + lsolver.solver.lower() + '\n')
+				outfile.write('  SOLVER ' + lsolver.solver.upper() + '\n')
+			if lsolver.preconditioner:
+				outfile.write('  PRECONDITIONER ' + lsolver.preconditioner.upper() + '\n')
 			outfile.write('END\n\n')
 		
 	def _read_nsolver(self,infile,line):
@@ -2883,6 +2916,8 @@ class pdata(object):
 				output.format_list.append(tstring)	# assign
 			elif key == 'velocities':
 				output.velocities = True
+			elif key == 'velocity_at_center':
+				output.velocity_at_center = True
 			elif key == 'mass_balance':
 				output.mass_balance = True
 			elif key == 'variables':	
@@ -2991,6 +3026,8 @@ class pdata(object):
 				print '       valid output.format:', output_formats_allowed, '\n'
 		if output.velocities:
 			outfile.write('  '+'VELOCITIES'+'\n')
+		if output.velocity_at_center:
+			outfile.write('  '+'VELOCITY_AT_CENTER'+'\n')
 		if output.mass_balance:
 			outfile.write('  '+'MASS_BALANCE'+'\n')
 		if output.variables_list:
@@ -3978,10 +4015,12 @@ class pdata(object):
 		restart = prestart()
 		
 		tstring = line.split()[1:] # 1st line for restart passed in
-		
+
 		restart.file_name = tstring[0]
-		restart.time_value = floatD(tstring[1])
-		restart.time_unit = tstring[2]
+		if len(tstring) > 1:
+			restart.time_value = floatD(tstring[1])
+		elif len(tstring) > 2:
+			restart.time_unit = tstring[2]
 		
 		self._restart = restart
 		
@@ -3993,25 +4032,27 @@ class pdata(object):
 		outfile.write('RESTART ' + str(restart.file_name) + ' ')
 		
 		# Write time value
-		try:
-			# error-checking
-			restart.time_value = floatD(restart.time_value)
-			
-			# writing
-			outfile.write(strD(restart.time_value) + ' ')
-		except:
-			print 'ERROR: restart.time_value is not float.'
-			
-			# writing
-			outfile.write(strD(restart.time_value) + ' ')
+		if restart.time_value:
+			try:
+				# error-checking
+				restart.time_value = floatD(restart.time_value)
+				
+				# writing
+				outfile.write(strD(restart.time_value) + ' ')
+			except:
+				print 'ERROR: restart.time_value is not float.'
+				
+				# writing
+				outfile.write(strD(restart.time_value) + ' ')
 		
 		# Write time unit of measurement
-		restart.time_unit = str(restart.time_unit).lower()
-		if restart.time_unit in time_units_allowed:
-			outfile.write(restart.time_unit)
-		else:
-			print 'ERROR: restart.time_unit \'',restart.time_unit,'\' is invalid. Valid times units are:',time_units_allowed,'\n'
-			outfile.write(restart.time_unit)
+		if restart.time_unit:
+			restart.time_unit = str(restart.time_unit).lower()
+			if restart.time_unit in time_units_allowed:
+				outfile.write(restart.time_unit)
+			else:
+				print 'ERROR: restart.time_unit \'',restart.time_unit,'\' is invalid. Valid times units are:',time_units_allowed,'\n'
+				outfile.write(restart.time_unit)
 			
 		outfile.write('\n\n')
 
@@ -4387,8 +4428,18 @@ class pdata(object):
 
 					try:
 						mineral.name = tstring[0]
-						mineral.volume_fraction = floatD(tstring[1])
-						mineral.surface_area = floatD(tstring[2])
+						if tstring[1].lower() == 'dataset':
+							mineral.volume_fraction = tstring[2]
+							if tstring[3].lower() == 'dataset':
+								mineral.surface_area = tstring[4]
+							else:
+								mineral.surface_area = floatD(tstring[3])
+						else:
+							mineral.volume_fraction = floatD(tstring[1])
+							if tstring[2].lower() == 'dataset':
+								mineral.surface_area = tstring[3]
+							else:
+								mineral.surface_area = floatD(tstring[2])
 
 					except(IndexError):
 						pass # No assigning is done if a value doesn't exist while being read in.
@@ -4486,9 +4537,15 @@ class pdata(object):
 					if mineral.name:
 						outfile.write('    ' + mineral.name)
 					if mineral.volume_fraction:
-						outfile.write('  ' + strD(mineral.volume_fraction))
+						if type(mineral.volume_fraction) is str:
+							outfile.write('  ' + 'DATASET ' + mineral.volume_fraction)
+						else:
+							outfile.write('  ' + strD(mineral.volume_fraction))
 					if mineral.surface_area:
-						outfile.write('  ' + strD(mineral.surface_area))
+						if type(mineral.surface_area) is str:
+							outfile.write('  ' + 'DATASET ' + mineral.surface_area)
+						else:
+							outfile.write('  ' + strD(mineral.surface_area))
 					outfile.write('\n')
 				outfile.write('  /\n') 	# END for concentrations
 			outfile.write('END\n\n')	# END for constraint

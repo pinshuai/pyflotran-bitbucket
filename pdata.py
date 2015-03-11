@@ -1920,7 +1920,7 @@ class pdata(object):
 #		else: print 'info: dataset name not detected\n'
 
 		if self.chemistry: self._write_chemistry(outfile)
-		else: print 'info: chemistry not detected\n'
+#		else: print 'info: chemistry not detected\n'
 		
 		if self.grid: self._write_grid(outfile)
 		else: print 'ERROR: grid is required, it is currently reading as empty\n'
@@ -1935,10 +1935,10 @@ class pdata(object):
 		else: print 'ERROR: proplist is required, it is currently reading as empty\n'
 		
 		if self.lsolverlist: self._write_lsolver(outfile)
-		else: print 'info: lsolverlist (linear solver list) not detected\n'
+#		else: print 'info: lsolverlist (linear solver list) not detected\n'
 		
 		if self.nsolverlist: self._write_nsolver(outfile)
-		else: print 'info: nsolverlist (newton solver list) not detected\n'
+#		else: print 'info: nsolverlist (newton solver list) not detected\n'
 		
 		if self.output: self._write_output(outfile)
 		else: print 'ERROR: output is required, it is currently reading as empty\n'
@@ -4362,6 +4362,7 @@ class pdata(object):
 				line = infile.readline()
 				while keepReading2:
 					try:
+#						print np_constraint_list_value,line.split()[0].lower()
 						np_constraint_list_value.append(floatD(line.split()[0].lower())) # Read 1st word online
 						np_constraint_list_type.append(line.split()[1].lower()) # Read 2nd word on line
 					except:

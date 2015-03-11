@@ -1840,6 +1840,16 @@ class pdata(object):
 				if len(line.strip())==0: continue
 				card = line.split()[0].lower() 		# make card lower case
 				if card == 'overwrite_restart_flow_params': self._overwrite_restart_flow_params = True
+				if card == 'skip':
+					keepReading1 = True
+					while keepReading1:
+						line1 = get_next_line() 
+						if not line1: keepReading1 = False
+						if len(line1.strip())==0: continue
+						print line1
+						print line1.strip().split()
+						card1 = line1.split()[0].lower()
+						if card1 == 'noskip':keepReading1 = False
 
 				if card in cards: 			# check if a valid cardname
 					if card in ['co2_database','checkpoint','restart','dataset','material_property',
@@ -4144,6 +4154,12 @@ class pdata(object):
 					line = infile.readline()	# get next line
 					if line.strip() in ['/','end']: break
 					chem.pspecies_list.append(line.strip())
+			elif key == 'skip':
+				keepReading1 = True
+				while keepReading1:
+					line1 = infile.readline()
+					print line1.strip()
+					if line1.strip().split()[0].lower() == 'noskip': keepReading1 = False 
 			elif key == 'secondary_species':
 				while True:
 					line = infile.readline()	# get next line
@@ -4536,16 +4552,14 @@ class pdata(object):
 				for mineral in c.mineral_list:
 					if mineral.name:
 						outfile.write('    ' + mineral.name)
-					if mineral.volume_fraction:
-						if type(mineral.volume_fraction) is str:
-							outfile.write('  ' + 'DATASET ' + mineral.volume_fraction)
-						else:
-							outfile.write('  ' + strD(mineral.volume_fraction))
-					if mineral.surface_area:
-						if type(mineral.surface_area) is str:
-							outfile.write('  ' + 'DATASET ' + mineral.surface_area)
-						else:
-							outfile.write('  ' + strD(mineral.surface_area))
+					if type(mineral.volume_fraction) is str:
+						outfile.write('  ' + 'DATASET ' + mineral.volume_fraction)
+					else:
+						outfile.write('  ' + strD(mineral.volume_fraction))
+					if type(mineral.surface_area) is str:
+						outfile.write('  ' + 'DATASET ' + mineral.surface_area)
+					else:
+						outfile.write('  ' + strD(mineral.surface_area))
 					outfile.write('\n')
 				outfile.write('  /\n') 	# END for concentrations
 			outfile.write('END\n\n')	# END for constraint

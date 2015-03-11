@@ -171,7 +171,7 @@ class pmaterial(object):
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
 	def __init__(self, id=None, name='', characteristic_curves = '', porosity=None, tortuosity=None, density=None,
-		     specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[]):
+		     specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[],permeability_power='',permeability_critical_porosity='',permeability_min_scale_factor=''):
 		self._id = id
 		self._name = name
 		self._characteristic_curves = characteristic_curves
@@ -183,6 +183,9 @@ class pmaterial(object):
 		self._cond_wet = cond_wet
 		self._saturation = saturation
 		self._permeability = permeability
+		self._permeability_power = permeability_power
+		self._permeability_critical_porosity = permeability_critical_porosity
+		self._permeability_min_scale_factor = permeability_min_scale_factor
 
 	def _get_id(self): return self._id
 	def _set_id(self,value): self._id = value
@@ -217,6 +220,15 @@ class pmaterial(object):
 	def _get_permeability(self): return self._permeability
 	def _set_permeability(self,value): self._permeability = value
 	permeability = property(_get_permeability, _set_permeability) #: (**)
+	def _get_permeability_power(self): return self._permeability_power
+	def _set_permeability_power(self,value): self._permeability_power = value
+	permeability_power = property(_get_permeability_power, _set_permeability_power) #: (**)
+	def _get_permeability_critical_porosity(self): return self._permeability_critical_porosity
+	def _set_permeability_critical_porosity(self,value): self._permeability_critical_porosity = value
+	permeability_critical_porosity = property(_get_permeability_critical_porosity, _set_permeability_critical_porosity) #: (**)
+	def _get_permeability_min_scale_factor(self): return self._permeability_min_scale_factor
+	def _set_permeability_min_scale_factor(self,value): self._permeability_min_scale_factor = value
+	permeability_min_scale_factor = property(_get_permeability_min_scale_factor, _set_permeability_min_scale_factor) #: (**)
 
 class ptime(object):
 	""" Class for time. Used to specify final time of simulation, 
@@ -285,7 +297,7 @@ class pgrid(object):
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
 	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0],
-		     origin=[0.0,0.0,0.0],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[0.0,0.0,-9.8068], filename=''):
+		     origin=[],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -1846,8 +1858,6 @@ class pdata(object):
 						line1 = get_next_line() 
 						if not line1: keepReading1 = False
 						if len(line1.strip())==0: continue
-						print line1
-						print line1.strip().split()
 						card1 = line1.split()[0].lower()
 						if card1 == 'noskip':keepReading1 = False
 
@@ -2342,10 +2352,11 @@ class pdata(object):
 					outfile.write('   ' + '\\' + '\n')
 			outfile.write('\n')
 			outfile.write('  END\n')
-		outfile.write('  ORIGIN' + ' ')
-		for i in range(3):
-			outfile.write(strD(grid.origin[i]) + ' ')
-		outfile.write('\n')
+		if grid.origin:
+			outfile.write('  ORIGIN' + ' ')
+			for i in range(3):
+				outfile.write(strD(grid.origin[i]) + ' ')
+			outfile.write('\n')
 		outfile.write('  NXYZ' + ' ')
 		for i in range(3):
 			outfile.write(strD(grid.nxyz[i]) + ' ')
@@ -2459,6 +2470,9 @@ class pdata(object):
 		np_cond_wet=p.cond_wet
 		np_saturation=p.saturation
 		np_permeability=[]
+		np_permeability_critical_porosity=p.permeability_critical_porosity
+		np_permeability_power=p.permeability_power
+		np_permeablity_min_scale_factor=p.permeability_min_scale_factor
 
 		keepReading = True
 
@@ -2486,6 +2500,12 @@ class pdata(object):
 				np_cond_wet = floatD(line.split()[-1])
 			elif key == 'saturation_function':
 				np_saturation = line.split()[-1]
+			elif key == 'permeability_power':
+				np_permeability_power = line.split()[-1]
+			elif key == 'permeability_critical_porosity':
+				np_permeability_critical_porosity = line.split()[-1]
+			elif key == 'permeability_min_scale_factor':
+				np_permeability_min_scale_factor = line.split()[-1]
 			elif key == 'permeability':
 				keepReading2 = True
 				while keepReading2:
@@ -2503,7 +2523,7 @@ class pdata(object):
 			elif key in ['/','end']: keepReading = False
 		new_prop = pmaterial(np_id,np_name,np_characteristic_curves,np_porosity,np_tortuosity,np_density,
 		                     np_specific_heat,np_cond_dry,np_cond_wet,
-				     np_saturation,np_permeability) 		# create an empty material property
+				     np_saturation,np_permeability,np_permeability_power,np_permeability_critical_porosity,np_permeability_min_scale_factor) 		# create an empty material property
 
 		self.add(new_prop)
 		
@@ -2551,6 +2571,13 @@ class pdata(object):
 				outfile.write('  THERMAL_CONDUCTIVITY_WET '+strD(prop.cond_wet)+'\n')
 			if prop.saturation:
 				outfile.write('  SATURATION_FUNCTION '+prop.saturation+'\n')
+			if prop.permeability_power:
+				outfile.write('  PERMEABILITY_POWER '+prop.permeability_power+'\n')
+			if prop.permeability_critical_porosity:
+				outfile.write('  PERMEABILITY_CRITICAL_POROSITY '+prop.permeability_critical_porosity+'\n')
+			if prop.permeability_min_scale_factor:
+				outfile.write('  PERMEABILITY_MIN_SCALE_FACTOR '+prop.permeability_min_scale_factor+'\n')
+
 			if prop.permeability:
 				outfile.write('  PERMEABILITY\n')
 				if len(prop.permeability) == 1:
@@ -4158,7 +4185,6 @@ class pdata(object):
 				keepReading1 = True
 				while keepReading1:
 					line1 = infile.readline()
-					print line1.strip()
 					if line1.strip().split()[0].lower() == 'noskip': keepReading1 = False 
 			elif key == 'secondary_species':
 				while True:

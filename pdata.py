@@ -3784,10 +3784,10 @@ class pdata(object):
 
 			for i in range(len(flow.varlist)):
 				# Write if using non-list format (Single line)
-				if flow.varlist[i].valuelist:	
+				if flow.varlist[i].valuelist:
 					outfile.write('    ' + flow.varlist[i].name.upper())	
-					if isinstance(flow.varlist[i].valuelist, str):
-				        	 outfile.write(' DATASET '+ flow.varlist[i].valuelist)
+					if isinstance(flow.varlist[i].valuelist[0], str):
+				        	outfile.write(' DATASET '+ flow.varlist[i].valuelist[0])
 					else:
 				        	j = 0	
 						while j < len(flow.varlist[i].valuelist):

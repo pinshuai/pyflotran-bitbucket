@@ -1955,7 +1955,7 @@ class pdata(object):
                 if self.regionlist: self._write_region(outfile)
 		else: print 'ERROR: regionlist is required, it is currently reading as empty\n'
 		
-#		if self.observation_list: self._write_observation(outfile)
+		if self.observation_list: self._write_observation(outfile)
 #		else: print 'info: observation_list not detect\n'
 		
 		if self.flowlist: self._write_flow(outfile)

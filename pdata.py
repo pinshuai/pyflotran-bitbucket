@@ -50,14 +50,13 @@ if WINDOWS: copyStr = 'copy'; delStr = 'del'; slash = '\\'
 else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 
 # Multiple classes/key words - allowed strings
-time_units_allowed = ['s', 'sec','m', 'min', 'h', 'hr', 'd', 
-		      'day', 'w', 'week', 'mo', 'month', 'y']
+time_units_allowed = ['s', 'sec','m', 'min', 'h','hr','d','day', 'w', 'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 # simulation type - allowed strings
 simulation_types_allowed = ['subsurface','surface_subsurface']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2',
-		      'th no_freezing', 'th freezing', 'immis']
+					  'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -73,6 +72,7 @@ output_variables_allowed = ['liquid_pressure','liquid_saturation','liquid_densit
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 
 				     'NMT_EXP', 'PRUESS_1']
+
 permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 
 				       'NMT_EXP', 'PRUESS_1']
 
@@ -256,16 +256,19 @@ class ptime(object):
 	:type dtf: [float, str]
 	:param dtf_list: delta (change) time starting at a given time instant.  Input is a list that can have multiple lists appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
 	:type dtf_list: [ [float, str, float, str] ]
+	:param steady_state: Run as steady state.
+	:type steady_state: Bool
 	"""
 	
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, tf=[], dti=[], dtf=[], dtf_list=[]):
+	def __init__(self, tf=[], dti=[], dtf=[],steady_state=False, dtf_list=[]):
 		self._tf = tf		# Final Time, 2nd parameter is unit, same for all other 
 					# variables except dtf_i
 		self._dti = dti		# Initial Timestep Size
 		self._dtf = dtf		# Maximum Timestep Size
 		self._dtf_list = dtf_list # Maximum Timestep Size using keyword 'at'
 					  # Lists (manually) are assigned to lists
+		self._steady_state = steady_state
 		
 	def _get_tf(self): return self._tf
 	def _set_tf(self,value): self._tf = value
@@ -281,7 +284,10 @@ class ptime(object):
 	def _get_dtf_list(self): return self._dtf_list
 	def _set_dtf_list(self,value): self._dtf_list = value
 	dtf_list = property(_get_dtf_list, _set_dtf_list) #: (**)
-	
+	def _get_ss(self): return self._steady_state
+	def _set_ss(self,value): self._steady_state= value
+	steady_state = property(_get_ss, _set_ss) #: (**)
+
 class pgrid(object):
 	""" Class for defining a grid. Used to define type, resolution and geometry of the gird
 	
@@ -351,7 +357,6 @@ class pgrid(object):
 	def _get_filename(self): return self._filename
 	def _set_filename(self,value): self._filename = value
 	filename = property(_get_filename, _set_filename) #: (**)
-
 
 class psimulation(object):
 	""" Class for specifying simulation type and simulation mode. 
@@ -1620,7 +1625,7 @@ class pdata(object):
 		self._observation_list = []
 		self._flowlist = []
 		self._transportlist = []
-		self._initial_condition = pinitial_condition()
+		self._initial_condition_list = []
 		self._boundary_condition_list = []
 		self._source_sink_list = []
 		self._strata_list = []
@@ -1889,7 +1894,9 @@ class pdata(object):
 					 'simulation','regression','grid',
 					 'timestepper','linear_solver','newton_solver',
 					 'saturation_function','region','flow_condition',
-					 'boundary_condition','source_sink','transport_condition','constraint','uniform_velocity','nonuniform_velocity']:
+					 'boundary_condition','source_sink','initial_condition',
+					 'transport_condition','constraint','uniform_velocity',
+					 'nonuniform_velocity']:
 						
 						read_fn[card](infile,line)
 					else:
@@ -1987,8 +1994,8 @@ class pdata(object):
 		
 		if self.transportlist: self._write_transport(outfile)
 		
-		if self.initial_condition: self._write_initial_condition(outfile)
-		else: print 'PyFLOTRAN ERROR: initial_condition is required, it is currently reading as empty\n'
+		if self.initial_condition_list: self._write_initial_condition(outfile)
+		else: print 'PyFLOTRAN ERROR: initial_condition_list is required, it is currently reading as empty\n'
 		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		else: print 'PyFLOTRAN ERROR: boundary_condition_list is required, it is currently reading as empty\n'		
@@ -2017,7 +2024,7 @@ class pdata(object):
 		:type overwrite: bool
 		'''
 	
-		add_checklist = [pmaterial,pdataset,psaturation,pcharacteristic_curves,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pboundary_condition,psource_sink,pstrata,ptransport,pconstraint,pconstraint_concentration]
+		add_checklist = [pmaterial,pdataset,psaturation,pcharacteristic_curves,pchemistry_m_kinetic,plsolver,pnsolver,pregion,pobservation,pflow,pflow_variable,pinitial_condition,pboundary_condition,psource_sink,pstrata,ptransport,pconstraint,pconstraint_concentration]
 
 	 	# Check if obj first is an object that belongs to add_checklist
 		checklist_bool = [isinstance(obj,item) for item in add_checklist]
@@ -2042,6 +2049,8 @@ class pdata(object):
 		if isinstance(obj,pflow): self._add_flow(obj,overwrite)
 		if isinstance(obj, pflow_variable): 
 			self._add_flow_variable(obj,index,overwrite)
+		if isinstance(obj,pinitial_condition):
+			self._add_initial_condition(obj,overwrite)
 		if isinstance(obj,pboundary_condition):
 			self._add_boundary_condition(obj,overwrite)
 		if isinstance(obj,psource_sink):
@@ -2104,6 +2113,11 @@ class pdata(object):
 		elif isinstance(obj,list): # Condition not tested
 			for obji in copy(obj):
 				if isinstance(obji,pflow_variable): self._delete_flow_variable(obji)
+				
+		if isinstance(obj,pinitial_condition): self._delete_initial_condition(obj)
+		elif isinstance(obj,list):
+			for obji in copy(obj):
+				if isinstance(obji,pinitial_condition): self._delete_initial_condition(obji)
 				
 		if isinstance(obj,pboundary_condition): self._delete_boundary_condition(obj)
 		elif isinstance(obj,list):
@@ -2703,7 +2717,9 @@ class pdata(object):
 		self._header(outfile,headers['time'])
 		time = self.time
 		outfile.write('TIME\n')
-		
+		if time.steady_state:
+			outfile.write('  STEADY_STATE\n')
+	
 		# write FINAL_TIME statement (tf)
 		if time.tf:
 			try:
@@ -3888,26 +3904,48 @@ class pdata(object):
 			
 		# Create an empty initial condition and assign the values read in
 		new_initial_condition = pinitial_condition(np_flow,np_transport,np_region)
-		self._initial_condition = new_initial_condition
+		self.add(new_initial_condition)
+		
+	def _add_initial_condition(self,initial_condition=pinitial_condition(),overwrite=False):			#Adds a initial_condition object.
+		# check if flow already exists
+		if isinstance(initial_condition,pinitial_condition):
+			if initial_condition.region in self.initial_condition.keys():
+				if not overwrite:
+					warning = 'WARNING: A initial_condition with region \''+str(initial_condition.region)+'\' already exists. initial_condition will not be defined, use overwrite = True in add() to overwrite the old initial_condition.'
+					print warning; print
+					_buildWarnings(warning)
+					return
+				else:	
+					self.delete(self.initial_condition[initial_condition.region])
+					
+		if initial_condition not in self._initial_condition_list:
+			self._initial_condition_list.append(initial_condition)
+			
+	def _delete_initial_condition(self,initial_condition=pinitial_condition()):
+		self._initial_condition_list.remove(initial_condition)
 
 	def _write_initial_condition(self,outfile):
 		self._header(outfile,headers['initial_condition'])
-		initial_condition = self.initial_condition
-		outfile.write('INITIAL_CONDITION\n')
 		
-		# Write out initial_condition variables
-		if initial_condition.flow:
-			outfile.write('  FLOW_CONDITION ' + initial_condition.flow.lower() + '\n')
-			
-		if initial_condition.transport:
-			outfile.write('  TRANSPORT_CONDITION  '+initial_condition.transport.lower()+'\n')
-			
-		if initial_condition.region:
-			outfile.write('  REGION ' + initial_condition.region.lower() + '\n')
-		else:
-			print 'PyFLOTRAN ERROR: initial_condition.region is required\n'
-		
-		outfile.write('END\n\n')
+		# Write all initial conditions to file
+		try:
+			for b in self.initial_condition_list:	# b = initial_condition
+				if b.name:
+					outfile.write('INITIAL_CONDITION ' + b.name.lower() + '\n')
+				else:
+					outfile.write('INITIAL_CONDITION\n')
+				if b.flow:
+					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
+				if b.transport:
+					outfile.write('  TRANSPORT_CONDITION '+b.transport.lower()+'\n')
+				if b.region:
+					outfile.write('  REGION ' + b.region.lower() + '\n')
+				else:
+					print 'PyFLOTRAN ERROR: initial_condition.region is required\n'
+				outfile.write('END\n\n')
+		except:
+			print 'Error: At least one initial condition with valid attributes is required\n'		
+
 		
 	def _read_boundary_condition(self,infile,line):
 		if len(line.split()) > 1: 
@@ -4781,9 +4819,12 @@ class pdata(object):
 		return dict([flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist if flow_variable.name.lower())
 	flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
 	
-	def _get_initial_condition(self): return self._initial_condition
-	def _set_initial_condition(self, object): self._initial_condition = object
-	initial_condition = property(_get_initial_condition, _set_initial_condition) #: (**)
+	def _get_initial_condition_list(self): return self._initial_condition_list
+	def _set_initial_condition_list(self, object): self._initial_condition_list = object
+	initial_condition_list = property(_get_initial_condition_list, _set_initial_condition_list) #: (**)
+	def _get_initial_condition(self):
+		return dict([initial_condition.region,initial_condition] for initial_condition in self.initial_condition_list if initial_condition.region)
+	initial_condition = property(_get_initial_condition)#: (*dict[pinitial_condition]*) Dictionary of initial_condition objects, indexed by flow region.
 	
 	def _get_boundary_condition_list(self): return self._boundary_condition_list
 	def _set_boundary_condition_list(self, object): self._boundary_condition_list = object

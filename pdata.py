@@ -53,7 +53,7 @@ else: copyStr = 'cp'; delStr = 'rm'; slash = '/'
 time_units_allowed = ['s', 'sec','m', 'min', 'h','hr','d','day', 'w', 'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow'] # newton and linear
 # simulation type - allowed strings
-simulation_types_allowed = ['subsurface','surface_subsurface']
+simulation_types_allowed = ['subsurface','surface_subsurface','hydroquake']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph',  'flash2',
 					  'th no_freezing', 'th freezing', 'immis']
@@ -106,9 +106,9 @@ cards = ['co2_database','uniform_velocity','nonuniform_velocity','simulation','r
 'timestepper', 'material_property','time','linear_solver','newton_solver',
 'output','fluid_property','saturation_function', 'characteristic_curves','region','observation',
 'flow_condition','transport_condition','initial_condition',
-'boundary_condition','source_sink','strata','constraint']
+'boundary_condition','source_sink','strata','constraint','hydroquake']
 
-headers = ['co2 database path','uniform velocity','nonuniform velocity','simulation','regression','checkpoint','restart', 'dataset', 'chemistry','grid','time stepping','material properties','time','linear solver','newton solver','output','fluid properties','saturation functions', 'characteristic curves', 'regions','observation','flow conditions','transport conditions','initial condition','boundary conditions','source sink','stratigraphy couplers','constraints']
+headers = ['co2 database path','uniform velocity','nonuniform velocity','simulation','regression','checkpoint','restart', 'dataset', 'chemistry','grid','time stepping','material properties','time','linear solver','newton solver','output','fluid properties','saturation functions', 'characteristic curves', 'regions','observation','flow conditions','transport conditions','initial condition','boundary conditions','source sink','stratigraphy couplers','constraints','hydroquake']
 
 
 headers = dict(zip(cards,headers))
@@ -1631,6 +1631,7 @@ class pdata(object):
 		self._strata_list = []
 		self._constraint_list = []
 		self._filename = filename
+		self._hydroquake =  pquake()
 		
 		# run object
 		self._path = ppath(parent=self)
@@ -2017,6 +2018,10 @@ class pdata(object):
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
 			self._write_subsurface_simulation_end(outfile)
+			
+		
+		if self.simulation.simulation_type == 'hydroquake':
+			self._write_hydroquake(outfile)
 
 		outfile.close()
         
@@ -4715,6 +4720,17 @@ class pdata(object):
 		for i in range(pad): ws+='='
 		ws+='\n'
 	
+	def _write_hydroquake(self,outfile):
+		self._header(outfile,headers['hydroquake'])
+		outfile.write('HYDROQUAKE\n')
+		if self.hydroquake.mapping_file:
+			outfile.write('  HYDROQUAKE_MAPPING_FILE ' +  self.hydroquake.mapping_file + '\n')
+		if self.hydroquake.time_scaling:
+			outfile.write('  TIME_SCALING ' + strD(self.hydroquake.time_scaling) + '\n')		
+		if self.hydroquake.pressure_scaling:
+			outfile.write('  PRESSURE_SCALING ' + strD(self.hydroquake.pressure_scaling) + '\n')
+		outfile.write('END_HYDROQUAKE')
+	
 	def _get_co2_database(self): return self._co2_database
 	def _set_co2_database(self,value): self._co2_database = value
 	co2_database = property(_get_co2_database, _set_co2_database) #: (**)
@@ -4885,3 +4901,32 @@ class pdata(object):
 	def _get_constraint_concentration(self, constraint=pconstraint()):
 		return dict([constraint_concentration.pspecies,constraint_concentration] for constraint_concentration in constraint.concentration_list if constraint_concentration.pspecies)
 	constraint_concentration = property(_get_constraint_concentration)#: (*dict[pconstraint_concentration]*) Dictionary of pconstraint_concentration objects in a specified constraint object, indexed by constraint_concentration pspecies
+
+class pquake(object):
+	""" Class for specifying pflotran-qk3 related information
+	
+	:param name: Specify name of the physics for which the linear solver is
+	 being defined. Options include: 'tran', 'transport','flow'.
+	:type name: str
+	:param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
+	:type solver: str
+	:param preconditioner: Specify preconditioner type: Options include: 'ilu' 
+	:type solver: str
+	"""
+	
+	def __init__(self,mapping_file='mapping.dat',time_scaling=1.0,pressure_scaling=1.0):
+		self._mapping_file = mapping_file
+		self._time_scaling = time_scaling
+		self._pressure_scaling = pressure_scaling
+		
+	def _get_mapping_file(self): return self._mapping_file
+	def _set_mapping_file(self,value): self._mapping_file = value
+	mapping_file = property(_get_mapping_file, _set_mapping_file)
+	def _get_time_scaling(self): return self._time_scaling
+	def _set_time_scaling(self,value): self._time_scaling = value
+	time_scaling = property(_get_time_scaling, _set_time_scaling)
+	def _get_pressure_scaling(self): return self._pressure_scaling
+	def _set_pressure_scaling(self,value): self._pressure_scaling = value
+	pressure_scaling = property(_get_pressure_scaling, _set_pressure_scaling)
+
+

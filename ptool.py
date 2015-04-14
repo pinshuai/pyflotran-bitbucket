@@ -9,6 +9,24 @@ else: slash = '/'
 from pdflt import*
 dflt = pdflt()
 
+
+def powspace(x0,x1,N=10,power=1):
+	'''Returns a sequence of numbers spaced according to the power law (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0
+	
+	:param x0: First number in sequence.
+	:type x0: fl64
+	:param x1: Last number in sequence.
+	:type x1: fl64
+	:param N: Total items in sequence.
+	:type N: int
+	:param power: Index of power law. If negative, spacing order will be reversed from "big-to-small".
+	:type power: fl64
+	'''
+	if power>0:
+		return (x1-x0)**(1-power)*np.linspace(0,x1-x0,N)**power+x0
+	elif power<0:
+		return np.sort(x1-((x1-x0)**(1-abs(power))*np.linspace(0,x1-x0,N)**abs(power)))
+
 # Suggested for determining file path when reading an input file in-case it is relative
 #def produce_valid_file_path(path):
 #	# Return the string without modifications if it's an absolute file path

@@ -314,8 +314,8 @@ class pgrid(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0],
-		     origin=[],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[], filename=''):
+	def __init__(self, type='structured', lower_bounds=[], upper_bounds=[],
+		     origin=[],nxyz=[], dx=[],dy=[],dz=[], gravity=[], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -1695,9 +1695,15 @@ class pdata(object):
 			print('PyFLOTRAN ERROR: Cannot specify both input and input_prefix')
 			return
 		if input: 
-			subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
+			if num_procs == 1:
+				subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
+			else:
+				subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename,shell=True)
 		if input_prefix:
-			subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -input_prefix ' + self._path.filename,shell=True)
+			if num_procs == 1:
+				subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename,shell=True)
+			else:
+				subprocess.call('mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -input_prefix ' + self._path.filename,shell=True)
 
 
 		# After executing simulation, go back to the parent directory
@@ -1983,7 +1989,7 @@ class pdata(object):
 		if (not self.charlist and not self.saturationlist):
 			print 'PyFLOTRAN ERROR: either saturation or characteristic curves need to be defined.'
 	
-                if self.regionlist: self._write_region(outfile)
+		if self.regionlist: self._write_region(outfile)
 		else: print 'PyFLOTRAN ERROR: regionlist is required, it is currently reading as empty\n'
 		
 		if self.observation_list: self._write_observation(outfile)
@@ -1998,10 +2004,11 @@ class pdata(object):
 		else: print 'PyFLOTRAN ERROR: initial_condition_list is required, it is currently reading as empty\n'
 		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
-		else: print 'PyFLOTRAN ERROR: boundary_condition_list is required, it is currently reading as empty\n'		
 		
 		if self.source_sink_list: self._write_source_sink(outfile)
-		else: print 'PyFLOTRAN ERROR: source_sink_list is required, it is currently reading as empty\n'
+		
+		if not (self.boundary_condition_list or self.source_sink_list):
+			print 'PyFLOTRAN ERROR: source_sink_list or boundary_condition_list is required, it is currently reading as empty\n'
 
 		if self.strata_list: self._write_strata(outfile)
 		else: print 'PyFLOTRAN ERROR: (stratigraphy_coupler) strata is required, it is currently reading as empty\n'
@@ -3057,6 +3064,7 @@ class pdata(object):
 		#if output.periodic_observation_time:
 			#outfile.write('  PERIODIC_OBSERVATION TIME  '+
 					#str(output.periodic_observation_time)+'\n')
+		print output.screen_output
 		if not output.screen_output:
 			try: # Error checking to ensure screen_output is Bool.
 				output.screen_output = bool(output.screen_output)
@@ -3799,14 +3807,12 @@ class pdata(object):
 			
 		# Write out all valid flow_conditions objects with FLOW_CONDITION as keyword
 		for flow in self.flowlist:
-
 			outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
 			
 			if flow.sync_timestep_with_update:
 				outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
 				
 			if flow.datum:	# error-checking not yet added
-				
 				outfile.write('  DATUM')
 				
 				if isinstance(flow.datum, str):
@@ -3817,11 +3823,10 @@ class pdata(object):
 					outfile.write(flow.datum)
 				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
 					# write out d_dx, d_dy, d_dz
-					for line in flow.datum:
-						outfile.write(' ')
-						outfile.write(strD(line[0])+' ')
-						outfile.write(strD(line[1])+' ')
-						outfile.write(strD(line[2]))
+					outfile.write(' ')
+					outfile.write(strD(flow.datum[0])+' ')
+					outfile.write(strD(flow.datum[1])+' ')
+					outfile.write(strD(flow.datum[2]))
 				outfile.write('\n')
 				
 			outfile.write('  TYPE\n') # Following code is paired w/ this statement.
@@ -3926,14 +3931,13 @@ class pdata(object):
 
 	def _write_initial_condition(self,outfile):
 		self._header(outfile,headers['initial_condition'])
-		
 		# Write all initial conditions to file
 		try:
 			for b in self.initial_condition_list:	# b = initial_condition
 				if b.name:
 					outfile.write('INITIAL_CONDITION ' + b.name.lower() + '\n')
 				else:
-					outfile.write('INITIAL_CONDITION\n')
+					print 'Give a name for initial condition!'
 				if b.flow:
 					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
 				if b.transport:
@@ -4002,7 +4006,7 @@ class pdata(object):
 				if b.name:
 					outfile.write('BOUNDARY_CONDITION ' + b.name.lower() + '\n')
 				else:
-					outfile.write('BOUNDARY_CONDITION\n')
+					print 'Give a name for boundary condition!'
 				if b.flow:
 					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
 				if b.transport:

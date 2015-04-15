@@ -314,8 +314,8 @@ class pgrid(object):
 	"""
 
 	# definitions are put on one line to work better with rst/latex/sphinx.
-	def __init__(self, type='structured', lower_bounds=[], upper_bounds=[],
-		     origin=[],nxyz=[], dx=[],dy=[],dz=[], gravity=[], filename=''):
+	def __init__(self, type='structured', lower_bounds=[0.0,0.0,0.0], upper_bounds=[1.0,1.0,1.0],
+		     origin=[],nxyz=[10,10,10], dx=[],dy=[],dz=[], gravity=[], filename=''):
 		self._type = type
 		self._lower_bounds = lower_bounds
 		self._upper_bounds = upper_bounds
@@ -372,7 +372,7 @@ class psimulation(object):
 	:param flowtran_coupling: Specify the type for the flow transport coupling 
 	:type mode: str
 	"""
-	def __init__(self, simulation_type='', subsurface_flow='', subsurface_transport='', mode='',flowtran_coupling=''):
+	def __init__(self, simulation_type='subsurface', subsurface_flow='flow', subsurface_transport='', mode='richards',flowtran_coupling=''):
 		self._simulation_type = simulation_type
 		self._subsurface_flow = subsurface_flow
 		self._subsurface_transport = subsurface_transport
@@ -390,6 +390,7 @@ class psimulation(object):
 	subsurface_transport = property(_get_subsurface_transport, _set_subsurface_transport)
 	def _get_mode(self): return self._mode
 	def _set_mode(self,value): self._mode = value
+	mode = property(_get_mode,_set_mode)
 	def _get_flowtran_coupling(self): return self._flowtran_coupling
 	def _set_flowtran_coupling(self,value): self._flowtran_coupling = value
 	flowtran_coupling = property(_get_flowtran_coupling, _set_flowtran_coupling)
@@ -2260,7 +2261,7 @@ class pdata(object):
                         outfile.write('END'+'\n\n')
 		elif simulation.subsurface_flow:
                         outfile.write('  PROCESS_MODELS' +'\n')		
-                        outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n') 
+                        outfile.write('    SUBSURFACE_FLOW '+ simulation.subsurface_flow +'\n')
 			if simulation.mode in mode_names_allowed:		
 	                        outfile.write('      MODE '+ simulation.mode +'\n')		
                         else:

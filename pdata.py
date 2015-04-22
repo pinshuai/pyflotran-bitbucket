@@ -1995,10 +1995,8 @@ class pdata(object):
 		else: print 'PyFLOTRAN ERROR: regionlist is required, it is currently reading as empty\n'
 		
 		if self.observation_list: self._write_observation(outfile)
-#		else: print 'info: observation_list not detect\n'
 		
 		if self.flowlist: self._write_flow(outfile)
-		else: print 'PyFLOTRAN ERROR: flowlist not detected\n'
 		
 		if self.transportlist: self._write_transport(outfile)
 		
@@ -3070,7 +3068,6 @@ class pdata(object):
 		#if output.periodic_observation_time:
 			#outfile.write('  PERIODIC_OBSERVATION TIME  '+
 					#str(output.periodic_observation_time)+'\n')
-		print output.screen_output
 		if not output.screen_output:
 			try: # Error checking to ensure screen_output is Bool.
 				output.screen_output = bool(output.screen_output)
@@ -4688,6 +4685,8 @@ class pdata(object):
 					outfile.write('    ' + concn.pspecies)
 				if concn.value:
 					outfile.write('  ' + strD(concn.value))
+				else:
+					print 'ERROR: invalid concentration value!'
 				if concn.constraint:
 					outfile.write('  ' + concn.constraint)
 				if concn.element:

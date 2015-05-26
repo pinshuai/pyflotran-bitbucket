@@ -16,8 +16,6 @@ sys.path.append(pyflotran_dir)
 
 from pdata import*
 
-print '\nTEST EXECUTED\n'	# console header
-
 ###############################################################
 
 # initialize without reading in test data
@@ -27,6 +25,7 @@ dat = pdata('')
 
 simulation = psimulation()
 simulation.simulation_type = 'subsurface'
+simulation.subsurface_flow = ''
 simulation.subsurface_transport = 'transport'
 dat.simulation = simulation
 
@@ -206,23 +205,24 @@ dat.add(transport_condition)
 # set initial condition
 #--------------------------------------------------------------
 initial_condition = pinitial_condition()
-initial_condition.flow = 'INITIAL'
+initial_condition.name = 'initial'
+initial_condition.flow = 'initial'
 initial_condition.transport = 'initial'
 initial_condition.region = 'all'
-dat.initial_condition = initial_condition
+dat.add(initial_condition)
 #--------------------------------------------------------------
 
 # set boundary conditions
 #--------------------------------------------------------------
 boundary_condition = pboundary_condition()
-boundary_condition.name = ''
+boundary_condition.name = 'west'
 boundary_condition.flow = 'west'
 boundary_condition.transport = 'west'
 boundary_condition.region = 'WEST'
 dat.add(boundary_condition)
 
 boundary_condition = pboundary_condition()
-boundary_condition.name = ''
+boundary_condition.name = 'east'
 boundary_condition.flow = 'east'
 boundary_condition.transport = 'EAST'
 boundary_condition.region = 'east'

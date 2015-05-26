@@ -2,6 +2,7 @@
 
 import numpy as np
 import os,platform,string
+import sys
 WINDOWS = platform.system()=='Windows'
 if WINDOWS: slash = '\\'
 else: slash = '/'
@@ -65,6 +66,15 @@ def strD(number):
 		return ('%8.3e'%number).replace('e','d')
 	else:
 		return tstring
+
+def perror(string):
+	"""Prints out an error
+
+	:param string: Error string
+	:type string: str
+	"""
+	print('PyFLOTRAN ERROR:' + ' ' + string)
+	os._exit(1)
 	
 def pyflotran_print(s):
 	if not pyflotran_print.silent: print s

@@ -159,21 +159,21 @@ TRANSPORT_CONDITION east
 
 #========================== initial and boundary conditions =================
 # initial condition
-INITIAL_CONDITION
+INITIAL_CONDITION initial
   FLOW_CONDITION initial
   TRANSPORT_CONDITION initial
   REGION all
 END
 
 # west boundary condition
-BOUNDARY_CONDITION
+BOUNDARY_CONDITION west
   FLOW_CONDITION west
   TRANSPORT_CONDITION west
   REGION west
 END
 
 # east boundary condition
-BOUNDARY_CONDITION
+BOUNDARY_CONDITION east
   FLOW_CONDITION east
   TRANSPORT_CONDITION east
   REGION east

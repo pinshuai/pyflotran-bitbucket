@@ -219,14 +219,14 @@ variable = pflow_variable('') 	# new flow var object
 variable.name = 'TEMPERATURE'
 variable.type = 'zero_gradient'
 variable.valuelist = [50.0]
-variable.unit = 'C'
+#variable.unit = 'C'
 dat.add(variable)
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('')	# new flow var object
 variable.name = 'CONCENTRATION'
 variable.type = 'zero_gradient'
 variable.valuelist = [1e-6]
-variable.unit = 'm'
+#variable.unit = 'm'
 dat.add(variable,flow) 		# alternative
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('') 	# new flow var object
@@ -329,9 +329,10 @@ dat.add(variable)	# assigning for flow var done here
 # set initial condition
 #--------------------------------------------------------------
 ic = pinitial_condition()
+ic.name = 'initial'
 ic.flow = 'INITIAL'
 ic.region = 'all'
-dat.initial_condition = ic
+dat.add(ic)
 #--------------------------------------------------------------
 
 # set boundary conditions
@@ -354,9 +355,10 @@ dat.add(boundary_condition)
 # set source sink
 #--------------------------------------------------------------
 ss = psource_sink()
+ss.name = 'injection_well'
 ss.flow = 'source'
 ss.region = 'WELL'
-dat.source_sink = ss
+dat.add(ss)
 #--------------------------------------------------------------
 
 # set stratigraphy couplers

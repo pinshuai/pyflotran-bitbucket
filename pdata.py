@@ -1991,8 +1991,8 @@ class pdata(object):
 				
 		if self.charlist: self._write_characteristic_curves(outfile)
 	
-		if (not self.charlist and not self.saturationlist):
-			perror('either saturation or characteristic curves need to be defined!')
+		#if (not self.charlist and not self.saturationlist  self.simulation.subsurface_flow=''):
+		#	perror('either saturation or characteristic curves need to be defined!')
 	
 		if self.regionlist: self._write_region(outfile)
 		else: perror('regionlist is required, it is currently reading as empty!')
@@ -2203,7 +2203,7 @@ class pdata(object):
 	def _read_simulation(self,infile,line):
 		simulation = psimulation()
 		keepReading = True
-		
+		key_bank = []
 		while keepReading: #Read through all cards
                         line = infile.readline()        # get next line
                         key = line.strip().split()[0].lower()   # take first key word
@@ -2220,6 +2220,7 @@ class pdata(object):
 					elif key1 in ['/','end']:keepReading1 = False
 					else:
 						perror('mode is missing!')
+				key_bank.append(key)
                 	elif key == 'subsurface_transport':
 				simulation.subsurface_transport = line.split()[-1] 
 				keepReading2 = True
@@ -2231,8 +2232,11 @@ class pdata(object):
 					elif key1 in ['/','end']:keepReading2 = False
 #				else:
 #					perror('flow tran coupling type missing!')
+				key_bank.append(key)
 			elif key in ['/','end']: keepReading = False 
-
+		if ( not ('subsurface_flow' in key_bank) and  ('subsurface_transport' in key_bank)):
+			simulation.subsurface_flow = ''
+			simulation.mode = ''
 		self._simulation = simulation                               
                               
 	def _write_simulation(self,outfile):
@@ -2361,9 +2365,9 @@ class pdata(object):
 					line3 = infile.readline()
 					if line3.strip().split()[0].lower() in ['/','end']: keepReading2 = False
 			elif key == 'origin':
-				grid.origin[0] = floatD(line.strip().split()[1])
-				grid.origin[1] = floatD(line.strip().split()[2])
-				grid.origin[2] = floatD(line.strip().split()[3])
+				grid.origin.append(floatD(line.strip().split()[1]))
+				grid.origin.append(floatD(line.strip().split()[2]))
+				grid.origin.append(floatD(line.strip().split()[3]))
 			elif key == 'nxyz':
 				grid.nxyz[0] = int(line.split()[1])
 				grid.nxyz[1] = int(line.split()[2])
@@ -2545,8 +2549,7 @@ class pdata(object):
 		np_permeability=[]
 		np_permeability_critical_porosity=p.permeability_critical_porosity
 		np_permeability_power=p.permeability_power
-		np_permeablity_min_scale_factor=p.permeability_min_scale_factor
-
+		np_permeability_min_scale_factor=p.permeability_min_scale_factor
 		keepReading = True
 
 		while keepReading: 			# read through all cards
@@ -3823,9 +3826,9 @@ class pdata(object):
 				else: # Applies if datum is a list of [d_dx, d_dy, d_dz]
 					# write out d_dx, d_dy, d_dz
 					outfile.write(' ')
-					outfile.write(strD(flow.datum[0])+' ')
-					outfile.write(strD(flow.datum[1])+' ')
-					outfile.write(strD(flow.datum[2]))
+					outfile.write(strD(flow.datum[0][0])+' ')
+					outfile.write(strD(flow.datum[0][1])+' ')
+					outfile.write(strD(flow.datum[0][2]))
 				outfile.write('\n')
 				
 			outfile.write('  TYPE\n') # Following code is paired w/ this statement.
@@ -3886,7 +3889,11 @@ class pdata(object):
 					outfile.write('    /\n')
 			outfile.write('END\n\n')
 		
-	def _read_initial_condition(self,infile):
+	def _read_initial_condition(self,infile,line):
+		if len(line.split()) > 1: 
+			np_name = line.split()[-1].lower()	# Flow Condition name passed in.
+		else:
+			np_name = None
 		p = pinitial_condition()
 		np_flow = p.flow
 		np_transport = p.transport
@@ -3907,7 +3914,7 @@ class pdata(object):
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty initial condition and assign the values read in
-		new_initial_condition = pinitial_condition(np_flow,np_transport,np_region)
+		new_initial_condition = pinitial_condition(np_flow,np_transport,np_region,np_name)
 		self.add(new_initial_condition)
 		
 	def _add_initial_condition(self,initial_condition=pinitial_condition(),overwrite=False):			#Adds a initial_condition object.

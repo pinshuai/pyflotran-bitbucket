@@ -216,7 +216,7 @@ ENTHALPY 0.d0 0.d0
 
 !=========================== condition couplers ===============================
 ! initial condition
-INITIAL_CONDITION
+INITIAL_CONDITION initial
 FLOW_CONDITION initial
 REGION all
 END
@@ -231,7 +231,7 @@ FLOW_CONDITION initial
 REGION east
 END
 
-SOURCE_SINK
+SOURCE_SINK well
 FLOW_CONDITION source
 REGION well
 END

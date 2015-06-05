@@ -1243,11 +1243,15 @@ class psource_sink(object):
 	:type region: str
 	"""
 	
-	def __init__(self,flow=None,transport=None,region=None):
+	def __init__(self,flow='',transport='',region='',name=''):
+		self._name = name   # Name of source sink
 		self._flow = flow	# Flow Condition (e.g., initial)
 		self._transport = transport	# Flow Condition (e.g., initial)
 		self._region = region	# Define region (e.g., west, east, well)
 		
+	def _get_name(self): return self._name
+	def _set_name(self,value): self._name = value
+	name = property(_get_name, _set_name)	
 	def _get_flow(self): return self._flow
 	def _set_flow(self,value): self._flow = value
 	flow = property(_get_flow, _set_flow)	
@@ -4023,11 +4027,17 @@ class pdata(object):
 		except:
 			perror('At least one boundary_condition with valid attributes is required')
 		
-	def _read_source_sink(self,infile):
+	def _read_source_sink(self,infile,line):
 		p = psource_sink()
+		np_name = p.name
 		np_flow = p.flow
 		np_region = p.region
 		
+		if len(line.split()) > 1: 
+			np_name = line.split()[-1].lower()	# Flow Condition name passed in.
+		else:
+			np_name = None
+
 		keepReading = True
 		
 		while keepReading:	# Read through all cards
@@ -4041,7 +4051,7 @@ class pdata(object):
 			elif key in ['/','end']: keepReading = False
 			
 		# Create an empty source sink and assign the values read in
-		new_source_sink = psource_sink(np_flow,np_region)
+		new_source_sink = psource_sink(np_flow,np_region,np_name)
 		self.add(new_source_sink)
 
 	def _add_source_sink(self,source_sink=psource_sink(),overwrite=False):			#Adds a source_sink object.

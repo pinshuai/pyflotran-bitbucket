@@ -372,7 +372,7 @@ class psimulation(object):
 	:param flowtran_coupling: Specify the type for the flow transport coupling 
 	:type mode: str
 	"""
-	def __init__(self, simulation_type='subsurface', subsurface_flow='flow', subsurface_transport='', mode='richards',flowtran_coupling=''):
+	def __init__(self, simulation_type='subsurface', subsurface_flow='', subsurface_transport='', mode='richards',flowtran_coupling=''):
 		self._simulation_type = simulation_type
 		self._subsurface_flow = subsurface_flow
 		self._subsurface_transport = subsurface_transport

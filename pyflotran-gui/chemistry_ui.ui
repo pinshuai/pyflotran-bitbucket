@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>408</width>
+    <height>619</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Chemistry</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="7" column="0">
+    <widget class="QLabel" name="molalLabel">
+     <property name="text">
+      <string>Molal</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="outputListLabel">
+     <property name="text">
+      <string>Output List</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2">
+    <widget class="QLineEdit" name="output_list_lineEdit"/>
+   </item>
+   <item row="7" column="2">
+    <widget class="QComboBox" name="molal_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="10" column="1" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QComboBox" name="log_formulation_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="3">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Mineral Kinetics</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="1" column="0">
+       <widget class="QLabel" name="rateConstantListLabel">
+        <property name="text">
+         <string>Rate Constant</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="nameLabel">
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="rate_const_list_dSpinBox">
+        <property name="decimals">
+         <number>20</number>
+        </property>
+        <property name="minimum">
+         <double>-999999999.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>999999999.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QLineEdit" name="mineral_kinetic_name_lineEdit"/>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLineEdit" name="rate_const_list_unit_lineEdit">
+        <property name="placeholderText">
+         <string>e.g., '‘mol/m^2-sec'</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QPushButton" name="m_kinetic_delete_pushButton">
+        <property name="text">
+         <string>Delete</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="m_kinetic_add_pushButton">
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" rowspan="2">
+       <widget class="QListWidget" name="m_kinetic_listWidget">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::ExtendedSelection</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QLineEdit" name="database_lineEdit"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="databaseLabel">
+     <property name="text">
+      <string>Database</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="logFormulationLabel">
+     <property name="text">
+      <string>Log Formulation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QTextEdit" name="mineral_list_textEdit"/>
+   </item>
+   <item row="6" column="2">
+    <widget class="QComboBox" name="activity_coefficients_comboBox">
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>LAG</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NEWTON</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>TIMESTEP</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NEWTON ITERATION</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="activityCoefficientsLabel">
+     <property name="text">
+      <string>Activity Coefficients</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="speciesListLabel">
+     <property name="text">
+      <string>Species List</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QTextEdit" name="species_list_textEdit"/>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QLabel" name="aqueousSpeciesLabel">
+     <property name="text">
+      <string>Aqueous Species in Equilibrium with Primary Species</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QTextEdit" name="aq_species_in_eq_with_primary_species_textEdit"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="mineralListLabel">
+     <property name="text">
+      <string>Mineral List</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Gas Species</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QTextEdit" name="gas_species_textEdit"/>
+   </item>
+  </layout>
+  <zorder>groupBox</zorder>
+  <zorder>buttonBox</zorder>
+  <zorder>aq_species_in_eq_with_primary_species_textEdit</zorder>
+  <zorder>mineral_list_textEdit</zorder>
+  <zorder>speciesListLabel</zorder>
+  <zorder>mineralListLabel</zorder>
+  <zorder>molalLabel</zorder>
+  <zorder>database_lineEdit</zorder>
+  <zorder>activity_coefficients_comboBox</zorder>
+  <zorder>log_formulation_comboBox</zorder>
+  <zorder>molal_comboBox</zorder>
+  <zorder>outputListLabel</zorder>
+  <zorder>aqueousSpeciesLabel</zorder>
+  <zorder>databaseLabel</zorder>
+  <zorder>logFormulationLabel</zorder>
+  <zorder>output_list_lineEdit</zorder>
+  <zorder>species_list_textEdit</zorder>
+  <zorder>activityCoefficientsLabel</zorder>
+  <zorder>label</zorder>
+  <zorder>gas_species_textEdit</zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

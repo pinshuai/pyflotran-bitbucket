@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>647</width>
+    <height>306</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Transport Condition</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="4" column="5">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Constraint List Type</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="6">
+    <widget class="QToolButton" name="push_down_tool_button">
+     <property name="text">
+      <string>+</string>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonIconOnly</enum>
+     </property>
+     <property name="arrowType">
+      <enum>Qt::DownArrow</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Constraint List Value</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QLineEdit" name="name_lineEdit"/>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="type_comboBox">
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dirichlet</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dirichlet Zero Gradient</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Equilibrium</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Neumann</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Mole</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Mole Rate</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Zero Gradient</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="5">
+    <widget class="QLineEdit" name="constraint_list_type_lineEdit"/>
+   </item>
+   <item row="4" column="1">
+    <widget class="QPushButton" name="remove_push_button">
+     <property name="text">
+      <string>Remove</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QDoubleSpinBox" name="constraint_list_value_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>9999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1" colspan="5">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="3" colspan="3">
+    <widget class="QListWidget" name="listWidget">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::MultiSelection</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

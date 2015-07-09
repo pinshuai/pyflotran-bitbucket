@@ -1,0 +1,1115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1209</width>
+    <height>704</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>605</width>
+    <height>422</height>
+   </size>
+  </property>
+  <property name="acceptDrops">
+   <bool>false</bool>
+  </property>
+  <property name="windowTitle">
+   <string>PyFLOTRAN</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QTabWidget" name="bottom_bar_tabWidget">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open the log window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="whatsThis">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open the log window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Triangular</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="ham_placeholder_tab">
+       <attribute name="title">
+        <string>=</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="log_tab">
+       <attribute name="title">
+        <string>Log</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="id_search_tab">
+       <attribute name="title">
+        <string>ID Search</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="multi_properties_tabWidget">
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="elideMode">
+       <enum>Qt::ElideRight</enum>
+      </property>
+      <property name="usesScrollButtons">
+       <bool>true</bool>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="material_tab">
+       <attribute name="title">
+        <string>Material Properties</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QListWidget" name="material_list">
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="material_remove_button">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="solvers_tab">
+       <attribute name="title">
+        <string>Linear Solvers</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QListWidget" name="solvers_list">
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="list_remove_button">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="strata_tab">
+       <attribute name="title">
+        <string>Stratigraphy Coupler</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_7">
+        <item row="0" column="0">
+         <widget class="QListWidget" name="strata_list">
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="strata_remove_button">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="observationtab">
+       <attribute name="title">
+        <string>Observation</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <widget class="QListWidget" name="listWidget_6">
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="observation_remove_button">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="constraint_tab">
+       <attribute name="title">
+        <string>Constraint Condition</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="constraint_condition_remove_button">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+          <property name="autoDefault">
+           <bool>false</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QListWidget" name="constraint_condition_list">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="region_tab">
+       <attribute name="title">
+        <string>Region</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="flow_tab">
+       <attribute name="title">
+        <string>Flow</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QTabWidget" name="sidebar_tabWidget">
+      <property name="maximumSize">
+       <size>
+        <width>30</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="baseSize">
+       <size>
+        <width>10</width>
+        <height>10</height>
+       </size>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::West</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Triangular</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="elideMode">
+       <enum>Qt::ElideNone</enum>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="ham_placeholder_tab">
+       <attribute name="title">
+        <string>||</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="py_shell_tab">
+       <attribute name="title">
+        <string>IPython Shell</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1209</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_file">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionOpen"/>
+   </widget>
+   <widget class="QMenu" name="menu_run">
+    <property name="title">
+     <string>&amp;Input File</string>
+    </property>
+    <addaction name="action_run"/>
+    <addaction name="action_generate_input_file"/>
+    <addaction name="separator"/>
+    <addaction name="action_add_remove_current_attributes"/>
+   </widget>
+   <widget class="QMenu" name="menuAttributes">
+    <property name="title">
+     <string>Add &amp;Attributes</string>
+    </property>
+    <widget class="QMenu" name="menuCheckpointing">
+     <property name="title">
+      <string>Checkpointing</string>
+     </property>
+     <addaction name="actionCheckpoint"/>
+     <addaction name="actionRestart"/>
+    </widget>
+    <widget class="QMenu" name="menuSolvers">
+     <property name="title">
+      <string>Solvers</string>
+     </property>
+     <addaction name="action_add_newton"/>
+     <addaction name="action_add_linear"/>
+    </widget>
+    <widget class="QMenu" name="menuTime">
+     <property name="title">
+      <string>Time</string>
+     </property>
+     <addaction name="action_add_timestepper"/>
+     <addaction name="action_add_time"/>
+    </widget>
+    <widget class="QMenu" name="menuConditions">
+     <property name="title">
+      <string>Conditions</string>
+     </property>
+     <addaction name="action_add_initial_condition"/>
+     <addaction name="action_add_boundary_condition"/>
+     <addaction name="action_add_source_sink_condition"/>
+    </widget>
+    <widget class="QMenu" name="menuVelocity">
+     <property name="title">
+      <string>Velocity</string>
+     </property>
+     <addaction name="action_uniform_velocity"/>
+     <addaction name="action_nonuniform_velocity"/>
+    </widget>
+    <addaction name="actionSimulation"/>
+    <addaction name="action_grid"/>
+    <addaction name="actionMaterial_Properties"/>
+    <addaction name="action_add_output"/>
+    <addaction name="action_add_observation"/>
+    <addaction name="action_add_strata"/>
+    <addaction name="action_add_flow"/>
+    <addaction name="action_add_transport"/>
+    <addaction name="action_add_constraints"/>
+    <addaction name="separator"/>
+    <addaction name="menuConditions"/>
+    <addaction name="menuSolvers"/>
+    <addaction name="menuTime"/>
+    <addaction name="menuCheckpointing"/>
+    <addaction name="menuVelocity"/>
+    <addaction name="separator"/>
+    <addaction name="action_add_saturation_function"/>
+    <addaction name="action_add_fluid_properties"/>
+    <addaction name="action_add_chemistry"/>
+    <addaction name="actionRegression"/>
+    <addaction name="actionDataset"/>
+    <addaction name="action_characteristic_curves"/>
+    <addaction name="action_add_region"/>
+    <addaction name="actionPlot_Observation"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <widget class="QMenu" name="menuGuides">
+     <property name="title">
+      <string>Guides</string>
+     </property>
+     <addaction name="actionMaking_an_input_file"/>
+    </widget>
+    <addaction name="actionAbout"/>
+    <addaction name="separator"/>
+    <addaction name="menuGuides"/>
+   </widget>
+   <widget class="QMenu" name="menuSave_Layout">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <widget class="QMenu" name="menuLayout">
+     <property name="title">
+      <string>Layout</string>
+     </property>
+     <addaction name="action_restore_default_layout"/>
+    </widget>
+    <addaction name="menuLayout"/>
+    <addaction name="action_dump_log"/>
+   </widget>
+   <widget class="QMenu" name="menuView_Attributes">
+    <property name="title">
+     <string>View Attributes</string>
+    </property>
+    <widget class="QMenu" name="menuSolvers_2">
+     <property name="title">
+      <string>Solvers</string>
+     </property>
+     <addaction name="action_view_newton_solver"/>
+     <addaction name="action_view_linear_solver"/>
+    </widget>
+    <widget class="QMenu" name="menuGrid_2">
+     <property name="title">
+      <string>Grid</string>
+     </property>
+     <addaction name="action_view_grid_file"/>
+     <addaction name="action_view_grid_unstructured"/>
+    </widget>
+    <widget class="QMenu" name="menuConditions_2">
+     <property name="title">
+      <string>Conditions</string>
+     </property>
+     <addaction name="action_view_condition_initial"/>
+     <addaction name="action_view_condition_boundary"/>
+     <addaction name="action_view_source_sink"/>
+    </widget>
+    <widget class="QMenu" name="menuTime_2">
+     <property name="title">
+      <string>Time</string>
+     </property>
+     <addaction name="action_view_timestepper"/>
+     <addaction name="action_view_time"/>
+    </widget>
+    <widget class="QMenu" name="menuCheckpointing_2">
+     <property name="title">
+      <string>Checkpointing</string>
+     </property>
+     <addaction name="action_view_checkpoint"/>
+     <addaction name="action_view_restart"/>
+    </widget>
+    <widget class="QMenu" name="menuVelocity_2">
+     <property name="title">
+      <string>Velocity</string>
+     </property>
+     <addaction name="action_view_uniform_velocity"/>
+     <addaction name="action_view_nonuniform_velocity"/>
+    </widget>
+    <addaction name="action_clear_all_attributes"/>
+    <addaction name="separator"/>
+    <addaction name="action_view_simulation"/>
+    <addaction name="menuGrid_2"/>
+    <addaction name="action_view_mat_properties"/>
+    <addaction name="action_view_output"/>
+    <addaction name="action_view_observation"/>
+    <addaction name="action_view_strata"/>
+    <addaction name="action_view_flow"/>
+    <addaction name="action_view_transport"/>
+    <addaction name="action_view_constraint_condition"/>
+    <addaction name="separator"/>
+    <addaction name="menuConditions_2"/>
+    <addaction name="menuSolvers_2"/>
+    <addaction name="menuTime_2"/>
+    <addaction name="menuCheckpointing_2"/>
+    <addaction name="menuVelocity_2"/>
+    <addaction name="separator"/>
+    <addaction name="action_view_saturation_function"/>
+    <addaction name="action_view_fluid_properties"/>
+    <addaction name="action_view_chemistry"/>
+    <addaction name="action_view_regression"/>
+    <addaction name="action_view_dataset"/>
+    <addaction name="action_view_characteristics_curves"/>
+    <addaction name="action_view_region"/>
+    <addaction name="action_view_plot_observation"/>
+   </widget>
+   <addaction name="menu_file"/>
+   <addaction name="menu_run"/>
+   <addaction name="menuAttributes"/>
+   <addaction name="menuView_Attributes"/>
+   <addaction name="menuSave_Layout"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="log_dockWidget">
+   <property name="styleSheet">
+    <string notr="true">background: rgb(231, 231, 231)</string>
+   </property>
+   <property name="windowTitle">
+    <string>Log</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QGridLayout" name="gridLayout_5">
+     <item row="0" column="0">
+      <widget class="QTextEdit" name="log_textEdit">
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="documentTitle">
+        <string>Log</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="ipython_dockWidget">
+   <property name="minimumSize">
+    <size>
+     <width>300</width>
+     <height>200</height>
+    </size>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="windowTitle">
+    <string>IPython Shell</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QGridLayout" name="gridLayout_6">
+     <item row="0" column="0">
+      <widget class="QWidget" name="ipython_widget" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="id_search_dockWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>200</width>
+     <height>90</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>200</width>
+     <height>524287</height>
+    </size>
+   </property>
+   <property name="windowTitle">
+    <string>ID Search</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QGridLayout" name="gridLayout_9">
+     <item row="0" column="1">
+      <widget class="QSpinBox" name="id_spinBox">
+       <property name="maximum">
+        <number>99999999</number>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>ID:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="id_search_pushButton">
+       <property name="text">
+        <string>Search</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="id_view_pushButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>View</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="id_delete_pushButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Delete</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="action_file">
+   <property name="text">
+    <string>&amp;file</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="action_run">
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionSimulation">
+   <property name="text">
+    <string>Simulation</string>
+   </property>
+  </action>
+  <action name="actionGrid">
+   <property name="text">
+    <string>Grid</string>
+   </property>
+  </action>
+  <action name="actionTimestepper">
+   <property name="text">
+    <string>Timestepper</string>
+   </property>
+  </action>
+  <action name="actionNewton_Solver">
+   <property name="text">
+    <string>Newton Solver</string>
+   </property>
+  </action>
+  <action name="actionInitial_Condition">
+   <property name="text">
+    <string>Initial Condition</string>
+   </property>
+  </action>
+  <action name="actionCheckpoint">
+   <property name="text">
+    <string>Checkpoint</string>
+   </property>
+  </action>
+  <action name="actionRestart">
+   <property name="text">
+    <string>Restart</string>
+   </property>
+  </action>
+  <action name="action_add_newton">
+   <property name="text">
+    <string>Newton</string>
+   </property>
+  </action>
+  <action name="action_add_linear">
+   <property name="text">
+    <string>Linear</string>
+   </property>
+  </action>
+  <action name="action_add_timestepper">
+   <property name="text">
+    <string>Timestepper</string>
+   </property>
+  </action>
+  <action name="action_add_time">
+   <property name="text">
+    <string>Time</string>
+   </property>
+  </action>
+  <action name="action_add_initial_condition">
+   <property name="text">
+    <string>Initial</string>
+   </property>
+  </action>
+  <action name="action_add_boundary_condition">
+   <property name="text">
+    <string>Boundary</string>
+   </property>
+  </action>
+  <action name="action_add_source_sink_condition">
+   <property name="text">
+    <string>Source Sink</string>
+   </property>
+  </action>
+  <action name="action_add_output">
+   <property name="text">
+    <string>Output</string>
+   </property>
+  </action>
+  <action name="action_add_observation">
+   <property name="text">
+    <string>Observation</string>
+   </property>
+  </action>
+  <action name="actionAdd">
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionView">
+   <property name="text">
+    <string>View List</string>
+   </property>
+  </action>
+  <action name="actionView_List">
+   <property name="text">
+    <string>View List</string>
+   </property>
+  </action>
+  <action name="actionAdd_2">
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionDelete_2">
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="action_add_strata">
+   <property name="text">
+    <string>Strata</string>
+   </property>
+  </action>
+  <action name="actionMaterial_Properties">
+   <property name="text">
+    <string>Material Properties</string>
+   </property>
+  </action>
+  <action name="actionView_All">
+   <property name="text">
+    <string>View All</string>
+   </property>
+  </action>
+  <action name="action_add_saturation_function">
+   <property name="text">
+    <string>Saturation Function</string>
+   </property>
+  </action>
+  <action name="actionFlow_2">
+   <property name="text">
+    <string>Flow</string>
+   </property>
+  </action>
+  <action name="actionFlow_Variable_Adder">
+   <property name="text">
+    <string>Flow Variable Adder</string>
+   </property>
+  </action>
+  <action name="actionCheckpoint_2">
+   <property name="text">
+    <string>Checkpoint</string>
+   </property>
+  </action>
+  <action name="actionRestart_2">
+   <property name="text">
+    <string>Restart</string>
+   </property>
+  </action>
+  <action name="actionUniform_Velocity">
+   <property name="text">
+    <string>Uniform Velocity</string>
+   </property>
+  </action>
+  <action name="action_add_fluid_properties">
+   <property name="text">
+    <string>Fluid Properties</string>
+   </property>
+  </action>
+  <action name="actionObservation_2">
+   <property name="text">
+    <string>Observation</string>
+   </property>
+  </action>
+  <action name="action_add_chemistry">
+   <property name="text">
+    <string>Chemistry</string>
+   </property>
+  </action>
+  <action name="action_add_transport">
+   <property name="text">
+    <string>Transport</string>
+   </property>
+  </action>
+  <action name="action_add_constraints">
+   <property name="text">
+    <string>Constraint Conditions</string>
+   </property>
+  </action>
+  <action name="actionConcentration">
+   <property name="text">
+    <string>Condition Concentration</string>
+   </property>
+  </action>
+  <action name="actionCondition_Mineral">
+   <property name="text">
+    <string>Condition Mineral</string>
+   </property>
+  </action>
+  <action name="actionRegression">
+   <property name="text">
+    <string>Regression</string>
+   </property>
+  </action>
+  <action name="actionDataset">
+   <property name="text">
+    <string>Dataset</string>
+   </property>
+  </action>
+  <action name="actionPlot_Observation">
+   <property name="text">
+    <string>Plot Observation</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="action_add_region">
+   <property name="text">
+    <string>Region</string>
+   </property>
+  </action>
+  <action name="action_generate_input_file">
+   <property name="text">
+    <string>Generate</string>
+   </property>
+  </action>
+  <action name="actionSubmit_A_Issue">
+   <property name="text">
+    <string>Submit A Issue</string>
+   </property>
+  </action>
+  <action name="actionMaking_an_input_file">
+   <property name="text">
+    <string>Making an input file</string>
+   </property>
+  </action>
+  <action name="action_uniform_velocity">
+   <property name="text">
+    <string>Uniform</string>
+   </property>
+  </action>
+  <action name="action_nonuniform_velocity">
+   <property name="text">
+    <string>Nonuniform</string>
+   </property>
+  </action>
+  <action name="action_point">
+   <property name="text">
+    <string>Point</string>
+   </property>
+  </action>
+  <action name="action_characteristic_curves">
+   <property name="text">
+    <string>Characteristics Curves</string>
+   </property>
+  </action>
+  <action name="action_add_flow">
+   <property name="text">
+    <string>Flow</string>
+   </property>
+  </action>
+  <action name="action_save_log">
+   <property name="text">
+    <string>Save Log</string>
+   </property>
+  </action>
+  <action name="action_restore_default">
+   <property name="text">
+    <string>Restore Default</string>
+   </property>
+  </action>
+  <action name="actionRestore">
+   <property name="text">
+    <string>Restore</string>
+   </property>
+  </action>
+  <action name="action_restore_default_layout">
+   <property name="text">
+    <string>Restore Default</string>
+   </property>
+  </action>
+  <action name="action_dump_log">
+   <property name="text">
+    <string>Dump Log</string>
+   </property>
+  </action>
+  <action name="action_grid_file">
+   <property name="text">
+    <string>File</string>
+   </property>
+  </action>
+  <action name="action_grid">
+   <property name="text">
+    <string>Grid</string>
+   </property>
+  </action>
+  <action name="action_clear_all_attributes">
+   <property name="text">
+    <string>Clear All</string>
+   </property>
+  </action>
+  <action name="action_view_simulation">
+   <property name="text">
+    <string>Simulation</string>
+   </property>
+  </action>
+  <action name="action_view_mat_properties">
+   <property name="text">
+    <string>Material Properties</string>
+   </property>
+  </action>
+  <action name="action_view_output">
+   <property name="text">
+    <string>Output</string>
+   </property>
+  </action>
+  <action name="action_view_observation">
+   <property name="text">
+    <string>Observation</string>
+   </property>
+  </action>
+  <action name="action_view_strata">
+   <property name="text">
+    <string>Strata</string>
+   </property>
+  </action>
+  <action name="action_view_flow">
+   <property name="text">
+    <string>Flow</string>
+   </property>
+  </action>
+  <action name="action_view_transport">
+   <property name="text">
+    <string>Transport</string>
+   </property>
+  </action>
+  <action name="action_view_constraint_condition">
+   <property name="text">
+    <string>Constraint Conditions</string>
+   </property>
+  </action>
+  <action name="action_view_timestepper">
+   <property name="text">
+    <string>Timestepper</string>
+   </property>
+  </action>
+  <action name="action_view_time">
+   <property name="text">
+    <string>Time</string>
+   </property>
+  </action>
+  <action name="action_view_point">
+   <property name="text">
+    <string>Point</string>
+   </property>
+  </action>
+  <action name="action_view_saturation_function">
+   <property name="text">
+    <string>Saturation Function</string>
+   </property>
+  </action>
+  <action name="action_view_fluid_properties">
+   <property name="text">
+    <string>Fluid Properties</string>
+   </property>
+  </action>
+  <action name="action_view_chemistry">
+   <property name="text">
+    <string>Chemistry</string>
+   </property>
+  </action>
+  <action name="action_view_regression">
+   <property name="text">
+    <string>Regression</string>
+   </property>
+  </action>
+  <action name="action_view_dataset">
+   <property name="text">
+    <string>Dataset</string>
+   </property>
+  </action>
+  <action name="action_view_characteristics_curves">
+   <property name="text">
+    <string>Characteristics Curves</string>
+   </property>
+  </action>
+  <action name="action_view_region">
+   <property name="text">
+    <string>Region</string>
+   </property>
+  </action>
+  <action name="action_view_plot_observation">
+   <property name="text">
+    <string>Plot Observation</string>
+   </property>
+  </action>
+  <action name="action_view_grid_file">
+   <property name="text">
+    <string>File</string>
+   </property>
+  </action>
+  <action name="action_view_grid_unstructured">
+   <property name="text">
+    <string>Unstructured</string>
+   </property>
+  </action>
+  <action name="action_view_condition_initial">
+   <property name="text">
+    <string>Initial</string>
+   </property>
+  </action>
+  <action name="action_view_condition_boundary">
+   <property name="text">
+    <string>Boundary</string>
+   </property>
+  </action>
+  <action name="action_view_source_sink">
+   <property name="text">
+    <string>Source Sink</string>
+   </property>
+  </action>
+  <action name="action_view_newton_solver">
+   <property name="text">
+    <string>Newton</string>
+   </property>
+  </action>
+  <action name="action_view_linear_solver">
+   <property name="text">
+    <string>Linear</string>
+   </property>
+  </action>
+  <action name="action_view_checkpoint">
+   <property name="text">
+    <string>Checkpoint</string>
+   </property>
+  </action>
+  <action name="action_view_restart">
+   <property name="text">
+    <string>Restart</string>
+   </property>
+  </action>
+  <action name="action_view_uniform_velocity">
+   <property name="text">
+    <string>Uniform</string>
+   </property>
+  </action>
+  <action name="action_view_nonuniform_velocity">
+   <property name="text">
+    <string>Nonuniform</string>
+   </property>
+  </action>
+  <action name="action_add_remove_current_attributes">
+   <property name="text">
+    <string>Remove Current Attributes</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+ <slots>
+  <slot>verifyFields()</slot>
+ </slots>
+</ui>

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>291</width>
+    <height>460</height>
+   </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>460</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Material Properties</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="11" column="1" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0" colspan="3">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Permeability</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="0">
+       <widget class="QLabel" name="k_zzLabel">
+        <property name="text">
+         <string>zz [m^2]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="k_yyLabel">
+        <property name="text">
+         <string>yy [m^2]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="k_xxLabel">
+        <property name="text">
+         <string>xx [m^2]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="permeability_z_dSpinBox">
+        <property name="decimals">
+         <number>20</number>
+        </property>
+        <property name="minimum">
+         <double>-999999999.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>999999999.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="permeability_x_dSpinBox">
+        <property name="decimals">
+         <number>20</number>
+        </property>
+        <property name="minimum">
+         <double>-999999999.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>999999999.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="permeability_y_dSpinBox">
+        <property name="decimals">
+         <number>20</number>
+        </property>
+        <property name="minimum">
+         <double>-999999999.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>999999999.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="iDLabel">
+     <property name="text">
+      <string>ID</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="nameLabel">
+     <property name="text">
+      <string>Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLineEdit" name="name_lineEdit">
+     <property name="placeholderText">
+      <string>e.g. 'soil1'</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="characteristicCurvesLabel">
+     <property name="text">
+      <string>Characteristic Curves</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QLineEdit" name="char_curves_lineEdit"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="porosityLabel">
+     <property name="text">
+      <string>Porosity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="tortuosityLabel">
+     <property name="text">
+      <string>Tortuosity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="densityLabel">
+     <property name="text">
+      <string>Rock Density [kg/m^3]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="specificHeatLabel">
+     <property name="text">
+      <string>Specific Heat [W/m/K]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QLabel" name="conditionDryLabel">
+     <property name="text">
+      <string>Conductivity Dry [W/m/K]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QLabel" name="conductivityWetLabel">
+     <property name="text">
+      <string>Conductivity Wet [W/m/K</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="saturationLabel">
+     <property name="text">
+      <string>Saturation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="2">
+    <widget class="QLineEdit" name="saturation_lineEdit">
+     <property name="placeholderText">
+      <string>e.g. 'sf2'</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QSpinBox" name="id_spinBox">
+     <property name="maximum">
+      <number>99999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QDoubleSpinBox" name="porosity_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QDoubleSpinBox" name="rock_density_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QDoubleSpinBox" name="specific_heat_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="2">
+    <widget class="QDoubleSpinBox" name="conductivity_dry_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2">
+    <widget class="QDoubleSpinBox" name="conductivity_wet_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QDoubleSpinBox" name="tortuosity_dSpinBox">
+     <property name="maximum">
+      <double>99999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>410</width>
+    <height>547</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>410</width>
+    <height>547</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Output</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Screen Output</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Time List</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="1" column="1">
+       <widget class="QComboBox" name="time_value_list_unit_comboBox">
+        <item>
+         <property name="text">
+          <string>s</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>min</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>h</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>d</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>w</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>mo</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>y</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Time Values</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QLineEdit" name="time_values_list_lineEdit">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Comma seperated time values required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="placeholderText">
+         <string>e.g. 1, 5, 10</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="8" column="1" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <property name="verticalSpacing">
+      <number>6</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="tecplot_block_checkBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TecPlot block format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>TECPLOT BLOCK</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="tecplot_point_checkBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TecPlot point format (requires a single processor)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>TECPLOT POINT</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="hdf5_checkBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Produces single HDF5 file and xml for unstructured grids&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>HDF5</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="hdf5_multiple_files_checkBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Produces a separate HDF5 file at each output time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>HDF5 MULTIPLE FILES</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="vtk_checkBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;VTK format&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>VTK</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="4" column="2">
+    <widget class="QComboBox" name="periodic_time_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>min</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>w</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Print Column IDs</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="print_column_ids_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="screen_output_comboBox">
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Print to screen every &amp;lt;integer&amp;gt; time steps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Screen Periodic</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Periodic Time</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Periodic Timestep</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QComboBox" name="periodic_timestep_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>min</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>w</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Periodic Observation Time</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QComboBox" name="periodic_observation_time_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>min</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>w</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Formats</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Permeability</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QComboBox" name="permeability_combBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>Porosity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="1">
+    <widget class="QComboBox" name="porosity_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="12" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Velocities</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="1">
+    <widget class="QComboBox" name="velocities_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="13" column="0">
+    <widget class="QLabel" name="label_12">
+     <property name="text">
+      <string>Mass Balance</string>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="1">
+    <widget class="QComboBox" name="mass_balance_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="14" column="0">
+    <widget class="QLabel" name="label_13">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Comma seperated list of variables to be printed in the output file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Variables List</string>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="1" colspan="2">
+    <widget class="QLineEdit" name="variable_list_lineEdit">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Comma seperated list of variables to be printed in the output file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="screen_periodic_spinBox">
+     <property name="maximum">
+      <number>999999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QDoubleSpinBox" name="periodic_time_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="periodic_timestep_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="periodic_observation_time_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <spacer name="horizontalSpacer_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_14">
+     <property name="text">
+      <string>Periodic Observation Timestep</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QSpinBox" name="periodic_obs_timestep_spinBox"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

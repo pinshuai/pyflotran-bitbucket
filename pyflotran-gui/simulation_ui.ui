@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>316</width>
+    <height>160</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Simulation Settings</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="3" column="0">
+    <widget class="QCheckBox" name="geomechanics_checkBox">
+     <property name="text">
+      <string>Geomechanics</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="mode_label">
+     <property name="text">
+      <string>Mode</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="subsurface_flow_checkBox">
+     <property name="text">
+      <string>Subsurface Flow</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QCheckBox" name="subsurface_trans_checkBox">
+     <property name="text">
+      <string>Subsurface Transport</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QComboBox" name="mode_comboBox">
+     <item>
+      <property name="text">
+       <string>richards</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mphase</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mph</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>flash2</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>th no_freezing</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>th freezing</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>immis</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

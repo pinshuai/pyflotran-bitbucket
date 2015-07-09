@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>439</width>
+    <height>548</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Characteristic Curves</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>SF M [Van Genutchen m]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="16" column="0">
+    <widget class="QLabel" name="label_17">
+     <property name="text">
+      <string>GPF M [Van Genutchen m]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="18" column="0">
+    <widget class="QLabel" name="label_18">
+     <property name="text">
+      <string>GPF Liquid Residual Saturation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Max Capillary Pressure</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QDoubleSpinBox" name="sf_gas_residual_saturation_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Smooth</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="sf_liquid_residual_saturation_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="20" column="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QDoubleSpinBox" name="max_cap_pressure_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QLineEdit" name="name_lineEdit">
+     <property name="placeholderText">
+      <string>e.g. cc1</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>SF Gas Residual Saturation</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Saturation Function Type</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>SF Liquid Residual Saturation</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="saturation_func_type_comboBox">
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Van Genuchten</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Brooks Corey</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QDoubleSpinBox" name="sf_alpha_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>SF Alpha [Pa^-1]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>SF Lambda</string>
+     </property>
+    </widget>
+   </item>
+   <item row="19" column="1">
+    <widget class="QDoubleSpinBox" name="gpf_gas_residual_sat_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QDoubleSpinBox" name="sf_lambda_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="19" column="0">
+    <widget class="QLabel" name="label_19">
+     <property name="text">
+      <string>GPF Gas Residual Saturation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QComboBox" name="smooth_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QDoubleSpinBox" name="sf_m_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="power_label">
+     <property name="text">
+      <string>Power</string>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="1">
+    <widget class="QDoubleSpinBox" name="lpf_liquid_residual_sat_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="1">
+    <widget class="QComboBox" name="liquid_perm_function_type_comboBox">
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Maulem</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Burdine</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="15" column="0">
+    <widget class="QLabel" name="label_16">
+     <property name="text">
+      <string>Gas Permeability Function Type</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="label_12">
+     <property name="text">
+      <string>Liquid Permeability Functin Type</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="0">
+    <widget class="QLabel" name="label_14">
+     <property name="text">
+      <string>LPF Lambda</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QDoubleSpinBox" name="power_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Default</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QComboBox" name="default_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="16" column="1">
+    <widget class="QDoubleSpinBox" name="gpf_m_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="1">
+    <widget class="QDoubleSpinBox" name="lpf_lambda_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="1">
+    <widget class="QComboBox" name="gas_perm_function_type_comboBox">
+     <item>
+      <property name="text">
+       <string>Maulem VG Gas</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Burdine BC Gas</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="14" column="0">
+    <widget class="QLabel" name="label_15">
+     <property name="text">
+      <string>LPF Liquid Residual Saturation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="0">
+    <widget class="QLabel" name="label_13">
+     <property name="text">
+      <string>LPF M [Van Genutchen m]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="1">
+    <widget class="QDoubleSpinBox" name="lpf_m_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="18" column="1">
+    <widget class="QDoubleSpinBox" name="gpf_liquid_residual_sat_dSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="17" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>GPF Lambda</string>
+     </property>
+    </widget>
+   </item>
+   <item row="17" column="1">
+    <widget class="QDoubleSpinBox" name="gpf_lambda_doubleSpinBox">
+     <property name="decimals">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

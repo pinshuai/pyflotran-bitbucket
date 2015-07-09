@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>308</width>
+    <height>366</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>366</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>366</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Timestepper</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+   </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="tSModeLabel">
+     <property name="text">
+      <string>TS Mode</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="ts_mode_comboBox">
+     <item>
+      <property name="text">
+       <string>Flow</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Tran</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>TS Acceleration</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Nunber of Steps After Cut</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Max TS Cuts</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>CFL Limiter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Initialize to Steady State</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QComboBox" name="init_steady_state_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Run as Steady State</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QComboBox" name="run_as_steady_state_comboBox">
+     <item>
+      <property name="text">
+       <string>False</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Max Pressure Change [Pa]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Max Temperature Change [C]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Max Concentration Change [mol/L]</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>Max Saturation Change</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QSpinBox" name="ts_acceleration_spinBox">
+     <property name="maximum">
+      <number>999999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="num_steps_after_cut_spinBox">
+     <property name="maximum">
+      <number>999999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="max_ts_cuts_spinBox">
+     <property name="maximum">
+      <number>999999</number>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QDoubleSpinBox" name="cfl_limiter_dSpinBox">
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QDoubleSpinBox" name="max_pressure_change_dSpinBox">
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QDoubleSpinBox" name="max_temp_change_dSpinBox">
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QDoubleSpinBox" name="max_concentration_change_dSpinBox">
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="1">
+    <widget class="QDoubleSpinBox" name="max_saturation_change_dSpinBox">
+     <property name="maximum">
+      <double>999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Max Steps</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="max_steps_spinBox">
+     <property name="minimum">
+      <number>-999999999</number>
+     </property>
+     <property name="maximum">
+      <number>999999999</number>
+     </property>
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

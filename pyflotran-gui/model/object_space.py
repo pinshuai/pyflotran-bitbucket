@@ -1,0 +1,43 @@
+from collections import OrderedDict
+
+# Define all attribute objects here as dictionaries. This allows for a decent method of accessing all the different
+# attributes during the 'write' procedure of PyFLOTRAN.
+# KEY: id(object), VALUE: object
+ALL_OBJECTS = {}
+
+SIMULATION_OBJECT = [0]
+GRID_OBJECT = [0]
+MATERIAL_PROP_OBJECT = [0]
+NEWTON_SOLVER_OBJECTS = {}
+LINEAR_SOLVER_OBJECTS = {}
+OUTPUT_OBJECT = [0]
+REGION_OBJECTS = OrderedDict()
+TRANSPORT_OBJECTS = OrderedDict()
+FLOW_AND_VARIABLES_OBJECTS = OrderedDict()
+FLOW_VARIABLES_OBJECTS = OrderedDict()
+BOUNDARY_CONDITION_OBJECTS = OrderedDict()
+CC_MINERAL = OrderedDict()
+CC_CONCENTRATION = OrderedDict()
+CONSTRAINT_CONDITION_OBJECTS = OrderedDict()
+
+
+# Unsure if there can be multiple of these ->
+TIMESTEPPER_OBJECT = [0]
+TIME_OBJECT = [0]
+FLUID_PROPERTIES_OBJECT = [0]
+SATURATION_FUNCTION_OBJECT = [0]
+INITIAL_CONDITION_OBJECT = [0]
+SOURCE_SINK_OBJECT = [0]
+STRATA_OBJECT = [0]
+OBSERVATION_OBJECT = [0]
+RESTART_OBJECT = [0]
+UNIFORM_VELOCITY_OBJECT = [0]
+NONUNIFORM_VELOCITY_OBJECT = [0]
+CHECKPOINT_OBJECT = [0]
+CHEMISTRY_OBJECT = [0]
+REGRESSION_OBJECT = [0]
+DATASET_OBJECT = [0]
+PLOT_OBSERVATION_OBJECT = [0]
+POINT_OBJECT = [0]
+CHARACTERISTIC_CURVE_OBJECT = [0]
+

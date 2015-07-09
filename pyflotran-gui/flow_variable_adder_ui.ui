@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>421</width>
+    <height>488</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>300</width>
+    <height>460</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Flow Variable Adder</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="1" colspan="2">
+    <widget class="QComboBox" name="name_comboBox">
+     <item>
+      <property name="text">
+       <string>PRESSURE</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>RATE</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>FLUX</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>TEMPERATURE</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>CONCENTRATION</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>SATURATION</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>ENTHALPY</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="typeLabel">
+     <property name="text">
+      <string>Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Time Unit Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional and is needed for multiphase simulations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Value List</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Data Unit Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="3">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Flow Variable List Maker</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="3" column="1">
+       <widget class="QPushButton" name="remove_push_button">
+        <property name="text">
+         <string>Remove</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QListWidget" name="listWidget">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::MultiSelection</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <layout class="QFormLayout" name="formLayout_2">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="timeUnitValueLabel">
+          <property name="text">
+           <string>Time Unit Value</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="dataUnitValueListLabel">
+          <property name="text">
+           <string>Data Unit Value List</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QToolButton" name="push_down_tool_button">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="arrowType">
+           <enum>Qt::DownArrow</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QDoubleSpinBox" name="time_unit_value_dSpinBox"/>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="data_unit_value_list_lineEdit">
+          <property name="placeholderText">
+           <string>Comma seperate floats, e.g., 0, 2</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QLineEdit" name="data_unit_type_lineEdit"/>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Flow Variable List Objects</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="2">
+    <widget class="QPlainTextEdit" name="flow_variable_list_objects_textEdit"/>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QComboBox" name="type_comboBox">
+     <item>
+      <property name="text">
+       <string>Dirichlet</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Hydrostatic</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Zero Gradient</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Conductance</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Seepage</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="5" column="2">
+    <widget class="QLineEdit" name="time_unit_type_lineEdit"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="nameLabel">
+     <property name="text">
+      <string>Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="3">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::Reset</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QDoubleSpinBox" name="value_list_1_dSpinBox">
+     <property name="decimals">
+      <number>20</number>
+     </property>
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QDoubleSpinBox" name="value_list_2_dSpinBox">
+     <property name="decimals">
+      <number>20</number>
+     </property>
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Value Unit</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QLineEdit" name="unit_lineEdit">
+     <property name="placeholderText">
+      <string>e.g., C</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+  <zorder>groupBox</zorder>
+  <zorder>buttonBox</zorder>
+  <zorder>type_comboBox</zorder>
+  <zorder>nameLabel</zorder>
+  <zorder>typeLabel</zorder>
+  <zorder>name_comboBox</zorder>
+  <zorder>flow_variable_list_objects_textEdit</zorder>
+  <zorder>label</zorder>
+  <zorder>time_unit_type_lineEdit</zorder>
+  <zorder>label_4</zorder>
+  <zorder>data_unit_type_lineEdit</zorder>
+  <zorder>label_2</zorder>
+  <zorder>label_3</zorder>
+  <zorder>value_list_1_dSpinBox</zorder>
+  <zorder>value_list_2_dSpinBox</zorder>
+  <zorder>label_5</zorder>
+  <zorder>unit_lineEdit</zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

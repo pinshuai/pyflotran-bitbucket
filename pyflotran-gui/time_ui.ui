@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>454</width>
+    <height>527</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Time</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="9" column="0" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Time unit</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" colspan="2">
+      <widget class="QListWidget" name="listWidget">
+       <property name="font">
+        <font>
+         <family>MS Shell Dlg 2</family>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="showDropIndicator" stdset="0">
+        <bool>false</bool>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::MultiSelection</enum>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <property name="isWrapping" stdset="0">
+        <bool>true</bool>
+       </property>
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="currentRow">
+        <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QDoubleSpinBox" name="second_dt_value_dSpinBox">
+       <property name="decimals">
+        <number>4</number>
+       </property>
+       <property name="minimum">
+        <double>-999999999.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>999999999.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="second_dt_unit_comboBox">
+       <item>
+        <property name="text">
+         <string>s</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>h</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>d</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>mo</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>y</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QDoubleSpinBox" name="delta_t_given_inst_time_value_dSpinBox">
+       <property name="decimals">
+        <number>4</number>
+       </property>
+       <property name="minimum">
+        <double>-999999999.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>999999999.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Time value</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="delta_t_given_inst_unit_comboBox">
+       <item>
+        <property name="text">
+         <string>s</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>h</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>d</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>mo</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>y</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="add_delta_time_row_button">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="remove_time_value_unit_push_button">
+       <property name="text">
+        <string>Remove</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="6" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Run as Steady State</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="false_radioButton">
+        <property name="text">
+         <string>False</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QRadioButton" name="true_radioButton">
+        <property name="text">
+         <string>True</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QDoubleSpinBox" name="delta_time_init_dSpinBox">
+     <property name="decimals">
+      <number>22</number>
+     </property>
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>ΔT at Given Instant</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="final_time_unit_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>m</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QDoubleSpinBox" name="final_time_dSpinBox">
+     <property name="decimals">
+      <number>22</number>
+     </property>
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QDoubleSpinBox" name="delta_time_final_dSpinBox">
+     <property name="decimals">
+      <number>22</number>
+     </property>
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="delta_time_final_unit_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>m</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>ΔT Final</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Final Time</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="delta_time_init_unit_comboBox">
+     <item>
+      <property name="text">
+       <string>s</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>m</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>h</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>d</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mo</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>y</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>ΔT Initial</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

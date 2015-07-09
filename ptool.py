@@ -66,6 +66,9 @@ def strD(number):
 		return ('%8.3e'%number).replace('e','d')
 	else:
 		return tstring
+		
+class PyFLOTRAN_ERROR(Exception):
+	pass
 
 def perror(string):
 	"""Prints out an error
@@ -73,8 +76,7 @@ def perror(string):
 	:param string: Error string
 	:type string: str
 	"""
-	print('PyFLOTRAN ERROR:' + ' ' + string)
-	os._exit(1)
+	raise PyFLOTRAN_ERROR(string)
 	
 def pyflotran_print(s):
 	if not pyflotran_print.silent: print s

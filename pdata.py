@@ -1680,7 +1680,7 @@ class pdata(object):
 		exe_path.filename = exe
 		
 		if not os.path.isfile(exe_path.full_path): # if can't find the executable, halt
-			perror('Default location is' +exe + '. No executable at location '+exe)
+			raise PyFLOTRAN_ERROR('Default location is' +exe + '. No executable at location '+exe)
 			return
 		
 		# option to write input file to new name
@@ -1694,7 +1694,7 @@ class pdata(object):
 		returnFlag = self.write(wd+self._path.filename) # ALWAYS write input file
 #		print returnFlag # testing?
 		if returnFlag: 
-			perror('Writing files')
+			raise PyFLOTRAN_ERROR('Writing files')
 			return
 		
 	
@@ -1702,7 +1702,7 @@ class pdata(object):
 		cwd = os.getcwd()
 		if self.work_dir: os.chdir(self.work_dir)	
 		if input and input_prefix:
-			perror('Cannot specify both input and input_prefix')
+			raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 			return
 		if input: 
 			if num_procs == 1:
@@ -1939,7 +1939,7 @@ class pdata(object):
 		# Presumes simulation.simulation_type is required
 		if self.simulation.simulation_type: self._write_simulation(outfile)
 		else: 
-			perror('simulation is required, it is currently reading as empty')
+			raise PyFLOTRAN_ERROR('simulation is required, it is currently reading as empty')
 	
 		
 		if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
@@ -1968,16 +1968,16 @@ class pdata(object):
 #		else: print 'info: chemistry not detected\n'
 		
 		if self.grid: self._write_grid(outfile)
-		else: perror('grid is required, it is currently reading as empty')
+		else: raise PyFLOTRAN_ERROR('grid is required, it is currently reading as empty')
 		
 		if self.timestepper : self._write_timestepper(outfile)
 #		else: print 'info: timestepper not detected\n'
 		
 		if self.time: self._write_time(outfile)
-		else: perror('time is required, it is currently reading as empty')
+		else: raise PyFLOTRAN_ERROR('time is required, it is currently reading as empty')
 		
 		if self.proplist: self._write_prop(outfile)
-		else: perror('proplist is required, it is currently reading as empty')
+		else: raise PyFLOTRAN_ERROR('proplist is required, it is currently reading as empty')
 		
 		if self.lsolverlist: self._write_lsolver(outfile)
 #		else: print 'info: lsolverlist (linear solver list) not detected\n'
@@ -1986,20 +1986,20 @@ class pdata(object):
 #		else: print 'info: nsolverlist (newton solver list) not detected\n'
 		
 		if self.output: self._write_output(outfile)
-		else: perror('output is required, it is currently reading as empty')
+		else: raise PyFLOTRAN_ERROR('output is required, it is currently reading as empty')
 		
 		if self.fluid: self._write_fluid(outfile)
-		else: perror('fluid is required, it is currently reading as empty')
+		else: raise PyFLOTRAN_ERROR('fluid is required, it is currently reading as empty')
 		
 		if self.saturationlist: self._write_saturation(outfile)
 				
 		if self.charlist: self._write_characteristic_curves(outfile)
 	
 		#if (not self.charlist and not self.saturationlist  self.simulation.subsurface_flow=''):
-		#	perror('either saturation or characteristic curves need to be defined!')
+		#	raise PyFLOTRAN_ERROR('either saturation or characteristic curves need to be defined!')
 	
 		if self.regionlist: self._write_region(outfile)
-		else: perror('regionlist is required, it is currently reading as empty!')
+		else: raise PyFLOTRAN_ERROR('regionlist is required, it is currently reading as empty!')
 		
 		if self.observation_list: self._write_observation(outfile)
 		
@@ -2008,17 +2008,17 @@ class pdata(object):
 		if self.transportlist: self._write_transport(outfile)
 		
 		if self.initial_condition_list: self._write_initial_condition(outfile)
-		else: perror('initial_condition_list is required, it is currently reading as empty!')
+		else: raise PyFLOTRAN_ERROR('initial_condition_list is required, it is currently reading as empty!')
 		
 		if self.boundary_condition_list: self._write_boundary_condition(outfile)
 		
 		if self.source_sink_list: self._write_source_sink(outfile)
 		
 		if not (self.boundary_condition_list or self.source_sink_list):
-			perror('source_sink_list or boundary_condition_list is required, it is currently reading as empty')
+			raise PyFLOTRAN_ERROR('source_sink_list or boundary_condition_list is required, it is currently reading as empty')
 
 		if self.strata_list: self._write_strata(outfile)
-		else: perror('(stratigraphy_coupler) strata is required, it is currently reading as empty!')
+		else: raise PyFLOTRAN_ERROR('(stratigraphy_coupler) strata is required, it is currently reading as empty!')
 		
 		if self.constraint_list: self._write_constraint(outfile)
 		
@@ -2223,7 +2223,7 @@ class pdata(object):
 						simulation.mode = line.split()[-1].lower()                         
 					elif key1 in ['/','end']:keepReading1 = False
 					else:
-						perror('mode is missing!')
+						raise PyFLOTRAN_ERROR('mode is missing!')
 				key_bank.append(key)
                 	elif key == 'subsurface_transport':
 				simulation.subsurface_transport = line.split()[-1] 
@@ -2235,7 +2235,7 @@ class pdata(object):
 						simulation.flowtran_coupling = key1
 					elif key1 in ['/','end']:keepReading2 = False
 #				else:
-#					perror('flow tran coupling type missing!')
+#					raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
 				key_bank.append(key)
 			elif key in ['/','end']: keepReading = False 
 		if ( not ('subsurface_flow' in key_bank) and  ('subsurface_transport' in key_bank)):
@@ -2251,7 +2251,7 @@ class pdata(object):
 		if simulation.simulation_type.lower() in simulation_types_allowed:
 			outfile.write('  SIMULATION_TYPE '+ simulation.simulation_type.upper() + '\n' )
 		else:
-			perror('simulation.simulation_type: \''+ simulation.simulation_type +'\' is invalid!')
+			raise PyFLOTRAN_ERROR('simulation.simulation_type: \''+ simulation.simulation_type +'\' is invalid!')
 			print '       valid simulation.simulation_type:', simulation_types_allowed, '\n'
 		if simulation.subsurface_flow and simulation.subsurface_transport:
                         outfile.write('  PROCESS_MODELS' +'\n')		
@@ -2259,7 +2259,7 @@ class pdata(object):
 			if simulation.mode in mode_names_allowed:		
 	                        outfile.write('      MODE '+ simulation.mode +'\n')		
                         else:
-				perror('simulation.mode: \''+ simulation.mode +'\' is invalid!')
+				raise PyFLOTRAN_ERROR('simulation.mode: \''+ simulation.mode +'\' is invalid!')
 				print '       valid simulation.mode:', mode_names_allowed, '\n'
 			outfile.write('    / '+'\n')
                         outfile.write('    SUBSURFACE_TRANSPORT '+ simulation.subsurface_transport +'\n')
@@ -2381,10 +2381,10 @@ class pdata(object):
 				grid.gravity[1] = floatD(line.split()[2])
 				grid.gravity[2] = floatD(line.split()[3])
 			elif key == 'filename':
-				if grid.type != 'unstructured': perror('filename not need with structure grid!'); return
+				if grid.type != 'unstructured': raise PyFLOTRAN_ERROR('filename not need with structure grid!'); return
 				grid.filename = line.split()[-1]
 			elif key == 'dxyz':
-				if bounds_key: perror('specify either bounds of dxyz!'); return
+				if bounds_key: raise PyFLOTRAN_ERROR('specify either bounds of dxyz!'); return
 				keepReading2 = True
 				count = 0
 				while keepReading2:
@@ -2405,7 +2405,7 @@ class pdata(object):
 			outfile.write('  TYPE ' + grid.type + '\n')
 		else:
 			print '       valid grid.types:', grid_types_allowed
-			perror('grid.type: \''+ grid.type +'\' is invalid!')
+			raise PyFLOTRAN_ERROR('grid.type: \''+ grid.type +'\' is invalid!')
 		if grid.lower_bounds:
 			outfile.write('  BOUNDS\n')
 			outfile.write('    ')
@@ -2749,9 +2749,9 @@ class pdata(object):
 					outfile.write(' ' + time.tf[1].lower() +'\n')# Write time unit
 				else:
 					print '       valid time.units', time_units_allowed, '\n'
-					perror('PyFLOTRAN ERROR: time.tf[1]: \'' + time.tf[1] + '\' is invalid!')
+					raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: time.tf[1]: \'' + time.tf[1] + '\' is invalid!')
 			except:
-				perror('time.tf (final time) input is invalid. Format should be a list: [number, string]')
+				raise PyFLOTRAN_ERROR('time.tf (final time) input is invalid. Format should be a list: [number, string]')
 		
 		# write INITIAL_TIMESTEP_SIZE statement (dti)
 		if time.dti:
@@ -2762,9 +2762,9 @@ class pdata(object):
 					outfile.write(' ' + time.dti[1] +'\n')	# Write time unit
 				else:
 					print '       valid time.units', time_units_allowed, '\n'
-					perror('time.dti[1]: \'' + time.dti[1] + '\' is invalid.')
+					raise PyFLOTRAN_ERROR('time.dti[1]: \'' + time.dti[1] + '\' is invalid.')
 			except:
-				perror('time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]')
+				raise PyFLOTRAN_ERROR('time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]')
 		
 		# write MAXIMUM_TIMESTEP_SIZE statement	dtf
 		if time.dtf:
@@ -2774,9 +2774,9 @@ class pdata(object):
 					outfile.write(' ' + time.dtf[1] +'\n')
 				else:
 					print '       valid time.units', time_units_allowed, '\n'
-					perror('time.dtf[1]: \'' + time.dtf[1] + '\' is invalid.')
+					raise PyFLOTRAN_ERROR('time.dtf[1]: \'' + time.dtf[1] + '\' is invalid.')
 			except:
-				perror('time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]')
+				raise PyFLOTRAN_ERROR('time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]')
 				
 		# Write more MAXIMUM_TIME_STEP_SIZE statements if applicable
 		for dtf in time.dtf_list:
@@ -2787,13 +2787,13 @@ class pdata(object):
 				if isinstance(dtf[0], float):
 					outfile.write(strD(dtf[0]) + ' ')
 				else:
-					perror('The 1st variable in a dtf_list is not recognized as a float.')
+					raise PyFLOTRAN_ERROR('The 1st variable in a dtf_list is not recognized as a float.')
 					
 				# Write 1st time unit before 'at'
 				if isinstance(dtf[1], str):
 					outfile.write((dtf[1]) + ' ')
 				else:
-					perror('The 2nd variable in a dtf_list is not recognized as a str (string).')
+					raise PyFLOTRAN_ERROR('The 2nd variable in a dtf_list is not recognized as a str (string).')
 					
 				outfile.write('at ')
 					
@@ -2801,15 +2801,15 @@ class pdata(object):
 				if isinstance(dtf[2], float):
 					outfile.write(strD(dtf[2]) + ' ')
 				else:
-					perror('The 3rd variable in a dtf_list is not recognized as a float.')
+					raise PyFLOTRAN_ERROR('The 3rd variable in a dtf_list is not recognized as a float.')
 					
 				# Write 2nd time unit after 'at'
 				if isinstance(dtf[3], str):
 					outfile.write((dtf[3]))
 				else:
-					perror('PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a str (string).')
+					raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a str (string).')
 			except:
-				perror('PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a list: [float, str, float, str]')
+				raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a list: [float, str, float, str]')
 			outfile.write('\n')
 		'''
 		# Determine dtf_i size, the length of the smallest sized list being used
@@ -2901,7 +2901,7 @@ class pdata(object):
 				outfile.write('LINEAR_SOLVER ' + lsolver.name.lower() + '\n')
 			else:
 				print '       valid solver.names', solver_names_allowed, '\n'
-				perror('lsolver.name: \''+ lsolver.name +'\' is invalid.')
+				raise PyFLOTRAN_ERROR('lsolver.name: \''+ lsolver.name +'\' is invalid.')
 			if lsolver.solver:
 				outfile.write('  SOLVER ' + lsolver.solver.upper() + '\n')
 			if lsolver.preconditioner:
@@ -2969,7 +2969,7 @@ class pdata(object):
 				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
 			else:
 				print '       valid solver.names', solver_names_allowed, '\n'
-				perror('nsolver.name: \''+ nsolver.name +'\' is invalid.')
+				raise PyFLOTRAN_ERROR('nsolver.name: \''+ nsolver.name +'\' is invalid.')
 			if nsolver.atol:
 				outfile.write('  ATOL ' + strD(nsolver.atol) + '\n')
 			if nsolver.rtol:
@@ -3049,7 +3049,7 @@ class pdata(object):
 						output.variables_list.append(key1)
 					elif key1 in ['/','end']: keepReading1 = False
 					else:
-						perror('variable ' + str(key1) + ' cannot be an output variable.')
+						raise PyFLOTRAN_ERROR('variable ' + str(key1) + ' cannot be an output variable.')
 			elif key in ['/','end']: keepReading = False
 			
 		self._output = output
@@ -3070,7 +3070,7 @@ class pdata(object):
 						outfile.write(' '+strD(value).lower())
 			else:
 				print '       valid time.units', time_units_allowed, '\n'
-				perror('output.time_list[0]: \''+ output.time_list[0] +'\' is invalid.')
+				raise PyFLOTRAN_ERROR('output.time_list[0]: \''+ output.time_list[0] +'\' is invalid.')
 			outfile.write('\n')
 					
 # This is here on purpose - Needed later
@@ -3082,14 +3082,14 @@ class pdata(object):
 				output.screen_output = bool(output.screen_output)
 				outfile.write('  '+'SCREEN OFF'+'\n')
 			except(ValueError):
-				perror('output.screen_output: \''+output.screen_output+'\' is not bool.')
+				raise PyFLOTRAN_ERROR('output.screen_output: \''+output.screen_output+'\' is not bool.')
 
 		if output.screen_periodic:
 			try: # Error checking to ensure screen_periodic is int (integer).
 				output.screen_periodic = int(output.screen_periodic)
 				outfile.write('  '+'SCREEN PERIODIC '+str(output.screen_periodic)+'\n')
 			except(ValueError):
-				perror('output.screen_periodic: \''+output.screen_periodic+'\' is not int (integer).')
+				raise PyFLOTRAN_ERROR('output.screen_periodic: \''+output.screen_periodic+'\' is not int (integer).')
 		if output.periodic_time:
 			try: # Error checking to ensure periodic_time is [float, str].
 				output.periodic_time[0] = floatD(output.periodic_time[0])
@@ -3097,19 +3097,19 @@ class pdata(object):
 					output.periodic_time[1] = str(output.periodic_time[1].lower())
 				else:
 					output.periodic_time[1] = str(output.periodic_time[1].lower())
-					perror('time unit in output.periodic_time[1] is invalid. Valid time units are:', time_units_allowed)
+					raise PyFLOTRAN_ERROR('time unit in output.periodic_time[1] is invalid. Valid time units are:', time_units_allowed)
 				outfile.write('  '+'PERIODIC TIME ')
 				outfile.write(strD(output.periodic_time[0])+' ')
 				outfile.write(output.periodic_time[1]+'\n')
 			except:
-				perror('output.periodic_time: \''+str(output.periodic_time)+'\' is not [float, str].')
+				raise PyFLOTRAN_ERROR('output.periodic_time: \''+str(output.periodic_time)+'\' is not [float, str].')
 		if output.periodic_timestep:
 			try: # Error checking to ensure periodic_timestep is [float].
 				output.periodic_timestep = int(output.periodic_timestep)
 				outfile.write('  '+'PERIODIC TIMESTEP ')
 				outfile.write(strD(output.periodic_timestep)+'\n')
 			except:
-				perror('output.periodic_timestep: \''+str(output.periodic_timestep)+'\' is not [float].')
+				raise PyFLOTRAN_ERROR('output.periodic_timestep: \''+str(output.periodic_timestep)+'\' is not [float].')
 		if output.periodic_observation_time:
 			try: 
 				# Error checking to ensure periodic_observation_time is [float, str].
@@ -3118,14 +3118,14 @@ class pdata(object):
 					output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
 				else:
 					output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
-					perror('time unit in output.periodic_observation_time[1] is invalid. Valid time units are:', time_units_allowed)
+					raise PyFLOTRAN_ERROR('time unit in output.periodic_observation_time[1] is invalid. Valid time units are:', time_units_allowed)
 					
 				# Writing out results
 				outfile.write('  '+'PERIODIC_OBSERVATION TIME ')
 				outfile.write(strD(output.periodic_observation_time[0])+' ')
 				outfile.write(output.periodic_observation_time[1]+'\n')
 			except:
-				perror('output.periodic_observation_time: \''+str(output.periodic_observation_time)+'\' is not [float, str].')
+				raise PyFLOTRAN_ERROR('output.periodic_observation_time: \''+str(output.periodic_observation_time)+'\' is not [float, str].')
 		if output.periodic_observation_timestep:
 			outfile.write('  PERIODIC_OBSERVATION TIMESTEP '+
 					str(output.periodic_observation_timestep)+'\n')
@@ -3137,7 +3137,7 @@ class pdata(object):
 				outfile.write(format.upper() + '\n')
 			else:
 				print '       valid output.format:', output_formats_allowed, '\n'
-				perror('output.format: \''+ format +'\' is invalid.')
+				raise PyFLOTRAN_ERROR('output.format: \''+ format +'\' is invalid.')
 		if output.velocities:
 			outfile.write('  '+'VELOCITIES'+'\n')
 		if output.velocity_at_center:
@@ -3153,7 +3153,7 @@ class pdata(object):
 					outfile.write('    ' + variable.upper() + '\n')
 				else:
 					print '       valid output.variable:', output_variables_allowed, '\n'
-					perror('output.variable: \''+ variable +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('output.variable: \''+ variable +'\' is invalid.')
 			outfile.write('  /\n')
 		outfile.write('END\n\n')
 		
@@ -3261,7 +3261,7 @@ class pdata(object):
 						sat.permeability_function_type + '\n')
 				else:		
 					print('       valid saturation.permeability_function_types', saturation_function_types_allowed, '\n')
-					perror('saturation.saturation_function_type: \'' + sat.saturation_function_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('saturation.saturation_function_type: \'' + sat.saturation_function_type +'\' is invalid.')
 			if sat.saturation_function_type:
 				if sat.saturation_function_type in saturation_function_types_allowed:
 					outfile.write('  SATURATION_FUNCTION_TYPE ' +
@@ -3376,7 +3376,7 @@ class pdata(object):
 						char.saturation_function_type + '\n')
 				else:
 					print '       valid  char.saturation_function_types', characteristic_curves_saturation_function_types_allowed, '\n'	
-					perror('char.saturation_function_type: \'' + char.saturation_function_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('char.saturation_function_type: \'' + char.saturation_function_type +'\' is invalid.')
 				if char.sf_alpha:
 					outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
 				if char.sf_m:
@@ -3407,7 +3407,7 @@ class pdata(object):
 #					outfile.write('   PHASE LIQUID' + '\n')
 				else:
 					print '       valid  char.liquid_permeability_function_types', characteristic_curves_liquid_permeability_function_types_allowed, '\n'	
-					perror('char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type +'\' is invalid.')
 				if char.lpf_m:
 					outfile.write('   M ' + strD(char.lpf_m) + '\n')
 				if char.lpf_lambda:
@@ -3425,7 +3425,7 @@ class pdata(object):
 				else:
 
 					print '       valid  char.gas_permeability_function_types', characteristic_curves_gas_permeability_function_types_allowed, '\n'	
-					perror('char.gas_permeability_function_type: \'' + char.gas_permeability_function_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('char.gas_permeability_function_type: \'' + char.gas_permeability_function_type +'\' is invalid.')
 				if char.gpf_m:
 					outfile.write('   M ' + strD(char.gpf_m) + '\n')
 				if char.gpf_lambda:
@@ -3756,42 +3756,42 @@ class pdata(object):
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition pressure_types_allowed:', pressure_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'FLUX':
 				if condition_type.lower() in flux_types_allowed: 
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'RATE':
 				if condition_type.lower() in rate_types_allowed: 
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'FLUX':
 				if condition_type.lower() in flux_types_allowed:
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'TEMPERATURE':
 				if condition_type.lower() in temperature_types_allowed: 
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition temperature_types_allowed:', temperature_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'CONCENTRATION':
 				if condition_type.lower() in concentration_types_allowed: 
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition concentration_types_allowed:', concentration_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			elif condition_name.upper() == 'SATURATION':
 				if condition_type.lower() in saturation_types_allowed: 
@@ -3805,7 +3805,7 @@ class pdata(object):
 					outfile.write(condition_type.lower())
 				else:
 					print '       valid flow_condition enthalpy_types_allowed:', enthalpy_types_allowed, '\n'	
-					perror('flow.varlist.type: \'' + condition_type +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type +'\' is invalid.')
 				return 0 # Break out of function
 			else:
 				pass # Error reporting for flow_condition.name is done elsewhere
@@ -3843,7 +3843,7 @@ class pdata(object):
 					outfile.write('    ' + flow.varlist[i].name.upper() + '  ')
 				else:
 					print '       valid flow_condition.names:', flow_condition_type_names_allowed, '\n'
-					perror('flow.varlist.name: \'' + flow.varlist[i].name +'\' is invalid.')
+					raise PyFLOTRAN_ERROR('flow.varlist.name: \'' + flow.varlist[i].name +'\' is invalid.')
 
 				# Checks flow.varlist[i].type and performs write or error reporting
 				check_condition_type(flow.varlist[i].name, flow.varlist[i].type)
@@ -3947,7 +3947,7 @@ class pdata(object):
 				if b.name:
 					outfile.write('INITIAL_CONDITION ' + b.name.lower() + '\n')
 				else:
-					perror('Give a name for initial condition!')
+					raise PyFLOTRAN_ERROR('Give a name for initial condition!')
 				if b.flow:
 					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
 				if b.transport:
@@ -3955,10 +3955,10 @@ class pdata(object):
 				if b.region:
 					outfile.write('  REGION ' + b.region.lower() + '\n')
 				else:
-					perror('initial_condition.region is required')
+					raise PyFLOTRAN_ERROR('initial_condition.region is required')
 				outfile.write('END\n\n')
 		except:
-			perror('At least one initial condition with valid attributes is required')		
+			raise PyFLOTRAN_ERROR('At least one initial condition with valid attributes is required')		
 
 		
 	def _read_boundary_condition(self,infile,line):
@@ -4016,7 +4016,7 @@ class pdata(object):
 				if b.name:
 					outfile.write('BOUNDARY_CONDITION ' + b.name.lower() + '\n')
 				else:
-					perror('Give a name for boundary condition!')
+					raise PyFLOTRAN_ERROR('Give a name for boundary condition!')
 				if b.flow:
 					outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
 				if b.transport:
@@ -4025,7 +4025,7 @@ class pdata(object):
 					outfile.write('  REGION ' + b.region.lower() + '\n')
 				outfile.write('END\n\n')
 		except:
-			perror('At least one boundary_condition with valid attributes is required')
+			raise PyFLOTRAN_ERROR('At least one boundary_condition with valid attributes is required')
 		
 	def _read_source_sink(self,infile,line):
 		p = psource_sink()
@@ -4088,7 +4088,7 @@ class pdata(object):
 			if b.region:
 				outfile.write('  REGION ' + b.region.lower() + '\n')
 			else:
-				perror('source_sink.region is required')
+				raise PyFLOTRAN_ERROR('source_sink.region is required')
 			outfile.write('END\n\n')
 		
 	def _delete_strata(self,strata=pstrata()):
@@ -4140,11 +4140,11 @@ class pdata(object):
 			if strata.region:
 				outfile.write('  REGION ' + strata.region.lower() + '\n')
 			else:
-				perror('strata.region is required')
+				raise PyFLOTRAN_ERROR('strata.region is required')
 			if strata.material:
 				outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
 			else:
-				perror('strata.material is required')
+				raise PyFLOTRAN_ERROR('strata.material is required')
 			outfile.write('END\n\n')
 	
 	def _read_checkpoint(self, infile, line):
@@ -4167,7 +4167,7 @@ class pdata(object):
 			outfile.write(str(checkpoint.frequency))
 			outfile.write('\n')
 		except(ValueError):
-			perror('checkpoint.frequency is not int (integer).')
+			raise PyFLOTRAN_ERROR('checkpoint.frequency is not int (integer).')
 			
 			# write results
 			outfile.write('CHECKPOINT ')
@@ -4205,7 +4205,7 @@ class pdata(object):
 				# writing
 				outfile.write(strD(restart.time_value) + ' ')
 			except:
-				perror('restart.time_value is not float.')
+				raise PyFLOTRAN_ERROR('restart.time_value is not float.')
 				
 				# writing
 				outfile.write(strD(restart.time_value) + ' ')
@@ -4216,7 +4216,7 @@ class pdata(object):
 			if restart.time_unit in time_units_allowed:
 				outfile.write(restart.time_unit)
 			else:
-				perror('restart.time_unit \'',restart.time_unit,'\' is invalid. Valid times units are:',time_units_allowed,'\n')
+				raise PyFLOTRAN_ERROR('restart.time_unit \'',restart.time_unit,'\' is invalid. Valid times units are:',time_units_allowed,'\n')
 				outfile.write(restart.time_unit)
 			
 		outfile.write('\n\n')
@@ -4254,7 +4254,7 @@ class pdata(object):
 			if dataset.dataset_mapped_name:
 				outfile.write('DATASET MAPPED ' + dataset.dataset_mapped_name + '\n')
 			if dataset.dataset_name and dataset.dataset_mapped_name:
-				perror('Cannot use both DATASET and DATASET MAPPED')
+				raise PyFLOTRAN_ERROR('Cannot use both DATASET and DATASET MAPPED')
 			if dataset.name:
 				outfile.write('  NAME '+dataset.name+'\n')
 			if dataset.file_name:
@@ -4494,7 +4494,7 @@ class pdata(object):
 						np_constraint_list_value.append(floatD(line.split()[0].lower())) # Read 1st word online
 						np_constraint_list_type.append(line.split()[1].lower()) # Read 2nd word on line
 					except:
-						perror('constraint_list_value and constraint_list_type requires at least one value. Value should = Number and type should = String\n')
+						raise PyFLOTRAN_ERROR('constraint_list_value and constraint_list_type requires at least one value. Value should = Number and type should = String\n')
 					
 					line = infile.readline()	# get next line
 					key = line.split()[0].lower()	# Used to stop loop when / or end is read
@@ -4531,12 +4531,12 @@ class pdata(object):
 			if t.name:
 				outfile.write('TRANSPORT_CONDITION '+t.name.lower()+'\n')
 			else:
-				perror('transport_condition['+str(tl.index(t))+'].name is required.\n')
+				raise PyFLOTRAN_ERROR('transport_condition['+str(tl.index(t))+'].name is required.\n')
 			if t.type.lower() in transport_condition_types_allowed:
 				outfile.write('  TYPE '+t.type.lower()+'\n')
 			else:
 				print '       valid transport_condition.types:', transport_condition_types_allowed, '\n'
-				perror('transport.type: \'' + t.type +'\' is invalid.')
+				raise PyFLOTRAN_ERROR('transport.type: \'' + t.type +'\' is invalid.')
 			try :
 				outfile.write('  CONSTRAINT_LIST\n')
 
@@ -4553,9 +4553,9 @@ class pdata(object):
 						else:
 							outfile.write('  '+str(clt[i]).lower() + '\n')
 					else:
-						perror('transport['+str(tl.index(t))+'].constraint_list_type['+str(clt.index(i))+'] is required to have a value when transport.constraint_list_value does.')
+						raise PyFLOTRAN_ERROR('transport['+str(tl.index(t))+'].constraint_list_type['+str(clt.index(i))+'] is required to have a value when transport.constraint_list_value does.')
 			except:
-				perror('transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n')
+				raise PyFLOTRAN_ERROR('transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n')
 			outfile.write('\n  END\n')	# END FOR CONSTRAINT_LIST
 			outfile.write('END\n\n')	# END FOR TRANSPORT_CONDITION
 			
@@ -4689,7 +4689,7 @@ class pdata(object):
 			if c.name:
 				outfile.write('CONSTRAINT '+c.name.lower()+'\n')
 			else:
-				perror('constraint_list['+str(cl.index(c))+'].name is required.')
+				raise PyFLOTRAN_ERROR('constraint_list['+str(cl.index(c))+'].name is required.')
 
 			outfile.write('  CONCENTRATIONS\n')
 			
@@ -4699,7 +4699,7 @@ class pdata(object):
 				if concn.value:
 					outfile.write('  ' + strD(concn.value))
 				else:
-					perror('invalid concentration value!')
+					raise PyFLOTRAN_ERROR('invalid concentration value!')
 				if concn.constraint:
 					outfile.write('  ' + concn.constraint)
 				if concn.element:

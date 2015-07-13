@@ -49,7 +49,7 @@ def powspace(x0, x1, N=10, power=1):
 # Don't use with absolute file path name
 # NOT TESTED WITH WINDOWS
 
-def del_extra_slash(path): 
+def del_extra_slash(path):
     return path.replace(slash + slash, slash)
 
 

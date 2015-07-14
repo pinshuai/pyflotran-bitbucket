@@ -1,4 +1,3 @@
-import filecmp
 import unittest
 import os
 

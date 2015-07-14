@@ -5,7 +5,6 @@ try:
 except KeyError:
   print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
-sys.path.append(pflotran_dir + '/src/python')
 
 try:
   pyflotran_dir = os.environ['PYFLOTRAN_DIR']

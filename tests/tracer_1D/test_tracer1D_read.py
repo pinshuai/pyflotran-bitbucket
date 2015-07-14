@@ -4,13 +4,13 @@ import os
 dir = os.path.dirname(os.path.realpath(__file__))
 
 class tracer_read(unittest.TestCase):
-    """Test for reading mphase."""
+    """Test for reading tracer_1D"."""
 
     def setUp(self):
         os.system('python ' + dir + '/tracer_1D_read.py > /dev/null 2>&1')
 
     def test_mphase_read(self):
-        """Test for reading ttracer_1D"""
+        """Test for reading tracer_1D"""
         gold = ''
         test = ''
         with open('tracer_1D_SC_2.in', 'r') as f:

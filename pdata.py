@@ -3931,7 +3931,7 @@ class pdata(object):
                     _buildWarnings(warning)
                     return
                 else:  # Executes if overwrite = True
-                    self.delete(self.sat[saturation.name])
+                    self.delete(self.sat[sat.name])
 
         if sat not in self._saturationlist:
             self._saturationlist.append(sat)
@@ -5006,7 +5006,7 @@ class pdata(object):
                     _buildWarnings(warning)
                     return
                 else:  # Executes if overwrite = True
-                    self.delete(self.dat[dataset.name])
+                    self.delete(self.dat[dat.name])
 
         if dat not in self._datasetlist:
             self._datasetlist.append(dat)

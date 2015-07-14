@@ -13,10 +13,10 @@ class vsat_read(unittest.TestCase):
         """Test for reading vsat_flow"""
         gold = ''
         test = ''
-        with open('vsat_flow2.in', 'r') as f:
+        with open(dir + '/vsat_flow2.in', 'r') as f:
             test += f.read()
 
-        with open('vsat_flow.gold', 'r') as f:
+        with open(dir + '/vsat_flow.gold', 'r') as f:
             gold += f.read()
 
         self.assertEqual(gold, test)

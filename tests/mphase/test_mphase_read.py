@@ -13,12 +13,12 @@ class mphase_read(unittest.TestCase):
         """Test for reading mphase"""
         gold = ''
         test = ''
-        with open('mphase2.in', 'r') as f:
+        with open(dir + '/mphase2.in', 'r') as f:
             line = f.readline()
             if not 'CO2_DATABASE' in line:
                 test += line
 
-        with open('mphase.gold', 'r') as f:
+        with open(dir + '/mphase.gold', 'r') as f:
             line = f.readline()
             if not 'CO2_DATABASE' in line:
                 gold += line

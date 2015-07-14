@@ -32,7 +32,7 @@ CHEMISTRY
   /
   MINERAL_KINETICS
     Calcite
-      RATE_CONSTANT 1.0000000d-06 mol/m^2-sec 
+      RATE_CONSTANT 1.000d-06 mol/m^2-sec 
     /
   /
   DATABASE /Users/satkarra/src/pflotran-dev/database/hanford.dat
@@ -51,9 +51,7 @@ GRID
     0.0 0.0 0.0 
     100.0 1.0 1.0 
   /
-  ORIGIN 0.0 0.0 0.0 
   NXYZ 100 1 1 
-  GRAVITY 0.0 0.0 -9.8068 
 END
 
 TIME
@@ -69,7 +67,7 @@ MATERIAL_PROPERTY soil1
 END
 
 LINEAR_SOLVER transport
-  SOLVER direct
+  SOLVER DIRECT
 END
 
 OUTPUT
@@ -78,7 +76,7 @@ OUTPUT
 END
 
 FLUID_PROPERTY
-  DIFFUSION_COEFFICIENT 1.0000000d-09
+  DIFFUSION_COEFFICIENT 1.000d-09
 END
 
 REGION all
@@ -118,8 +116,8 @@ TRANSPORT_CONDITION inlet_conc
   END
 END
 
-INITIAL_CONDITION
-  TRANSPORT_CONDITION  background_conc
+INITIAL_CONDITION initial
+  TRANSPORT_CONDITION background_conc
   REGION all
 END
 
@@ -140,12 +138,12 @@ END
 
 CONSTRAINT initial_constraint
   CONCENTRATIONS
-    H+  1.0000000d-08  F
+    H+  1.000d-08  F
     HCO3-  0.001  G  CO2(g)
     Ca++  0.0005  M  Calcite
   /
   MINERALS
-    Calcite  1.0000000d-05  1.0
+    Calcite  1.000d-05  1.0
   /
 END
 
@@ -153,7 +151,7 @@ CONSTRAINT inlet_constraint
   CONCENTRATIONS
     H+  5.0  P
     HCO3-  0.001  T
-    Ca++  1.0000000d-06  Z
+    Ca++  1.000d-06  Z
   /
 END
 

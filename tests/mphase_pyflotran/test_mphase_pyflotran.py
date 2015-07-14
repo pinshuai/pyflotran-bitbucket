@@ -4,7 +4,7 @@ import os
 dir = os.path.dirname(os.path.realpath(__file__))
 
 class mphase_read(unittest.TestCase):
-    """Test for reading mphase."""
+    """Test for reading tracer 1D read."""
 
     def setUp(self):
         os.system('python ' + dir + '/mphase.py > /dev/null 2>&1')
@@ -13,12 +13,12 @@ class mphase_read(unittest.TestCase):
         """Test for reading mphase"""
         gold = ''
         test = ''
-        with open('mphase.in', 'r') as f:
+        with open(dir + '/mphase.in', 'r') as f:
             line = f.readline()
             if not 'CO2_DATABASE' in line:
                 test += line
 
-        with open('mphase.gold', 'r') as f:
+        with open(dir + '/mphase.gold', 'r') as f:
             line = f.readline()
             if not 'CO2_DATABASE' in line:
                 gold += line

@@ -13,10 +13,10 @@ class tracer_read(unittest.TestCase):
         """Test for reading tracer_1D"""
         gold = ''
         test = ''
-        with open('tracer_1D_SC_2.in', 'r') as f:
+        with open(dir + '/tracer_1D_SC_2.in', 'r') as f:
             test += f.read()
 
-        with open('tracer_1D.gold', 'r') as f:
+        with open(dir + '/tracer_1D.gold', 'r') as f:
             gold += f.read()
 
         self.assertEqual(gold, test)

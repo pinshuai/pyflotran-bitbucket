@@ -13,10 +13,10 @@ class tracer_read(unittest.TestCase):
         """Test for running tracer_1D pyflotran"""
         gold = ''
         test = ''
-        with open('tracer_1D.in', 'r') as f:
+        with open(dir + '/tracer_1D.in', 'r') as f:
             test += f.read()
 
-        with open('tracer_1D.gold', 'r') as f:
+        with open(dir + '/tracer_1D.gold', 'r') as f:
             gold += f.read()
 
         self.assertEqual(gold, test)

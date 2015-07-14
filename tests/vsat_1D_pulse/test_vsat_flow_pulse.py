@@ -1,24 +1,28 @@
-import filecmp
 import unittest
 import os
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
-def compare_vsat_pulse():
-    """Return True if pyflotran runs vsat_pulse_read.py in correctly."""
-    os.system('python ' + dir + '/vsat_pulse_read.py >& /dev/null ')
-    return  filecmp.cmp(dir + '/vsat_flow2.in', dir + '/vsat_flow.gold')
+class vsat_read(unittest.TestCase):
+    """Test for reading vsat pulse."""
 
-class vsat_pulse(unittest.TestCase):
-    """Test for reading vsat_pulse."""
+    def setUp(self):
+        os.system('python ' + dir + '/vsat_pulse_read.py > /dev/null 2>&1')
 
-    def test_vsat_pulse_read(self):
-        """Test for writing to PFLOTRAN input from PyFLOTRAN input for vsat 1D pulse"""
-        self.assertTrue(compare_vsat_pulse())
-	os.system('rm -f ' + dir + '/vsat_flow2.in')
-	os.system('rm -f ' + dir + '/vsat_flow2*.tec')
-	os.system('rm -f ' + dir + '/vsat_flow2*.out')
-	os.system('rm -f ' + dir + '/vsat_flow2*.regression')
+    def test_vsat_flow_read(self):
+        """Test for reading vsat pulse"""
+        gold = ''
+        test = ''
+        with open('vsat_flow2.in', 'r') as f:
+            test += f.read()
+
+        with open('vsat_flow.gold', 'r') as f:
+            gold += f.read()
+
+        self.assertEqual(gold, test)
+
+    def tearDown(self):
+        os.system('rm -f ' + dir + '/vsat_flow2.in')
 
 if __name__ == '__main__':
     unittest.main()

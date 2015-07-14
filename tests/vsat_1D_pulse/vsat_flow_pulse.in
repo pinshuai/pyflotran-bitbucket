@@ -111,7 +111,7 @@ END
 
 #=========================== condition couplers ===============================
 # initial condition
-INITIAL_CONDITION
+INITIAL_CONDITION initial
   FLOW_CONDITION initial
   REGION all
 END

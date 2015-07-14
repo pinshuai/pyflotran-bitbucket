@@ -13,7 +13,8 @@ except KeyError:
   print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
 sys.path.append(pyflotran_dir)
-print sys.path
+
+
 from pdata import*
 
 test_dir = '/tests/vsat_1D/'

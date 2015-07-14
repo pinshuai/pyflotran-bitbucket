@@ -6,7 +6,6 @@ except KeyError:
   print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
   sys.exit(1)
 sys.path.append(pflotran_dir + '/src/python')
-import pflotran as pft
 
 try:
   pyflotran_dir = os.environ['PYFLOTRAN_DIR']
@@ -18,7 +17,7 @@ sys.path.append(pyflotran_dir)
 
 from pdata import*
 
-test_dir = 'tests/calcite_tran_only'
+test_dir = '/tests/calcite_tran_only'
 pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 
 # Read input file

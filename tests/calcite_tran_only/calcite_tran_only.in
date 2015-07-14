@@ -152,7 +152,7 @@ END
 
 #=========================== condition couplers ===============================
 # initial condition
-INITIAL_CONDITION
+INITIAL_CONDITION initial
   TRANSPORT_CONDITION background_conc
   REGION all
 END

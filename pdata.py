@@ -3042,9 +3042,9 @@ class pdata(object):
                 grid.nxyz[1] = int(line.split()[2])
                 grid.nxyz[2] = int(line.split()[3])
             elif key == 'gravity':
-                grid.gravity[0] = floatD(line.split()[1])
-                grid.gravity[1] = floatD(line.split()[2])
-                grid.gravity[2] = floatD(line.split()[3])
+                grid.gravity.append(floatD(line.split()[1]))
+                grid.gravity.append(floatD(line.split()[2]))
+                grid.gravity.append(floatD(line.split()[3]))
             elif key == 'filename':
                 if grid.type != 'unstructured':
                     raise PyFLOTRAN_ERROR('filename not need with structure grid!')

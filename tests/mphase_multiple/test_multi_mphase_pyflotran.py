@@ -7,13 +7,13 @@ dir2 = '/mphase-run2'
 
 
 class mphase_read(unittest.TestCase):
-    """Test for reading multi mphase pyflotran."""
+    """Test for writing multiple mphase"""
 
     def setUp(self):
         os.system('python ' + dir + '/mphase_multiple.py > /dev/null 2>&1')
 
     def test_mphase_read(self):
-        """Test for reading mphase"""
+        """Test for reading and writing multiple mphase"""
 
         gold = ''
         test = ''

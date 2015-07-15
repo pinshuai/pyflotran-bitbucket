@@ -3,6 +3,7 @@ import os
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
+
 class vsat_read(unittest.TestCase):
     """Test for reading vsat 1D pulse."""
 
@@ -23,6 +24,7 @@ class vsat_read(unittest.TestCase):
 
     def tearDown(self):
         os.system('rm -f ' + dir + '/vsat_flow2.in')
+
 
 if __name__ == '__main__':
     unittest.main()

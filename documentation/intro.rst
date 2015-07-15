@@ -22,7 +22,7 @@ PyFLOTRAN_ is supported on Python 2.6 and 2.7, but NOT 3.x. Instructions for dow
 found at http://www.python.org. PyFLOTRAN requires NumPy, SciPy, Matplotlib modules to be installed
 
 PyFLOTRAN
-^^^^^^
+^^^^^^^^^
 
 A download link for the latest release version 1.0.0 of PyFLOTRAN_ can be found at https://bitbucket.org/satkarra/pyflotran-release-v1.0.0 
 
@@ -68,7 +68,7 @@ Instructions for downloading and installing Paraview_ can be found at http://www
 __ Paraview_
 
 Import PyFLOTRAN
-------------
+----------------
 
 PyFLOTRAN consists of several Python modules. To access their functionality, the user must include the following line at the 
 top of any Python script
@@ -77,8 +77,8 @@ top of any Python script
 
 Before doing this, one needs to ensure that pyflotran directory is in the PYTHONPATH. This can be done by configuring cshrc or bashrc files. Alternatively, one can add the PyFLOTRAN path using sys.path.append() in their driver script.
 
-About thise  manual
------------------
+About this  manual
+------------------
 
 This manual comprises sections for each of the important PyFLOTRAN modules: :ref:`pdata <pdata-chapter>` In these, the important
 classes and their methods are documented, and example usage provided. Examples can be found in the 'tests' directory of the PyFLOTRAN repository. One can get a feel for setting up, running and visualizing PFLOTRAN simulations (both flow and reactive transport) through these examples.

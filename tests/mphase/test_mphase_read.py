@@ -3,6 +3,7 @@ import os
 
 dir = os.path.dirname(os.path.realpath(__file__))
 
+
 class mphase_read(unittest.TestCase):
     """Test for reading mphase."""
 
@@ -32,6 +33,7 @@ class mphase_read(unittest.TestCase):
         os.system('rm -f ' + dir + '/mphase2*.h5')
         os.system('rm -f ' + dir + '/mphase2*.dat')
         os.system('rm -f ' + dir + '/mphase2*.regression')
+
 
 if __name__ == '__main__':
     unittest.main()

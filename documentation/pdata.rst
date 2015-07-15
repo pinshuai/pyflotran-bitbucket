@@ -133,7 +133,7 @@ Regression
 .. autoclass:: pdata.pregression
 
 Dataset
-----------
+-------
 .. autoclass:: pdata.pdataset
 
 Methods

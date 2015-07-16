@@ -104,7 +104,7 @@ pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic',
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
 flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic, conductance', 'zero_gradient',
                       'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium']
-temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'neumann']
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 saturation_types_allowed = ['dirichlet']
 enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
@@ -4865,8 +4865,8 @@ class pdata(object):
             outfile.write('STRATA\n')
             if strata.region:
                 outfile.write('  REGION ' + strata.region.lower() + '\n')
-            else:
-                raise PyFLOTRAN_ERROR('strata.region is required')
+            #else:
+            #    raise PyFLOTRAN_ERROR('strata.region is required')
             if strata.material:
                 outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
             else:

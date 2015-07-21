@@ -2298,7 +2298,11 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('Default location is' + exe + '. No executable at location ' + exe)
 
         # option to write input file to new name
-        if input: self._path.filename = input
+        if input:
+            self._path.filename = input
+        else:
+            self._path.filename = self._path.filename[:-3] + '_new.in'
+
         if input_prefix: self._path.filename = input_prefix
         # ASSEMBLE FILES IN CORRECT DIRECTORIES
         if self.work_dir:

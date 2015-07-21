@@ -2310,7 +2310,7 @@ class pdata(object):
         else:
             wd = os.getcwd() + os.sep
         # print wd # testing?
-        #		print self._path.filename # testing?
+        # print self._path.filename # testing?
         returnFlag = self.write(wd + self._path.filename)  # ALWAYS write input file
         #		print returnFlag # testing?
         if returnFlag:
@@ -2322,13 +2322,13 @@ class pdata(object):
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 
-        if input:
-            if num_procs == 1:
-                subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True)
-            else:
-                subprocess.call(
-                    'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
-                    shell=True)
+        if num_procs == 1:
+            subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True)
+        else:
+            subprocess.call(
+                'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
+                shell=True)
+
         if input_prefix:
             if num_procs == 1:
                 subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True)
@@ -2499,7 +2499,7 @@ class pdata(object):
                             self._read_strata,
                             self._read_constraint]
 
-                           ))  # associate each card name with a read function, defined further below
+        ))  # associate each card name with a read function, defined further below
 
         skip_readline = False
         line = ''  # Memorizes the most recent line read in.
@@ -2546,7 +2546,7 @@ class pdata(object):
                     else:
                         read_fn[card](infile)
 
-                        #	def _get_skip_readline(self): return self._skip_readline
+                        # def _get_skip_readline(self): return self._skip_readline
                         #	def _set_skip_readline(self, object): self._skip_readline = object
                         #	skip_readline = property(_get_skip_readline, _set_skip_readline) #: (**)
 
@@ -2586,7 +2586,7 @@ class pdata(object):
         if self._overwrite_restart_flow_params: self._write_overwrite_restart(outfile)
 
         if self.checkpoint.frequency: self._write_checkpoint(outfile)
-        #		else: print 'info: checkpoint not detected\n'
+        # else: print 'info: checkpoint not detected\n'
 
         if self.restart.file_name: self._write_restart(outfile)
         #		else: print 'info: restart not detected\n'
@@ -2901,7 +2901,7 @@ class pdata(object):
                     elif key1 in ['/', 'end']:
                         keepReading2 = False
                 # else:
-                #					raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
+                # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
                 key_bank.append(key)
             elif key in ['/', 'end']:
                 keepReading = False
@@ -3646,7 +3646,7 @@ class pdata(object):
         for nsolver in self.nsolverlist:
             # Write Newton Solver Type - Not certain this is correct.
 
-            #			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
+            # if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
             #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
             #			elif nsolver.name.lower() == 'tran':
             #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
@@ -4589,7 +4589,7 @@ class pdata(object):
                         j = 0
                         while j < len(flow.varlist[i].valuelist):
                             outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
-                            #	try:
+                            # try:
                             #		outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
                             #	except:
                             #		outfile.write(' DATASET ' + (flow.varlist[i].valuelist[j]))
@@ -4861,7 +4861,7 @@ class pdata(object):
 
     def _write_strata(self, outfile):
         self._header(outfile, headers['strata'])
-        #		strata = self.strata
+        # strata = self.strata
 
         # Write out strata condition variables
         for strata in self.strata_list:

@@ -172,6 +172,7 @@ def simulation(i, rate):
     # set initial condition
     # --------------------------------------------------------------
     initial_condition = pinitial_condition()
+    initial_condition.name = 'initial'
     initial_condition.transport = 'background_CONC'
     initial_condition.region = 'ALL'
     dat.add(initial_condition)

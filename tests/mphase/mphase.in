@@ -2,16 +2,13 @@ SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS
     SUBSURFACE_FLOW flow
-      MODE MPHASE 
-    /
-  /
+      MODE mphase
+    / 
+  / 
 END
 
 SUBSURFACE
 
-CO2_DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat
-
-!=========================== regression ===================================
 REGRESSION
   CELLS
     2086
@@ -19,228 +16,194 @@ REGRESSION
   CELLS_PER_PROCESS 2
 END
 
-!=========================== discretization ===================================
+CO2_DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/co2data0.dat
+
 GRID
-TYPE structured
-ORIGIN 0.d0 0.d0 0.d0
-NXYZ 107  1  51
-BOUNDS
-0.d0 0.d0 0.d0
-321.d0 1.d0 51.d0
-/
+  TYPE structured
+  BOUNDS
+    0.0 0.0 0.0 
+    321.0 1.0 51.0 
+  /
+  ORIGIN 0.0 0.0 0.0 
+  NXYZ 107 1 51 
 END
-!
-!=========================== solver options ===================================
-!TIMESTEPPER
-!TS_ACCELERATION 8
-!/
 
-NEWTON_SOLVER FLOW
-ATOL 1D-12
-RTOL 1D-12
-STOL 1D-30
-DTOL 1D15
-ITOL 1D-8
-MAXIT 25
-MAXF 100
+TIMESTEPPER flow
+  TS_ACCELERATION 8
 END
-!
 
-NEWTON_SOLVER TRAN
-ATOL 1D-12
-RTOL 1D-12
-STOL 1D-30
-DTOL 1D15
-ITOL 1D-8
-MAXIT 25
-MAXF 100
-END
-!
-
-!=========================== timestepper ======================================
-TIMESTEPPER
-TS_ACCELERATION 8
-/
-
-!=========================== times ============================================
 TIME
-FINAL_TIME 0.25d0 y
-INITIAL_TIMESTEP_SIZE 1.d-6 y
-MAXIMUM_TIMESTEP_SIZE 50.d0 y
-!MAXIMUM_TIMESTEP_SIZE 50.d0 y at 15. y
-MAXIMUM_TIMESTEP_SIZE 200.d0 y at 50. y
-MAXIMUM_TIMESTEP_SIZE 500.d0 y at 20000. y
-MAXIMUM_TIMESTEP_SIZE 1000.d0 y at 50000. y
-MAXIMUM_TIMESTEP_SIZE 5000.d0 y at 100000. y
-/
+  FINAL_TIME 0.25 y
+  INITIAL_TIMESTEP_SIZE 1.000d-06 y
+  MAXIMUM_TIMESTEP_SIZE 50.0 y
+  MAXIMUM_TIMESTEP_SIZE 200.0 y at 50.0 y
+  MAXIMUM_TIMESTEP_SIZE 500.0 y at 20000.0 y
+  MAXIMUM_TIMESTEP_SIZE 1000.0 y at 50000.0 y
+  MAXIMUM_TIMESTEP_SIZE 5000.0 y at 100000.0 y
+END
 
-!=========================== output options ===================================
-OUTPUT
-MASS_BALANCE
-PRINT_COLUMN_IDS
-PERIODIC_OBSERVATION TIMESTEP 1
-FORMAT TECPLOT POINT
-FORMAT HDF5
-/
-
-!=========================== fluid properties =================================
-FLUID_PROPERTY 
-DIFFUSION_COEFFICIENT 1.d-9
-/
-
-!=========================== material properties ==============================
 MATERIAL_PROPERTY soil1
-ID 1
-POROSITY 0.15d0
-TORTUOSITY 1d-1
-ROCK_DENSITY 2.65E3
-SPECIFIC_HEAT 1E3
-THERMAL_CONDUCTIVITY_DRY 0.5
-THERMAL_CONDUCTIVITY_WET 0.5 
-SATURATION_FUNCTION sf2
-PERMEABILITY
-PERM_X 1.d-15
-PERM_Y 1.d-15
-PERM_Z 1.d-17
-/
-/
-!=========================== saturation functions =============================
-SATURATION_FUNCTION sf2
-PERMEABILITY_FUNCTION_TYPE NMT_EXP
-SATURATION_FUNCTION_TYPE NMT_EXP
-!RESIDUAL_SATURATION 0.03
-RESIDUAL_SATURATION LIQUID_PHASE 0.1
-RESIDUAL_SATURATION GAS_PHASE 0.0
-LAMBDA 0.762d0
-ALPHA 7.5d-4
-MAX_CAPILLARY_PRESSURE 1.d6
-BETAC 2.d0
-POWER 7.d0
-/
+  ID 1
+  POROSITY 0.15
+  TORTUOSITY 0.1
+  ROCK_DENSITY 2650.0
+  SPECIFIC_HEAT 1000.0
+  THERMAL_CONDUCTIVITY_DRY 0.5
+  THERMAL_CONDUCTIVITY_WET 0.5
+  SATURATION_FUNCTION sf2
+  PERMEABILITY
+    PERM_X 1.000d-15
+    PERM_Y 1.000d-15
+    PERM_Z 1.000d-17
+  /
+END
 
-!=========================== regions ==========================================
+NEWTON_SOLVER flow
+  ATOL 1.000d-12
+  RTOL 1.000d-12
+  STOL 1.000d-30
+  DTOL 1.000d+15
+  ITOL 1.000d-08
+  MAXIT 25
+  MAXF 100
+END
+
+NEWTON_SOLVER tran
+  ATOL 1.000d-12
+  RTOL 1.000d-12
+  STOL 1.000d-30
+  DTOL 1.000d+15
+  ITOL 1.000d-08
+  MAXIT 25
+  MAXF 100
+END
+
+OUTPUT
+  PERIODIC_OBSERVATION TIMESTEP 1
+  PRINT_COLUMN_IDS
+  FORMAT TECPLOT POINT
+  FORMAT HDF5
+  MASS_BALANCE
+END
+
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.000d-09
+END
+
+SATURATION_FUNCTION  sf2
+  PERMEABILITY_FUNCTION_TYPE NMT_EXP
+  SATURATION_FUNCTION_TYPE NMT_EXP
+  RESIDUAL_SATURATION LIQUID_PHASE 0.1
+  RESIDUAL_SATURATION GAS_PHASE 0.0
+  LAMBDA 0.762
+  ALPHA 0.00075
+  MAX_CAPILLARY_PRESSURE 1000000.0
+  BETAC 2.0
+  POWER 7.0
+END
+
 REGION all
-COORDINATES
-0.d0 0.d0 0.d0
-321.D0 1.D0  51.D0
-/
+  COORDINATES
+    0.0 0.0 0.0 
+    321.0 1.0 51.0 
+  END
 END
 
 REGION top
-FACE TOP
-COORDINATES
-0.d0 0.d0  51.d0
-321.d0 1.d0 51.d0
-/
+  FACE top
+  COORDINATES
+    0.0 0.0 51.0 
+    321.0 1.0 51.0 
+  END
 END
 
 REGION west
-FACE WEST
-COORDINATES
-0.d0 0.d0 0.d0
-0.d0 1.d0 51.d0
-/
+  FACE west
+  COORDINATES
+    0.0 0.0 0.0 
+    0.0 1.0 51.0 
+  END
 END
 
 REGION east
-FACE EAST
-COORDINATES
-321.d0 0.d0 0.d0
-321.d0 1.d0 51.d0
-/
+  FACE east
+  COORDINATES
+    321.0 0.0 0.0 
+    321.0 1.0 51.0 
+  END
 END
 
 REGION well
-COORDINATES
-160.d0 1.d0 20.d0
-160.d0 1.d0 20.d0
-/
+  COORDINATES
+    160.0 1.0 20.0 
+    160.0 1.0 20.0 
+  END
 END
 
-!=========================== flow conditions ==================================
-FLOW_CONDITION initial
+FLOW_CONDITION  initial
   TYPE
-    PRESSURE hydrostatic
-    TEMPERATURE zero_gradient
-    CONCENTRATION zero_gradient
-    ENTHALPY dirichlet
-  /
-!  DATUM
-!    3.0 5.0 2.0
-!    2.0 1.0 6.0
-!  DATUM
-!    FILE file_name
-IPHASE 1
-PRESSURE 2D7 2D7
-TEMPERATURE 50 
-CONCENTRATION 1d-6 
-ENTHALPY 0.d0 0.d0
-/
+    PRESSURE  hydrostatic
+    TEMPERATURE  zero_gradient
+    CONCENTRATION  zero_gradient
+    ENTHALPY  dirichlet
+  END
+  IPHASE 1
+    PRESSURE 20000000.0 20000000.0
+    TEMPERATURE 50.0
+    CONCENTRATION 1.000d-06
+    ENTHALPY 0.0 0.0
+END
 
-FLOW_CONDITION top
-UNITS Pa,C,M,yr
-TYPE
-PRESSURE dirichlet
-TEMPERATURE zero_gradient
-CONCENTRATION zero_gradient
-ENTHALPY dirichlet
-/
-IPHASE 1
-PRESSURE 3D7 2D7
-TEMPERATURE 60
-CONCENTRATION 1d-6
-ENTHALPY 0.d0 0.d0
-/
+FLOW_CONDITION  top
+  TYPE
+    PRESSURE  dirichlet
+    TEMPERATURE  zero_gradient
+    CONCENTRATION  zero_gradient
+    ENTHALPY  dirichlet
+  END
+  IPHASE 1
+    PRESSURE 30000000.0 20000000.0
+    TEMPERATURE 60.0
+    CONCENTRATION 1.000d-06
+    ENTHALPY 0.0 0.0
+END
 
-FLOW_CONDITION source
-UNITS Pa,C,M,yr
-SYNC_TIMESTEP_WITH_UPDATE
-TYPE
-RATE mass_rate
-PRESSURE dirichlet
-TEMPERATURE dirichlet
-CONCENTRATION dirichlet
-ENTHALPY dirichlet
-/
-RATE LIST
-  TIME_UNITS y
-  DATA_UNITS kg/s
-  0.  0. 1.d-4
-  10. 0. 0.
-/
-PRESSURE 4.d7 2.d7
-TEMPERATURE 70.d0
-CONCENTRATION 0.D0
-ENTHALPY 0.d0 0.d0
-/
+FLOW_CONDITION  source
+  SYNC_TIMESTEP_WITH_UPDATE
+  TYPE
+    RATE  mass_rate
+    PRESSURE  dirichlet
+    TEMPERATURE  dirichlet
+    CONCENTRATION  dirichlet
+    ENTHALPY  dirichlet
+  END
+    RATE LIST
+      TIME_UNITS y
+      DATA_UNITS kg/s
+        0.0  0.0  0.0001
+        10.0  0.0  0.0
+    /
+    PRESSURE 40000000.0 20000000.0
+    TEMPERATURE 70.0
+    CONCENTRATION 0.0
+    ENTHALPY 0.0 0.0
+END
 
-!=========================== condition couplers ===============================
-! initial condition
 INITIAL_CONDITION initial
-FLOW_CONDITION initial
-REGION all
+  FLOW_CONDITION initial
+  REGION all
 END
 
 BOUNDARY_CONDITION west
-FLOW_CONDITION initial
-REGION west
+  FLOW_CONDITION initial
+  REGION west
 END
 
 BOUNDARY_CONDITION east
-FLOW_CONDITION initial
-REGION east
+  FLOW_CONDITION initial
+  REGION east
 END
 
-SOURCE_SINK well
-FLOW_CONDITION source
-REGION well
-END
-
-
-!=========================== stratigraphy couplers ============================
-STRATA
-REGION all
-MATERIAL soil1
-END
-
-END_SUBSURFACE
+SOURCE_SINK
+  FLOW_CONDITION source
+  TRANSPORT_CONDITION well

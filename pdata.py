@@ -1,4 +1,4 @@
-""" Class for pflotran data """
+""" Class for pyflotran data """
 
 """
 PyFLOTRAN v1.0.0 LA-CC-14-094 
@@ -104,7 +104,7 @@ pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic',
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
 flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic, conductance', 'zero_gradient',
                       'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium']
-temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'neumann']
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 saturation_types_allowed = ['dirichlet']
 enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
@@ -2266,7 +2266,7 @@ class pdata(object):
                 pass
 
         # OPTIONS
-        temp_path = ppath();
+        temp_path = ppath()
         temp_path.filename = filename
         if temp_path.filename:
             if temp_path.absolute_to_file != os.getcwd():
@@ -2289,7 +2289,7 @@ class pdata(object):
         :param num_procs: Number of processors
         :type num_procs: int
         """
-
+        print 'RUN EXECUTED...'
         # set up and check path to executable
         exe_path = ppath()
         exe_path.filename = exe
@@ -2298,7 +2298,11 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('Default location is' + exe + '. No executable at location ' + exe)
 
         # option to write input file to new name
-        if input: self._path.filename = input
+        if input:
+            self._path.filename = input
+        else:
+            self._path.filename = self._path.filename[:-3] + '_new.in'
+
         if input_prefix: self._path.filename = input_prefix
         # ASSEMBLE FILES IN CORRECT DIRECTORIES
         if self.work_dir:
@@ -2306,7 +2310,7 @@ class pdata(object):
         else:
             wd = os.getcwd() + os.sep
         # print wd # testing?
-        #		print self._path.filename # testing?
+        # print self._path.filename # testing?
         returnFlag = self.write(wd + self._path.filename)  # ALWAYS write input file
         #		print returnFlag # testing?
         if returnFlag:
@@ -2318,23 +2322,26 @@ class pdata(object):
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 
-        if input:
-            if num_procs == 1:
-                subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True)
-            else:
-                subprocess.call(
-                    'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
-                    shell=True)
+        if num_procs == 1:
+            subprocess.Popen(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True,
+                             stdout=sys.stdout, stderr=sys.stderr).communicate()
+        else:
+            subprocess.Popen(
+                'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
+                stdout=sys.stdout, stderr=sys.stderr).communicate()
+
         if input_prefix:
             if num_procs == 1:
-                subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True)
+                subprocess.Popen(exe_path.full_path + ' -input_prefix ' + self._path.filename, stdout=sys.stdout,
+                                 stderr=sys.stderr).communicate()
             else:
-                subprocess.call(
+                subprocess.Popen(
                     'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename,
-                    shell=True)
+                    stdout=sys.stdout, stderr=sys.stderr).communicate()
 
         # After executing simulation, go back to the parent directory
-        if self.work_dir: os.chdir(cwd)
+        if self.work_dir:
+            os.chdir(cwd)
 
     def __repr__(self):
         return self.filename  # print to screen when called
@@ -2542,7 +2549,7 @@ class pdata(object):
                     else:
                         read_fn[card](infile)
 
-                        #	def _get_skip_readline(self): return self._skip_readline
+                        # def _get_skip_readline(self): return self._skip_readline
                         #	def _set_skip_readline(self, object): self._skip_readline = object
                         #	skip_readline = property(_get_skip_readline, _set_skip_readline) #: (**)
 
@@ -2582,7 +2589,7 @@ class pdata(object):
         if self._overwrite_restart_flow_params: self._write_overwrite_restart(outfile)
 
         if self.checkpoint.frequency: self._write_checkpoint(outfile)
-        #		else: print 'info: checkpoint not detected\n'
+        # else: print 'info: checkpoint not detected\n'
 
         if self.restart.file_name: self._write_restart(outfile)
         #		else: print 'info: restart not detected\n'
@@ -2897,7 +2904,7 @@ class pdata(object):
                     elif key1 in ['/', 'end']:
                         keepReading2 = False
                 # else:
-                #					raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
+                # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
                 key_bank.append(key)
             elif key in ['/', 'end']:
                 keepReading = False
@@ -3642,7 +3649,7 @@ class pdata(object):
         for nsolver in self.nsolverlist:
             # Write Newton Solver Type - Not certain this is correct.
 
-            #			if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
+            # if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
             #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
             #			elif nsolver.name.lower() == 'tran':
             #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
@@ -4585,7 +4592,7 @@ class pdata(object):
                         j = 0
                         while j < len(flow.varlist[i].valuelist):
                             outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
-                            #	try:
+                            # try:
                             #		outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
                             #	except:
                             #		outfile.write(' DATASET ' + (flow.varlist[i].valuelist[j]))
@@ -4857,7 +4864,7 @@ class pdata(object):
 
     def _write_strata(self, outfile):
         self._header(outfile, headers['strata'])
-        #		strata = self.strata
+        # strata = self.strata
 
         # Write out strata condition variables
         for strata in self.strata_list:
@@ -4865,8 +4872,8 @@ class pdata(object):
             outfile.write('STRATA\n')
             if strata.region:
                 outfile.write('  REGION ' + strata.region.lower() + '\n')
-            else:
-                raise PyFLOTRAN_ERROR('strata.region is required')
+            # else:
+            #    raise PyFLOTRAN_ERROR('strata.region is required')
             if strata.material:
                 outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
             else:

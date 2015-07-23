@@ -1,31 +1,54 @@
-import filecmp
 import unittest
 import os
 
 dir = os.path.dirname(os.path.realpath(__file__))
+dir1 = '/mphase-run1'
+dir2 = '/mphase-run2'
 
-def compare_mphase():
-    """Return True if pyflotran writes files in multiple directories correctly."""
-    os.system('python ' + dir + '/mphase_multiple.py >& /dev/null')
-    dir1 = '/mphase-run1'
-    dir2 = '/mphase-run2'
-
-    res1 =  filecmp.cmp(dir + dir1 + '/mphase2.in', dir + '/mphase.gold')
-    res2 =  filecmp.cmp(dir + dir2 + '/mphase2.in', dir + '/mphase.gold')
-    os.system('rm -rf ' +  dir + dir1)
-    os.system('rm -rf ' +  dir + dir2)
-
-    print res1, res2
-    res = res1 and res2
- 
-    return res
 
 class mphase_read(unittest.TestCase):
-    """Test for writing to multiple directories from PyFLOTRAN input for mphase."""
+    """Test for writing multiple mphase"""
 
-    def test_mphase_multi(self):
-        """Test for writing to multiple directories from PyFLOTRAN input for mphase."""
-        self.assertTrue(compare_mphase())
+    def setUp(self):
+        os.system('python ' + dir + '/mphase_multiple.py > /dev/null 2>&1')
+
+    def test_mphase_read(self):
+        """Test for reading and writing multiple mphase"""
+
+        gold = ''
+        test = ''
+
+        with open(dir + dir1 + '/mphase2.in', 'r') as f:
+            line = f.readline()
+            if not 'CO2_DATABASE' in line:
+                test += line
+
+        with open(dir + '/mphase.gold', 'r') as f:
+            line = f.readline()
+            if not 'CO2_DATABASE' in line:
+                gold += line
+
+        self.assertEqual(gold, test)
+
+        gold = ''
+        test = ''
+
+        with open(dir + dir2 + '/mphase2.in', 'r') as f:
+            line = f.readline()
+            if not 'CO2_DATABASE' in line:
+                test += line
+
+        with open(dir + '/mphase.gold', 'r') as f:
+            line = f.readline()
+            if not 'CO2_DATABASE' in line:
+                gold += line
+
+        self.assertEqual(gold, test)
+
+    def tearDown(self):
+        os.system('rm -rf ' + dir + dir1)
+        os.system('rm -rf ' + dir + dir2)
+
 
 if __name__ == '__main__':
     unittest.main()

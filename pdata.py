@@ -2321,23 +2321,22 @@ class pdata(object):
         if self.work_dir: os.chdir(self.work_dir)
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
-
+        output = None
         if num_procs == 1:
             subprocess.Popen(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True,
-                             stdout=sys.stdout, stderr=sys.stderr).communicate()
+                             stdout=sys.stdout, stderr=subprocess.PIPE).communicate()
         else:
-            subprocess.Popen(
-                'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
-                stdout=sys.stdout, stderr=sys.stderr).communicate()
+            subprocess.Popen('mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' +
+                             self._path.filename, shell=True, stdout=sys.stdout, stderr=subprocess.PIPE).communicate()
 
         if input_prefix:
             if num_procs == 1:
-                subprocess.Popen(exe_path.full_path + ' -input_prefix ' + self._path.filename, stdout=sys.stdout,
-                                 stderr=sys.stderr).communicate()
+                subprocess.Popen(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True,
+                                 stdout=sys.stdout, stderr=sys.stderr).communicate()
             else:
                 subprocess.Popen(
                     'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename,
-                    stdout=sys.stdout, stderr=sys.stderr).communicate()
+                    shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT).communicate()
 
         # After executing simulation, go back to the parent directory
         if self.work_dir:

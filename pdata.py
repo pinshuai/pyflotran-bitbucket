@@ -35,7 +35,6 @@ print('Contact: ' + __email__ + ' (' + __maintainer__ + ')')
 print('=========================================')
 
 from copy import copy
-# from subprocess import Popen, PIPE
 import subprocess
 import matplotlib.pyplot as plt
 import itertools as it
@@ -2289,7 +2288,6 @@ class pdata(object):
         :param num_procs: Number of processors
         :type num_procs: int
         """
-        print 'RUN EXECUTED...'
         # set up and check path to executable
         exe_path = ppath()
         exe_path.filename = exe
@@ -2321,22 +2319,22 @@ class pdata(object):
         if self.work_dir: os.chdir(self.work_dir)
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
-        output = None
+
         if num_procs == 1:
             subprocess.Popen(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True,
-                             stdout=sys.stdout, stderr=subprocess.PIPE).communicate()
+                             stdout=sys.stdout, stderr=sys.stderr)
         else:
             subprocess.Popen('mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' +
-                             self._path.filename, shell=True, stdout=sys.stdout, stderr=subprocess.PIPE).communicate()
+                             self._path.filename, shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
         if input_prefix:
             if num_procs == 1:
                 subprocess.Popen(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True,
-                                 stdout=sys.stdout, stderr=sys.stderr).communicate()
+                                 stdout=sys.stdout, stderr=sys.stderr)
             else:
                 subprocess.Popen(
                     'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename,
-                    shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT).communicate()
+                    shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
         # After executing simulation, go back to the parent directory
         if self.work_dir:

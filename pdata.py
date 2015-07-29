@@ -2323,19 +2323,21 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 
         if num_procs == 1:
-            subprocess.call(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True)
+            subprocess.Popen(exe_path.full_path + ' -pflotranin ' + self._path.filename, shell=True, stdout=sys.stdout,
+                             stderr=sys.stderr)
         else:
             subprocess.call(
                 'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
-                shell=True)
+                shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
         if input_prefix:
             if num_procs == 1:
-                subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True)
+                subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True,
+                                stdout=sys.stdout, stderr=sys.stderr)
             else:
                 subprocess.call(
                     'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename,
-                    shell=True)
+                    shell=True, stdout=sys.stdout, stderr=sys.stderr)
 
         # After executing simulation, go back to the parent directory
         if self.work_dir: os.chdir(cwd)

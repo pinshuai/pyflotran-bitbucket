@@ -129,11 +129,6 @@ headers = dict(zip(cards, headers))
 buildWarnings = []
 
 
-def _buildWarnings(s):
-    global buildWarnings
-    buildWarnings.append(s)
-
-
 class puniform_velocity(object):
     """
     Class for specifiying uniform velocity with transport. Optional with transport problem when not coupling with
@@ -749,7 +744,7 @@ class pflow(object):
                 if not overwrite:
                     warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable.'
                     print warning; print
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else: # Executes if overwrite = True
                     self.delete(self._get_flow_variable(flow)[flow_variable.name],
@@ -1045,6 +1040,7 @@ class ptransport(object):
         self.type = tran_type  # e.g., dirichlet, zero_gradient
         self.constraint_list_value = constraint_list_value
         self.constraint_list_type = constraint_list_type
+
 
 class pconstraint(object):
     """
@@ -2186,7 +2182,7 @@ class pdata(object):
                     warning = 'WARNING: A Material Property with id \'' + str(
                         prop.id) + '\' already exists. Prop will not be defined, use overwrite = True in add() to overwrite the old prop.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.prop[prop.id])
@@ -2460,7 +2456,7 @@ class pdata(object):
                     warning = 'WARNING: A linear solver with name \'' + str(
                         lsolver.name) + '\' already exists. lsolver will not be defined, use overwrite = True in add() to overwrite the old lsolver.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.lsolver[lsolver.name])
@@ -2524,7 +2520,7 @@ class pdata(object):
                     warning = 'WARNING: A newton solver with name \'' + str(
                         nsolver.name) + '\' already exists. nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.nsolver[nsolver.name])
@@ -2827,7 +2823,7 @@ class pdata(object):
                     warning = 'WARNING: A saturation function with name \'' + str(
                         sat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old saturation function.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.sat[sat.name])
@@ -2958,7 +2954,7 @@ class pdata(object):
                     warning = 'WARNING: A Characteristic Curve with name \'' + str(
                         char.name) + '\' already exists. Characteristic curve will not be defined, use overwrite = True in add() to overwrite the old characteristic curve.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.char[char.name])
@@ -3098,7 +3094,7 @@ class pdata(object):
                     warning = 'WARNING: A region with name \'' + str(
                         region.name) + '\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.region[region.name])
@@ -3160,7 +3156,7 @@ class pdata(object):
                     warning = 'WARNING: A observation with region \'' + str(
                         observation.region) + '\' already exists. Observation will not be defined, use overwrite = True in add() to overwrite the old observation.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.observation[observation.region])
@@ -3304,7 +3300,7 @@ class pdata(object):
                     warning = 'WARNING: A flow with name \'' + str(
                         flow.name) + '\' already exists. Flow will not be defined, use overwrite = True in add() to overwrite the old flow.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.flow[flow.name])
@@ -3347,7 +3343,7 @@ class pdata(object):
                         flow_variable.name) + '\' already exists in flow with name \'' + str(
                         flow.name) + '\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable. Use flow=\'name\' if you want to specify the flow object to add flow_variable to.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self._get_flow_variable(flow)[flow_variable.name], flow)
@@ -3547,7 +3543,7 @@ class pdata(object):
                     warning = 'WARNING: A initial_condition with region \'' + str(
                         initial_condition.region) + '\' already exists. initial_condition will not be defined, use overwrite = True in add() to overwrite the old initial_condition.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.initial_condition[initial_condition.region])
@@ -3617,7 +3613,7 @@ class pdata(object):
                     warning = 'WARNING: A boundary_condition with region \'' + str(
                         boundary_condition.region) + '\' already exists. boundary_condition will not be defined, use overwrite = True in add() to overwrite the old boundary_condition.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.boundary_condition[boundary_condition.region])
@@ -3684,7 +3680,7 @@ class pdata(object):
                     warning = 'WARNING: A source_sink with region \'' + str(
                         source_sink.region) + '\' already exists. source_sink will not be defined, use overwrite = True in add() to overwrite the old source_sink.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.source_sink[source_sink.region])
@@ -3743,7 +3739,7 @@ class pdata(object):
                     warning = 'WARNING: A strata with name \'' + str(
                         strata.region) + '\' already exists. strata will not be defined, use overwrite = True in add() to overwrite the old strata.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.strata[strata.region])
@@ -3902,7 +3898,7 @@ class pdata(object):
                     warning = 'WARNING: A dataset with name \'' + str(
                         dat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old dataset.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.dat[dat.name])
@@ -4033,7 +4029,7 @@ class pdata(object):
                                                                                           'm_kinetic.'
                     print warning
                     print
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return  # exit function
                 else:  # Executes if overwrite = True
                     self.delete(self._get_m_kinetic()[m_kinetic.name])
@@ -4152,7 +4148,7 @@ class pdata(object):
                     warning = 'WARNING: A transport with name \'' + str(
                         transport.name) + '\' already exists. transport will not be defined, use overwrite = True in add() to overwrite the old transport.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.transport[transport.name])
@@ -4274,7 +4270,7 @@ class pdata(object):
                     warning = 'WARNING: A constraint with name \'' + str(
                         constraint.name) + '\' already exists. constraint will not be defined, use overwrite = True in add() to overwrite the old constraint.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:
                     self.delete(self.constraint[constraint.name])
@@ -4312,7 +4308,7 @@ class pdata(object):
                         constraint_concentration.pspecies) + '\' already exists in constraint with name \'' + str(
                         constraint.name) + '\'. constraint_concentration will not be defined, use overwrite = True in add() to overwrite the old constraint_concentration. Use constraint=\'name\' if you want to specify the constraint object to add constraint_concentration to.'
                     print warning,
-                    _buildWarnings(warning)
+                    buildWarnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self._get_constraint_concentration(constraint)[constraint_concentration.pspecies],

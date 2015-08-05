@@ -1,20 +1,15 @@
-#Description: 1D Calcite dissolution problem
-
 SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS
-    SUBSURFACE_TRANSPORT transport 
-    /
-  /
+    SUBSURFACE_TRANSPORT transport
+    / 
+  / 
 END
 
+SUBSURFACE
 
-SUBSURFACE 
+UNIFORM_VELOCITY 1.0 0.0 0.0 m/yr 
 
-#=========================== useful tranport parameters ==================
-UNIFORM_VELOCITY 1.d0 0.d0 0.d0 m/yr
-
-#=========================== chemistry ========================================
 CHEMISTRY
   PRIMARY_SPECIES
     H+
@@ -37,12 +32,11 @@ CHEMISTRY
   /
   MINERAL_KINETICS
     Calcite
-      RATE_CONSTANT 1.d-6 mol/m^2-sec
+      RATE_CONSTANT 1.000d-06 mol/m^2-sec 
     /
   /
   DATABASE /home/satkarra/src/pflotran-dev-PM-RHEL-6.5-nodebug/database/hanford.dat
   LOG_FORMULATION
-#  OPERATOR_SPLITTING
   ACTIVITY_COEFFICIENTS TIMESTEP
   OUTPUT
     PH
@@ -51,107 +45,77 @@ CHEMISTRY
   /
 END
 
-#=========================== solver options ===================================
-LINEAR_SOLVER TRANSPORT
+GRID
+  TYPE structured
+  BOUNDS
+    0.0 0.0 0.0 
+    100.0 1.0 1.0 
+  /
+  NXYZ 100 1 1 
+END
+
+TIME
+  FINAL_TIME 25.0 y
+  INITIAL_TIMESTEP_SIZE 1.0 h
+  MAXIMUM_TIMESTEP_SIZE 0.25 y
+END
+
+MATERIAL_PROPERTY soil1
+  ID 1
+  POROSITY 0.25
+  TORTUOSITY 1.0
+END
+
+LINEAR_SOLVER transport
   SOLVER DIRECT
 END
 
-#=========================== discretization ===================================
-GRID
-  TYPE structured
-  NXYZ 100 1 1
-  BOUNDS
-    0.d0 0.d0 0.d0
-    100.d0 1.d0 1.d0
-  /
-END
-
-#=========================== fluid properties =================================
-FLUID_PROPERTY 
-  DIFFUSION_COEFFICIENT 1.d-9
-END
-
-#=========================== material properties ==============================
-MATERIAL_PROPERTY soil1
-  ID 1
-  POROSITY 0.25d0
-  TORTUOSITY 1.d0
-END
-
-#=========================== output options ===================================
 OUTPUT
-  TIMES y 5. 10. 15. 20.
+  TIMES  y 5.0 10.0 15.0 20.0
   FORMAT TECPLOT POINT
 END
 
-#=========================== times ============================================
-TIME
-  FINAL_TIME 25.d0 y
-  INITIAL_TIMESTEP_SIZE 1.d0 h
-  MAXIMUM_TIMESTEP_SIZE 2.5d-1 y
+FLUID_PROPERTY
+  DIFFUSION_COEFFICIENT 1.000d-09
 END
 
-#=========================== regions ==========================================
 REGION all
   COORDINATES
-    0.d0 0.d0 0.d0
-    100.d0 1.d0 1.d0
-  /
+    0.0 0.0 0.0 
+    100.0 1.0 1.0 
+  END
 END
 
 REGION west
-  FACE WEST
+  FACE west
   COORDINATES
-    0.d0 0.d0 0.d0
-    0.d0 1.d0 1.d0
-  /
+    0.0 0.0 0.0 
+    0.0 1.0 1.0 
+  END
 END
 
 REGION east
-  FACE EAST
+  FACE east
   COORDINATES
-    100.d0 0.d0 0.d0
-    100.d0 1.d0 1.d0
-  /
+    100.0 0.0 0.0 
+    100.0 1.0 1.0 
+  END
 END
 
-#=========================== transport conditions =============================
 TRANSPORT_CONDITION background_conc
   TYPE zero_gradient
   CONSTRAINT_LIST
-    0.d0 initial_constraint
-  /
+    0.0  initial_constraint
+  END
 END
 
 TRANSPORT_CONDITION inlet_conc
   TYPE dirichlet_zero_gradient
   CONSTRAINT_LIST
-    0.d0 inlet_constraint
-  /
+    0.0  inlet_constraint
+  END
 END
 
-#=========================== constraints ======================================
-CONSTRAINT initial_constraint
-  CONCENTRATIONS
-    H+     1.d-8      F
-    HCO3-  1.d-3      G  CO2(g)
-    Ca++   5.d-4      M  Calcite
-  /
-  MINERALS
-    Calcite 1.d-5 1.d0 m^2/m^3
-  /
-END
-
-CONSTRAINT inlet_constraint
-  CONCENTRATIONS
-    H+     5.         P
-    HCO3-  1.d-3      T 
-    Ca++   1.d-6      Z 
-  /
-END
-
-#=========================== condition couplers ===============================
-# initial condition
 INITIAL_CONDITION initial
   TRANSPORT_CONDITION background_conc
   REGION all
@@ -167,12 +131,29 @@ BOUNDARY_CONDITION inlet
   REGION west
 END
 
-#=========================== stratigraphy couplers ============================
 STRATA
   REGION all
   MATERIAL soil1
 END
 
-END_SUBSURFACE
+CONSTRAINT initial_constraint
+  CONCENTRATIONS
+    H+  1.000d-08  F
+    HCO3-  0.001  G  CO2(g)
+    Ca++  0.0005  M  Calcite
+  /
+  MINERALS
+    Calcite  1.000d-05  1.0
+  /
+END
 
+CONSTRAINT inlet_constraint
+  CONCENTRATIONS
+    H+  5.0  P
+    HCO3-  0.001  T
+    Ca++  1.000d-06  Z
+  /
+END
+
+END_SUBSURFACE
 

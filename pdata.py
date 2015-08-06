@@ -9,7 +9,8 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
+   following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
    disclaimer in the documentation and/or other materials provided with the distribution.
@@ -126,7 +127,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity', 'simu
 
 headers = dict(zip(cards, headers))
 
-buildWarnings = []
+build_warnings = []
 
 
 class puniform_velocity(object):
@@ -181,7 +182,8 @@ class pmaterial(object):
     :type cond_wet: float
     :param saturation: Saturation function of material property. e.g., 'sf2'
     :type saturation: str
-    :param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
+    :param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in
+    unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
     :type permeability: [float]*3
     """
 
@@ -433,7 +435,7 @@ class poutput(object):
     Class for dumping simulation output.
     Acceptable time units (units of measurements) are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
 
-    :param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats.
+    :param time_list: List of time values. 1st variable specifies time unit to be used. Remaining variable(s) are floats
     :type time_list: [str, float*]
     :param print_column_ids: Flag to indicate whether to print column numbers in observation
      and mass balance output files. Default: False
@@ -572,7 +574,8 @@ class ppoint(object):
 
 class pcharacteristic_curves(object):
     """
-    Class for specifying characteristic curves. This card is used only in GENERAL mode; the SATURATION_FUNCTION card should be used in RICHARDS mode.
+    Class for specifying characteristic curves. This card is used only in GENERAL mode; the SATURATION_FUNCTION card
+    should be used in RICHARDS mode.
 
     :param name: Characteristic curve name. e.g., 'cc1'
     :param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY'.
@@ -742,9 +745,10 @@ class pflow(object):
     #			if flow_variable.name in super(self)._get_flow_variable(self).keys(): #testing
             if flow_variable.name in self._get_flow_variable(self).keys():
                 if not overwrite:
-                    warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable.'
+                    warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow
+                    with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable.'
                     print warning; print
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else: # Executes if overwrite = True
                     self.delete(self._get_flow_variable(flow)[flow_variable.name],
@@ -757,7 +761,8 @@ class pflow(object):
 
     def _get_flow_variable(self, flow):
         return dict([flow_variable.name, flow_variable] for flow_variable in flow.varlist if flow_variable.name)
-    flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a specified flow object, indexed by flow_variable name
+    flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a
+    specified flow object, indexed by flow_variable name
     '''
 
 
@@ -766,7 +771,8 @@ class pflow_variable(object):
     Sub-class of pflow for each kind of variable (includes type and value) such as
     pressure, temperature, etc. There can be multiple pflow_variable objects appended to a single pflow object.
 
-    :param name: Indicates name of the flow variable. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
+    :param name: Indicates name of the flow variable. Options include: ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
+    'CONCENTRATION', 'SATURATION', 'ENTHALPY'].
     :type name: str
     :param type: Indicates type that is associated with name under keyword TYPE.
      Options for PRESSURE include: 'dirichlet', 'hydrostatic', 'zero_gradient', 'conductance',
@@ -775,15 +781,20 @@ class pflow_variable(object):
      'zero_gradient', 'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium'.
      Options for TEMPERATURE include: 'dirichlet', 'hydrostatic', 'zero_gradient'.
      Options for CONCENTRATION include: 'dirichlet', 'hydrostatic', 'zero_gradient'.
-     Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic', 'zero_gradient'
+     Options for SATURATION include: 'dirichlet'. Options for ENTHALPY include: 'dirichlet', 'hydrostatic',
+     'zero_gradient'
     :type type: str
-    :param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list alternative. The 2nd float is optional and is needed for multiphase simulations.
+    :param valuelist: Provide one or two values associated with a single Non-list alternative, do not use with list
+    alternative. The 2nd float is optional and is needed for multiphase simulations.
     :type valuelist: [float, float]
     :param unit: Non-list alternative, do not use with list alternative. Specify unit of measurement.
     :type unit: str
     :param time_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
     :type time_unit_type: str
-    :param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support adding pflow_variable_list to pflow_variable objects. Appending to can be done manually. e.g., variable.list.append(var_list) if var_list=pflow_variable_list.
+    :param list: List alternative, do not use with non-list alternative attributes/parameters. Input is a list of
+    pflow_variable_list objects. Sub-class of pflow_variable. The add function currently does not support
+    adding pflow_variable_list to pflow_variable objects. Appending to can be done manually.
+    e.g., variable.list.append(var_list) if var_list=pflow_variable_list.
     :type list: [pflow_variable_list]
     """
 
@@ -806,7 +817,9 @@ class pflow_variable(object):
 class pflow_variable_list(object):
     """
     Sub-class of pflow_variable.
-    Used for pflow_variables that are lists (as function of time) instead of a single value. Each of these list objects can hold multiple lines (from a Python input file) with each line holding one time_unit_value and a data_unit_value_list that can hold multiple values.
+    Used for pflow_variables that are lists (as function of time) instead of a single value. Each of these list
+    objects can hold multiple lines (from a Python input file) with each line holding one time_unit_value and a
+    data_unit_value_list that can hold multiple values.
 
     :param time_unit_value:
     :type time_unit_value: float
@@ -862,7 +875,7 @@ class pboundary_condition(object):
 
 class psource_sink(object):
     """
-    Class for specifying source sink - this is also a condition coupler that links a region to the source sink condition.
+    Class for specifying source sink - this is also a condition coupler that links a region to the source sink condition
 
     :param flow: Name of the flow condition the source/sink term is applied to.
     :type flow: str
@@ -879,7 +892,8 @@ class psource_sink(object):
 
 class pstrata(object):
     """
-    Class for specifying stratigraphy coupler. Multiple stratigraphy couplers can be created. Couples material properties with a region.
+    Class for specifying stratigraphy coupler. Multiple stratigraphy couplers can be created. Couples material
+    properties with a region.
 
     :param region: Name of the material property to be associated with a region.
     :type region: str
@@ -915,7 +929,8 @@ class prestart(object):
     :type file_name: str
     :param time_value: Specify time value.
     :type time_value: float
-    :param time_unit: Specify unit of measurement to use for time. Options include: 's', 'sec','m', 'min', 'h', 'hr', 'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
+    :param time_unit: Specify unit of measurement to use for time. Options include: 's', 'sec','m', 'min', 'h', 'hr',
+    'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
     :type time_unit: str
     """
 
@@ -929,11 +944,13 @@ class pdataset(object):
     """
     Class for incorporating data within a model.
 
-    :param dataset_name: Opens the card block with the name of the data set in the string. I name is not given the NAME entry is required.
+    :param dataset_name: Opens the card block with the name of the data set in the string. I name is not given the NAME
+    entry is required.
     :type dataset_name: str
     :param dataset_mapped_name: Adds the MAPPED flag to the DATASET and allows for the dataset to be named.
     :type dataset_name: str
-    :param name: Name of the data set if not included with DATASET card. Note: this string overwrites the name specified with DATASET
+    :param name: Name of the data set if not included with DATASET card. Note: this string overwrites the name specified
+    with DATASET
     :type name: str
     :param file_name: Name of the file containing the data
     :type file_name: str
@@ -960,7 +977,9 @@ class pchemistry(object):
     """
     Class for specifying chemistry.
 
-    :param pspecies_list: List of primary species that fully describe the chemical composition of the fluid. The set of primary species must form an independent set of species in terms of which all homogeneous aqueous equilibrium reactions can be expressed.
+    :param pspecies_list: List of primary species that fully describe the chemical composition of the fluid. The set of
+    primary species must form an independent set of species in terms of which all homogeneous aqueous equilibrium
+    reactions can be expressed.
     :type pspecies_list: [str]
     :param sec_species_list: List of aqueous species in equilibrium with primary species.
     :type sec_species_list: [str]
@@ -968,7 +987,8 @@ class pchemistry(object):
     :type gas_species_list: [str]
     :param minerals_list: List of mineral names.
     :type minerals_list: [str]
-    :param m_kinetics_list: List of pchemistry_m_kinetic objects. Holds kinetics information about a specified mineral name. Works with add function so that m_kinetics_list does not need to be remembered. e.g., dat.add(mineral_kinetic).
+    :param m_kinetics_list: List of pchemistry_m_kinetic objects. Holds kinetics information about a specified mineral
+    name. Works with add function so that m_kinetics_list does not need to be remembered. e.g., dat.add(mineral_kinetic)
     :type m_kinetics_list: [pchemistry_m_kinetic]
     :param log_formulation:
     :type log_formulation: bool - True or False
@@ -982,7 +1002,12 @@ class pchemistry(object):
     :type activity_coefficients: str
     :param molal:
     :type molal: bool - True or False
-    :param output_list: To print secondary aqueous complex concentrations, either add the names of the secondary species of interest or the keyword 'SECONDARY_SPECIES' for all secondary species to the CHEMISTRY OUTPUT card. e.g., output_list = 'SECONDARY_SPECIES' or output_list = ['CO2(aq), 'PH']. By default, if ALL or MINERALS are listed under CHEMISTRY OUTPUT, the volume fractions and rates of kinetic minerals are printed. To print out the saturation indices of minerals listed under the MINERAL keyword, add the name of the mineral to the OUTPUT specification.
+    :param output_list: To print secondary aqueous complex concentrations, either add the names of the secondary species
+    of interest or the keyword 'SECONDARY_SPECIES' for all secondary species to the CHEMISTRY OUTPUT card.
+    e.g., output_list = 'SECONDARY_SPECIES' or output_list = ['CO2(aq), 'PH']. By default, if ALL or MINERALS are
+    listed under CHEMISTRY OUTPUT, the volume fractions and rates of kinetic minerals are printed. To print out
+    the saturation indices of minerals listed under the MINERAL keyword, add the name of the
+    mineral to the OUTPUT specification.
     :type output_list: [str]
     """
 
@@ -1006,7 +1031,8 @@ class pchemistry(object):
 
 class pchemistry_m_kinetic(object):
     """
-    Sub-class of pchemistry. Mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do this automatically. e.g., dat.add(mineral_kinetic).
+    Sub-class of pchemistry. Mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do
+    this automatically. e.g., dat.add(mineral_kinetic).
 
     :param name: Mineral name.
     :type name: str
@@ -1022,15 +1048,19 @@ class pchemistry_m_kinetic(object):
 class ptransport(object):
     """
     Class for specifying a transport condition. Multiple transport objects can be created.
-    Specifies a transport condition based on various user defined constraints with minerals, gases, pH, charge balance, free ion, and total concentrations.
+    Specifies a transport condition based on various user defined constraints with minerals, gases, pH, charge balance,
+    free ion, and total concentrations.
 
     :param name: Transport condition name.
     :type name: str
-    :param type: Options include: 'dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 'neumann', 'mole', 'mole_rate', 'zero_gradient'.
+    :param type: Options include: 'dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 'neumann', 'mole', 'mole_rate',
+    'zero_gradient'.
     :type type: str
-    :param constraint_list_value: List of constraint values. The position of each value in the list correlates with the position of each type in constraint_list_type.
+    :param constraint_list_value: List of constraint values. The position of each value in the list correlates with the
+    position of each type in constraint_list_type.
     :type constraint_list_value: [float]
-    :param constraint_list_type: List of constraint types. The position of each value in the list correlates with the position of each value in constraint_list_value. E.g., 'initial_constraint', 'inlet_constraint'.
+    :param constraint_list_type: List of constraint types. The position of each value in the list correlates with
+    the position of each value in constraint_list_value. E.g., 'initial_constraint', 'inlet_constraint'.
     :type constraint_list_type: [str]
     """
 
@@ -1049,8 +1079,10 @@ class pconstraint(object):
     :param name: Constraint name.
     :type name: str
     :param concentration_list: List of pconstraint_concentration objects.
-    :type concentration_list: [pconstraint_concentration]. Works with add function so that concentration_list does not need to be remembered. e.g., dat.add(concentration). Used for key word CONC or CONCENTRATIONS
-    :param mineral_list: List of pconstraint_mineral objects. Currently does not work with add function. Used for key word MNRL OR MINERALS.
+    :type concentration_list: [pconstraint_concentration]. Works with add function so that concentration_list does
+    not need to be remembered. e.g., dat.add(concentration). Used for key word CONC or CONCENTRATIONS
+    :param mineral_list: List of pconstraint_mineral objects. Currently does not work with add function. Used for
+    keyword MNRL OR MINERALS.
     :type mineral_list: [pconstraint_mineral]
     """
 
@@ -1086,7 +1118,10 @@ class pconstraint_concentration(object):
 
 class pconstraint_mineral(object):
     """
-    Class for mineral in a constraint with vol. fraction and surface area. There can be multiple pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add function. pconstraint_mineral can be manually appended to minerals_list in a pconstraint object. e.g., 'constraint.mineral_list.append(mineral)'.
+    Class for mineral in a constraint with vol. fraction and surface area. There can be multiple
+    pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add
+    function. pconstraint_mineral can be manually appended to minerals_list in a pconstraint object.
+    e.g., 'constraint.mineral_list.append(mineral)'.
 
     :param name: Mineral name.
     :type name: str
@@ -1155,7 +1190,7 @@ class pdata(object):
                 pass
 
         # OPTIONS
-        temp_path = ppath();
+        temp_path = ppath()
         temp_path.filename = filename
         if temp_path.filename:
             if temp_path.absolute_to_file != os.getcwd():
@@ -1353,7 +1388,8 @@ class pdata(object):
 
     def read(self, filename=''):
         """
-        Read a given PFLOTRAN input file. This method is useful for reading an existing a PFLOTRAN input deck and all the corresponding PyFLOTRAN objects and data structures are autmatically created.
+        Read a given PFLOTRAN input file. This method is useful for reading an existing a PFLOTRAN input deck and all
+        the corresponding PyFLOTRAN objects and data structures are autmatically created.
 
         :param filename: Name of input file.
         :type filename: str
@@ -1397,7 +1433,8 @@ class pdata(object):
 
         def get_next_line(skip_readline=skip_readline, line=line):
             """
-            Used by read function to avoid skipping a line in cases where a particular read function might read an extra line.
+            Used by read function to avoid skipping a line in cases where a particular read function might read an
+            extra line.
             """
 
             if skip_readline:
@@ -1408,21 +1445,26 @@ class pdata(object):
                 return line
 
         with open(self.filename, 'r') as infile:
-            keepReading = True
-            while keepReading:
+            keep_reading = True
+            while keep_reading:
                 line = get_next_line()
-                if not line: keepReading = False
-                if len(line.strip()) == 0: continue
+                if not line: keep_reading = False
+                if len(line.strip()) == 0:
+                    continue
                 card = line.split()[0].lower()  # make card lower case
-                if card == 'overwrite_restart_flow_params': self.overwrite_restart_flow_params = True
+                if card == 'overwrite_restart_flow_params':
+                    self.overwrite_restart_flow_params = True
                 if card == 'skip':
-                    keepReading1 = True
-                    while keepReading1:
+                    keep_reading_1 = True
+                    while keep_reading_1:
                         line1 = get_next_line()
-                        if not line1: keepReading1 = False
-                        if len(line1.strip()) == 0: continue
+                        if not line1:
+                            keep_reading_1 = False
+                        if len(line1.strip()) == 0:
+                            continue
                         card1 = line1.split()[0].lower()
-                        if card1 == 'noskip': keepReading1 = False
+                        if card1 == 'noskip':
+                            keep_reading_1 = False
 
                 if card in cards:  # check if a valid cardname
                     if card in ['co2_database', 'checkpoint', 'restart', 'dataset', 'material_property',
@@ -1448,7 +1490,8 @@ class pdata(object):
 
     def write(self, filename=''):
         """
-        Write pdata object to PFLOTRAN input file. Does not execute the input file - only writes a corresponding PFLOTRAN input file.
+        Write pdata object to PFLOTRAN input file. Does not execute the input file - only writes a corresponding
+        PFLOTRAN input file.
 
         :param filename: Name of PFLOTRAN input file.
         :type filename: str
@@ -2180,9 +2223,10 @@ class pdata(object):
             if prop.id in self.prop.keys():
                 if not overwrite:
                     warning = 'WARNING: A Material Property with id \'' + str(
-                        prop.id) + '\' already exists. Prop will not be defined, use overwrite = True in add() to overwrite the old prop.'
+                        prop.id) + '\' already exists. Prop will not be defined, use overwrite = True in add() to ' \
+                                   'overwrite the old prop.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.prop[prop.id])
@@ -2382,51 +2426,55 @@ class pdata(object):
                         'PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a str (string).')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a list: [float, str, float, str]')
+                    'PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a '
+                    'list: [float, str, float, str]')
             outfile.write('\n')
         '''
-		# Determine dtf_i size, the length of the smallest sized list being used
-		# with MAXIMUM_TIMESTEP_SIZE with key word  'at'.
-		# Displays a warning if the lists are not all of equal length.
-		if time.dtf_i == 0:	# Checks to see if user manually specified length so that
-					# it does not re-assign user input
-			# Assign minimum value
-			time.dtf_i = min(len(time.dtf_lv), len(time.dtf_li),
-					 len(time.dtf_lv_unit), len(time.dtf_li_unit))
+        # Determine dtf_i size, the length of the smallest sized list being used
+        # with MAXIMUM_TIMESTEP_SIZE with key word  'at'.
+        # Displays a warning if the lists are not all of equal length.
+        if time.dtf_i == 0:	# Checks to see if user manually specified length so that
+                    # it does not re-assign user input
+            # Assign minimum value
+            time.dtf_i = min(len(time.dtf_lv), len(time.dtf_li),
+                     len(time.dtf_lv_unit), len(time.dtf_li_unit))
 
-			# Display warning if lists are not all of equal length
-			# This check may not be needed.
-			if not all(i == time.dtf_i for i in (len(time.dtf_lv), len(time.dtf_li),
-							     len(time.dtf_lv_unit),
-							     len(time.dtf_li_unit))):
-				print 'WARNING: The lengths of time.dtf_lv, time.dtf_li, time.dtf_lv, and time.dtf_li are not all of equal length.\n\tSome values assigned will be missing.\n'
+            # Display warning if lists are not all of equal length
+            # This check may not be needed.
+            if not all(i == time.dtf_i for i in (len(time.dtf_lv), len(time.dtf_li),
+                                 len(time.dtf_lv_unit),
+                                 len(time.dtf_li_unit))):
+                print 'WARNING: The lengths of time.dtf_lv, time.dtf_li, time.dtf_lv, and time.dtf_li are not all of
+                equal length.\n\tSome values assigned will be missing.\n'
 
-		# Write more MAXIMUM_TIMESTEP_SIZE statements if applicable
-		for i in range(0, time.dtf_i):
-			try:
-				# write before key word 'AT'
-				time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()# lower capitalization
-				outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
-				outfile.write(strD(time.dtf_lv[i]) + ' ') # Write Value
-				if time.dtf_lv_unit[i] in time_units_allowed:
-					outfile.write(time.dtf_lv_unit[i])# Write Time Unit
-				else:
-					print 'PyFLOTRAN ERROR: time.dtf_lv_unit: \'' + time.dtf_lv_unit[i] + '\' is invalid.'
-					print '       valid time.units', time_units_allowed, '\n'
+        # Write more MAXIMUM_TIMESTEP_SIZE statements if applicable
+        for i in range(0, time.dtf_i):
+            try:
+                # write before key word 'AT'
+                time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()# lower capitalization
+                outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
+                outfile.write(strD(time.dtf_lv[i]) + ' ') # Write Value
+                if time.dtf_lv_unit[i] in time_units_allowed:
+                    outfile.write(time.dtf_lv_unit[i])# Write Time Unit
+                else:
+                    print 'PyFLOTRAN ERROR: time.dtf_lv_unit: \'' + time.dtf_lv_unit[i] + '\' is invalid.'
+                    print '       valid time.units', time_units_allowed, '\n'
 
-				# write after key word 'AT'
-				time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()# lower capitalization
-				outfile.write(' at ')
-				outfile.write(strD(time.dtf_li[i]) + ' ') # Write Value
-				if time.dtf_li_unit[i] in time_units_allowed:
-					outfile.write(time.dtf_li_unit[i]) # Write Time Unit
-				else:
-					print 'PyFLOTRAN ERROR: time.dtf_li_unit: \'' + time.dtf_li_unit[i] + '\' is invalid.'
-					print '       valid time.units', time_units_allowed, '\n'
-				outfile.write('\n')
-			except:
-				print 'PyFLOTRAN ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of strings. All lists should be of equal length.\n'
-		'''
+                # write after key word 'AT'
+                time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()# lower capitalization
+                outfile.write(' at ')
+                outfile.write(strD(time.dtf_li[i]) + ' ') # Write Value
+                if time.dtf_li_unit[i] in time_units_allowed:
+                    outfile.write(time.dtf_li_unit[i]) # Write Time Unit
+                else:
+                    print 'PyFLOTRAN ERROR: time.dtf_li_unit: \'' + time.dtf_li_unit[i] + '\' is invalid.'
+                    print '       valid time.units', time_units_allowed, '\n'
+                outfile.write('\n')
+            except:
+                print 'PyFLOTRAN ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and
+                time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of
+                strings. All lists should be of equal length.\n'
+        '''
         outfile.write('END\n\n')
 
     def _read_lsolver(self, infile, line):
@@ -2454,9 +2502,10 @@ class pdata(object):
             if lsolver.name in self.lsolver.keys():
                 if not overwrite:
                     warning = 'WARNING: A linear solver with name \'' + str(
-                        lsolver.name) + '\' already exists. lsolver will not be defined, use overwrite = True in add() to overwrite the old lsolver.'
+                        lsolver.name) + '\' already exists. lsolver will not be defined, use overwrite = True in add() ' \
+                                        'to overwrite the old lsolver.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.lsolver[lsolver.name])
@@ -2518,9 +2567,10 @@ class pdata(object):
             if nsolver.name in self.nsolver.keys():
                 if not overwrite:
                     warning = 'WARNING: A newton solver with name \'' + str(
-                        nsolver.name) + '\' already exists. nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.'
+                        nsolver.name) + '\' already exists. nsolver will not be defined, use overwrite = True in add() ' \
+                                        'to overwrite the old nsolver.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.nsolver[nsolver.name])
@@ -2821,9 +2871,10 @@ class pdata(object):
             if sat.name in self.saturation.keys():
                 if not overwrite:
                     warning = 'WARNING: A saturation function with name \'' + str(
-                        sat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old saturation function.'
+                        sat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old saturation ' \
+                                    'function.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.sat[sat.name])
@@ -2952,9 +3003,10 @@ class pdata(object):
             if char.name in self.char.keys():
                 if not overwrite:
                     warning = 'WARNING: A Characteristic Curve with name \'' + str(
-                        char.name) + '\' already exists. Characteristic curve will not be defined, use overwrite = True in add() to overwrite the old characteristic curve.'
+                        char.name) + '\' already exists. Characteristic curve will not be defined, use overwrite = True ' \
+                                     'in add() to overwrite the old characteristic curve.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.char[char.name])
@@ -2978,7 +3030,8 @@ class pdata(object):
                     outfile.write('  SATURATION_FUNCTION ' +
                                   char.saturation_function_type + '\n')
                 else:
-                    print '       valid  char.saturation_function_types', characteristic_curves_saturation_function_types_allowed, '\n'
+                    print '       valid  char.saturation_function_types', \
+                        characteristic_curves_saturation_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'char.saturation_function_type: \'' + char.saturation_function_type + '\' is invalid.')
                 if char.sf_alpha:
@@ -3005,14 +3058,17 @@ class pdata(object):
             if char.default:
                 outfile.write('  DEFAULT ' + '\n')  # This just prints the DEFAULT flag
             if char.liquid_permeability_function_type:
-                if char.liquid_permeability_function_type in characteristic_curves_liquid_permeability_function_types_allowed:
+                if char.liquid_permeability_function_type in \
+                        characteristic_curves_liquid_permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION ' +
                                   char.liquid_permeability_function_type + '\n')
                 # outfile.write('   PHASE LIQUID' + '\n')
                 else:
-                    print '       valid  char.liquid_permeability_function_types', characteristic_curves_liquid_permeability_function_types_allowed, '\n'
+                    print '       valid  char.liquid_permeability_function_types', \
+                        characteristic_curves_liquid_permeability_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type + '\' is invalid.')
+                        'char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type +
+                        '\' is invalid.')
                 if char.lpf_m:
                     outfile.write('   M ' + strD(char.lpf_m) + '\n')
                 if char.lpf_lambda:
@@ -3029,9 +3085,11 @@ class pdata(object):
                     outfile.write('   PHASE GAS' + '\n')
                 else:
 
-                    print '       valid  char.gas_permeability_function_types', characteristic_curves_gas_permeability_function_types_allowed, '\n'
+                    print '       valid  char.gas_permeability_function_types', \
+                        characteristic_curves_gas_permeability_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'char.gas_permeability_function_type: \'' + char.gas_permeability_function_type + '\' is invalid.')
+                        'char.gas_permeability_function_type: \'' + char.gas_permeability_function_type
+                        + '\' is invalid.')
                 if char.gpf_m:
                     outfile.write('   M ' + strD(char.gpf_m) + '\n')
                 if char.gpf_lambda:
@@ -3092,9 +3150,10 @@ class pdata(object):
             if region.name in self.region.keys():
                 if not overwrite:
                     warning = 'WARNING: A region with name \'' + str(
-                        region.name) + '\' already exists. Region will not be defined, use overwrite = True in add() to overwrite the old region.'
+                        region.name) + '\' already exists. Region will not be defined, use overwrite = True in add()' \
+                                       ' to overwrite the old region.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.region[region.name])
@@ -3154,9 +3213,10 @@ class pdata(object):
             if observation.region in self.observation.keys():
                 if not overwrite:
                     warning = 'WARNING: A observation with region \'' + str(
-                        observation.region) + '\' already exists. Observation will not be defined, use overwrite = True in add() to overwrite the old observation.'
+                        observation.region) + '\' already exists. Observation will not be defined, use overwrite = True ' \
+                                              'in add() to overwrite the old observation.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.observation[observation.region])
@@ -3197,7 +3257,8 @@ class pdata(object):
                 # This # indicates how many time a / or 'end'
                 # can be read before loop terminates.
 
-            elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == 'enthalpy' or key == 'flux':
+            elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == \
+                    'enthalpy' or key == 'flux':
                 if end_count == 0:
                     '''
                     Appending and instantiation of new flow_variables occur here. Only two entries are filled,
@@ -3209,7 +3270,8 @@ class pdata(object):
                     var.valuelist = []
                     var.list = []
 
-                    isValid = True  # Indicates the entries read here should be written so that entries outside flow conditions are ignored.
+                    isValid = True  # Indicates the entries read here should be written so that entries outside
+                    # flow conditions are ignored.
                     tstring = line.split()[0:]  # Convert string into list
 
                     flow.varlist.append(var)
@@ -3298,9 +3360,10 @@ class pdata(object):
             if flow.name in self.flow.keys():
                 if not overwrite:
                     warning = 'WARNING: A flow with name \'' + str(
-                        flow.name) + '\' already exists. Flow will not be defined, use overwrite = True in add() to overwrite the old flow.'
+                        flow.name) + '\' already exists. Flow will not be defined, use overwrite = True in add() to ' \
+                                     'overwrite the old flow.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.flow[flow.name])
@@ -3327,7 +3390,8 @@ class pdata(object):
             if isinstance(index, str):
                 flow = self.flow.get(index)  # Assign flow object to existing flow object with string type name/index
                 if not flow:  # Occurs if index/string is not found in flow object
-                    print 'WARNING: a flow object with flow.name', index, 'was not found. Current found entries are:', self.flow.keys(), 'pflow_variable was not added.\n'
+                    print 'WARNING: a flow object with flow.name', index, 'was not found. Current found entries are:', \
+                        self.flow.keys(), 'pflow_variable was not added.\n'
                     return
 
             elif isinstance(index, pflow):
@@ -3341,9 +3405,11 @@ class pdata(object):
                 if not overwrite:
                     warning = 'WARNING: A flow_variable with name \'' + str(
                         flow_variable.name) + '\' already exists in flow with name \'' + str(
-                        flow.name) + '\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable. Use flow=\'name\' if you want to specify the flow object to add flow_variable to.'
+                        flow.name) + '\'. Flow_variable will not be defined, use overwrite = True in add() to ' \
+                                     'overwrite the old flow_variable. Use flow=\'name\' if you want to specify the ' \
+                                     'flow object to add flow_variable to.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.flow_variable(flow)[flow_variable.name], flow)
@@ -3541,9 +3607,10 @@ class pdata(object):
             if initial_condition.region in self.initial_condition.keys():
                 if not overwrite:
                     warning = 'WARNING: A initial_condition with region \'' + str(
-                        initial_condition.region) + '\' already exists. initial_condition will not be defined, use overwrite = True in add() to overwrite the old initial_condition.'
+                        initial_condition.region) + '\' already exists. initial_condition will not be defined, use ' \
+                                                    'overwrite = True in add() to overwrite the old initial_condition.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.initial_condition[initial_condition.region])
@@ -3611,9 +3678,10 @@ class pdata(object):
             if boundary_condition.region in self.boundary_condition.keys():
                 if not overwrite:
                     warning = 'WARNING: A boundary_condition with region \'' + str(
-                        boundary_condition.region) + '\' already exists. boundary_condition will not be defined, use overwrite = True in add() to overwrite the old boundary_condition.'
+                        boundary_condition.region) + '\' already exists. boundary_condition will not be defined, use ' \
+                                                     'overwrite = True in add() to overwrite the old boundary_condition.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.boundary_condition[boundary_condition.region])
@@ -3678,9 +3746,10 @@ class pdata(object):
             if source_sink.region in self.source_sink.keys():
                 if not overwrite:
                     warning = 'WARNING: A source_sink with region \'' + str(
-                        source_sink.region) + '\' already exists. source_sink will not be defined, use overwrite = True in add() to overwrite the old source_sink.'
+                        source_sink.region) + '\' already exists. source_sink will not be defined, use overwrite = True ' \
+                                              'in add() to overwrite the old source_sink.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.source_sink[source_sink.region])
@@ -3737,9 +3806,10 @@ class pdata(object):
             if strata.region in self.strata.keys():
                 if not overwrite:
                     warning = 'WARNING: A strata with name \'' + str(
-                        strata.region) + '\' already exists. strata will not be defined, use overwrite = True in add() to overwrite the old strata.'
+                        strata.region) + '\' already exists. strata will not be defined, use overwrite = True in add() ' \
+                                         'to overwrite the old strata.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.strata[strata.region])
@@ -3898,7 +3968,7 @@ class pdata(object):
                     warning = 'WARNING: A dataset with name \'' + str(
                         dat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old dataset.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.dat[dat.name])
@@ -4029,7 +4099,7 @@ class pdata(object):
                                                                                           'm_kinetic.'
                     print warning
                     print
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return  # exit function
                 else:  # Executes if overwrite = True
                     self.delete(self.m_kinetic[m_kinetic.name])
@@ -4127,7 +4197,8 @@ class pdata(object):
                         np_constraint_list_type.append(line.split()[1].lower())  # Read 2nd word on line
                     except:
                         raise PyFLOTRAN_ERROR(
-                            'constraint_list_value and constraint_list_type requires at least one value. Value should = Number and type should = String\n')
+                            'constraint_list_value and constraint_list_type requires at least one value. Value should '
+                            '= Number and type should = String\n')
 
                     line = infile.readline()  # get next line
                     key = line.split()[0].lower()  # Used to stop loop when / or end is read
@@ -4146,9 +4217,10 @@ class pdata(object):
             if transport.name in self.transport.keys():
                 if not overwrite:
                     warning = 'WARNING: A transport with name \'' + str(
-                        transport.name) + '\' already exists. transport will not be defined, use overwrite = True in add() to overwrite the old transport.'
+                        transport.name) + '\' already exists. transport will not be defined, use overwrite = ' \
+                                          'True in add() to overwrite the old transport.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.transport[transport.name])
@@ -4192,7 +4264,8 @@ class pdata(object):
                             clt.index(i)) + '] is required to have a value when transport.constraint_list_value does.')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'transport.constraint_list_value and transport.constraint_list_type should be in list format, be equal in length, and have at least one value.\n')
+                    'transport.constraint_list_value and transport.constraint_list_type should be in list format, '
+                    'be equal in length, and have at least one value.\n')
             outfile.write('\n  END\n')  # END FOR CONSTRAINT_LIST
             outfile.write('END\n\n')  # END FOR TRANSPORT_CONDITION
 
@@ -4268,9 +4341,10 @@ class pdata(object):
             if constraint.name in self.constraint.keys():
                 if not overwrite:
                     warning = 'WARNING: A constraint with name \'' + str(
-                        constraint.name) + '\' already exists. constraint will not be defined, use overwrite = True in add() to overwrite the old constraint.'
+                        constraint.name) + '\' already exists. constraint will not be defined, use overwrite = True ' \
+                                           'in add() to overwrite the old constraint.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.constraint[constraint.name])
@@ -4292,7 +4366,9 @@ class pdata(object):
                 constraint = self.constraint.get(
                     index)  # Assign constraint object to existing constraint object with string type name/index
                 if not constraint:  # Occurs if index/string is not found in constraint object
-                    print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found entries are:', self.constraint.keys(), 'pconstraint_concentration was not added.\n'
+                    print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found ' \
+                                                                                      'entries are:', \
+                        self.constraint.keys(), 'pconstraint_concentration was not added.\n'
                     return
 
             elif isinstance(index, pconstraint):
@@ -4306,9 +4382,12 @@ class pdata(object):
                 if not overwrite:
                     warning = 'WARNING: A constraint_concentration with pspecies \'' + str(
                         constraint_concentration.pspecies) + '\' already exists in constraint with name \'' + str(
-                        constraint.name) + '\'. constraint_concentration will not be defined, use overwrite = True in add() to overwrite the old constraint_concentration. Use constraint=\'name\' if you want to specify the constraint object to add constraint_concentration to.'
+                        constraint.name) + '\'. constraint_concentration will not be defined, use overwrite = True in ' \
+                                           'add() to overwrite the old constraint_concentration. Use constraint=\'name\' ' \
+                                           'if you want to specify the constraint object to ' \
+                                           'add constraint_concentration to.'
                     print warning,
-                    buildWarnings.append(warning)
+                    build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.constraint_concentration(constraint)[constraint_concentration.pspecies],

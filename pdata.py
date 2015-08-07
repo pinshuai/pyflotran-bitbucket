@@ -1242,15 +1242,15 @@ class pdata(object):
 
         # RUN SIMULATION
         cwd = os.getcwd()
-        if self.work_dir: os.chdir(self.work_dir)
+        if self.work_dir:
+            os.chdir(self.work_dir)
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 
-        if num_procs == 1:
-            import multiprocessing
+        import multiprocessing
 
-            def proc():
-                process = subprocess.Popen([exe_path.full_path, '-pflotranin', self._path.filename], shell=False,
+        def proc(cmd):
+                process = subprocess.Popen(cmd.split(' '), shell=False,
                                            stdout=subprocess.PIPE,
                                            stderr=sys.stderr)
                 while True:
@@ -1261,21 +1261,21 @@ class pdata(object):
                         sys.stdout.write(out)
                         sys.stdout.flush()
 
-            multiprocessing.Process(target=proc).start()
+        if num_procs == 1:
+            arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
+            multiprocessing.Process(target=proc, args=(arg,)).start()
 
         else:
-            subprocess.call(
-                'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename,
-                shell=True, stdout=sys.stdout, stderr=sys.stderr)
+            arg = 'mpirun -np', str(num_procs), exe_path.full_path, '-pflotranin', self._path.filename
+            multiprocessing.Process(target=proc, args=(arg,)).start()
 
         if input_prefix:
             if num_procs == 1:
-                subprocess.call(exe_path.full_path + ' -input_prefix ' + self._path.filename, shell=True,
-                                stdout=sys.stdout, stderr=sys.stderr)
+                arg = exe_path.full_path + ' -input_prefix ' + self._path.filename
+                multiprocessing.Process(target=proc, args=(arg,)).start()
             else:
-                subprocess.call(
-                    'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename,
-                    shell=True, stdout=sys.stdout, stderr=sys.stderr)
+                arg = 'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
+                multiprocessing.Process(target=proc, args=(arg,)).start()
 
         # After executing simulation, go back to the parent directory
         if self.work_dir: os.chdir(cwd)

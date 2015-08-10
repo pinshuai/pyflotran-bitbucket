@@ -1877,6 +1877,10 @@ class pdata(object):
                 if isinstance(obji, pconstraint_concentration):
                     self._delete_constraint_concentration(obji)
 
+    @staticmethod
+    def splitter(a_line):
+        return a_line.split()[-1]
+
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
         tstring = line.split()[1:]  # Convert to list, ignore 1st word
@@ -1885,7 +1889,7 @@ class pdata(object):
         while i < len(tstring):
             try:
                 np_value_list.append(floatD(tstring[i]))
-            except ValueError, e:
+            except ValueError:
                 np_value_list.append(tstring[i])
             i += 1
 
@@ -2255,11 +2259,8 @@ class pdata(object):
                           strD(self.timestepper.max_saturation_change) + '\n')
         outfile.write('END\n\n')
 
-    def splitter(self, a_line):
-        return a_line.split()[-1]
-    
     def _read_prop(self, infile, line):
-        
+
         np_name = self.splitter(line)  # property name
         np_id = None
         p = pmaterial(0, '')  # assign defaults before reading in values
@@ -3256,9 +3257,8 @@ class pdata(object):
         if isinstance(region, pregion):
             if region.name in self.region.keys():
                 if not overwrite:
-                    warning = 'WARNING: A region with name \'' + str(
-                        region.name) + '\' already exists. Region will not be defined, use overwrite = True in add()' \
-                                       ' to overwrite the old region.'
+                    warning = 'WARNING: A region with name \'' + str(region.name) + '\' already exists. Region will' +  \
+                              'not be defined, use overwrite = True in add() to overwrite the old region.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3379,13 +3379,9 @@ class pdata(object):
 
                     is_valid = True  # Indicates the entries read here should be written so that entries outside
                     # flow conditions are ignored.
-                    tstring = line.split()[0:]  # Convert string into list
-
                     flow.varlist.append(var)
 
                 elif end_count == 1:
-                    count = 0
-
                     tstring2name = line.strip().split()[0]  # Assigns the 1st word on a line
                     tstring2 = line.split()[1:]  # Assigns the rest of the line
                     # #2 used because this is the 2nd reading of the variables
@@ -3396,8 +3392,8 @@ class pdata(object):
                         # for each list in a pflow_variable object, check all
                         # pflow_variable objects by name to determine correct assignment
                         # before assigning in values from a list
-                        keep_readingList = True
-                        while keep_readingList:
+                        keep_reading_list = True
+                        while keep_reading_list:
 
                             line = infile.readline()  # get next line
                             tstring2 = line.split()[:]  # split the whole string/line
@@ -3411,15 +3407,17 @@ class pdata(object):
                                     elif tstring2[0].lower() == 'data_units':
                                         var.data_unit_type = tstring2[1]
                                     elif line.split()[0] in ['/', 'end']:
-                                        keep_readingList = False
+                                        keep_reading_list = False
                                     else:
                                         tvarlist = pflow_variable_list()
                                         tvarlist.time_unit_value = floatD(tstring2[0])
                                         tvarlist.data_unit_value_list = []
                                         tvarlist.data_unit_value_list.append(floatD(tstring2[1]))
-                                        if len(tstring2) > 2: tvarlist.data_unit_value_list.append(floatD(tstring2[2]))
+                                        if len(tstring2) > 2:
+                                            tvarlist.data_unit_value_list.append(floatD(tstring2[2]))
                                         var.list.append(tvarlist)
-                            if line.split()[0] in ['/', 'end']: keep_readingList = False
+                            if line.split()[0] in ['/', 'end']:
+                                keep_reading_list = False
                     else:
                         # for each single variable in a pflow_variable object, check all
                         # pflow_variable object by name to determine correct assignment
@@ -3429,7 +3427,7 @@ class pdata(object):
                                     try:
                                         var.valuelist.append(floatD(substring))
                                     # If a string (e.g., C for temp.), assign to unit
-                                    except(ValueError):
+                                    except ValueError:
                                         var.unit = substring
             elif key == 'iphase':
                 flow.iphase = int(self.splitter(line))

@@ -762,6 +762,7 @@ class pflow(object):
 
     def __init__(self, name='', units_list=None, iphase=None, sync_timestep_with_update=False, datum=None,
                  datum_type='', varlist=None):
+
         if datum is None:
             datum = []
         if varlist is None:
@@ -776,44 +777,6 @@ class pflow(object):
         self.sync_timestep_with_update = sync_timestep_with_update  # Boolean
         self.datum = datum  # x, y, z, and a file name. [float,float,float,str]
         self.varlist = varlist
-
-    # Code below is an attempt to change the way sub-classes are added.
-    # it's not necessary. (Attempting to make it possible to do a flow.add(variable)
-    # instead of dat.add(variable). Current way of specifying which flow object to
-    # add to is dat.add(variable,flow) (e.g. Rate List instead of Rate)
-    '''
-    # Definitions for sub-class of pflow object
-
-    # Adds a new pflow_variable to a pflow object
-    def add(self,variable,overwrite=False):
-
-        # Establish super-class flow variable reference
-        flow = super(self,)
-
-        # check if flow_variable already exists
-        if isinstance(self.flow_variable,pflow_variable):
-    #			if flow_variable.name in super(self)._get_flow_variable(self).keys(): #testing
-            if flow_variable.name in self._get_flow_variable(self).keys():
-                if not overwrite:
-                    warning = 'WARNING: A flow_variable with name \''+str(flow_variable.name)+'\' already exists in flow
-                    with name \''+str(flow.name)+'\'. Flow_variable will not be defined, use overwrite = True in add() to overwrite the old flow_variable.'
-                    print warning; print
-                    build_warnings.append(warning)
-                    return
-                else: # Executes if overwrite = True
-                    self.delete(self._get_flow_variable(flow)[flow_variable.name],
-                            flow)
-
-        # Add flow_variable to flow (as a sub-class) if flow_variable does
-        # not exist in specified flow object
-        if flow_variable not in flow.varlist:
-            flow.varlist.append(flow_variable)
-
-    def _get_flow_variable(self, flow):
-        return dict([flow_variable.name, flow_variable] for flow_variable in flow.varlist if flow_variable.name)
-    flow_variable = property(_get_flow_variable)#: (*dict[pflow_variable]*) Dictionary of pflow_variable objects in a
-    specified flow object, indexed by flow_variable name
-    '''
 
 
 class pflow_variable(object):
@@ -1310,9 +1273,9 @@ class pdata(object):
             wd = os.getcwd() + os.sep
         # print wd # testing?
         # print self._path.filename # testing?
-        returnFlag = self.write(wd + self._path.filename)  # ALWAYS write input file
-        #		print returnFlag # testing?
-        if returnFlag:
+        return_flag = self.write(wd + self._path.filename)  # ALWAYS write input file
+
+        if return_flag:
             raise PyFLOTRAN_ERROR('Writing files')
 
         # RUN SIMULATION
@@ -1325,9 +1288,7 @@ class pdata(object):
         import multiprocessing
 
         def proc(cmd):
-            process = subprocess.Popen(cmd.split(' '), shell=False,
-                                       stdout=subprocess.PIPE,
-                                       stderr=sys.stderr)
+            process = subprocess.Popen(cmd.split(' '), shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
             while True:
                 out = process.stdout.read(1)
                 if out == '' and process.poll() is not None:
@@ -1536,14 +1497,13 @@ class pdata(object):
                             self._read_boundary_condition,
                             self._read_source_sink,
                             self._read_strata,
-                            self._read_constraint]
-
+                            self._read_constraint],
                            ))  # associate each card name with a read function, defined further below
 
         skip_readline = False
-        line = ''  # Memorizes the most recent line read in.
+        p_line = ''  # Memorizes the most recent line read in.
 
-        def get_next_line(skip_readline=skip_readline, line=line):
+        def get_next_line(skip_readline=skip_readline, line=p_line):
             """
             Used by read function to avoid skipping a line in cases where a particular read function might read an
             extra line.
@@ -1559,11 +1519,12 @@ class pdata(object):
         with open(self.filename, 'r') as infile:
             keep_reading = True
             while keep_reading:
-                line = get_next_line()
-                if not line: keep_reading = False
-                if len(line.strip()) == 0:
+                p_line = get_next_line()
+                if not p_line:
+                    keep_reading = False
+                if len(p_line.strip()) == 0:
                     continue
-                card = line.split()[0].lower()  # make card lower case
+                card = p_line.split()[0].lower()  # make card lower case
                 if card == 'overwrite_restart_flow_params':
                     self.overwrite_restart_flow_params = True
                 if card == 'skip':
@@ -1587,18 +1548,9 @@ class pdata(object):
                                 'transport_condition', 'constraint', 'uniform_velocity',
                                 'nonuniform_velocity']:
 
-                        read_fn[card](infile, line)
+                        read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
-
-                        # def _get_skip_readline(self): return self._skip_readline
-                        #	def _set_skip_readline(self, object): self._skip_readline = object
-                        #	skip_readline = property(_get_skip_readline, skip_readline) #: (**)
-
-                        # Memorizes the most recent line read in.
-                        #	def _get_line(self): return self._line
-                        #	def _set_line(self, object): self._line = object
-                        #	line = property(_get_line, _set_line) #: (**)
 
     def write(self, filename=''):
         """
@@ -1643,15 +1595,15 @@ class pdata(object):
 
         if self.restart.file_name:
             self._write_restart(outfile)
-        #		else: print 'info: restart not detected\n'
+        # else: print 'info: restart not detected\n'
 
         if self.datasetlist:
             self._write_dataset(outfile)
-        #		else: print 'info: dataset name not detected\n'
+        # else: print 'info: dataset name not detected\n'
 
         if self.chemistry:
             self._write_chemistry(outfile)
-        #		else: print 'info: chemistry not detected\n'
+        # else: print 'info: chemistry not detected\n'
 
         if self.grid:
             self._write_grid(outfile)
@@ -1660,7 +1612,7 @@ class pdata(object):
 
         if self.timestepper:
             self._write_timestepper(outfile)
-        #		else: print 'info: timestepper not detected\n'
+        # else: print 'info: timestepper not detected\n'
 
         if self.time:
             self._write_time(outfile)
@@ -1674,11 +1626,11 @@ class pdata(object):
 
         if self.lsolverlist:
             self._write_lsolver(outfile)
-        #		else: print 'info: lsolverlist (linear solver list) not detected\n'
+        # else: print 'info: lsolverlist (linear solver list) not detected\n'
 
         if self.nsolverlist:
             self._write_nsolver(outfile)
-        #		else: print 'info: nsolverlist (newton solver list) not detected\n'
+        # else: print 'info: nsolverlist (newton solver list) not detected\n'
 
         if self.output:
             self._write_output(outfile)
@@ -1733,7 +1685,8 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('(stratigraphy_coupler) strata is required, it is currently reading as empty!')
 
-        if self.constraint_list: self._write_constraint(outfile)
+        if self.constraint_list:
+            self._write_constraint(outfile)
 
         if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
             self._write_subsurface_simulation_end(outfile)
@@ -1761,11 +1714,8 @@ class pdata(object):
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
-        if True in checklist_bool:
-            pass
-        else:
-            print 'pdata.add used incorrectly! Cannot use pdata.add with one of the specificed object.'
-            sys.exit()
+        if True not in checklist_bool:
+            raise PyFLOTRAN_ERROR('pdata.add used incorrectly! Cannot use pdata.add with one of the specificed object.')
 
         # Always make index lower case if it is being used as a string
         if isinstance(index, str):
@@ -1971,22 +1921,22 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first key word
             if key == 'simulation_type':
-                simulation.simulation_type = line.split()[-1]
+                simulation.simulation_type = self.splitter(line)
             elif key == 'subsurface_flow':
-                simulation.subsurface_flow = line.split()[-1]
+                simulation.subsurface_flow = self.splitter(line)
                 keep_reading_1 = True
                 while keep_reading_1:
                     line = infile.readline()
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'mode':
-                        simulation.mode = line.split()[-1].lower()
+                        simulation.mode = self.splitter(line).lower()
                     elif key1 in ['/', 'end']:
                         keep_reading_1 = False
                     else:
                         raise PyFLOTRAN_ERROR('mode is missing!')
                 key_bank.append(key)
             elif key == 'subsurface_transport':
-                simulation.subsurface_transport = line.split()[-1]
+                simulation.subsurface_transport = self.splitter(line)
                 keep_reading_2 = True
                 while keep_reading_2:
                     line1 = infile.readline()
@@ -2000,7 +1950,7 @@ class pdata(object):
                 key_bank.append(key)
             elif key in ['/', 'end']:
                 keep_reading = False
-        if (not ('subsurface_flow' in key_bank) and ('subsurface_transport' in key_bank)):
+        if not ('subsurface_flow' in key_bank) and ('subsurface_transport' in key_bank):
             simulation.subsurface_flow = ''
             simulation.mode = ''
         self.simulation = simulation
@@ -2059,7 +2009,7 @@ class pdata(object):
             outfile.write('END_SUBSURFACE\n\n')
 
     def _read_co2_database(self, infile, line):
-        self.co2_database = del_extra_slash(line.split()[-1])
+        self.co2_database = del_extra_slash(self.splitter(line))
 
     def _write_overwrite_restart(self, outfile):
         outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
@@ -2077,8 +2027,8 @@ class pdata(object):
 
             if key == 'cells':
                 keep_reading_2 = True
+                cell_list = []
                 while keep_reading_2:
-                    cell_list = []
                     for i in range(100):
                         line1 = infile.readline()
                         if line1.strip().split()[0].lower() in ['/', 'end']:
@@ -2087,7 +2037,7 @@ class pdata(object):
                         cell_list.append(int(line1))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
-                regression.cells_per_process = line.split()[-1]
+                regression.cells_per_process = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -2118,7 +2068,7 @@ class pdata(object):
             if key in ['#']:
                 pass
             if key == 'type':
-                grid.type = line.split()[-1]
+                grid.type = self.splitter(line)
             elif key == 'bounds':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -2147,7 +2097,7 @@ class pdata(object):
             elif key == 'filename':
                 if grid.type != 'unstructured':
                     raise PyFLOTRAN_ERROR('filename not need with structure grid!')
-                grid.filename = line.split()[-1]
+                grid.filename = self.splitter(line)
             elif key == 'dxyz':
                 if bounds_key:
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
@@ -2239,29 +2189,29 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'ts_mode':
-                np_ts_mode = str(line.split()[-1])
+                np_ts_mode = str(self.splitter(line))
             if key == 'ts_acceleration':
-                np_ts_acceleration = int(line.split()[-1])
+                np_ts_acceleration = int(self.splitter(line))
             elif key == 'num_steps_after_cut':
-                np_num_steps_after_cut = int(line.split()[-1])
+                np_num_steps_after_cut = int(self.splitter(line))
             elif key == 'max_steps':
-                np_max_steps = int(line.split()[-1])
+                np_max_steps = int(self.splitter(line))
             elif key == 'max_ts_cuts':
-                np_max_ts_cuts = int(line.split()[-1])
+                np_max_ts_cuts = int(self.splitter(line))
             elif key == 'cfl_limiter':
-                np_cfl_limiter = floatD(line.split()[-1])
+                np_cfl_limiter = floatD(self.splitter(line))
             elif key == 'initialize_to_steady_state':
                 np_initialize_to_steady_state = True
             elif key == 'run_as_steady_state':
                 np_run_as_steady_state = True
             elif key == 'max_pressure_change':
-                np_max_pressure_change = floatD(line.split()[-1])
+                np_max_pressure_change = floatD(self.splitter(line))
             elif key == 'max_temperature_change':
-                np_max_temperature_change = floatD(line.split()[-1])
+                np_max_temperature_change = floatD(self.splitter(line))
             elif key == 'max_concentration_change':
-                np_max_concentration_change = floatD(line.split()[-1])
+                np_max_concentration_change = floatD(self.splitter(line))
             elif key == 'max_saturation_change':
-                np_max_saturation_change = floatD(line.split()[-1])
+                np_max_saturation_change = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -2305,8 +2255,12 @@ class pdata(object):
                           strD(self.timestepper.max_saturation_change) + '\n')
         outfile.write('END\n\n')
 
+    def splitter(self, a_line):
+        return a_line.split()[-1]
+    
     def _read_prop(self, infile, line):
-        np_name = line.split()[-1]  # property name
+        
+        np_name = self.splitter(line)  # property name
         np_id = None
         p = pmaterial(0, '')  # assign defaults before reading in values
         np_porosity = p.porosity
@@ -2327,45 +2281,45 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
-                np_id = int(line.split()[-1])
+                np_id = int(self.splitter(line))
             elif key == 'characteristic_curves':
-                np_characteristic_curves = line.split()[-1]
+                np_characteristic_curves = self.splitter(line)
             elif key == 'porosity':
                 if line.split()[1].lower() == 'dataset':
-                    np_porosity = line.split()[-1]
+                    np_porosity = self.splitter(line)
                 else:
-                    np_porosity = floatD(line.split()[-1])
+                    np_porosity = floatD(self.splitter(line))
             elif key == 'tortuosity':
-                np_tortuosity = floatD(line.split()[-1])
+                np_tortuosity = floatD(self.splitter(line))
             elif key == 'rock_density':
-                np_density = floatD(line.split()[-1])
+                np_density = floatD(self.splitter(line))
             elif key == 'specific_heat':
-                np_specific_heat = floatD(line.split()[-1])
+                np_specific_heat = floatD(self.splitter(line))
             elif key == 'thermal_conductivity_dry':
-                np_cond_dry = floatD(line.split()[-1])
+                np_cond_dry = floatD(self.splitter(line))
             elif key == 'thermal_conductivity_wet':
-                np_cond_wet = floatD(line.split()[-1])
+                np_cond_wet = floatD(self.splitter(line))
             elif key == 'saturation_function':
-                np_saturation = line.split()[-1]
+                np_saturation = self.splitter(line)
             elif key == 'permeability_power':
-                np_permeability_power = line.split()[-1]
+                np_permeability_power = self.splitter(line)
             elif key == 'permeability_critical_porosity':
-                np_permeability_critical_porosity = line.split()[-1]
+                np_permeability_critical_porosity = self.splitter(line)
             elif key == 'permeability_min_scale_factor':
-                np_permeability_min_scale_factor = line.split()[-1]
+                np_permeability_min_scale_factor = self.splitter(line)
             elif key == 'permeability':
                 keep_reading_2 = True
                 while keep_reading_2:
                     line = infile.readline()  # get next line
                     key = line.split()[0].lower()  # take first keyword
                     if key == 'perm_iso':
-                        np_permeability.append(floatD(line.split()[-1]))
+                        np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'perm_x':
-                        np_permeability.append(floatD(line.split()[-1]))
+                        np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'perm_y':
-                        np_permeability.append(floatD(line.split()[-1]))
+                        np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'perm_z':
-                        np_permeability.append(floatD(line.split()[-1]))
+                        np_permeability.append(floatD(self.splitter(line)))
                     elif key in ['/', 'end']:
                         keep_reading_2 = False
             elif key in ['/', 'end']:
@@ -2638,7 +2592,7 @@ class pdata(object):
 
     def _read_lsolver(self, infile, line):
         lsolver = plsolver()  # temporary object while reading
-        lsolver.name = line.split()[-1].lower()  # solver type - tran_solver or flow_solver
+        lsolver.name = self.splitter(line).lower()  # solver type - tran_solver or flow_solver
 
         keep_reading = True
 
@@ -2647,9 +2601,9 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'solver':
-                lsolver.solver = line.split()[-1]  # Assign last word
+                lsolver.solver = self.splitter(line)  # Assign last word
             if key == 'preconditioner':
-                lsolver.preconditioner = line.split()[-1]
+                lsolver.preconditioner = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -2694,7 +2648,7 @@ class pdata(object):
 
         nsolver = pnsolver('')  # Assign Defaults
 
-        nsolver.name = line.split()[-1].lower()  # newton solver type - tran_solver or flow_solver
+        nsolver.name = self.splitter(line).lower()  # newton solver type - tran_solver or flow_solver
 
         keep_reading = True
 
@@ -2703,19 +2657,19 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'atol':
-                nsolver.atol = floatD(line.split()[-1])
+                nsolver.atol = floatD(self.splitter(line))
             if key == 'rtol':
-                nsolver.rtol = floatD(line.split()[-1])
+                nsolver.rtol = floatD(self.splitter(line))
             if key == 'stol':
-                nsolver.stol = floatD(line.split()[-1])
+                nsolver.stol = floatD(self.splitter(line))
             if key == 'dtol':
-                nsolver.dtol = floatD(line.split()[-1])
+                nsolver.dtol = floatD(self.splitter(line))
             if key == 'itol':
-                nsolver.itol = floatD(line.split()[-1])
+                nsolver.itol = floatD(self.splitter(line))
             if key == 'maxit':
-                nsolver.max_it = int(line.split()[-1])
+                nsolver.max_it = int(self.splitter(line))
             if key == 'maxf':
-                nsolver.max_f = int(line.split()[-1])
+                nsolver.max_f = int(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
         self.add(nsolver)  # Assign
@@ -2795,22 +2749,22 @@ class pdata(object):
             elif key == 'screen':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'periodic':
-                    output.screen_periodic = int(line.split()[-1])
+                    output.screen_periodic = int(self.splitter(line))
             elif key == 'periodic':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'time':
                     output.periodic_time.append(floatD(line.split()[-2]))  # 2nd from last word.
-                    output.periodic_time.append(line.split()[-1])  # last word
+                    output.periodic_time.append(self.splitter(line))  # last word
                 elif tstring == 'timestep':
                     output.periodic_timestep.append(floatD(line.split()[-2]))  # 2nd from last word.
-                    output.periodic_timestep.append(line.split()[-1])  # last word
+                    output.periodic_timestep.append(self.splitter(line))  # last word
             elif key == 'periodic_observation':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'time':
                     output.periodic_observation_time.append(floatD(line.split()[-2]))  # 2nd from last word.
-                    output.periodic_observation_time.append(line.split()[-1])  # last word
+                    output.periodic_observation_time.append(self.splitter(line))  # last word
                 elif tstring == 'timestep':
-                    output.periodic_observation_timestep = int(line.split()[-1])
+                    output.periodic_observation_timestep = int(self.splitter(line))
             elif key == 'print_column_ids':
                 output.print_column_ids = True
             elif key == 'format':
@@ -2962,7 +2916,7 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first
 
             if key == 'diffusion_coefficient':
-                np_diffusion_coefficient = floatD(line.split()[-1])  # Read last entry
+                np_diffusion_coefficient = floatD(self.splitter(line))  # Read last entry
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -2977,14 +2931,13 @@ class pdata(object):
 
         # Write out requested (not null) fluid properties
         if fluid.diffusion_coefficient:
-            outfile.write('  DIFFUSION_COEFFICIENT ' +
-                          strD(fluid.diffusion_coefficient) + '\n')  # Read last entry
+            outfile.write('  DIFFUSION_COEFFICIENT ' + strD(fluid.diffusion_coefficient) + '\n')  # Read last entry
         outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
 
         saturation = psaturation()  # assign defaults before reading in values
-        saturation.name = line.split()[-1].lower()  # saturation function name, passed in.
+        saturation.name = self.splitter(line).lower()  # saturation function name, passed in.
 
         keep_reading = True
 
@@ -2993,31 +2946,31 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first  key word
 
             if key == 'permeability_function_type':
-                saturation.permeability_function_type = line.split()[-1]
+                saturation.permeability_function_type = self.splitter(line)
             elif key == 'saturation_function_type':
-                saturation.saturation_function_type = line.split()[-1]
+                saturation.saturation_function_type = self.splitter(line)
             elif key == 'residual_saturation_liquid':
-                saturation.residual_saturation_liquid = floatD(line.split()[-1])
+                saturation.residual_saturation_liquid = floatD(self.splitter(line))
             elif key == 'residual_saturation_gas':
-                saturation.residual_saturation_gas = floatD(line.split()[-1])
+                saturation.residual_saturation_gas = floatD(self.splitter(line))
             elif key == 'residual_saturation':  # Alternative to check
                 tstring = line.strip().split()[1].lower()  # take 2nd key word
                 if tstring == 'liquid_phase':
-                    saturation.residual_saturation_liquid = floatD(line.split()[-1])
+                    saturation.residual_saturation_liquid = floatD(self.splitter(line))
                 elif tstring == 'gas_phase':
-                    saturation.residual_saturation_gas = floatD(line.split()[-1])
+                    saturation.residual_saturation_gas = floatD(self.splitter(line))
                 else:  # if no 2nd word exists
-                    saturation.residual_saturation = floatD(line.split()[-1])
+                    saturation.residual_saturation = floatD(self.splitter(line))
             elif key == 'lambda':
-                saturation.a_lambda = floatD(line.split()[-1])
+                saturation.a_lambda = floatD(self.splitter(line))
             elif key == 'alpha':
-                saturation.alpha = floatD(line.split()[-1])
+                saturation.alpha = floatD(self.splitter(line))
             elif key == 'max_capillary_pressure':
-                saturation.max_capillary_pressure = floatD(line.split()[-1])
+                saturation.max_capillary_pressure = floatD(self.splitter(line))
             elif key == 'betac':
-                saturation.betac = floatD(line.split()[-1])
+                saturation.betac = floatD(self.splitter(line))
             elif key == 'power':
-                saturation.power = floatD(line.split()[-1])
+                saturation.power = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3055,8 +3008,7 @@ class pdata(object):
                 outfile.write('\n')
             if sat.permeability_function_type:
                 if sat.permeability_function_type in permeability_function_types_allowed:
-                    outfile.write('  PERMEABILITY_FUNCTION_TYPE ' +
-                                  sat.permeability_function_type + '\n')
+                    outfile.write('  PERMEABILITY_FUNCTION_TYPE ' + sat.permeability_function_type + '\n')
                 else:
                     print('valid saturation.permeability_function_types', saturation_function_types_allowed, '\n')
                     raise PyFLOTRAN_ERROR(
@@ -3066,21 +3018,17 @@ class pdata(object):
                     outfile.write('  SATURATION_FUNCTION_TYPE ' +
                                   sat.saturation_function_type + '\n')
             if sat.residual_saturation or sat.residual_saturation == 0:
-                outfile.write('  RESIDUAL_SATURATION ' +
-                              strD(sat.residual_saturation) + '\n')
+                outfile.write('  RESIDUAL_SATURATION ' + strD(sat.residual_saturation) + '\n')
             if sat.residual_saturation_liquid or sat.residual_saturation_liquid == 0:
-                outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' +
-                              strD(sat.residual_saturation_liquid) + '\n')
+                outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' + strD(sat.residual_saturation_liquid) + '\n')
             if sat.residual_saturation_gas or sat.residual_saturation_gas == 0:
-                outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' +
-                              strD(sat.residual_saturation_gas) + '\n')
+                outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' + strD(sat.residual_saturation_gas) + '\n')
             if sat.a_lambda:
                 outfile.write('  LAMBDA ' + strD(sat.a_lambda) + '\n')
             if sat.alpha:
                 outfile.write('  ALPHA ' + strD(sat.alpha) + '\n')
             if sat.max_capillary_pressure:
-                outfile.write('  MAX_CAPILLARY_PRESSURE ' +
-                              strD(sat.max_capillary_pressure) + '\n')
+                outfile.write('  MAX_CAPILLARY_PRESSURE ' + strD(sat.max_capillary_pressure) + '\n')
             if sat.betac:
                 outfile.write('  BETAC ' + strD(sat.betac) + '\n')
             if sat.power:
@@ -3090,7 +3038,7 @@ class pdata(object):
     def _read_characteristic_curves(self, infile, line):
 
         characteristic_curves = pcharacteristic_curves()  # assign defaults before reading in values
-        characteristic_curves.name = line.split()[-1].lower()  # Characteristic curve name, passed in.
+        characteristic_curves.name = self.splitter(line).lower()  # Characteristic curve name, passed in.
 
         keep_reading = True
 
@@ -3099,43 +3047,43 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first  key word
 
             if key == 'saturation_function_type':
-                characteristic_curves.saturation_function_type = line.split()[-1]
+                characteristic_curves.saturation_function_type = self.splitter(line)
             elif key == 'sf_alpha':
-                characteristic_curves.sf_alpha = floatD(line.split()[-1])
+                characteristic_curves.sf_alpha = floatD(self.splitter(line))
             elif key == 'sf_m':
-                characteristic_curves.sf_m = floatD(line.split()[-1])
+                characteristic_curves.sf_m = floatD(self.splitter(line))
             elif key == 'sf_lambda':
-                characteristic_curves.sf_lambda = floatD(line.split()[-1])
+                characteristic_curves.sf_lambda = floatD(self.splitter(line))
             elif key == 'sf_liquid_residual_saturation':
-                characteristic_curves.sf_liquid_residual_saturation = floatD(line.split()[-1])
+                characteristic_curves.sf_liquid_residual_saturation = floatD(self.splitter(line))
             elif key == 'sf_gas_residual_saturation':
-                characteristic_curves.sf_gas_residual_saturation = floatD(line.split()[-1])
+                characteristic_curves.sf_gas_residual_saturation = floatD(self.splitter(line))
             elif key == 'max_capillary_pressure':
-                characteristic_curves.max_capillary_pressure = floatD(line.split()[-1])
+                characteristic_curves.max_capillary_pressure = floatD(self.splitter(line))
             elif key == 'smooth':
-                characteristic_curves.smooth = floatD(line.split()[-1])
+                characteristic_curves.smooth = floatD(self.splitter(line))
             elif key == 'power':
-                characteristic_curves.power = floatD(line.split()[-1])
+                characteristic_curves.power = floatD(self.splitter(line))
             elif key == 'default':
-                characteristic_curves.default = floatD(line.split()[-1])
+                characteristic_curves.default = floatD(self.splitter(line))
             elif key == 'liquid_permeability_function_type':
-                characteristic_curves.liquid_permeability_function_type = line.split()[-1]
+                characteristic_curves.liquid_permeability_function_type = self.splitter(line)
             elif key == 'lpf_m':
-                characteristic_curves.lpf_m = floatD(line.split()[-1])
+                characteristic_curves.lpf_m = floatD(self.splitter(line))
             elif key == 'lpf_lambda':
-                characteristic_curves.lpf_lambda = floatD(line.split()[-1])
+                characteristic_curves.lpf_lambda = floatD(self.splitter(line))
             elif key == 'lpf_liquid_residual_saturation':
-                characteristic_curves.lpf_liquid_residual_saturation = floatD(line.split()[-1])
+                characteristic_curves.lpf_liquid_residual_saturation = floatD(self.splitter(line))
             elif key == 'gas_permeability_function_type':
-                characteristic_curves.gas_permeability_function_type = line.split()[-1]
+                characteristic_curves.gas_permeability_function_type = self.splitter(line)
             elif key == 'gpf_m':
-                characteristic_curves.gpf_m = floatD(line.split()[-1])
+                characteristic_curves.gpf_m = floatD(self.splitter(line))
             elif key == 'gpf_lambda':
-                characteristic_curves.gpf_lambda = floatD(line.split()[-1])
+                characteristic_curves.gpf_lambda = floatD(self.splitter(line))
             elif key == 'gpf_liquid_residual_saturation':
-                characteristic_curves.gpf_liquid_residual_saturation = floatD(line.split()[-1])
+                characteristic_curves.gpf_liquid_residual_saturation = floatD(self.splitter(line))
             elif key == 'gpf_gas_residual_saturation':
-                characteristic_curves.gpf_gas_residual_saturation = floatD(line.split()[-1])
+                characteristic_curves.gpf_gas_residual_saturation = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3269,7 +3217,7 @@ class pdata(object):
         region.coordinates_lower = [None] * 3
         region.coordinates_upper = [None] * 3
 
-        region.name = line.split()[-1].lower()
+        region.name = self.splitter(line).lower()
 
         keep_reading = True
         while keep_reading:  # Read through all cards
@@ -3360,7 +3308,7 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'region':
-                observation.region = line.split()[-1]
+                observation.region = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3400,7 +3348,7 @@ class pdata(object):
         flow.datum = []
         flow.varlist = []
         flow.datum_type = ''
-        flow.name = line.split()[-1].lower()  # Flow Condition name passed in.
+        flow.name = self.splitter(line).lower()  # Flow Condition name passed in.
 
         keep_reading = True
         is_valid = False  # Used so that entries outside flow conditions are ignored
@@ -3484,7 +3432,7 @@ class pdata(object):
                                     except(ValueError):
                                         var.unit = substring
             elif key == 'iphase':
-                flow.iphase = int(line.split()[-1])
+                flow.iphase = int(self.splitter(line))
             elif key == 'sync_timestep_with_update':
                 flow.sync_timestep_with_update = True
             elif key == 'datum':
@@ -3729,7 +3677,7 @@ class pdata(object):
 
     def _read_initial_condition(self, infile, line):
         if len(line.split()) > 1:
-            np_name = line.split()[-1].lower()  # Flow Condition name passed in.
+            np_name = self.splitter(line).lower()  # Flow Condition name passed in.
         else:
             np_name = None
         p = pinitial_condition()
@@ -3744,11 +3692,11 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first  key word
 
             if key == 'flow_condition':
-                np_flow = line.split()[-1]
+                np_flow = self.splitter(line)
             elif key == 'transport_condition':
-                np_transport = line.split()[-1]
+                np_transport = self.splitter(line)
             elif key == 'region':
-                np_region = line.split()[-1]
+                np_region = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3800,7 +3748,7 @@ class pdata(object):
 
     def _read_boundary_condition(self, infile, line):
         if len(line.split()) > 1:
-            np_name = line.split()[-1].lower()  # Flow Condition name passed in.
+            np_name = self.splitter(line).lower()  # Flow Condition name passed in.
         else:
             np_name = None
         p = pboundary_condition('')
@@ -3815,11 +3763,11 @@ class pdata(object):
             key = line.split()[0].lower()  # take first key word
 
             if key == 'flow_condition':
-                np_flow = line.split()[-1]  # take last word
+                np_flow = self.splitter(line)  # take last word
             elif key == 'transport_condition':
-                np_transport = line.split()[-1]
+                np_transport = self.splitter(line)
             elif key == 'region':
-                np_region = line.split()[-1]
+                np_region = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3875,7 +3823,7 @@ class pdata(object):
         np_region = p.region
 
         if len(line.split()) > 1:
-            np_name = line.split()[-1].lower()  # Flow Condition name passed in.
+            np_name = self.splitter(line).lower()  # Flow Condition name passed in.
         else:
             np_name = None
 
@@ -3886,9 +3834,9 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'flow_condition':
-                np_flow = line.split()[-1]  # take last word
+                np_flow = self.splitter(line)  # take last word
             elif key == 'region':
-                np_region = line.split()[-1]
+                np_region = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3947,9 +3895,9 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'region':
-                strata.region = line.split()[-1]  # take last word
+                strata.region = self.splitter(line)  # take last word
             elif key == 'material':
-                strata.material = line.split()[-1]  # take last word
+                strata.material = self.splitter(line)  # take last word
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3994,7 +3942,7 @@ class pdata(object):
     def _read_checkpoint(self, infile, line):
         checkpoint = pcheckpoint()
 
-        checkpoint.frequency = line.split()[-1].lower()  # checkpoint int passed in.
+        checkpoint.frequency = self.splitter(line).lower()  # checkpoint int passed in.
 
         self.checkpoint = checkpoint
 
@@ -4070,22 +4018,22 @@ class pdata(object):
     def _read_dataset(self, infile, line):
         dataset = pdataset()
         keep_reading = True
-        dataset.dataset_name = line.split()[-1]
+        dataset.dataset_name = self.splitter(line)
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first  key word
             if key == 'dataset_mapped_name':
-                dataset.dataset_mapped_name = line.split()[-1]
+                dataset.dataset_mapped_name = self.splitter(line)
             elif key == 'name':
-                dataset.name = line.split()[-1]
+                dataset.name = self.splitter(line)
             elif key == 'filename':
-                dataset.file_name = line.split()[-1]
+                dataset.file_name = self.splitter(line)
             elif key == 'hdf5_dataset_name':
-                dataset.hdf5_dataset_name = line.split()[-1]
+                dataset.hdf5_dataset_name = self.splitter(line)
             elif key == 'map_hdf5_dataset_name':
-                dataset.map_hdf5_dataset_name = line.split()[-1]
+                dataset.map_hdf5_dataset_name = self.splitter(line)
             elif key == 'max_buffer_size':
-                dataset.max_buffer_size = floatD(line.split()[-1])
+                dataset.max_buffer_size = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -4154,7 +4102,8 @@ class pdata(object):
             if key == 'primary_species':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
                     chem.pspecies_list.append(line.strip())
             elif key == 'skip':
                 keep_reading_1 = True
@@ -4164,22 +4113,26 @@ class pdata(object):
             elif key == 'secondary_species':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
                     chem.sec_species_list.append(line.strip())
             elif key == 'gas_species':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
                     chem.gas_species_list.append(line.strip())
             elif key == 'minerals':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
                     chem.minerals_list.append(line.strip())
             elif key == 'mineral_kinetics':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
 
                     mkinetic = pchemistry_m_kinetic()  # temporary object
                     mkinetic.rate_constant_list = []
@@ -4190,7 +4143,8 @@ class pdata(object):
                     # Write mineral attributes here
                     while True:
                         line = infile.readline()  # get next line
-                        if line.strip().lower() in ['/', 'end']: break
+                        if line.strip().lower() in ['/', 'end']:
+                            break
 
                         # key is a kinetic mineral attribute here
                         key = line.strip().split()[0].lower()  # take 1st
@@ -4202,12 +4156,12 @@ class pdata(object):
                             for substring in tstring:
                                 try:
                                     mkinetic.rate_constant_list.append(floatD(substring))
-                                except(ValueError):
+                                except ValueError:
                                     mkinetic.rate_constant_list.append(substring)
 
                     chem.m_kinetics_list.append(mkinetic)  # object assigned
             elif key == 'database':
-                chem.database = line.split()[-1]  # take last word
+                chem.database = self.splitter(line)  # take last word
             elif key == 'log_formulation':
                 chem.log_formulation = True
             elif key == 'update_porosity':
@@ -4215,7 +4169,7 @@ class pdata(object):
             elif key == 'update_permeability':
                 chem.update_permeability = True
             elif key == 'activity_coefficients':
-                chem.activity_coefficients = line.split()[-1]
+                chem.activity_coefficients = self.splitter(line)
             elif key == 'molal':
                 chem.molal = True
             elif key == 'output':
@@ -4326,7 +4280,7 @@ class pdata(object):
 
     def _read_transport(self, infile, line):
         p = ptransport('')
-        np_name = line.split()[-1].lower()  # Transport Condition name passed in.
+        np_name = self.splitter(line).lower()  # Transport Condition name passed in.
         np_type = p.type
         np_constraint_list_value = []
         np_constraint_list_type = []
@@ -4339,7 +4293,7 @@ class pdata(object):
 
             if key == 'type':
                 if len(line.split()) == 2:  # Only Assign if 2 words are on the line
-                    np_type = line.split()[-1]  # take last word
+                    np_type = self.splitter(line)  # take last word
             elif key == 'constraint_list':
                 keep_reading_2 = True
                 line = infile.readline()
@@ -4405,9 +4359,9 @@ class pdata(object):
 
                 i = 0  # index for constraint_list_value and constraint_list_type
                 for i in range(0, len(clv)):
-                    if clv[i] != None:
+                    if clv[i] is not None:
                         outfile.write('    ' + strD(clv[i]))
-                    if clt[i] != None:
+                    if clt[i] is not None:
                         if i == len(clv) - 1:
                             outfile.write('  ' + str(clt[i]).lower())
                         else:
@@ -4424,7 +4378,7 @@ class pdata(object):
 
     def _read_constraint(self, infile, line):
         constraint = pconstraint()
-        constraint.name = line.split()[-1].lower()  # constraint name passed in.
+        constraint.name = self.splitter(line).lower()  # constraint name passed in.
         constraint.concentration_list = []
         constraint.mineral_list = []
 

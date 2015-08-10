@@ -1481,8 +1481,10 @@ class pdata(object):
         ax.set_ylabel(y_label)
         ax.set_xscale(x_type)
         ax.set_yscale(y_type)
-        if x_range: ax.set_xlim(x_range)
-        if y_range: ax.set_ylim(y_range)
+        if x_range:
+            ax.set_xlim(x_range)
+        if y_range:
+            ax.set_ylim(y_range)
         lns = []
         for item in combined_var_obs_list:
             for key in combined_dict.keys():
@@ -1620,26 +1622,35 @@ class pdata(object):
         if self.simulation.subsurface_flow or self.simulation.subsurface_transport:
             self._write_subsurface_simulation_begin(outfile)
 
-        if self.regression.cells or self.regression.cells_per_process: self._write_regression(outfile)
+        if self.regression.cells or self.regression.cells_per_process:
+            self._write_regression(outfile)
 
-        if self.uniform_velocity.value_list: self._write_uniform_velocity(outfile)
+        if self.uniform_velocity.value_list:
+            self._write_uniform_velocity(outfile)
 
-        if self.nonuniform_velocity.filename: self._write_nonuniform_velocity(outfile)
+        if self.nonuniform_velocity.filename:
+            self._write_nonuniform_velocity(outfile)
 
-        if self.co2_database: self._write_co2_database(outfile)
+        if self.co2_database:
+            self._write_co2_database(outfile)
 
-        if self.overwrite_restart_flow_params: self._write_overwrite_restart(outfile)
+        if self.overwrite_restart_flow_params:
+            self._write_overwrite_restart(outfile)
 
-        if self.checkpoint.frequency: self._write_checkpoint(outfile)
+        if self.checkpoint.frequency:
+            self._write_checkpoint(outfile)
         # else: print 'info: checkpoint not detected\n'
 
-        if self.restart.file_name: self._write_restart(outfile)
+        if self.restart.file_name:
+            self._write_restart(outfile)
         #		else: print 'info: restart not detected\n'
 
-        if self.datasetlist: self._write_dataset(outfile)
+        if self.datasetlist:
+            self._write_dataset(outfile)
         #		else: print 'info: dataset name not detected\n'
 
-        if self.chemistry: self._write_chemistry(outfile)
+        if self.chemistry:
+            self._write_chemistry(outfile)
         #		else: print 'info: chemistry not detected\n'
 
         if self.grid:
@@ -1647,7 +1658,8 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('grid is required, it is currently reading as empty')
 
-        if self.timestepper: self._write_timestepper(outfile)
+        if self.timestepper:
+            self._write_timestepper(outfile)
         #		else: print 'info: timestepper not detected\n'
 
         if self.time:
@@ -1660,10 +1672,12 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('proplist is required, it is currently reading as empty')
 
-        if self.lsolverlist: self._write_lsolver(outfile)
+        if self.lsolverlist:
+            self._write_lsolver(outfile)
         #		else: print 'info: lsolverlist (linear solver list) not detected\n'
 
-        if self.nsolverlist: self._write_nsolver(outfile)
+        if self.nsolverlist:
+            self._write_nsolver(outfile)
         #		else: print 'info: nsolverlist (newton solver list) not detected\n'
 
         if self.output:
@@ -1676,9 +1690,11 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('fluid is required, it is currently reading as empty')
 
-        if self.saturationlist: self._write_saturation(outfile)
+        if self.saturationlist:
+            self._write_saturation(outfile)
 
-        if self.charlist: self._write_characteristic_curves(outfile)
+        if self.charlist:
+            self._write_characteristic_curves(outfile)
 
         # if (not self.charlist and not self.saturationlist  self.simulation.subsurface_flow=''):
         #	raise PyFLOTRAN_ERROR('either saturation or characteristic curves need to be defined!')
@@ -1688,20 +1704,25 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('regionlist is required, it is currently reading as empty!')
 
-        if self.observation_list: self._write_observation(outfile)
+        if self.observation_list:
+            self._write_observation(outfile)
 
-        if self.flowlist: self._write_flow(outfile)
+        if self.flowlist:
+            self._write_flow(outfile)
 
-        if self.transportlist: self._write_transport(outfile)
+        if self.transportlist:
+            self._write_transport(outfile)
 
         if self.initial_condition_list:
             self._write_initial_condition(outfile)
         else:
             raise PyFLOTRAN_ERROR('initial_condition_list is required, it is currently reading as empty!')
 
-        if self.boundary_condition_list: self._write_boundary_condition(outfile)
+        if self.boundary_condition_list:
+            self._write_boundary_condition(outfile)
 
-        if self.source_sink_list: self._write_source_sink(outfile)
+        if self.source_sink_list:
+            self._write_source_sink(outfile)
 
         if not (self.boundary_condition_list or self.source_sink_list):
             raise PyFLOTRAN_ERROR(
@@ -1805,91 +1826,106 @@ class pdata(object):
             self._delete_characteristic_curves(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):  # obji = object index
-                if isinstance(obji, pcharacteristic_curves): self._delete_characteristic_curves(obji)
+                if isinstance(obji, pcharacteristic_curves):
+                    self._delete_characteristic_curves(obji)
 
         if isinstance(obj, pchemistry_m_kinetic):
             self._delete_pchemistry_m_kinetic(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pchemistry_m_kinetic): self._delete_pchemistry_m_kinetic(obji)
+                if isinstance(obji, pchemistry_m_kinetic):
+                    self._delete_pchemistry_m_kinetic(obji)
 
         if isinstance(obj, plsolver):
             self._delete_lsolver(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, plsolver): self._delete_lsolver(obji)
+                if isinstance(obji, plsolver):
+                    self._delete_lsolver(obji)
 
         if isinstance(obj, pnsolver):
             self._delete_nsolver(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pnsolver): self._delete_nsolver(obji)
+                if isinstance(obji, pnsolver):
+                    self._delete_nsolver(obji)
 
         if isinstance(obj, pobservation):
             self._delete_observation(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pobservation): self._delete_observation(obji)
+                if isinstance(obji, pobservation):
+                    self._delete_observation(obji)
 
         if isinstance(obj, pregion):
             self._delete_region(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pregion): self._delete_region(obji)
+                if isinstance(obji, pregion):
+                    self._delete_region(obji)
 
         if isinstance(obj, pflow):
             self._delete_flow(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pflow): self._delete_flow(obji)
+                if isinstance(obji, pflow):
+                    self._delete_flow(obji)
 
         if isinstance(obj, pflow_variable):  # Flow object needs to be specified
             self._delete_flow_variable(obj, super_obj)
         elif isinstance(obj, list):  # Condition not tested
             for obji in copy(obj):
-                if isinstance(obji, pflow_variable): self._delete_flow_variable(obji)
+                if isinstance(obji, pflow_variable):
+                    self._delete_flow_variable(obji)
 
         if isinstance(obj, pinitial_condition):
             self._delete_initial_condition(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pinitial_condition): self._delete_initial_condition(obji)
+                if isinstance(obji, pinitial_condition):
+                    self._delete_initial_condition(obji)
 
         if isinstance(obj, pboundary_condition):
             self._delete_boundary_condition(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pboundary_condition): self._delete_boundary_condition(obji)
+                if isinstance(obji, pboundary_condition):
+                    self._delete_boundary_condition(obji)
 
         if isinstance(obj, psource_sink):
             self._delete_source_sink(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, psource_sink): self._delete_source_sink(obji)
+                if isinstance(obji, psource_sink):
+                    self._delete_source_sink(obji)
 
         if isinstance(obj, pstrata):
             self._delete_strata(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pstrata): self._delete_strata(obji)
+                if isinstance(obji, pstrata):
+                    self._delete_strata(obji)
 
         if isinstance(obj, ptransport):
             self._delete_transport(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, ptransport): self._delete_transport(obji)
+                if isinstance(obji, ptransport):
+                    self._delete_transport(obji)
 
         if isinstance(obj, pconstraint):
             self._delete_constraint(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):
-                if isinstance(obji, pconstraint): self._delete_constraint(obji)
+                if isinstance(obji, pconstraint):
+                    self._delete_constraint(obji)
 
         if isinstance(obj, pconstraint_concentration):  # Constraint object needs to be specified
             self._delete_constraint_concentration(obj, super_obj)
         elif isinstance(obj, list):  # Condition not tested
             for obji in copy(obj):
-                if isinstance(obji, pconstraint_concentration): self._delete_constraint_concentration(obji)
+                if isinstance(obji, pconstraint_concentration):
+                    self._delete_constraint_concentration(obji)
 
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
@@ -2150,17 +2186,17 @@ class pdata(object):
             outfile.write('  DXYZ\n')
             for j in range(len(grid.dx)):
                 outfile.write('    ' + strD(grid.dx[j]))
-                if (j % 5 == 4):
+                if j % 5 == 4:
                     outfile.write('   ' + '\\' + '\n')
             outfile.write('\n')
             for j in range(len(grid.dy)):
                 outfile.write('    ' + strD(grid.dy[j]))
-                if (j % 5 == 4):
+                if j % 5 == 4:
                     outfile.write('   ' + '\\' + '\n')
             outfile.write('\n')
             for j in range(len(grid.dz)):
                 outfile.write('    ' + strD(grid.dz[j]))
-                if (j % 5 == 4):
+                if j % 5 == 4:
                     outfile.write('   ' + '\\' + '\n')
             outfile.write('\n')
             outfile.write('  END\n')
@@ -2231,9 +2267,8 @@ class pdata(object):
 
         new_timestep = ptimestepper(np_ts_mode, np_ts_acceleration, np_num_steps_after_cut, np_max_steps,
                                     np_max_ts_cuts, np_cfl_limiter, np_initialize_to_steady_state,
-                                    np_run_as_steady_state, np_max_pressure_change,
-                                    np_max_temperature_change, np_max_concentration_change,
-                                    np_max_saturation_change)
+                                    np_run_as_steady_state, np_max_pressure_change, np_max_temperature_change,
+                                    np_max_concentration_change, np_max_saturation_change)
 
         self.timestepper = new_timestep
 
@@ -2430,16 +2465,16 @@ class pdata(object):
                 else:
                     time.dti.append(floatD(tstring[0]))
             elif key == 'maximum_timestep_size':
-                if ('at' not in line):
+                if 'at' not in line:
                     tstring = line.split()[1:]
                     if len(tstring) == 2:
                         time.dtf.append(floatD(tstring[0]))
                         time.dtf.append(tstring[-1])
                     else:
                         time.dtf.append(floatD(tstring[0]))
-                elif ('at' in line):
-                    ## Read maximum_timestep_size with AT keyword
-                    if (key == 'maximum_timestep_size'):
+                elif 'at' in line:
+                    # Read maximum_timestep_size with AT keyword
+                    if key == 'maximum_timestep_size':
 
                         # temporary variable
                         dtf_more = []
@@ -2494,8 +2529,7 @@ class pdata(object):
         # write INITIAL_TIMESTEP_SIZE statement (dti)
         if time.dti:
             try:
-                outfile.write('  INITIAL_TIMESTEP_SIZE ' +
-                              strD(time.dti[0]))  # Write value
+                outfile.write('  INITIAL_TIMESTEP_SIZE ' + strD(time.dti[0]))  # Write value
                 if time.dti[1].lower() in time_units_allowed:
                     outfile.write(' ' + time.dti[1] + '\n')  # Write time unit
                 else:

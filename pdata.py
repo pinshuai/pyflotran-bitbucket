@@ -1325,16 +1325,16 @@ class pdata(object):
         import multiprocessing
 
         def proc(cmd):
-                process = subprocess.Popen(cmd.split(' '), shell=False,
-                                           stdout=subprocess.PIPE,
-                                           stderr=sys.stderr)
-                while True:
-                    out = process.stdout.read(1)
-                    if out == '' and process.poll() is not None:
-                        break
-                    if out != '':
-                        sys.stdout.write(out)
-                        sys.stdout.flush()
+            process = subprocess.Popen(cmd.split(' '), shell=False,
+                                       stdout=subprocess.PIPE,
+                                       stderr=sys.stderr)
+            while True:
+                out = process.stdout.read(1)
+                if out == '' and process.poll() is not None:
+                    break
+                if out != '':
+                    sys.stdout.write(out)
+                    sys.stdout.flush()
 
         if num_procs == 1:
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
@@ -1349,7 +1349,8 @@ class pdata(object):
                 arg = exe_path.full_path + ' -input_prefix ' + self._path.filename
                 multiprocessing.Process(target=proc, args=(arg,)).start()
             else:
-                arg = 'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
+                arg = 'mpirun -np ' + str(
+                    num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
                 multiprocessing.Process(target=proc, args=(arg,)).start()
 
         # After executing simulation, go back to the parent directory
@@ -1358,19 +1359,30 @@ class pdata(object):
     def __repr__(self):
         return self.filename  # print to screen when called
 
-    def plot_data_from_tec(self, direction='X', variable_list=[], tec_filenames=[], legend_list=[], plot_filename='',
-                           fontsize=10, xlabel='', ylabel_list=[], xtype='linear', ytype='linear', xrange=(), yrange=(),
-                           xfactor=1.0, yfactor=1.0):
+    def plot_data_from_tec(self, direction='X', variable_list=None, tec_filenames=None, legend_list=None,
+                           plot_filename='', fontsize=10, x_label='', y_label_list=None, x_type='linear',
+                           y_type='linear', x_range=(), y_range=(), x_factor=1.0, y_factor=1.0):
 
-        for var, ylabel in zip(variable_list, ylabel_list):
+        if variable_list is None:
+            variable_list = []
+        if tec_filenames is None:
+            tec_filenames = []
+        if legend_list is None:
+            legend_list = []
+        if y_label_list is None:
+            y_label_list = []
+
+        for var, y_label in zip(variable_list, y_label_list):
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
-            ax.set_xscale(xtype)
-            ax.set_yscale(ytype)
-            if xrange: ax.set_xlim(xrange)
-            if yrange: ax.set_ylim(yrange)
+            ax.set_xlabel(x_label)
+            ax.set_ylabel(y_label)
+            ax.set_xscale(x_type)
+            ax.set_yscale(y_type)
+            if x_range:
+                ax.set_xlim(x_range)
+            if y_range:
+                ax.set_ylim(y_range)
             lns = []
             for file in tec_filenames:
                 variable = []
@@ -1386,9 +1398,9 @@ class pdata(object):
                 var_values_dict = dict(zip(variable, data))
                 for key in var_values_dict.keys():
                     if direction.upper() in key:
-                        xval = [val * xfactor for val in var_values_dict[key]]
+                        xval = [val * x_factor for val in var_values_dict[key]]
                     if var in key:
-                        dat = [val * yfactor for val in var_values_dict[key]]
+                        dat = [val * y_factor for val in var_values_dict[key]]
                     else:
                         print 'Variable ' + var + ' not found in the tec files.'
                 ln, = ax.plot(xval, dat)
@@ -1403,9 +1415,9 @@ class pdata(object):
 
         return 0
 
-    def plot_observation(self, variable_list=[], observation_list=[], observation_filenames=[], plot_filename='',
-                         legend_list=[], fontsize=10, xlabel='', ylabel='', xtype='linear', ytype='linear', xrange=(),
-                         yrange=(), xfactor=1.0, yfactor=1.0):
+    def plot_observation(self, variable_list=None, observation_list=None, observation_filenames=None, plot_filename='',
+                         legend_list=None, fontsize=10, x_label='', y_label='', x_type='linear', y_type='linear',
+                         x_range=(), y_range=(), x_factor=1.0, y_factor=1.0):
         """
         Plot time-series data from observation files at a given set of observation points.
 
@@ -1421,19 +1433,28 @@ class pdata(object):
         :type legend_list: [str]
         :param fontsize: size of the legend font
         :type fontsize: float
-        :param xlabel: label on the x-axis
-        :type xlabel: str
-        :param ylabel: label on the y-axis
-        :type ylabel: str
-        :param xtype: type of plot in the x-direction, e.g., 'log', 'linear', 'symlog'
-        :type xtype: str
-        :param ytype: type of plot in the y-direction, e.g., 'log', 'linear', 'symlog'
-        :type ytype: str
-        :param xrange: limits on the x-axis range, e.g., (0,100)
-        :type xrange: (float,float)
-        :param yrange: limits on the y-axis range, e.g., (0,100)
-        :type yrange: (float,float)
+        :param x_label: label on the x-axis
+        :type x_label: str
+        :param y_label: label on the y-axis
+        :type y_label: str
+        :param x_type: type of plot in the x-direction, e.g., 'log', 'linear', 'symlog'
+        :type x_type: str
+        :param y_type: type of plot in the y-direction, e.g., 'log', 'linear', 'symlog'
+        :type y_type: str
+        :param x_range: limits on the x-axis range, e.g., (0,100)
+        :type x_range: (float,float)
+        :param y_range: limits on the y-axis range, e.g., (0,100)
+        :type y_range: (float,float)
         """
+
+        if variable_list is None:
+            variable_list = []
+        if observation_list is None:
+            observation_list = []
+        if observation_filenames is None:
+            observation_filenames = []
+        if legend_list is None:
+            legend_list = []
         combined_dict = {}
         for FILE in observation_filenames:
             variable = []
@@ -1456,18 +1477,18 @@ class pdata(object):
 
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_xscale(xtype)
-        ax.set_yscale(ytype)
-        if xrange: ax.set_xlim(xrange)
-        if yrange: ax.set_ylim(yrange)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_xscale(x_type)
+        ax.set_yscale(y_type)
+        if x_range: ax.set_xlim(x_range)
+        if y_range: ax.set_ylim(y_range)
         lns = []
         for item in combined_var_obs_list:
             for key in combined_dict.keys():
                 if item[0] in key and item[1] in key:
-                    time_new = [t * xfactor for t in time]
-                    var_new = [v * yfactor for v in combined_dict[key]]
+                    time_new = [t * x_factor for t in time]
+                    var_new = [v * y_factor for v in combined_dict[key]]
                     ln, = ax.plot(time_new, var_new)
                     lns.append(ln)
         ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
@@ -1726,18 +1747,28 @@ class pdata(object):
             sys.exit()
 
         # Always make index lower case if it is being used as a string
-        if isinstance(index, str): index = index.lower()
-        if isinstance(obj, pmaterial): self._add_prop(obj, overwrite)
-        if isinstance(obj, pdataset): self._add_dataset(obj, overwrite)
-        if isinstance(obj, psaturation): self._add_saturation(obj, overwrite)
-        if isinstance(obj, pcharacteristic_curves): self._add_characteristic_curves(obj, overwrite)
+        if isinstance(index, str):
+            index = index.lower()
+        if isinstance(obj, pmaterial):
+            self._add_prop(obj, overwrite)
+        if isinstance(obj, pdataset):
+            self._add_dataset(obj, overwrite)
+        if isinstance(obj, psaturation):
+            self._add_saturation(obj, overwrite)
+        if isinstance(obj, pcharacteristic_curves):
+            self._add_characteristic_curves(obj, overwrite)
         if isinstance(obj, pchemistry_m_kinetic):
             self._add_chemistry_m_kinetic(obj, overwrite)
-        if isinstance(obj, plsolver): self._add_lsolver(obj, overwrite)
-        if isinstance(obj, pnsolver): self._add_nsolver(obj, overwrite)
-        if isinstance(obj, pregion): self._add_region(obj, overwrite)
-        if isinstance(obj, pobservation): self._add_observation(obj, overwrite)
-        if isinstance(obj, pflow): self._add_flow(obj, overwrite)
+        if isinstance(obj, plsolver):
+            self._add_lsolver(obj, overwrite)
+        if isinstance(obj, pnsolver):
+            self._add_nsolver(obj, overwrite)
+        if isinstance(obj, pregion):
+            self._add_region(obj, overwrite)
+        if isinstance(obj, pobservation):
+            self._add_observation(obj, overwrite)
+        if isinstance(obj, pflow):
+            self._add_flow(obj, overwrite)
         if isinstance(obj, pflow_variable):
             self._add_flow_variable(obj, index, overwrite)
         if isinstance(obj, pinitial_condition):
@@ -1746,9 +1777,12 @@ class pdata(object):
             self._add_boundary_condition(obj, overwrite)
         if isinstance(obj, psource_sink):
             self._add_source_sink(obj, overwrite)
-        if isinstance(obj, pstrata): self._add_strata(obj, overwrite)
-        if isinstance(obj, ptransport): self._add_transport(obj, overwrite)
-        if isinstance(obj, pconstraint): self._add_constraint(obj, overwrite)
+        if isinstance(obj, pstrata):
+            self._add_strata(obj, overwrite)
+        if isinstance(obj, ptransport):
+            self._add_transport(obj, overwrite)
+        if isinstance(obj, pconstraint):
+            self._add_constraint(obj, overwrite)
         if isinstance(obj, pconstraint_concentration):
             self._add_constraint_concentration(obj, index, overwrite)
 

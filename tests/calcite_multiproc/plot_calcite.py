@@ -37,5 +37,5 @@ for i in range(1, num_realizations + 1):
 
 dat = pdata('')
 dat.plot_data_from_tec(variable_list=['Calcite VF', 'Calcite Rate', 'pH'], tec_filenames=files,
-                       plot_filename='combined_calcite_vf.pdf', legend_list=legend_list, xlabel='x [m]',
-                       ylabel_list=['Calcite VF', 'Calcite Rate', 'pH'])
+                       plot_filename='combined_calcite_vf.pdf', legend_list=legend_list, x_label='x [m]',
+                       y_label_list=['Calcite VF', 'Calcite Rate', 'pH'])

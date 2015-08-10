@@ -72,8 +72,7 @@ grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
 grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']  # cartesian is default in pflotran
 
 # output - allowed strings
-output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
-                          'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
+output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
 output_variables_allowed = ['liquid_pressure', 'liquid_saturation', 'liquid_density', 'liquid_mobility',
                             'liquid_energy',
@@ -140,7 +139,9 @@ class puniform_velocity(object):
     :type value_list: [float,float,float,str]
     """
 
-    def __init__(self, value_list=[]):
+    def __init__(self, value_list=None):
+        if value_list is None:
+            value_list = []
         self.value_list = value_list
 
 
@@ -189,8 +190,11 @@ class pmaterial(object):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
-                 specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=[],
+                 specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
                  permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor=''):
+        if permeability is None:
+            permeability = []
+
         self.id = id
         self.name = name
         self.characteristic_curves = characteristic_curves
@@ -230,7 +234,16 @@ class ptime(object):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, tf=[], dti=[], dtf=[], steady_state=False, dtf_list=[]):
+    def __init__(self, tf=None, dti=None, dtf=None, steady_state=False, dtf_list=None):
+        if tf is None:
+            tf = []
+        if dti is None:
+            dti = []
+        if dtf is None:
+            dtf = []
+        if dtf_list is None:
+            dtf_list = []
+
         self.tf = tf  # Final Time, 2nd parameter is unit, same for all other
         # variables except dtf_i
         self.dti = dti  # Initial Timestep Size
@@ -271,8 +284,25 @@ class pgrid(object):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, type='structured', lower_bounds=[0.0, 0.0, 0.0], upper_bounds=[1.0, 1.0, 1.0],
-                 origin=[], nxyz=[10, 10, 10], dx=[], dy=[], dz=[], gravity=[], filename=''):
+    def __init__(self, type='structured', lower_bounds=None, upper_bounds=None,
+                 origin=None, nxyz=None, dx=None, dy=None, dz=None, gravity=None, filename=''):
+        if lower_bounds is None:
+            lower_bounds = [0.0, 0.0, 0.0]
+        if upper_bounds is None:
+            upper_bounds = [1.0, 1.0, 1.0]
+        if origin is None:
+            origin = []
+        if nxyz is None:
+            nxyz = [10, 10, 10]
+        if dx is None:
+            dx = []
+        if dy is None:
+            dy = []
+        if dz is None:
+            dz = []
+        if gravity is None:
+            gravity = []
+
         self.type = type
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
@@ -320,7 +350,9 @@ class pregression(object):
     :type cells_per_process: int
     """
 
-    def __init__(self, cells=[], cells_per_process=''):
+    def __init__(self, cells=None, cells_per_process=''):
+        if cells is None:
+            cells = []
         self.cells = cells
         self.cells_per_process = cells_per_process
 
@@ -474,12 +506,22 @@ class poutput(object):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, time_list=[], print_column_ids=False, screen_periodic=None,
-                 screen_output=True, periodic_time=[], periodic_timestep=None,
-                 periodic_observation_time=[], periodic_observation_timestep=None,
-                 format_list=[], permeability=False, porosity=False, velocities=False, velocity_at_center=False,
-                 velocity_at_face=False,
-                 mass_balance=False, variables_list=[]):
+    def __init__(self, time_list=None, print_column_ids=False, screen_periodic=None, screen_output=True,
+                 periodic_time=None, periodic_timestep=None, periodic_observation_time=None,
+                 periodic_observation_timestep=None, format_list=None, permeability=False, porosity=False,
+                 velocities=False, velocity_at_center=False, velocity_at_face=False, mass_balance=False,
+                 variables_list=None):
+        if time_list is None:
+            time_list = []
+        if periodic_time is None:
+            periodic_time = []
+        if periodic_observation_time is None:
+            periodic_observation_time = []
+        if format_list is None:
+            format_list = []
+        if variables_list is None:
+            variables_list = []
+
         self.time_list = time_list
         self.print_column_ids = print_column_ids
         self.screen_output = screen_output  # Bool
@@ -567,7 +609,9 @@ class ppoint(object):
     :type coordinate: [float]*3
     """
 
-    def __init__(self, name='', coordinate=[0.0, 0.0, 0.0]):
+    def __init__(self, name='', coordinate=None):
+        if coordinate is None:
+            coordinate = [0.0, 0.0, 0.0]
         self.name = name.lower()
         self.coordinate = coordinate
 
@@ -662,8 +706,11 @@ class pregion(object):
     :type face: str
     """
 
-    def __init__(self, name='', coordinates_lower=[0.0, 0.0, 0.0], coordinates_upper=[0.0, 0.0, 0.0],
-                 face=None):
+    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None, face=None):
+        if coordinates_lower is None:
+            coordinates_lower = [0.0, 0.0, 0.0]
+        if coordinates_upper is None:
+            coordinates_upper = [0.0, 0.0, 0.0]
         self.name = name.lower()
         self.coordinates_lower = coordinates_lower  # 3D coordinates
         self.coordinates_upper = coordinates_upper  # 3D coordinates
@@ -713,10 +760,13 @@ class pflow(object):
     :type varlist: [pflow_variable]
     """
 
-    def __init__(self, name='', units_list=None,
-                 iphase=None, sync_timestep_with_update=False,
-                 datum=[], datum_type='',
-                 varlist=[]):
+    def __init__(self, name='', units_list=None, iphase=None, sync_timestep_with_update=False, datum=None,
+                 datum_type='', varlist=None):
+        if datum is None:
+            datum = []
+        if varlist is None:
+            varlist = []
+
         self.name = name.lower()  # Include initial, top, source
         self.units_list = units_list  # Specify type of units to display such as
         # time,length,rate,pressure,velocity, temperature,
@@ -798,12 +848,15 @@ class pflow_variable(object):
     :type list: [pflow_variable_list]
     """
 
-    def __init__(self, name='', type=None, valuelist=[], unit='',
-                 time_unit_type='', data_unit_type='', list=[]):
+    def __init__(self, name='', type=None, valuelist=None, unit='', time_unit_type='', data_unit_type='', plist=None):
+        if valuelist is None:
+            valuelist = []
+        if plist is None:
+            plist = []
         self.name = name.lower()  # Pressure,temp., concen.,enthalpy...(String)
         self.type = type  # hydrostatic, zero_gradient, dirichlet ...(String)
 
-        # The Following attributes are a stand alone single list w/out lists
+        # The Following attributes are a stand alone single plist w/out lists
         # (e.g., Rate instead of Rate List)
         self.valuelist = valuelist  # Holds 2 floats - 2nd is optional
         self.unit = unit  # Possible to overide Parent class? - sorda?
@@ -811,7 +864,7 @@ class pflow_variable(object):
         # Following attributes are used with lists (eg. Rate Lists instead of Rate)
         self.time_unit_type = time_unit_type  # e.g., 'y'
         self.data_unit_type = data_unit_type  # e.g., 'kg/s'
-        self.list = list  # Holds a list of pflow_variable_lists objects
+        self.list = plist  # Holds a plist of pflow_variable_lists objects
 
 
 class pflow_variable_list(object):
@@ -827,7 +880,9 @@ class pflow_variable_list(object):
     :type data_unit_value_list: [float]
     """
 
-    def __init__(self, time_unit_value=None, data_unit_value_list=[]):
+    def __init__(self, time_unit_value=None, data_unit_value_list=None):
+        if data_unit_value_list is None:
+            data_unit_value_list = []
         self.time_unit_value = time_unit_value  # 1 float
         self.data_unit_value_list = data_unit_value_list  # 2 floats? (2nd optional?)
 
@@ -1011,10 +1066,21 @@ class pchemistry(object):
     :type output_list: [str]
     """
 
-    def __init__(self, pspecies_list=[], sec_species_list=[], gas_species_list=[],
-                 minerals_list=[], m_kinetics_list=[], log_formulation=False,
-                 database=None, activity_coefficients=None, molal=False, output_list=[], update_permeability=False,
-                 update_porosity=False):
+    def __init__(self, pspecies_list=None, sec_species_list=None, gas_species_list=None, minerals_list=None,
+                 m_kinetics_list=None, log_formulation=False, database=None, activity_coefficients=None, molal=False,
+                 output_list=None, update_permeability=False, update_porosity=False):
+        if pspecies_list is None:
+            pspecies_list = []
+        if sec_species_list is None:
+            sec_species_list = []
+        if gas_species_list is None:
+            gas_species_list = []
+        if minerals_list is None:
+            minerals_list = []
+        if m_kinetics_list is None:
+            m_kinetics_list = []
+        if output_list is None:
+            output_list = []
         self.pspecies_list = pspecies_list  # primary_species (eg. 'A(aq') - string
         self.sec_species_list = sec_species_list  # Secondary_species (E.g. 'OH-' - string
         self.gas_species_list = gas_species_list  # E.g. 'CO2(g)'
@@ -1040,7 +1106,9 @@ class pchemistry_m_kinetic(object):
     :type rate_constant_list: [float, str]
     """
 
-    def __init__(self, name=None, rate_constant_list=[]):
+    def __init__(self, name=None, rate_constant_list=None):
+        if rate_constant_list is None:
+            rate_constant_list = []
         self.name = name
         self.rate_constant_list = rate_constant_list
 
@@ -1064,8 +1132,11 @@ class ptransport(object):
     :type constraint_list_type: [str]
     """
 
-    def __init__(self, name='', tran_type='', constraint_list_value=[],
-                 constraint_list_type=[]):
+    def __init__(self, name='', tran_type='', constraint_list_value=None, constraint_list_type=None):
+        if constraint_list_value is None:
+            constraint_list_value = []
+        if constraint_list_type is None:
+            constraint_list_type = []
         self.name = name  # e.g., initial, west, east
         self.type = tran_type  # e.g., dirichlet, zero_gradient
         self.constraint_list_value = constraint_list_value
@@ -1086,7 +1157,11 @@ class pconstraint(object):
     :type mineral_list: [pconstraint_mineral]
     """
 
-    def __init__(self, name='', concentration_list=[], mineral_list=[]):
+    def __init__(self, name='', concentration_list=None, mineral_list=None):
+        if concentration_list is None:
+            concentration_list = []
+        if mineral_list is None:
+            mineral_list = []
         self.name = name.lower()
         self.concentration_list = concentration_list  # Composed of pconstraint_concentration objects
         self.mineral_list = mineral_list  # list of minerals
@@ -3354,10 +3429,7 @@ class pdata(object):
                     flow.datum = line.split()[1]
                 # Assign d_dx, d_dy, d_dz values
                 else:
-                    temp_list = []
-                    temp_list.append(floatD(line.split()[1]))
-                    temp_list.append(floatD(line.split()[2]))
-                    temp_list.append(floatD(line.split()[3]))
+                    temp_list = [floatD(line.split()[1]), floatD(line.split()[2]), floatD(line.split()[3])]
                     flow.datum.append(temp_list)
 
             # Detect if there is carriage return after '/' or 'end' to end loop

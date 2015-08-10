@@ -1829,27 +1829,27 @@ class pdata(object):
                 simulation.simulation_type = line.split()[-1]
             elif key == 'subsurface_flow':
                 simulation.subsurface_flow = line.split()[-1]
-                keep_reading1 = True
-                while keep_reading1:
+                keep_reading_1 = True
+                while keep_reading_1:
                     line = infile.readline()
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'mode':
                         simulation.mode = line.split()[-1].lower()
                     elif key1 in ['/', 'end']:
-                        keep_reading1 = False
+                        keep_reading_1 = False
                     else:
                         raise PyFLOTRAN_ERROR('mode is missing!')
                 key_bank.append(key)
             elif key == 'subsurface_transport':
                 simulation.subsurface_transport = line.split()[-1]
-                keep_reading2 = True
-                while keep_reading2:
+                keep_reading_2 = True
+                while keep_reading_2:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'global_implicit':
                         simulation.flowtran_coupling = key1
                     elif key1 in ['/', 'end']:
-                        keep_reading2 = False
+                        keep_reading_2 = False
                 # else:
                 # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
                 key_bank.append(key)
@@ -1931,13 +1931,13 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'cells':
-                keep_reading2 = True
-                while keep_reading2:
+                keep_reading_2 = True
+                while keep_reading_2:
                     cell_list = []
                     for i in range(100):
                         line1 = infile.readline()
                         if line1.strip().split()[0].lower() in ['/', 'end']:
-                            keep_reading2 = False
+                            keep_reading_2 = False
                             break
                         cell_list.append(int(line1))
                 regression.cells = cell_list
@@ -2210,8 +2210,8 @@ class pdata(object):
             elif key == 'permeability_min_scale_factor':
                 np_permeability_min_scale_factor = line.split()[-1]
             elif key == 'permeability':
-                keep_reading2 = True
-                while keep_reading2:
+                keep_reading_2 = True
+                while keep_reading_2:
                     line = infile.readline()  # get next line
                     key = line.split()[0].lower()  # take first keyword
                     if key == 'perm_iso':
@@ -2223,7 +2223,7 @@ class pdata(object):
                     elif key == 'perm_z':
                         np_permeability.append(floatD(line.split()[-1]))
                     elif key in ['/', 'end']:
-                        keep_reading2 = False
+                        keep_reading_2 = False
             elif key in ['/', 'end']:
                 keep_reading = False
         new_prop = pmaterial(np_id, np_name, np_characteristic_curves, np_porosity, np_tortuosity, np_density,
@@ -2683,14 +2683,14 @@ class pdata(object):
             elif key == 'mass_balance':
                 output.mass_balance = True
             elif key == 'variables':
-                keep_reading1 = True
-                while keep_reading1:
+                keep_reading_1 = True
+                while keep_reading_1:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
                     if key1 in output_variables_allowed:
                         output.variables_list.append(key1)
                     elif key1 in ['/', 'end']:
-                        keep_reading1 = False
+                        keep_reading_1 = False
                     else:
                         raise PyFLOTRAN_ERROR('variable ' + str(key1) + ' cannot be an output variable.')
             elif key in ['/', 'end']:
@@ -4017,10 +4017,10 @@ class pdata(object):
                     if line.strip() in ['/', 'end']: break
                     chem.pspecies_list.append(line.strip())
             elif key == 'skip':
-                keep_reading1 = True
-                while keep_reading1:
+                keep_reading_1 = True
+                while keep_reading_1:
                     line1 = infile.readline()
-                    if line1.strip().split()[0].lower() == 'noskip': keep_reading1 = False
+                    if line1.strip().split()[0].lower() == 'noskip': keep_reading_1 = False
             elif key == 'secondary_species':
                 while True:
                     line = infile.readline()  # get next line
@@ -4201,9 +4201,9 @@ class pdata(object):
                 if len(line.split()) == 2:  # Only Assign if 2 words are on the line
                     np_type = line.split()[-1]  # take last word
             elif key == 'constraint_list':
-                keep_reading2 = True
+                keep_reading_2 = True
                 line = infile.readline()
-                while keep_reading2:
+                while keep_reading_2:
                     try:
                         # print np_constraint_list_value,line.split()[0].lower()
                         np_constraint_list_value.append(floatD(line.split()[0].lower()))  # Read 1st word online
@@ -4215,7 +4215,7 @@ class pdata(object):
 
                     line = infile.readline()  # get next line
                     key = line.split()[0].lower()  # Used to stop loop when / or end is read
-                    if key in ['/', 'end']: keep_reading2 = False
+                    if key in ['/', 'end']: keep_reading_2 = False
             elif key in ['/', 'end']:
                 keep_reading = False
 

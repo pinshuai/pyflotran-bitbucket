@@ -1265,7 +1265,8 @@ class pdata(object):
         else:
             self._path.filename = self._path.filename[:-3] + '_new.in'
 
-        if input_prefix: self._path.filename = input_prefix
+        if input_prefix:
+            self._path.filename = input_prefix
         # ASSEMBLE FILES IN CORRECT DIRECTORIES
         if self.work_dir:
             wd = self.work_dir + os.sep
@@ -1287,7 +1288,7 @@ class pdata(object):
 
         import multiprocessing
 
-        def proc(cmd):
+        def run_popen(cmd):
             process = subprocess.Popen(cmd.split(' '), shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
             while True:
                 out = process.stdout.read(1)
@@ -1299,20 +1300,19 @@ class pdata(object):
 
         if num_procs == 1:
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
-            multiprocessing.Process(target=proc, args=(arg,)).start()
-
+            multiprocessing.Process(target=run_popen, args=(arg,)).start()
         else:
             arg = 'mpirun -np', str(num_procs), exe_path.full_path, '-pflotranin', self._path.filename
-            multiprocessing.Process(target=proc, args=(arg,)).start()
+            multiprocessing.Process(target=run_popen, args=(arg,)).start()
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + self._path.filename
-                multiprocessing.Process(target=proc, args=(arg,)).start()
+                multiprocessing.Process(target=run_popen, args=(arg,)).start()
             else:
                 arg = 'mpirun -np ' + str(
                     num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
-                multiprocessing.Process(target=proc, args=(arg,)).start()
+                multiprocessing.Process(target=run_popen, args=(arg,)).start()
 
         # After executing simulation, go back to the parent directory
         if self.work_dir: os.chdir(cwd)
@@ -1540,12 +1540,10 @@ class pdata(object):
                             keep_reading_1 = False
 
                 if card in cards:  # check if a valid cardname
-                    if card in ['co2_database', 'checkpoint', 'restart', 'dataset', 'material_property',
-                                'simulation', 'regression', 'grid',
-                                'timestepper', 'linear_solver', 'newton_solver',
-                                'saturation_function', 'region', 'flow_condition',
-                                'boundary_condition', 'source_sink', 'initial_condition',
-                                'transport_condition', 'constraint', 'uniform_velocity',
+                    if card in ['co2_database', 'checkpoint', 'restart', 'dataset', 'material_property', 'simulation',
+                                'regression', 'grid', 'timestepper', 'linear_solver', 'newton_solver',
+                                'saturation_function', 'region', 'flow_condition', 'boundary_condition', 'source_sink',
+                                'initial_condition', 'transport_condition', 'constraint', 'uniform_velocity',
                                 'nonuniform_velocity']:
 
                         read_fn[card](infile, p_line)
@@ -3257,7 +3255,7 @@ class pdata(object):
         if isinstance(region, pregion):
             if region.name in self.region.keys():
                 if not overwrite:
-                    warning = 'WARNING: A region with name \'' + str(region.name) + '\' already exists. Region will' +  \
+                    warning = 'WARNING: A region with name \'' + str(region.name) + '\' already exists. Region will' + \
                               'not be defined, use overwrite = True in add() to overwrite the old region.'
                     print warning,
                     build_warnings.append(warning)

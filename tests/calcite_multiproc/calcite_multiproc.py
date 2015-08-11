@@ -48,7 +48,6 @@ def simulation(i, rate):
     simulation.subsurface_transport = 'transport'
     dat.simulation = simulation
 
-
     # set uniform_velocity
     # --------------------------------------------------------------
     dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
@@ -260,7 +259,21 @@ def simulation(i, rate):
 
     dat.run(input=work_dir + '_calcite.in', exe=executable)
 
+from multiprocessing.pool import Pool as xPool
+
+class NoDaemonProcess(multiprocessing.Process):
+    # make 'daemon' attribute always return False
+    def _get_daemon(self):
+        return False
+
+    def _set_daemon(self, value):
+        pass
+    daemon = property(_get_daemon, _set_daemon)
+
+class Pool(xPool):
+    Process = NoDaemonProcess
+
 
 if __name__ == '__main__':
-    p = multiprocessing.Pool(processes=procs)
+    p = Pool(processes=procs)
     p.map(execute, realizations)

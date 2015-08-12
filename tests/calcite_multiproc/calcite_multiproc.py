@@ -259,21 +259,7 @@ def simulation(i, rate):
 
     dat.run(input=work_dir + '_calcite.in', exe=executable)
 
-from multiprocessing.pool import Pool as xPool
-
-class NoDaemonProcess(multiprocessing.Process):
-    # make 'daemon' attribute always return False
-    def _get_daemon(self):
-        return False
-
-    def _set_daemon(self, value):
-        pass
-    daemon = property(_get_daemon, _set_daemon)
-
-class Pool(xPool):
-    Process = NoDaemonProcess
-
 
 if __name__ == '__main__':
-    p = Pool(processes=procs)
+    p = multiprocessing.Pool(processes=procs)
     p.map(execute, realizations)

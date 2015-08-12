@@ -1286,8 +1286,6 @@ class pdata(object):
         if input and input_prefix:
             raise PyFLOTRAN_ERROR('Cannot specify both input and input_prefix')
 
-        import multiprocessing
-
         def run_popen(cmd):
             process = subprocess.Popen(cmd.split(' '), shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
             while True:
@@ -1300,19 +1298,19 @@ class pdata(object):
 
         if num_procs == 1:
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
-            multiprocessing.Process(target=run_popen, args=(arg,)).start()
+            run_popen(arg)
         else:
             arg = 'mpirun -np', str(num_procs), exe_path.full_path, '-pflotranin', self._path.filename
-            multiprocessing.Process(target=run_popen, args=(arg,)).start()
+            run_popen(arg)
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + self._path.filename
-                multiprocessing.Process(target=run_popen, args=(arg,)).start()
+                run_popen(arg)
             else:
                 arg = 'mpirun -np ' + str(
                     num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
-                multiprocessing.Process(target=run_popen, args=(arg,)).start()
+                run_popen(arg)
 
         # After executing simulation, go back to the parent directory
         if self.work_dir: os.chdir(cwd)

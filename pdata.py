@@ -1300,7 +1300,7 @@ class pdata(object):
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
         else:
-            arg = 'mpirun -np', str(num_procs), exe_path.full_path, '-pflotranin', self._path.filename
+            arg = 'mpirun -np ' + str(num_procs) + exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
 
         if input_prefix:

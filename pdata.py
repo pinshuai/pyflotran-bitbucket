@@ -777,6 +777,7 @@ class pflow(object):
         self.sync_timestep_with_update = sync_timestep_with_update  # Boolean
         self.datum = datum  # x, y, z, and a file name. [float,float,float,str]
         self.varlist = varlist
+        self.datum_type = datum_type
 
 
 class pflow_variable(object):

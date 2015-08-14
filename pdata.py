@@ -2052,7 +2052,7 @@ class pdata(object):
         self._header(outfile, headers['regression'])
         regression = self.regression
         outfile.write('REGRESSION' + '\n')
-        if regression.cells and len(regression.cells[0]) > 1:
+        if regression.cells and regression.cells[0] != '':
             outfile.write('  CELLS' + '\n')
             for cell in regression.cells:
                 outfile.write('    ' + str(cell) + '\n')

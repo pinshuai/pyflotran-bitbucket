@@ -68,7 +68,7 @@ def strD(number):
     """Converts input float to string, replacing 'e' with 'd'
 
     :param number: Number to be converted.
-    :type number: str
+    :type number: float
     """
     tstring = str(number)
     if 'e' in tstring:

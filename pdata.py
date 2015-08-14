@@ -2919,7 +2919,7 @@ class pdata(object):
 
         # Write out requested (not null) fluid properties
         if fluid.diffusion_coefficient:
-            outfile.write('  DIFFUSION_COEFFICIENT ' + strD(str(fluid.diffusion_coefficient)) + '\n')  # Read last entry
+            outfile.write('  DIFFUSION_COEFFICIENT ' + strD(fluid.diffusion_coefficient) + '\n')  # Read last entry
         outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
@@ -4584,10 +4584,8 @@ class pdata(object):
     @property
     def char(self):
         return dict(
-            [(characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in
-             self.charlist] + [
-                (characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in
-                self.charlist])
+            [(characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in self.charlist] +
+            [(characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in self.charlist])
 
     @property
     def region(self):

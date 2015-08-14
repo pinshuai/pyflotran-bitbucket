@@ -64,8 +64,7 @@ solver_names_allowed = ['transport', 'tran', 'flow']  # newton and linear
 # simulation type - allowed strings
 simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake']
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2',
-                      'th no_freezing', 'th freezing', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
@@ -75,11 +74,10 @@ grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']  # carte
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
 output_variables_allowed = ['liquid_pressure', 'liquid_saturation', 'liquid_density', 'liquid_mobility',
-                            'liquid_energy',
-                            'liquid_mole_fractions', 'gas_pressure', 'gas_saturation', 'gas_density', 'gas_mobility',
-                            'gas_mole_fractions', 'air_pressure', 'capillary_pressure', 'thermodynamic_state',
-                            'temperature', 'residual', 'porosity', 'mineral_porosity', 'permeability',
-                            'mineral_porosity']
+                            'liquid_energy', 'liquid_mole_fractions', 'gas_pressure', 'gas_saturation', 'gas_density',
+                            'gas_mobility', 'gas_mole_fractions', 'air_pressure', 'capillary_pressure',
+                            'thermodynamic_state', 'temperature', 'residual', 'porosity', 'mineral_porosity',
+                            'permeability', 'mineral_porosity']
 
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1']
@@ -583,9 +581,8 @@ class psaturation(object):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='', permeability_function_type=None, saturation_function_type=None,
-                 residual_saturation=None, residual_saturation_liquid=None,
-                 residual_saturation_gas=None, a_lambda=None, alpha=None,
-                 max_capillary_pressure=None, betac=None, power=None):
+                 residual_saturation=None, residual_saturation_liquid=None, residual_saturation_gas=None, a_lambda=None,
+                 alpha=None, max_capillary_pressure=None, betac=None, power=None):
         self.name = name
         self.permeability_function_type = permeability_function_type
         self.saturation_function_type = saturation_function_type
@@ -1348,16 +1345,16 @@ class pdata(object):
             if y_range:
                 ax.set_ylim(y_range)
             lns = []
-            for file in tec_filenames:
+            for FILE in tec_filenames:
                 variable = []
                 var_values_dict = {}
-                f = open(file, 'r')
+                f = open(FILE, 'r')
                 time = f.readline().split('"')[1]
                 title = f.readline()
                 title = title.split(',')
                 for i in title:
                     variable.append(i.strip('"'))
-                data = np.genfromtxt(file, skip_header=3)
+                data = np.genfromtxt(FILE, skip_header=3)
                 data = data.T.tolist()
                 var_values_dict = dict(zip(variable, data))
                 for key in var_values_dict.keys():
@@ -1609,7 +1606,7 @@ class pdata(object):
         if self.grid:
             self._write_grid(outfile)
         else:
-            raise PyFLOTRAN_ERROR('grid is required, it is currently reading as empty')
+            raise PyFLOTRAN_ERROR('grid is required, it is currently reading as empty!')
 
         if self.timestepper:
             self._write_timestepper(outfile)
@@ -1618,12 +1615,12 @@ class pdata(object):
         if self.time:
             self._write_time(outfile)
         else:
-            raise PyFLOTRAN_ERROR('time is required, it is currently reading as empty')
+            raise PyFLOTRAN_ERROR('time is required, it is currently reading as empty!')
 
         if self.proplist:
             self._write_prop(outfile)
         else:
-            raise PyFLOTRAN_ERROR('proplist is required, it is currently reading as empty')
+            raise PyFLOTRAN_ERROR('proplist is required, it is currently reading as empty!')
 
         if self.lsolverlist:
             self._write_lsolver(outfile)
@@ -1636,12 +1633,12 @@ class pdata(object):
         if self.output:
             self._write_output(outfile)
         else:
-            raise PyFLOTRAN_ERROR('output is required, it is currently reading as empty')
+            raise PyFLOTRAN_ERROR('output is required, it is currently reading as empty!')
 
         if self.fluid:
             self._write_fluid(outfile)
         else:
-            raise PyFLOTRAN_ERROR('fluid is required, it is currently reading as empty')
+            raise PyFLOTRAN_ERROR('fluid is required, it is currently reading as empty!')
 
         if self.saturationlist:
             self._write_saturation(outfile)
@@ -1679,7 +1676,7 @@ class pdata(object):
 
         if not (self.boundary_condition_list or self.source_sink_list):
             raise PyFLOTRAN_ERROR(
-                'source_sink_list or boundary_condition_list is required, it is currently reading as empty')
+                'source_sink_list or boundary_condition_list is required, it is currently reading as empty!')
 
         if self.strata_list:
             self._write_strata(outfile)
@@ -1774,11 +1771,11 @@ class pdata(object):
                     self._delete_prop(obji)
 
         if isinstance(obj, pcharacteristic_curves):
-            self._delete_characteristic_curves(obj)
+            self._delete_char(obj)
         elif isinstance(obj, list):
             for obji in copy(obj):  # obji = object index
                 if isinstance(obji, pcharacteristic_curves):
-                    self._delete_characteristic_curves(obji)
+                    self._delete_char(obji)
 
         if isinstance(obj, pchemistry_m_kinetic):
             self._delete_pchemistry_m_kinetic(obj)
@@ -2231,11 +2228,9 @@ class pdata(object):
         self._header(outfile, headers['timestepper'])
         outfile.write('TIMESTEPPER ' + self.timestepper.ts_mode + '\n')
         if self.timestepper.ts_acceleration:
-            outfile.write('  ' + 'TS_ACCELERATION ' +
-                          str(self.timestepper.ts_acceleration) + '\n')
+            outfile.write('  ' + 'TS_ACCELERATION ' + str(self.timestepper.ts_acceleration) + '\n')
         if self.timestepper.num_steps_after_cut:
-            outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
-                          str(self.timestepper.num_steps_after_cut) + '\n')
+            outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' + str(self.timestepper.num_steps_after_cut) + '\n')
         if self.timestepper.max_ts_cuts:
             outfile.write('  ' + 'MAX_TS_CUTS ' + str(self.timestepper.max_ts_cuts) + '\n')
         if self.timestepper.max_steps:
@@ -2247,17 +2242,13 @@ class pdata(object):
         if self.timestepper.run_as_steady_state:
             outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
         if self.timestepper.max_pressure_change:
-            outfile.write('  ' + 'MAX_PRESSURE_CHANGE' +
-                          strD(self.timestepper.max_pressure_change) + '\n')
+            outfile.write('  ' + 'MAX_PRESSURE_CHANGE' + strD(self.timestepper.max_pressure_change) + '\n')
         if self.timestepper.max_temperature_change:
-            outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE' +
-                          strD(self.timestepper.max_temperature_change) + '\n')
+            outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE' + strD(self.timestepper.max_temperature_change) + '\n')
         if self.timestepper.max_concentration_change:
-            outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE' +
-                          strD(self.timestepper.max_concentration_change) + '\n')
+            outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE' + strD(self.timestepper.max_concentration_change) + '\n')
         if self.timestepper.max_saturation_change:
-            outfile.write('  ' + 'MAX_SATURATION_CHANGE' +
-                          strD(self.timestepper.max_saturation_change) + '\n')
+            outfile.write('  ' + 'MAX_SATURATION_CHANGE' + strD(self.timestepper.max_saturation_change) + '\n')
         outfile.write('END\n\n')
 
     def _read_prop(self, infile, line):
@@ -2326,10 +2317,11 @@ class pdata(object):
                         keep_reading_2 = False
             elif key in ['/', 'end']:
                 keep_reading = False
+
+        # create an empty material property
         new_prop = pmaterial(np_id, np_name, np_characteristic_curves, np_porosity, np_tortuosity, np_density,
-                             np_specific_heat, np_cond_dry, np_cond_wet,
-                             np_saturation, np_permeability, np_permeability_power, np_permeability_critical_porosity,
-                             np_permeability_min_scale_factor)  # create an empty material property
+                             np_specific_heat, np_cond_dry, np_cond_wet, np_saturation, np_permeability,
+                             np_permeability_power, np_permeability_critical_porosity, np_permeability_min_scale_factor)
 
         self.add(new_prop)
 
@@ -2700,12 +2692,6 @@ class pdata(object):
         self._header(outfile, headers['newton_solver'])
 
         for nsolver in self.nsolverlist:
-            # Write Newton Solver Type - Not certain this is correct.
-
-            # if nsolver.name.lower() == 'flow' or nsolver.name.lower() == 'transport':	# default
-            #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
-            #			elif nsolver.name.lower() == 'tran':
-            #				outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
             if nsolver.name.lower() in solver_names_allowed:
                 outfile.write('NEWTON_SOLVER ' + nsolver.name.lower() + '\n')
             else:
@@ -2825,7 +2811,7 @@ class pdata(object):
                 output.screen_output = bool(output.screen_output)
                 outfile.write('  ' + 'SCREEN OFF' + '\n')
             except ValueError:
-                raise PyFLOTRAN_ERROR('output.screen_output: \'' + output.screen_output + '\' is not bool.')
+                raise PyFLOTRAN_ERROR('output.screen_output: \'' + str(output.screen_output) + '\' is not bool.')
 
         if output.screen_periodic:
             try:  # Error checking to ensure screen_periodic is int (integer).
@@ -2833,7 +2819,7 @@ class pdata(object):
                 outfile.write('  ' + 'SCREEN PERIODIC ' + str(output.screen_periodic) + '\n')
             except ValueError:
                 raise PyFLOTRAN_ERROR(
-                    'output.screen_periodic: \'' + output.screen_periodic + '\' is not int (integer).')
+                    'output.screen_periodic: \'' + str(output.screen_periodic) + '\' is not int (integer).')
         if output.periodic_time:
             try:  # Error checking to ensure periodic_time is [float, str].
                 output.periodic_time[0] = floatD(output.periodic_time[0])
@@ -2933,7 +2919,7 @@ class pdata(object):
 
         # Write out requested (not null) fluid properties
         if fluid.diffusion_coefficient:
-            outfile.write('  DIFFUSION_COEFFICIENT ' + strD(fluid.diffusion_coefficient) + '\n')  # Read last entry
+            outfile.write('  DIFFUSION_COEFFICIENT ' + strD(str(fluid.diffusion_coefficient)) + '\n')  # Read last entry
         outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
@@ -3129,7 +3115,7 @@ class pdata(object):
     def _write_characteristic_curves(self, outfile):
 
         self._header(outfile, headers['characteristic_curves'])
-        characteristic_curves = pcharacteristic_curves()
+
         for char in self.charlist:
             # Write out characteristic curve properties that exist
             if char.name:
@@ -3957,7 +3943,7 @@ class pdata(object):
             outfile.write('CHECKPOINT ')
             outfile.write(str(checkpoint.frequency))
             outfile.write('\n')
-        except(ValueError):
+        except ValueError:
             # write results
             outfile.write('CHECKPOINT ')
             outfile.write(str(checkpoint.frequency))
@@ -4254,7 +4240,7 @@ class pdata(object):
                 for rate in mk.rate_constant_list:
                     try:
                         outfile.write(strD(rate) + ' ')
-                    except(TypeError):
+                    except TypeError:
                         outfile.write(rate + ' ')
                 outfile.write('\n    /\n')  # marks end for mineral name
             outfile.write('  /\n')  # marks end for mineral_kinetics
@@ -4404,7 +4390,7 @@ class pdata(object):
                         concentrations.value = floatD(tstring[1])
                         concentrations.constraint = tstring[2]
                         concentrations.element = tstring[3]
-                    except(IndexError):
+                    except IndexError:
                         pass  # No assigning is done if a value doesn't exist while being read in.
                     constraint.concentration_list.append(concentrations)
 
@@ -4431,7 +4417,7 @@ class pdata(object):
                             else:
                                 mineral.surface_area = floatD(tstring[2])
 
-                    except(IndexError):
+                    except IndexError:
                         pass  # No assigning is done if a value doesn't exist while being read in.
 
                     constraint.mineral_list.append(mineral)
@@ -4553,12 +4539,15 @@ class pdata(object):
             outfile.write('END\n\n')  # END for constraint
 
     def _header(self, outfile, header):
-        if not header: return
+        if not header:
+            return
         ws = '# '
         pad = int(np.floor((80 - len(header) - 4) / 2))
-        for i in range(pad): ws += '='
+        for i in range(pad):
+            ws += '='
         ws += ' ' + header + ' '
-        for i in range(pad): ws += '='
+        for i in range(pad):
+            ws += '='
         ws += '\n'
 
     def _write_hydroquake(self, outfile):

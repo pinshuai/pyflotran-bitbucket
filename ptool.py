@@ -59,7 +59,8 @@ def floatD(string):
     :param string: Number in string format.
     :type string: str
     """
-    if not isinstance(string, str): string = strD(string)  # Convert to string if not string.
+    if not isinstance(string, str):
+        string = strD(string)  # Convert to string if not string.
     return float(string.lower().replace('d', 'e'))
 
 
@@ -147,8 +148,10 @@ class ppath(object):
         path = string.join(path, slash)
 
         absolute = False
-        if WINDOWS and path[1] == ':': absolute = True
-        if not WINDOWS and path[0] == '/': absolute = True
+        if WINDOWS and path[1] == ':':
+            absolute = True
+        if not WINDOWS and path[0] == '/':
+            absolute = True
 
         if absolute:
             self.absolute_to_file = path

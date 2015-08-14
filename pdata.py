@@ -1291,6 +1291,9 @@ class pdata(object):
             process = subprocess.Popen(cmd.split(' '), shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
             while True:
                 out = process.stdout.read(1)
+                if ('ERROR' or 'WARNING') in out:
+                    raise PyFLOTRAN_ERROR(out)
+
                 if out == '' and process.poll() is not None:
                     break
                 if out != '':
@@ -1314,7 +1317,8 @@ class pdata(object):
                 run_popen(arg)
 
         # After executing simulation, go back to the parent directory
-        if self.work_dir: os.chdir(cwd)
+        if self.work_dir:
+            os.chdir(cwd)
 
     def __repr__(self):
         return self.filename  # print to screen when called

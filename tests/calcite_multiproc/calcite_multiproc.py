@@ -29,7 +29,7 @@ import multiprocessing
 procs = 2
 rate_realizations = [1.e-6, 1.e-8, 1.e-10, 1e-12]
 realizations = range(1, 5)
-
+test_dir = '/tests/calcite_multiproc/'
 
 def execute(j):
     simulation(j, rate_realizations[j - 1])
@@ -37,7 +37,7 @@ def execute(j):
 
 def simulation(i, rate):
     # initialize without reading in test data
-    work_dir = 'multi_' + str(i)
+    work_dir = pyflotran_dir + test_dir + 'multi_' + str(i)
 
     # initialize without reading in test data
     # --------------------------------------------------------------

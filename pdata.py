@@ -558,8 +558,8 @@ class psaturation(object):
     :type name: str
     :param permeability_function_type: Options include: 'VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 'NMT_EXP', 'PRUESS_1'.
     :type permeability_function_type: str
-    :param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY',
-     'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1'.
+    :param saturation_function_type: Options include: 'VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP',
+    'PRUESS_1'.
     :type saturation_function_type: str
     :param residual_saturation: MODES: RICHARDS, TH, THC
     :type residual_saturation: float
@@ -1307,8 +1307,8 @@ class pdata(object):
                 arg = exe_path.full_path + ' -input_prefix ' + self._path.filename
                 run_popen(arg)
             else:
-                arg = 'mpirun -np ' + str(
-                    num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + self._path.filename
+                arg = 'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -input_prefix ' + \
+                      self._path.filename
                 run_popen(arg)
 
         # After executing simulation, go back to the parent directory
@@ -2379,7 +2379,7 @@ class pdata(object):
 
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
-                if len(prop.permeability) == 1:
+                if len(prop.permeability) == 1 or prop.permeability[0] == prop.permeability[1] == prop.permeability[2]:
                     outfile.write('    PERM_ISO ' + strD(prop.permeability[0]) + '\n')
                 else:
                     outfile.write('    PERM_X ' + strD(prop.permeability[0]) + '\n')

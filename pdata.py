@@ -1345,9 +1345,7 @@ class pdata(object):
             lns = []
             for FILE in tec_filenames:
                 variable = []
-                var_values_dict = {}
                 f = open(FILE, 'r')
-                time = f.readline().split('"')[1]
                 title = f.readline()
                 title = title.split(',')
                 for i in title:
@@ -1674,8 +1672,8 @@ class pdata(object):
             self._write_source_sink(outfile)
 
         if not (self.boundary_condition_list or self.source_sink_list):
-            raise PyFLOTRAN_ERROR(
-                'source_sink_list or boundary_condition_list is required, it is currently reading as empty!')
+            raise PyFLOTRAN_ERROR('source_sink_list or boundary_condition_list is required, it is currently reading' +
+                                  'as empty!')
 
         if self.strata_list:
             self._write_strata(outfile)
@@ -2861,13 +2859,13 @@ class pdata(object):
             outfile.write('  PERIODIC_OBSERVATION TIMESTEP ' + str(output.periodic_observation_timestep) + '\n')
         if output.print_column_ids:
             outfile.write('  ' + 'PRINT_COLUMN_IDS' + '\n')
-        for format in output.format_list:
-            if format.upper() in output_formats_allowed:
+        for out_format in output.format_list:
+            if out_format.upper() in output_formats_allowed:
                 outfile.write('  FORMAT ')
-                outfile.write(format.upper() + '\n')
+                outfile.write(out_format.upper() + '\n')
             else:
                 print '       valid output.format:', output_formats_allowed, '\n'
-                raise PyFLOTRAN_ERROR('output.format: \'' + format + '\' is invalid.')
+                raise PyFLOTRAN_ERROR('output.format: \'' + out_format + '\' is invalid.')
         if output.velocities:
             outfile.write('  ' + 'VELOCITIES' + '\n')
         if output.velocity_at_center:
@@ -3737,9 +3735,9 @@ class pdata(object):
         if isinstance(boundary_condition, pboundary_condition):
             if boundary_condition.region in self.boundary_condition.keys():
                 if not overwrite:
-                    warning = 'WARNING: A boundary_condition with region \'' + str(
-                        boundary_condition.region) + '\' already exists. boundary_condition will not be defined, use ' \
-                                                     'overwrite = True in add() to overwrite the old boundary_condition.'
+                    warning = 'WARNING: A boundary_condition with region \'' + str(boundary_condition.region) + '\'' + \
+                              ' already exists. boundary_condition will not be defined, use overwrite = True in add()' + \
+                              'to overwrite the old boundary_condition.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3774,7 +3772,6 @@ class pdata(object):
 
     def _read_source_sink(self, infile, line):
         p = psource_sink()
-        np_name = p.name
         np_flow = p.flow
         np_region = p.region
 
@@ -4258,9 +4255,8 @@ class pdata(object):
                         np_constraint_list_value.append(floatD(line.split()[0].lower()))  # Read 1st word online
                         np_constraint_list_type.append(line.split()[1].lower())  # Read 2nd word on line
                     except:
-                        raise PyFLOTRAN_ERROR(
-                            'constraint_list_value and constraint_list_type requires at least one value. Value should '
-                            '= Number and type should = String\n')
+                        raise PyFLOTRAN_ERROR('constraint_list_value and constraint_list_type requires at least one' +
+                                              'value. Value should = Number and type should = String\n')
 
                     line = infile.readline()  # get next line
                     key = line.split()[0].lower()  # Used to stop loop when / or end is read
@@ -4278,9 +4274,9 @@ class pdata(object):
         if isinstance(transport, ptransport):
             if transport.name in self.transport.keys():
                 if not overwrite:
-                    warning = 'WARNING: A transport with name \'' + str(
-                        transport.name) + '\' already exists. transport will not be defined, use overwrite = ' \
-                                          'True in add() to overwrite the old transport.'
+                    warning = 'WARNING: A transport with name \'' + str(transport.name) + '\' already exists.' + \
+                              'transport will not be defined, use overwrite = True in add() to overwrite the' + \
+                              'old transport.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4325,9 +4321,8 @@ class pdata(object):
                         raise PyFLOTRAN_ERROR('transport[' + str(tl.index(t)) + '].constraint_list_type[' + str(
                             clt.index(i)) + '] is required to have a value when transport.constraint_list_value does.')
             except:
-                raise PyFLOTRAN_ERROR(
-                    'transport.constraint_list_value and transport.constraint_list_type should be in list format, '
-                    'be equal in length, and have at least one value.\n')
+                raise PyFLOTRAN_ERROR('transport.constraint_list_value and transport.constraint_list_type should be' +
+                                      'in list format, be equal in length, and have at least one value.\n')
             outfile.write('\n  END\n')  # END FOR CONSTRAINT_LIST
             outfile.write('END\n\n')  # END FOR TRANSPORT_CONDITION
 
@@ -4402,9 +4397,9 @@ class pdata(object):
         if isinstance(constraint, pconstraint):
             if constraint.name in self.constraint.keys():
                 if not overwrite:
-                    warning = 'WARNING: A constraint with name \'' + str(
-                        constraint.name) + '\' already exists. constraint will not be defined, use overwrite = True ' \
-                                           'in add() to overwrite the old constraint.'
+                    warning = 'WARNING: A constraint with name \'' + str(constraint.name) + '\' already exists. ' + \
+                              'constraint will not be defined, use overwrite = True in add() to overwrite the old ' + \
+                              'constraint.'
                     print warning,
                     build_warnings.append(warning)
                     return

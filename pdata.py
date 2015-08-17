@@ -740,8 +740,6 @@ class pflow(object):
     :type iphase: int
     :param sync_timestep_with_update: Flag that indicates whether to use sync_timestep_with_update. Default: False.
     :type sync_timestep_with_update: bool - True or False
-    :param data_unit_type: List alternative, do not use with non-list alternative attributes/parameters.
-    :type data_unit_type: str
     :param datum: Input is either a list of [d_dx, d_dy, d_dz] OR a 'file_name'
      with a list of [d_dx, d_dy, d_dz]. Choose one format type or the other, not both.
      If both are used, then only the file name will be written to the input deck.
@@ -1467,7 +1465,8 @@ class pdata(object):
         :param filename: Name of input file.
         :type filename: str
         """
-        if not os.path.isfile(filename): print filename + ' not found...'
+        if not os.path.isfile(filename):
+            print filename + ' not found...'
         self.filename = filename  # assign filename attribute
         read_fn = dict(zip(cards,
                            [self._read_co2_database,
@@ -1647,7 +1646,7 @@ class pdata(object):
             self._write_characteristic_curves(outfile)
 
         # if (not self.charlist and not self.saturationlist  self.simulation.subsurface_flow=''):
-        #	raise PyFLOTRAN_ERROR('either saturation or characteristic curves need to be defined!')
+        # raise PyFLOTRAN_ERROR('either saturation or characteristic curves need to be defined!')
 
         if self.regionlist:
             self._write_region(outfile)
@@ -1713,7 +1712,7 @@ class pdata(object):
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
         if True not in checklist_bool:
-            raise PyFLOTRAN_ERROR('pdata.add used incorrectly! Cannot use pdata.add with one of the specificed object.')
+            raise PyFLOTRAN_ERROR('pdata.add used incorrectly! Cannot use pdata.add with one of the specified object.')
 
         # Always make index lower case if it is being used as a string
         if isinstance(index, str):
@@ -2860,11 +2859,10 @@ class pdata(object):
                 outfile.write(strD(output.periodic_observation_time[0]) + ' ')
                 outfile.write(output.periodic_observation_time[1] + '\n')
             except:
-                raise PyFLOTRAN_ERROR('output.periodic_observation_time: \'' + str(
-                    output.periodic_observation_time) + '\' is not [float, str].')
+                raise PyFLOTRAN_ERROR('output.periodic_observation_time: \'' + str(output.periodic_observation_time) +
+                                      '\' is not [float, str].')
         if output.periodic_observation_timestep:
-            outfile.write('  PERIODIC_OBSERVATION TIMESTEP ' +
-                          str(output.periodic_observation_timestep) + '\n')
+            outfile.write('  PERIODIC_OBSERVATION TIMESTEP ' + str(output.periodic_observation_timestep) + '\n')
         if output.print_column_ids:
             outfile.write('  ' + 'PRINT_COLUMN_IDS' + '\n')
         for format in output.format_list:
@@ -3122,8 +3120,7 @@ class pdata(object):
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
             if char.saturation_function_type:
                 if char.saturation_function_type in characteristic_curves_saturation_function_types_allowed:
-                    outfile.write('  SATURATION_FUNCTION ' +
-                                  char.saturation_function_type + '\n')
+                    outfile.write('  SATURATION_FUNCTION ' + char.saturation_function_type + '\n')
                 else:
                     print '       valid  char.saturation_function_types', \
                         characteristic_curves_saturation_function_types_allowed, '\n'
@@ -3136,14 +3133,11 @@ class pdata(object):
                 if char.sf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
                 if char.sf_liquid_residual_saturation or char.sf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.sf_liquid_residual_saturation) + '\n')
+                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' + strD(char.sf_liquid_residual_saturation) + '\n')
                 if char.sf_gas_residual_saturation or char.sf_gas_residual_saturation == 0:
-                    outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                  strD(char.sf_gas_residual_saturation) + '\n')
+                    outfile.write('   GAS_RESIDUAL_SATURATION ' + strD(char.sf_gas_residual_saturation) + '\n')
                 if char.max_capillary_pressure:
-                    outfile.write('   MAX_CAPILLARY_PRESSURE ' +
-                                  strD(char.max_capillary_pressure) + '\n')
+                    outfile.write('   MAX_CAPILLARY_PRESSURE ' + strD(char.max_capillary_pressure) + '\n')
                 if char.smooth:
                     outfile.write('   SMOOTH ' + '\n')  # This just prints the SMOOTH flag
                 outfile.write('  / ' + '\n')
@@ -3155,46 +3149,40 @@ class pdata(object):
             if char.liquid_permeability_function_type:
                 if char.liquid_permeability_function_type in \
                         characteristic_curves_liquid_permeability_function_types_allowed:
-                    outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.liquid_permeability_function_type + '\n')
+                    outfile.write('  PERMEABILITY_FUNCTION ' + char.liquid_permeability_function_type + '\n')
                 # outfile.write('   PHASE LIQUID' + '\n')
                 else:
                     print '       valid  char.liquid_permeability_function_types', \
                         characteristic_curves_liquid_permeability_function_types_allowed, '\n'
-                    raise PyFLOTRAN_ERROR(
-                        'char.liquid_permeability_function_type: \'' + char.liquid_permeability_function_type +
-                        '\' is invalid.')
+                    raise PyFLOTRAN_ERROR('char.liquid_permeability_function_type: \'' +
+                                          char.liquid_permeability_function_type + '\' is invalid.')
                 if char.lpf_m:
                     outfile.write('   M ' + strD(char.lpf_m) + '\n')
                 if char.lpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
                 if char.lpf_liquid_residual_saturation or char.lpf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.lpf_liquid_residual_saturation) + '\n')
+                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' + strD(char.lpf_liquid_residual_saturation) + '\n')
                 outfile.write('  / ' + '\n')
 
             if char.gas_permeability_function_type:
                 if char.gas_permeability_function_type in characteristic_curves_gas_permeability_function_types_allowed:
-                    outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.gas_permeability_function_type + '\n')
+                    outfile.write('  PERMEABILITY_FUNCTION ' + char.gas_permeability_function_type + '\n')
                     outfile.write('   PHASE GAS' + '\n')
                 else:
 
                     print '       valid  char.gas_permeability_function_types', \
                         characteristic_curves_gas_permeability_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'char.gas_permeability_function_type: \'' + char.gas_permeability_function_type
-                        + '\' is invalid.')
+                        'char.gas_permeability_function_type: \'' + char.gas_permeability_function_type +
+                        '\' is invalid.')
                 if char.gpf_m:
                     outfile.write('   M ' + strD(char.gpf_m) + '\n')
                 if char.gpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
                 if char.gpf_liquid_residual_saturation or char.gpf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_liquid_residual_saturation) + '\n')
+                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' + strD(char.gpf_liquid_residual_saturation) + '\n')
                 if char.gpf_gas_residual_saturation or char.gpf_gas_residual_saturation == 0:
-                    outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_gas_residual_saturation) + '\n')
+                    outfile.write('   GAS_RESIDUAL_SATURATION ' + strD(char.gpf_gas_residual_saturation) + '\n')
                 outfile.write('  / ' + '\n')
 
             outfile.write('END\n\n')
@@ -3894,9 +3882,8 @@ class pdata(object):
         if isinstance(strata, pstrata):
             if strata.region in self.strata.keys():
                 if not overwrite:
-                    warning = 'WARNING: A strata with name \'' + str(
-                        strata.region) + '\' already exists. strata will not be defined, use overwrite = True in add() ' \
-                                         'to overwrite the old strata.'
+                    warning = 'WARNING: A strata with name \'' + str(strata.region) + '\' already exists. strata will' + \
+                              'not be defined, use overwrite = True in add() to overwrite the old strata.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4082,7 +4069,7 @@ class pdata(object):
             line = infile.readline()  # get next line
             try:
                 key = line.strip().split()[0].lower()  # take first key word
-            except(IndexError):
+            except IndexError:
                 continue  # Read the next line if line is empty.
             if key == 'primary_species':
                 while True:

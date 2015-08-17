@@ -2062,7 +2062,6 @@ class pdata(object):
 
         keep_reading = True
         bounds_key = False
-        gravity_key = False
         while keep_reading:
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
@@ -2329,9 +2328,8 @@ class pdata(object):
         if isinstance(prop, pmaterial):
             if prop.id in self.prop.keys():
                 if not overwrite:
-                    warning = 'WARNING: A Material Property with id \'' + str(
-                        prop.id) + '\' already exists. Prop will not be defined, use overwrite = True in add() to ' \
-                                   'overwrite the old prop.'
+                    warning = 'WARNING: A Material Property with id \'' + str(prop.id) + '\' already exists. Prop' + \
+                              'will not be defined, use overwrite = True in add() to overwrite the old prop.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -2672,9 +2670,8 @@ class pdata(object):
         if isinstance(nsolver, pnsolver):
             if nsolver.name in self.nsolver.keys():
                 if not overwrite:
-                    warning = 'WARNING: A newton solver with name \'' + str(
-                        nsolver.name) + '\' already exists. nsolver will not be defined, use overwrite = True in add() ' \
-                                        'to overwrite the old nsolver.'
+                    warning = 'WARNING: A newton solver with name \'' + str(nsolver.name) + '\' already exists. ' + \
+                              'nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -2726,13 +2723,12 @@ class pdata(object):
 
             if key == 'times':
                 tstring = line.split()[1:]  # Turn into list, exempt 1st word
-                i = 0
-                while i < len(tstring):
+                for t in tstring:
                     try:
-                        output.time_list.append(floatD(tstring[i]))
+                        output.time_list.append(floatD(t))
                     except:
-                        output.time_list.append(tstring[i])
-                    i += 1
+                        output.time_list.append(t)
+
             elif key == 'screen':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'periodic':
@@ -3095,9 +3091,9 @@ class pdata(object):
         if isinstance(char, pcharacteristic_curves):
             if char.name in self.char.keys():
                 if not overwrite:
-                    warning = 'WARNING: A Characteristic Curve with name \'' + str(
-                        char.name) + '\' already exists. Characteristic curve will not be defined, use overwrite = True ' \
-                                     'in add() to overwrite the old characteristic curve.'
+                    warning = 'WARNING: A Characteristic Curve with name \'' + str(char.name) + '\' already exists.' + \
+                              'Characteristic curve will not be defined, use overwrite = True ' 'in add() to' + \
+                              'overwrite the old characteristic curve.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3211,7 +3207,8 @@ class pdata(object):
                     region.coordinates_upper[1] = floatD(line2.split()[1])
                     region.coordinates_upper[2] = floatD(line2.split()[2])
                     line3 = infile.readline()
-                    if line3.strip().split()[0].lower() in ['/', 'end']: keep_reading_2 = False
+                    if line3.strip().split()[0].lower() in ['/', 'end']:
+                        keep_reading_2 = False
             elif key == 'face':
                 region.face = line.strip().split()[-1].lower()
             elif key == 'coordinate':
@@ -3592,60 +3589,46 @@ class pdata(object):
 
             outfile.write('  TYPE\n')  # Following code is paired w/ this statement.
             # variable name and type from lists go here
-            i = 0
-            while i < len(flow.varlist):
-                if flow.varlist[i].name.upper() in flow_condition_type_names_allowed:
-                    outfile.write('    ' + flow.varlist[i].name.upper() + '  ')
+            for a_flow in flow.varlist:
+                if a_flow.name.upper() in flow_condition_type_names_allowed:
+                    outfile.write('    ' + a_flow.name.upper() + '  ')
                 else:
                     print '       valid flow_condition.names:', flow_condition_type_names_allowed, '\n'
-                    raise PyFLOTRAN_ERROR('flow.varlist.name: \'' + flow.varlist[i].name + '\' is invalid.')
+                    raise PyFLOTRAN_ERROR('flow.varlist.name: \'' + a_flow.name + '\' is invalid.')
 
-                # Checks flow.varlist[i].type and performs write or error reporting
-                check_condition_type(flow.varlist[i].name, flow.varlist[i].type)
-
+                # Checks a_flow.type and performs write or error reporting
+                check_condition_type(a_flow.name, a_flow.type)
                 outfile.write('\n')
-                i += 1
 
             outfile.write('  END\n')
             if flow.iphase:
                 outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
 
             # variable name and values from lists along with units go here
-            i = 0
-
-            for i in range(len(flow.varlist)):
-                # Write if using non-list format (Single line)
-                if flow.varlist[i].valuelist:
-                    outfile.write('    ' + flow.varlist[i].name.upper())
-                    if isinstance(flow.varlist[i].valuelist[0], str):
-                        outfile.write(' DATASET ' + flow.varlist[i].valuelist[0])
+            for a_flow in flow.varlist:
+                if a_flow.valuelist:
+                    outfile.write('    ' + a_flow.name.upper())
+                    if isinstance(a_flow.valuelist[0], str):
+                        outfile.write(' DATASET ' + a_flow.valuelist[0])
                     else:
-                        j = 0
-                        while j < len(flow.varlist[i].valuelist):
-                            outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
-                            # try:
-                            #		outfile.write(' ' + strD(flow.varlist[i].valuelist[j]))
-                            #	except:
-                            #		outfile.write(' DATASET ' + (flow.varlist[i].valuelist[j]))
-
-                            j += 1
-                    # Write out possible unit here
-                    if flow.varlist[i].unit:
-                        outfile.write(' ' + flow.varlist[i].unit.lower())
+                        for flow_val in a_flow.valuelist:
+                            outfile.write(' ' + strD(flow_val))
+                    if a_flow.unit:
+                        outfile.write(' ' + a_flow.unit.lower())
                     outfile.write('\n')
-                # Write if using list format (multiple lines)
-                elif flow.varlist[i].list:
-                    outfile.write('    ' + flow.varlist[i].name.upper() + ' LIST' + '\n')
-                    if flow.varlist[i].time_unit_type:
-                        outfile.write('      TIME_UNITS ' + flow.varlist[i].time_unit_type + '\n')
-                    if flow.varlist[i].data_unit_type:
-                        outfile.write('      DATA_UNITS ' + flow.varlist[i].data_unit_type + '\n')
-                    for k in flow.varlist[i].list:
+                elif a_flow.list:
+                    outfile.write('    ' + a_flow.name.upper() + ' LIST' + '\n')
+                    if a_flow.time_unit_type:
+                        outfile.write('      TIME_UNITS ' + a_flow.time_unit_type + '\n')
+                    if a_flow.data_unit_type:
+                        outfile.write('      DATA_UNITS ' + a_flow.data_unit_type + '\n')
+                    for k in a_flow.list:
                         outfile.write('        ' + strD(k.time_unit_value))
                         for p in range(len(k.data_unit_value_list)):
                             outfile.write('  ' + strD(k.data_unit_value_list[p]))
                         outfile.write('\n')
                     outfile.write('    /\n')
+
             outfile.write('END\n\n')
 
     def _read_initial_condition(self, infile, line):
@@ -4588,8 +4571,8 @@ class pdata(object):
         return dict([flow.name.lower(), flow] for flow in self.flowlist if flow.name.lower)
 
     def flow_variable(self, flow=pflow()):
-        return dict(
-            [flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist if flow_variable.name.lower())
+        return dict([flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist
+                    if flow_variable.name.lower())
 
     @property
     def initial_condition(self):

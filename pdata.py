@@ -2379,7 +2379,7 @@ class pdata(object):
 
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
-                if len(prop.permeability) == 1 or prop.permeability[0] == prop.permeability[1] == prop.permeability[2]:
+                if len(prop.permeability) == 1:
                     outfile.write('    PERM_ISO ' + strD(prop.permeability[0]) + '\n')
                 else:
                     outfile.write('    PERM_X ' + strD(prop.permeability[0]) + '\n')

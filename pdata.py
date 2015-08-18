@@ -4056,7 +4056,8 @@ class pdata(object):
                 keep_reading_1 = True
                 while keep_reading_1:
                     line1 = infile.readline()
-                    if line1.strip().split()[0].lower() == 'noskip': keep_reading_1 = False
+                    if line1.strip().split()[0].lower() == 'noskip':
+                        keep_reading_1 = False
             elif key == 'secondary_species':
                 while True:
                     line = infile.readline()  # get next line
@@ -4122,7 +4123,8 @@ class pdata(object):
             elif key == 'output':
                 while True:
                     line = infile.readline()  # get next line
-                    if line.strip() in ['/', 'end']: break
+                    if line.strip() in ['/', 'end']:
+                        break
                     chem.output_list.append(line.strip())
             elif key in ['/', 'end']:
                 keep_reading = False

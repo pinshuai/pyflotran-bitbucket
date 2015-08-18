@@ -1,14 +1,20 @@
 import os
 import glob
 
-for file in glob.glob('tests/*/*tec'):
-    os.system('rm -f' + ' ' + file)
+for FILE in glob.glob('tests/*/*tec'):
+    os.remove(FILE)
 
-for file in glob.glob('tests/*/*out'):
-    os.system('rm -f' + ' ' + file)
+for FILE in glob.glob('tests/*/*out'):
+    os.remove(FILE)
 
-for file in glob.glob('tests/*/*h5'):
-    os.system('rm -f' + ' ' + file)
+for FILE in glob.glob('tests/*/*.h5'):
+    os.remove(FILE)
 
-for file in glob.glob('tests/*/*.regression'):
-    os.system('rm -f' + ' ' + file)
+for FILE in glob.glob('tests/*/*.regression'):
+    os.remove(FILE)
+    
+for FILE in glob.glob('tests/*/multi_*/*'):
+    os.remove(FILE)
+
+for FILE in glob.glob('tests/*/*_new.*'):
+    os.remove(FILE)

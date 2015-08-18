@@ -4334,7 +4334,6 @@ class pdata(object):
             key = line.split()[0].lower()  # take first key word
 
             if key == 'concentrations':
-
                 while True:
                     line = infile.readline()  # get next line
                     tstring = line.split()  # Convert line to temporary list of strings
@@ -4408,15 +4407,13 @@ class pdata(object):
         self.constraint_list.remove(constraint)
 
     # Adds a constraint_concentration object
-    def _add_constraint_concentration(self,
-                                      constraint_concentration=pconstraint_concentration(),
-                                      index='', overwrite=False):
+    def _add_constraint_concentration(self, constraint_concentration=pconstraint_concentration(), index='',
+                                      overwrite=False):
 
         # check if constraint.name was specified
         if index:
             if isinstance(index, str):
-                constraint = self.constraint.get(
-                    index)  # Assign constraint object to existing constraint object with string type name/index
+                constraint = self.constraint.get(index)  # Assign constraint object to existing constraint object with string type name/index
                 if not constraint:  # Occurs if index/string is not found in constraint object
                     print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found ' \
                                                                                       'entries are:', \

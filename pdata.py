@@ -1536,13 +1536,12 @@ class pdata(object):
                         if card1 == 'noskip':
                             keep_reading_1 = False
 
-                if card in cards:  # check if a valid cardname
+                if card in cards:  # check if a valid card name
                     if card in ['co2_database', 'checkpoint', 'restart', 'dataset', 'material_property', 'simulation',
                                 'regression', 'grid', 'timestepper', 'linear_solver', 'newton_solver',
                                 'saturation_function', 'region', 'flow_condition', 'boundary_condition', 'source_sink',
                                 'initial_condition', 'transport_condition', 'constraint', 'uniform_velocity',
                                 'nonuniform_velocity']:
-
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -2524,8 +2523,8 @@ class pdata(object):
                 if isinstance(dtf[3], str):
                     outfile.write((dtf[3]))
                 else:
-                    raise PyFLOTRAN_ERROR(
-                        'PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a str (string).')
+                    raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a '
+                                          'str (string).')
             except:
                 raise PyFLOTRAN_ERROR(
                     'PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a '
@@ -2826,16 +2825,16 @@ class pdata(object):
                 outfile.write(strD(output.periodic_time[0]) + ' ')
                 outfile.write(output.periodic_time[1] + '\n')
             except:
-                raise PyFLOTRAN_ERROR(
-                    'output.periodic_time: \'' + str(output.periodic_time) + '\' is not [float, str].')
+                raise PyFLOTRAN_ERROR('output.periodic_time: \'' + str(output.periodic_time) +
+                                      '\' is not [float, str].')
         if output.periodic_timestep:
             try:  # Error checking to ensure periodic_timestep is [float].
                 output.periodic_timestep = int(output.periodic_timestep)
                 outfile.write('  ' + 'PERIODIC TIMESTEP ')
                 outfile.write(strD(output.periodic_timestep) + '\n')
             except:
-                raise PyFLOTRAN_ERROR(
-                    'output.periodic_timestep: \'' + str(output.periodic_timestep) + '\' is not [float].')
+                raise PyFLOTRAN_ERROR('output.periodic_timestep: \'' + str(output.periodic_timestep) +
+                                      '\' is not [float].')
         if output.periodic_observation_time:
             try:
                 # Error checking to ensure periodic_observation_time is [float, str].
@@ -2844,9 +2843,8 @@ class pdata(object):
                     output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
                 else:
                     output.periodic_observation_time[1] = str(output.periodic_observation_time[1].lower())
-                    raise PyFLOTRAN_ERROR(
-                        'time unit in output.periodic_observation_time[1] is invalid. Valid time units are:',
-                        time_units_allowed)
+                    raise PyFLOTRAN_ERROR('time unit in output.periodic_observation_time[1] is invalid. Valid time '
+                                          'units are:', time_units_allowed)
 
                 # Writing out results
                 outfile.write('  ' + 'PERIODIC_OBSERVATION TIME ')
@@ -3289,9 +3287,9 @@ class pdata(object):
         if isinstance(observation, pobservation):
             if observation.region in self.observation.keys():
                 if not overwrite:
-                    warning = 'WARNING: A observation with region \'' + str(
-                        observation.region) + '\' already exists. Observation will not be defined, use overwrite = True ' \
-                                              'in add() to overwrite the old observation.'
+                    warning = 'WARNING: A observation with region \'' + str(observation.region) + '\' already ' \
+                                                                                                  'exists. Observation will not be defined, use overwrite = True in add() to overwrite' \
+                                                                                                  'the old observation.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3431,9 +3429,8 @@ class pdata(object):
         if isinstance(flow, pflow):
             if flow.name in self.flow.keys():
                 if not overwrite:
-                    warning = 'WARNING: A flow with name \'' + str(
-                        flow.name) + '\' already exists. Flow will not be defined, use overwrite = True in add() to ' \
-                                     'overwrite the old flow.'
+                    warning = 'WARNING: A flow with name \'' + str(flow.name) + '\' already exists. Flow will not be ' +\
+                              'defined, use overwrite = True in add() to overwrite the old flow.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3454,9 +3451,7 @@ class pdata(object):
     in the flow object it is trying to add it to.
     '''
 
-    def _add_flow_variable(self, flow_variable=pflow_variable(), index='',
-                           overwrite=False):  # Adds a flow_variable object.
-
+    def _add_flow_variable(self, flow_variable=pflow_variable(), index='', overwrite=False):
         # check if flow.name was specified
         if index:
             if isinstance(index, str):
@@ -4308,18 +4303,18 @@ class pdata(object):
                 clv = t.constraint_list_value
                 clt = t.constraint_list_type
 
-                i = 0  # index for constraint_list_value and constraint_list_type
-                for i in range(0, len(clv)):
-                    if clv[i] is not None:
-                        outfile.write('    ' + strD(clv[i]))
+                for i, a_clv in enumerate(clv):
+                    if a_clv is not None:
+                        outfile.write('    ' + strD(a_clv))
                     if clt[i] is not None:
                         if i == len(clv) - 1:
                             outfile.write('  ' + str(clt[i]).lower())
                         else:
                             outfile.write('  ' + str(clt[i]).lower() + '\n')
                     else:
-                        raise PyFLOTRAN_ERROR('transport[' + str(tl.index(t)) + '].constraint_list_type[' + str(
-                            clt.index(i)) + '] is required to have a value when transport.constraint_list_value does.')
+                        raise PyFLOTRAN_ERROR('transport[' + str(tl.index(t)) + '].constraint_list_type[' +
+                                              str(clt.index(i)) + '] is required to have a value when'
+                                                                  ' transport.constraint_list_value does.')
             except:
                 raise PyFLOTRAN_ERROR('transport.constraint_list_value and transport.constraint_list_type should be' +
                                       'in list format, be equal in length, and have at least one value.\n')

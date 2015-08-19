@@ -127,20 +127,7 @@ headers = dict(zip(cards, headers))
 build_warnings = []
 
 
-class Frozen(object):
-    __frozen = False
-
-    def __setattr__(self, key, value):
-        if not self.__frozen or hasattr(self, key):
-            object.__setattr__(self, key, value)
-        else:
-            raise AttributeError(str(key) + ' is not a valid attribute for ' + self.__class__.__name__)
-
-    def _freeze(self):
-        self.__frozen = True
-
-
-class puniform_velocity(Frozen):
+class puniform_velocity(object):
     """
     Class for specifiying uniform velocity with transport. Optional with transport problem when not coupling with
     any flow mode.  If not specified, assumes diffusion transport only.
@@ -154,10 +141,9 @@ class puniform_velocity(Frozen):
         if value_list is None:
             value_list = []
         self.value_list = value_list
-        self._freeze()
 
 
-class pnonuniform_velocity(Frozen):
+class pnonuniform_velocity(object):
     """
     Class for specifiying nonuniform velocity with transport. Optional
     with transport problem when not coupling with any flow mode. If not specified, assumes diffusion transport only.
@@ -168,10 +154,9 @@ class pnonuniform_velocity(Frozen):
 
     def __init__(self, filename=''):
         self.filename = filename
-        self._freeze()
 
 
-class pmaterial(Frozen):
+class pmaterial(object):
     """
     Class for defining a material property.
     Multiple material property objects can be created.
@@ -222,10 +207,9 @@ class pmaterial(Frozen):
         self.permeability_power = permeability_power
         self.permeability_critical_porosity = permeability_critical_porosity
         self.permeability_min_scale_factor = permeability_min_scale_factor
-        self._freeze()
 
 
-class ptime(Frozen):
+class ptime(object):
     """
     Class for time. Used to specify final time of simulation,
     initial timestep size, maximum timestep size (throughout the
@@ -265,10 +249,9 @@ class ptime(Frozen):
         self.dtf_list = dtf_list  # Maximum Timestep Size using keyword 'at'
         # Lists (manually) are assigned to lists
         self.steady_state = steady_state
-        self._freeze()
 
 
-class pgrid(Frozen):
+class pgrid(object):
     """
     Class for defining a grid. Used to define type, resolution and geometry of the gird
 
@@ -328,10 +311,9 @@ class pgrid(Frozen):
         self.dz = dz
         self.gravity = gravity
         self.filename = filename
-        self._freeze()
 
 
-class psimulation(Frozen):
+class psimulation(object):
     """
     Class for specifying simulation type and simulation mode.
 
@@ -354,10 +336,9 @@ class psimulation(Frozen):
         self.subsurface_transport = subsurface_transport
         self.flowtran_coupling = flowtran_coupling
         self.mode = mode
-        self._freeze()
 
 
-class pregression(Frozen):
+class pregression(object):
     """
     Class for specifying regression details.
 
@@ -372,13 +353,12 @@ class pregression(Frozen):
             cells = []
         self.cells = cells
         self.cells_per_process = cells_per_process
-        self._freeze()
 
 
-class ptimestepper(Frozen):
+class ptimestepper(object):
     """
     Class for controling time stepping.
-        
+
     :param ts_mode: FLOW or TRAN mode
     :type ts_mode: string
     :param ts_acceleration: Integer for time step acceleration ramp.
@@ -422,12 +402,11 @@ class ptimestepper(Frozen):
         self.max_temperature_change = max_temperature_change
         self.max_concentration_change = max_concentration_change
         self.max_saturation_change = max_saturation_change
-        self._freeze()
 
 
-class plsolver(Frozen):
+class plsolver(object):
     """
-    Class for specifying linear solver. Multiple linear solver Frozens
+    Class for specifying linear solver. Multiple linear solver objects
     can be created one for flow and one for transport.
 
     :param name: Specify name of the physics for which the linear solver is
@@ -443,10 +422,9 @@ class plsolver(Frozen):
         self.name = name  # TRAN, TRANSPORT / FLOW
         self.solver = solver  # Solver Type
         self.preconditioner = preconditioner
-        self._freeze()
 
 
-class pnsolver(Frozen):
+class pnsolver(object):
     """
     Class for newton solver card. Multiple newton solver objects
     can be created, one for flow and one for transport.
@@ -480,10 +458,9 @@ class pnsolver(Frozen):
         self.itol = itol
         self.max_it = max_it
         self.max_f = max_f
-        self._freeze()
 
 
-class poutput(Frozen):
+class poutput(object):
     """
     Class for dumping simulation output.
     Acceptable time units (units of measurements) are: 's', 'min', 'h', 'd', 'w', 'mo', 'y'.
@@ -559,10 +536,9 @@ class poutput(Frozen):
         self.variables_list = variables_list
         self.velocity_at_center = velocity_at_center
         self.velocity_at_face = velocity_at_face
-        self._freeze()
 
 
-class pfluid(Frozen):
+class pfluid(object):
     """
     Class for specifying fluid properties.
 
@@ -572,10 +548,9 @@ class pfluid(Frozen):
 
     def __init__(self, diffusion_coefficient=1.e-9):
         self.diffusion_coefficient = diffusion_coefficient
-        self._freeze()
 
 
-class psaturation(Frozen):
+class psaturation(object):
     """
     Class for specifying saturation functions.
 
@@ -619,10 +594,9 @@ class psaturation(Frozen):
         self.max_capillary_pressure = max_capillary_pressure
         self.betac = betac
         self.power = power
-        self._freeze()
 
 
-class ppoint(Frozen):
+class ppoint(object):
     """
     Class for a point.
 
@@ -637,10 +611,9 @@ class ppoint(Frozen):
             coordinate = [0.0, 0.0, 0.0]
         self.name = name.lower()
         self.coordinate = coordinate
-        self._freeze()
 
 
-class pcharacteristic_curves(Frozen):
+class pcharacteristic_curves(object):
     """
     Class for specifying characteristic curves. This card is used only in GENERAL mode; the SATURATION_FUNCTION card
     should be used in RICHARDS mode.
@@ -712,10 +685,9 @@ class pcharacteristic_curves(Frozen):
         self.gpf_lambda = gpf_lambda
         self.gpf_liquid_residual_saturation = gpf_liquid_residual_saturation
         self.gpf_gas_residual_saturation = gpf_gas_residual_saturation
-        self._freeze()
 
 
-class pregion(Frozen):
+class pregion(object):
     """Class for specifying a PFLOTRAN region. Multiple region objects can be created.
 
     :param name: Region name.
@@ -741,10 +713,9 @@ class pregion(Frozen):
         self.coordinates_upper = coordinates_upper  # 3D coordinates
         self.face = face
         self.point_list = []
-        self._freeze()
 
 
-class pobservation(Frozen):
+class pobservation(object):
     """
     Class for specifying an observation region. Multiple observation objects may be added.
     Currently, only region is supported in PyFLOTRAN.
@@ -755,10 +726,9 @@ class pobservation(Frozen):
 
     def __init__(self, region=None):
         self.region = region
-        self._freeze()
 
 
-class pflow(Frozen):
+class pflow(object):
     """
     Class for specifying a PFLOTRAN flow condition. There can be multiple flow condition objects.
 
@@ -803,10 +773,9 @@ class pflow(Frozen):
         self.datum = datum  # x, y, z, and a file name. [float,float,float,str]
         self.varlist = varlist
         self.datum_type = datum_type
-        self._freeze()
 
 
-class pflow_variable(Frozen):
+class pflow_variable(object):
     """
     Sub-class of pflow for each kind of variable (includes type and value) such as
     pressure, temperature, etc. There can be multiple pflow_variable objects appended to a single pflow object.
@@ -855,10 +824,9 @@ class pflow_variable(Frozen):
         self.time_unit_type = time_unit_type  # e.g., 'y'
         self.data_unit_type = data_unit_type  # e.g., 'kg/s'
         self.list = plist  # Holds a plist of pflow_variable_lists objects
-        self._freeze()
 
 
-class pflow_variable_list(Frozen):
+class pflow_variable_list(object):
     """
     Sub-class of pflow_variable.
     Used for pflow_variables that are lists (as function of time) instead of a single value. Each of these list
@@ -876,10 +844,9 @@ class pflow_variable_list(Frozen):
             data_unit_value_list = []
         self.time_unit_value = time_unit_value  # 1 float
         self.data_unit_value_list = data_unit_value_list  # 2 floats? (2nd optional?)
-        self._freeze()
 
 
-class pinitial_condition(Frozen):
+class pinitial_condition(object):
     """
     Class for initial condition - a coupler between regions and initial flow and transport conditions.
 
@@ -896,10 +863,9 @@ class pinitial_condition(Frozen):
         self.flow = flow  # Flow Condition (e.g., initial)
         self.transport = transport
         self.region = region  # Define region (e.g., west, east, well)
-        self._freeze()
 
 
-class pboundary_condition(Frozen):
+class pboundary_condition(object):
     """
     Class for boundary conditions - performs coupling between a region and a flow/transport condition which are to be
     set as boundary conditions to that region. Multiple objects can be created.
@@ -919,10 +885,9 @@ class pboundary_condition(Frozen):
         self.flow = flow  # Flow Condition (e.g., initial)
         self.transport = transport  # Transport Condition (e.g., river_chemistry)
         self.region = region  # Define region (e.g., west, east, well)
-        self._freeze()
 
 
-class psource_sink(Frozen):
+class psource_sink(object):
     """
     Class for specifying source sink - this is also a condition coupler that links a region to the source sink condition
 
@@ -937,10 +902,9 @@ class psource_sink(Frozen):
         self.flow = flow  # Flow Condition (e.g., initial)
         self.transport = transport  # Flow Condition (e.g., initial)
         self.region = region  # Define region (e.g., west, east, well)
-        self._freeze()
 
 
-class pstrata(Frozen):
+class pstrata(object):
     """
     Class for specifying stratigraphy coupler. Multiple stratigraphy couplers can be created. Couples material
     properties with a region.
@@ -954,10 +918,9 @@ class pstrata(Frozen):
     def __init__(self, region=None, material=None):
         self.region = region
         self.material = material
-        self._freeze()
 
 
-class pcheckpoint(Frozen):
+class pcheckpoint(object):
     """
     Class for specifying checkpoint options.
 
@@ -970,10 +933,9 @@ class pcheckpoint(Frozen):
     def __init__(self, frequency=None, overwrite=False):
         self.frequency = frequency  # int
         self.overwrite = overwrite  # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how to write it.
-        self._freeze()
 
 
-class prestart(Frozen):
+class prestart(object):
     """
     Class for restarting a simulation.
 
@@ -990,10 +952,9 @@ class prestart(Frozen):
         self.file_name = file_name  # restart.chk file name
         self.time_value = time_value  # float
         self.time_unit = time_unit  # unit of measurement to use for time - str
-        self._freeze()
 
 
-class pdataset(Frozen):
+class pdataset(object):
     """
     Class for incorporating data within a model.
 
@@ -1024,10 +985,9 @@ class pdataset(Frozen):
         self.hdf5_dataset_name = hdf5_dataset_name  # name of hdf5 group
         self.map_hdf5_dataset_name = map_hdf5_dataset_name
         self.max_buffer_size = max_buffer_size
-        self._freeze()
 
 
-class pchemistry(Frozen):
+class pchemistry(object):
     """
     Class for specifying chemistry.
 
@@ -1092,10 +1052,9 @@ class pchemistry(Frozen):
         self.activity_coefficients = activity_coefficients
         self.molal = molal  # boolean
         self.output_list = output_list  # incl. molarity/all, species and mineral names - string
-        self._freeze()
 
 
-class pchemistry_m_kinetic(Frozen):
+class pchemistry_m_kinetic(object):
     """
     Sub-class of pchemistry. Mineral kinetics are assigned to m_kinetics_list in pchemistry. The add function can do
     this automatically. e.g., dat.add(mineral_kinetic).
@@ -1111,10 +1070,9 @@ class pchemistry_m_kinetic(Frozen):
             rate_constant_list = []
         self.name = name
         self.rate_constant_list = rate_constant_list
-        self._freeze()
 
 
-class ptransport(Frozen):
+class ptransport(object):
     """
     Class for specifying a transport condition. Multiple transport objects can be created.
     Specifies a transport condition based on various user defined constraints with minerals, gases, pH, charge balance,
@@ -1142,10 +1100,9 @@ class ptransport(Frozen):
         self.type = tran_type  # e.g., dirichlet, zero_gradient
         self.constraint_list_value = constraint_list_value
         self.constraint_list_type = constraint_list_type
-        self._freeze()
 
 
-class pconstraint(Frozen):
+class pconstraint(object):
     """
     Class for specifying a transport constraint.  Multiple constraint objects can be created.
 
@@ -1167,10 +1124,9 @@ class pconstraint(Frozen):
         self.name = name.lower()
         self.concentration_list = concentration_list  # Composed of pconstraint_concentration objects
         self.mineral_list = mineral_list  # list of minerals
-        self._freeze()
 
 
-class pconstraint_concentration(Frozen):
+class pconstraint_concentration(object):
     """
     Concentration unit, Sub-class for constraint. There can be multiple pconstraint_concentration objects appended to a
     single pconstraint object. Works with add function so that concentration_list in pconstraint does not need to be
@@ -1192,10 +1148,9 @@ class pconstraint_concentration(Frozen):
         self.value = value
         self.constraint = constraint  # (F, T, TOTAL_SORB, SC, etc.)
         self.element = element  # mineral or gas
-        self._freeze()
 
 
-class pconstraint_mineral(Frozen):
+class pconstraint_mineral(object):
     """
     Class for mineral in a constraint with vol. fraction and surface area. There can be multiple
     pconstraint_concentration objects appended to a single pconstraint object. Currently does not work with add
@@ -1214,7 +1169,6 @@ class pconstraint_mineral(Frozen):
         self.name = name
         self.volume_fraction = volume_fraction
         self.surface_area = surface_area
-        self._freeze()
 
 
 class pdata(object):
@@ -4082,6 +4036,14 @@ class pdata(object):
     def _read_chemistry(self, infile):
         chem = pchemistry()
 
+        # lists needs to be reset in python so their not continually appended to.
+        chem.pspecies_l = []
+        chem.sec_species_list = []
+        chem.gas_species_list = []
+        chem.minerals_list = []
+        chem.m_kinetics_list = []
+        chem.output_list = []
+
         keep_reading = True
 
         while keep_reading:  # Read through all cards
@@ -4644,33 +4606,8 @@ class pdata(object):
         return dict([constraint_concentration.pspecies, constraint_concentration] for constraint_concentration in
                     constraint.concentration_list if constraint_concentration.pspecies)
 
-    @staticmethod
-    def paraview(vtk_filepath_list=None):
-        if vtk_filepath_list is not None:
-            imports = 'from paraview import simple'
-            legacy_reader = ''
-            for vtk_filepath in vtk_filepath_list:
-                if not os.path.isfile(vtk_filepath):
-                    raise PyFLOTRAN_ERROR(vtk_filepath + ' is not a valid filepath!')
-                elif vtk_filepath[-3:] != 'vtk':
-                    raise PyFLOTRAN_ERROR(vtk_filepath + ' does not have a valid extension (.vtk)!')
-            legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(vtk_filepath_list).replace(' ', '\n') + ')\n'
-            with open('paraview-script.py', 'w+') as f:
-                f.write(imports + '\n')
-                f.write(legacy_reader)
 
-        process = subprocess.Popen('paraview script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
-                                   shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
-        while True:
-                out = process.stdout.read(1)
-                if out == '' and process.poll() is not None:
-                    break
-                if out != '':
-                    sys.stdout.write(out)
-                    sys.stdout.flush()
-
-
-class pquake(Frozen):
+class pquake(object):
     """
     Class for specifying pflotran-qk3 related information
 
@@ -4687,4 +4624,3 @@ class pquake(Frozen):
         self.mapping_file = mapping_file
         self.time_scaling = time_scaling
         self.pressure_scaling = pressure_scaling
-        self._freeze()

@@ -4606,6 +4606,30 @@ class pdata(object):
         return dict([constraint_concentration.pspecies, constraint_concentration] for constraint_concentration in
                     constraint.concentration_list if constraint_concentration.pspecies)
 
+    def paraview(self, vtk_filepath_list=None):
+        if vtk_filepath_list is not None:
+            imports = 'from paraview import simple'
+            legacy_reader = ''
+            for vtk_filepath in vtk_filepath_list:
+                if not os.path.isfile(vtk_filepath):
+                    raise PyFLOTRAN_ERROR(vtk_filepath + ' is not a valid filepath!')
+                elif vtk_filepath[-3:] != 'vtk':
+                    raise PyFLOTRAN_ERROR(vtk_filepath + ' does not have a valid extension (.vtk)!')
+            legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(vtk_filepath_list).replace(' ', '\n') + ')\n'
+            with open('paraview-script.py', 'w+') as f:
+                f.write(imports + '\n')
+                f.write(legacy_reader)
+
+        process = subprocess.Popen('paraview script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
+                                   shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
+        while True:
+                out = process.stdout.read(1)
+                if out == '' and process.poll() is not None:
+                    break
+                if out != '':
+                    sys.stdout.write(out)
+                    sys.stdout.flush()
+
 
 class pquake(object):
     """

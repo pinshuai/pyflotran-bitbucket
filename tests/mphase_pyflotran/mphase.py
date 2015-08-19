@@ -132,6 +132,7 @@ output.print_column_ids = True
 output.mass_balance = True
 output.periodic_observation_timestep = 1
 output.format_list.append('TECPLOT POINT')
+output.format_list.append('VTK')
 output.format_list.append('HDF5')
 dat.output = output
 # --------------------------------------------------------------
@@ -375,5 +376,8 @@ dat.add(stratigraphy_coupler)
 
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
-dat.run(input='mphase.in', exe=pflotran_exe)
-
+#dat.run(input='mphase.in', exe=pflotran_exe)
+print os.path.abspath('mphase-000.vtk')
+print os.path.abspath('mphase-001.vtk')
+# try paraview
+dat.paraview(vtk_filepath_list=[os.path.abspath('mphase-000.vtk'), os.path.abspath('mphase-001.vtk')])

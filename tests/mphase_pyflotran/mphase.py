@@ -61,7 +61,6 @@ grid = pgrid()
 grid.type = 'structured'
 grid.lower_bounds = [0.e0, 0.e0, 0.e0]
 grid.upper_bounds = [321.e0, 1.e0, 51.e0]
-grid.orign = [0.e0, 0.e0, 0.e0]
 grid.nxyz = [107, 1, 51]
 grid.gravity = [0.0, 0.0, -9.8068]  # Should not write
 grid.filename = ''
@@ -376,8 +375,8 @@ dat.add(stratigraphy_coupler)
 
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
-#dat.run(input='mphase.in', exe=pflotran_exe)
-print os.path.abspath('mphase-000.vtk')
-print os.path.abspath('mphase-001.vtk')
+dat.run(input='mphase.in', exe=pflotran_exe)
+#print os.path.abspath('mphase-000.vtk')
+#print os.path.abspath('mphase-001.vtk')
 # try paraview
-dat.paraview(vtk_filepath_list=[os.path.abspath('mphase-000.vtk'), os.path.abspath('mphase-001.vtk')])
+#dat.paraview(vtk_filepath_list=[os.path.abspath('mphase-000.vtk'), os.path.abspath('mphase-001.vtk')])

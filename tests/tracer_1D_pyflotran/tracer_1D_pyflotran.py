@@ -57,8 +57,6 @@ g = pgrid()
 g.type = 'structured'
 g.lower_bounds = [0.e0, 0.e0, 0.e0]
 g.upper_bounds = [0.04e0, 1.e0, 1.e0]
-g.bounds_bool = True
-g.orign = [0.e0, 0.e0, 0.e0]
 g.nxyz = [100, 1, 1]
 dat.grid = g
 # --------------------------------------------------------------

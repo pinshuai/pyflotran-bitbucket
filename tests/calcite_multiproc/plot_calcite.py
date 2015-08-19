@@ -34,7 +34,6 @@ for i in range(1, num_realizations + 1):
     for j in range(start_file, end_file):
         files.append(work_dir + '/' + work_dir + '_calcite-00' + str(j) + '.tec')
         legend_list.append(legend)
-
 dat = pdata('')
 dat.plot_data_from_tec(variable_list=['Calcite VF', 'Calcite Rate', 'pH'], tec_filenames=files,
                        plot_filename='combined_calcite_vf.pdf', legend_list=legend_list, x_label='x [m]',

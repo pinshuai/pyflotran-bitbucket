@@ -4619,9 +4619,8 @@ class pdata(object):
             with open('paraview-script.py', 'w+') as f:
                 f.write(imports + '\n')
                 f.write(legacy_reader)
-
-        process = subprocess.Popen('paraview script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
-                                   shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
+        process = subprocess.Popen('paraview --script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
+                                   shell=True, stdout=subprocess.PIPE, stderr=sys.stderr)
         while True:
                 out = process.stdout.read(1)
                 if out == '' and process.poll() is not None:

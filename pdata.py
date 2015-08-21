@@ -122,7 +122,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity', 'simu
            'observation', 'flow conditions', 'transport conditions', 'initial condition', 'boundary conditions',
            'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake']
 
-headers = dict(zip(cards, headers))
+headers = {k: headers[index] for index, k in enumerate(cards)}
 
 build_warnings = []
 
@@ -1353,7 +1353,7 @@ class pdata(object):
                         variable.append(i.strip('"'))
                     data = np.genfromtxt(FILE, skip_header=3)
                     data = data.T.tolist()
-                    var_values_dict = dict(zip(variable, data))
+                    var_values_dict = {k: data[index] for index, k in enumerate(variable)}
                     found = False
                     for key in var_values_dict.keys():
                         if direction.upper() in key:
@@ -1373,7 +1373,8 @@ class pdata(object):
                 plot_filename = plot_filename.replace(".pdf", "")
             if ' ' in var:
                 var = var.replace(" ", "_")
-            if found: print 'Plotting variable [' + var + '] in [' + direction + '] direction'
+            if found:
+                print 'Plotting variable [' + var + '] in [' + direction + '] direction'
             fig.savefig(plot_filename + '_' + var + '.pdf')
 
         return 0
@@ -1428,7 +1429,7 @@ class pdata(object):
                 variable.append(i.strip('"'))
             data = np.genfromtxt(FILE, skip_header=1)
             data = data.T.tolist()
-            var_values_dict = dict(zip(variable, data))
+            var_values_dict = {k: data[index] for index, k in enumerate(variable)}
             combined_dict.update(var_values_dict)
 
         for key in combined_dict.keys():
@@ -4620,7 +4621,7 @@ class pdata(object):
             with open('paraview-script.py', 'w+') as f:
                 f.write(imports + '\n')
                 f.write(legacy_reader + '\n')
-                f.write('simple.Show()\nsimple.Render()')
+                f.write('simple.Show()\nsimple.Render()\n')
         process = subprocess.Popen('paraview --script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
                                    shell=True, stdout=subprocess.PIPE, stderr=sys.stderr)
         while True:

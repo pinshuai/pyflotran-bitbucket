@@ -1470,7 +1470,8 @@ class pdata(object):
         :type filename: str
         """
         if not os.path.isfile(filename):
-            print filename + ' not found...'
+            raise IOError(filename + ' not found...')
+
         self.filename = filename  # assign filename attribute
         read_fn = dict(zip(cards,
                            [self._read_co2_database,

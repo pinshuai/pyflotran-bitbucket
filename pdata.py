@@ -127,19 +127,6 @@ headers = dict(zip(cards, headers))
 build_warnings = []
 
 
-class Frozen(object):
-    __frozen = False
-
-    def __setattr__(self, key, value):
-        if not self.__frozen or hasattr(self, key):
-            object.__setattr__(self, key, value)
-        else:
-            raise AttributeError(str(key) + ' is not a valid attribute for ' + self.__class__.__name__)
-
-    def _freeze(self):
-        self.__frozen = True
-
-
 class puniform_velocity(Frozen):
     """
     Class for specifiying uniform velocity with transport. Optional with transport problem when not coupling with
@@ -1516,7 +1503,7 @@ class pdata(object):
         :type filename: str
         """
         if not os.path.isfile(filename):
-            print filename + ' not found...'
+            raise IOError(filename + ' not found...')
         self.filename = filename  # assign filename attribute
         read_fn = dict(zip(cards,
                            [self._read_co2_database,
@@ -4643,31 +4630,6 @@ class pdata(object):
     def constraint_concentration(self, constraint=pconstraint()):
         return dict([constraint_concentration.pspecies, constraint_concentration] for constraint_concentration in
                     constraint.concentration_list if constraint_concentration.pspecies)
-
-    @staticmethod
-    def paraview(vtk_filepath_list=None):
-        if vtk_filepath_list is not None:
-            imports = 'from paraview import simple'
-            legacy_reader = ''
-            for vtk_filepath in vtk_filepath_list:
-                if not os.path.isfile(vtk_filepath):
-                    raise PyFLOTRAN_ERROR(vtk_filepath + ' is not a valid filepath!')
-                elif vtk_filepath[-3:] != 'vtk':
-                    raise PyFLOTRAN_ERROR(vtk_filepath + ' does not have a valid extension (.vtk)!')
-            legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(vtk_filepath_list).replace(' ', '\n') + ')\n'
-            with open('paraview-script.py', 'w+') as f:
-                f.write(imports + '\n')
-                f.write(legacy_reader)
-
-        process = subprocess.Popen('paraview script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
-                                   shell=False, stdout=subprocess.PIPE, stderr=sys.stderr)
-        while True:
-                out = process.stdout.read(1)
-                if out == '' and process.poll() is not None:
-                    break
-                if out != '':
-                    sys.stdout.write(out)
-                    sys.stdout.flush()
 
 
 class pquake(Frozen):

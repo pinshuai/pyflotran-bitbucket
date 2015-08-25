@@ -14,6 +14,20 @@ from pdflt import *
 
 dflt = pdflt()
 
+class Frozen(object):
+    """
+    Prevents adding new attributes to classes once _freeze() is called on the class.
+    """
+    __frozen = False
+
+    def __setattr__(self, key, value):
+        if not self.__frozen or hasattr(self, key):
+            object.__setattr__(self, key, value)
+        else:
+            raise AttributeError(str(key) + ' is not a valid attribute for ' + self.__class__.__name__)
+
+    def _freeze(self):
+        self.__frozen = True
 
 def powspace(x0, x1, N=10, power=1):
     """Returns a sequence of numbers spaced according to the power law (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0

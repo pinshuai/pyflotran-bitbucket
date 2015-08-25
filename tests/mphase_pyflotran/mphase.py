@@ -376,7 +376,3 @@ dat.add(stratigraphy_coupler)
 pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
 # Write to file and execute that input file
 dat.run(input='mphase.in', exe=pflotran_exe)
-#print os.path.abspath('mphase-000.vtk')
-#print os.path.abspath('mphase-001.vtk')
-# try paraview
-#dat.paraview(vtk_filepath_list=[os.path.abspath('mphase-000.vtk'), os.path.abspath('mphase-001.vtk')])

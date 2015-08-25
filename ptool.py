@@ -16,7 +16,7 @@ dflt = pdflt()
 
 class Frozen(object):
     """
-    Prevents adding new attributes to classes once _freeze() is called.
+    Prevents adding new attributes to classes once _freeze() is called on the class.
     """
     __frozen = False
 

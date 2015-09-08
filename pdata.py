@@ -1267,7 +1267,7 @@ class pdata(object):
         else:
             return
 
-    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path):
+    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False):
         """
         Run a pflotran simulation for a given input file with specified number of processors.
 
@@ -1279,6 +1279,8 @@ class pdata(object):
         :type exe: str
         :param num_procs: Number of processors
         :type num_procs: int
+        :param silent: Hide screen output
+        :type silent: bool
         """
 
         # set up and check path to executable
@@ -1324,7 +1326,7 @@ class pdata(object):
 
                 if out == '' and process.poll() is not None:
                     break
-                if out != '':
+                if out != '' and silent == False:
                     sys.stdout.write(out)
                     sys.stdout.flush()
 

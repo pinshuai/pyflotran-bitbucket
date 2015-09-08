@@ -29,4 +29,4 @@ dat = pdata(pyflotran_dir + test_dir + '/calcite_tran_only.in')
 
 # Write to file and execute that input file
 dat.chemistry.database = pflotran_dir + '/database/hanford.dat'
-dat.run(input='calcite_tran_only_2.in', exe=pflotran_exe)
+dat.run(input='calcite_tran_only_2.in', exe=pflotran_exe, silent=False)

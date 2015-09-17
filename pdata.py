@@ -29,12 +29,6 @@ __version__ = "1.0.0"
 __maintainer__ = "Satish Karra"
 __email__ = "satkarra@lanl.gov"
 
-print('=========================================')
-print('PyFLOTRAN ' + __version__)  # Makes console output a little easier to read
-print('Authors: ' + __author__)
-print('Contact: ' + __email__ + ' (' + __maintainer__ + ')')
-print('=========================================')
-
 from copy import copy
 import subprocess
 import matplotlib.pyplot as plt

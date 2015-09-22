@@ -180,12 +180,18 @@ class pmaterial(Frozen):
     :param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in
     unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
     :type permeability: [float]*3
+    :param longitudinal_dispersivity: Longitudinal dispersion coefficient 
+    :type longitudinal_dispersivity: float
+    :param transverse_dispersivity: Transverse dispersion coefficient
+    :type transverse_dispersivity: float
+
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
                  specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
-                 permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor=''):
+                 permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor='',
+		 longitudinal_dispersivity='',transverse_dispersivity=''):
         if permeability is None:
             permeability = []
 
@@ -203,6 +209,8 @@ class pmaterial(Frozen):
         self.permeability_power = permeability_power
         self.permeability_critical_porosity = permeability_critical_porosity
         self.permeability_min_scale_factor = permeability_min_scale_factor
+	self.longitudinal_dispersivity = longitudinal_dispersivity
+	self.transverse_dispersivity = transverse_dispersivity
         self._freeze()
 
 
@@ -2298,6 +2306,8 @@ class pdata(object):
         np_permeability_critical_porosity = p.permeability_critical_porosity
         np_permeability_power = p.permeability_power
         np_permeability_min_scale_factor = p.permeability_min_scale_factor
+	np_longitudinal_dispersivity = p.longitudinal_dispersivity
+	np_transverse_dispersivity = p.transverse_dispersivity
         keep_reading = True
 
         while keep_reading:  # read through all cards
@@ -2330,6 +2340,10 @@ class pdata(object):
                 np_permeability_critical_porosity = self.splitter(line)
             elif key == 'permeability_min_scale_factor':
                 np_permeability_min_scale_factor = self.splitter(line)
+            elif key == 'longitudinal_dispersivity':
+                np_longitudinal_dispersivity = self.splitter(line)
+            elif key == 'transverse_dispersivity':
+                np_transverse_dispersivity = self.splitter(line)
             elif key == 'permeability':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -2351,7 +2365,8 @@ class pdata(object):
         # create an empty material property
         new_prop = pmaterial(np_id, np_name, np_characteristic_curves, np_porosity, np_tortuosity, np_density,
                              np_specific_heat, np_cond_dry, np_cond_wet, np_saturation, np_permeability,
-                             np_permeability_power, np_permeability_critical_porosity, np_permeability_min_scale_factor)
+                             np_permeability_power, np_permeability_critical_porosity, np_permeability_min_scale_factor,
+			     np_longitudinal_dispersivity,np_transverse_dispersivity)
 
         self.add(new_prop)
 
@@ -2406,6 +2421,11 @@ class pdata(object):
                 outfile.write('  PERMEABILITY_CRITICAL_POROSITY ' + prop.permeability_critical_porosity + '\n')
             if prop.permeability_min_scale_factor:
                 outfile.write('  PERMEABILITY_MIN_SCALE_FACTOR ' + prop.permeability_min_scale_factor + '\n')
+            if prop.longitudinal_dispersivity:
+                outfile.write('  LONGITUDINAL_DISPERSIVITY' + prop.longitudinal_dispersivity+ '\n')
+            if prop.transverse_dispersivity:
+                outfile.write('  TRANSVERSE_DISPERSIVITY' + prop.transverse_dispersivity+ '\n')
+
 
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')

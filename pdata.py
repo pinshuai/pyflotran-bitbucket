@@ -374,7 +374,7 @@ class ptimestepper(Frozen):
     :type cfl_limiter: float
     :param initialize_to_steady_state: Boolean flag to initialize a simulation to steady state
     :type initialize_to_steady_state: bool - True or False
-    :param run_as_steady_state: Boolean flag to run a simulation to steady state
+    :param uun_as_steady_state: Boolean flag to run a simulation to steady state
     :type run_as_steady_state: bool - True or False
     :param max_pressure_change: Maximum change in pressure for a time step. Default: 5.d4 Pa.
     :type max_pressure_change: float
@@ -1328,7 +1328,7 @@ class pdata(object):
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
         else:
-            arg = 'mpirun -np ' + str(num_procs) + exe_path.full_path + ' -pflotranin ' + self._path.filename
+            arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
 
         if input_prefix:
@@ -2409,7 +2409,9 @@ class pdata(object):
 
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
-                if len(prop.permeability) == 1:
+		if type(prop.permeability) is str:
+                    outfile.write('    DATASET ' + prop.permeability + '\n')
+                elif len(prop.permeability) == 1:
                     outfile.write('    PERM_ISO ' + strD(prop.permeability[0]) + '\n')
                 else:
                     outfile.write('    PERM_X ' + strD(prop.permeability[0]) + '\n')

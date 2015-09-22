@@ -182,8 +182,11 @@ class pmaterial(Frozen):
     :type permeability: [float]*3
     :param longitudinal_dispersivity: Longitudinal dispersion coefficient 
     :type longitudinal_dispersivity: float
-    :param transverse_dispersivity: Transverse dispersion coefficient
-    :type transverse_dispersivity: float
+    :param transverse_dispersivity_h: Transverse dispersion coefficient horizontal
+    :type transverse_dispersivity_h: float
+    :param transverse_dispersivity_v: Transverse dispersion coefficient vertical
+    :type transverse_dispersivity_v: float
+
 
     """
 
@@ -191,7 +194,7 @@ class pmaterial(Frozen):
     def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
                  specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
                  permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor='',
-		 longitudinal_dispersivity='',transverse_dispersivity=''):
+		 longitudinal_dispersivity='',transverse_dispersivity_h='',transverse_dispersivity_v =''):
         if permeability is None:
             permeability = []
 
@@ -210,7 +213,8 @@ class pmaterial(Frozen):
         self.permeability_critical_porosity = permeability_critical_porosity
         self.permeability_min_scale_factor = permeability_min_scale_factor
 	self.longitudinal_dispersivity = longitudinal_dispersivity
-	self.transverse_dispersivity = transverse_dispersivity
+	self.transverse_dispersivity_h = transverse_dispersivity_h
+	self.transverse_dispersivity_v = transverse_dispersivity_v
         self._freeze()
 
 
@@ -2307,7 +2311,8 @@ class pdata(object):
         np_permeability_power = p.permeability_power
         np_permeability_min_scale_factor = p.permeability_min_scale_factor
 	np_longitudinal_dispersivity = p.longitudinal_dispersivity
-	np_transverse_dispersivity = p.transverse_dispersivity
+	np_transverse_dispersivity_h = p.transverse_dispersivity_h
+	np_transverse_dispersivity_v = p.transverse_dispersivity_v
         keep_reading = True
 
         while keep_reading:  # read through all cards
@@ -2342,8 +2347,10 @@ class pdata(object):
                 np_permeability_min_scale_factor = self.splitter(line)
             elif key == 'longitudinal_dispersivity':
                 np_longitudinal_dispersivity = self.splitter(line)
-            elif key == 'transverse_dispersivity':
-                np_transverse_dispersivity = self.splitter(line)
+            elif key == 'transverse_dispersivity_h':
+                np_transverse_dispersivity_h = self.splitter(line)
+            elif key == 'transverse_dispersivity_v':
+                np_transverse_dispersivity_v = self.splitter(line)
             elif key == 'permeability':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -2366,7 +2373,7 @@ class pdata(object):
         new_prop = pmaterial(np_id, np_name, np_characteristic_curves, np_porosity, np_tortuosity, np_density,
                              np_specific_heat, np_cond_dry, np_cond_wet, np_saturation, np_permeability,
                              np_permeability_power, np_permeability_critical_porosity, np_permeability_min_scale_factor,
-			     np_longitudinal_dispersivity,np_transverse_dispersivity)
+			     np_longitudinal_dispersivity,np_transverse_dispersivity_h,np_transverse_dispersivity_v)
 
         self.add(new_prop)
 
@@ -2423,8 +2430,11 @@ class pdata(object):
                 outfile.write('  PERMEABILITY_MIN_SCALE_FACTOR ' + prop.permeability_min_scale_factor + '\n')
             if prop.longitudinal_dispersivity:
                 outfile.write('  LONGITUDINAL_DISPERSIVITY' + strD(prop.longitudinal_dispersivity) + '\n')
-            if prop.transverse_dispersivity:
-                outfile.write('  TRANSVERSE_DISPERSIVITY' + strD(prop.transverse_dispersivity) + '\n')
+            if prop.transverse_dispersivity_h:
+                outfile.write('  TRANSVERSE_DISPERSIVITY_H' + strD(prop.transverse_dispersivity_h) + '\n')
+            if prop.transverse_dispersivity_v:
+                outfile.write('  TRANSVERSE_DISPERSIVITY_V' + strD(prop.transverse_dispersivity_v) + '\n')
+
 
 
             if prop.permeability:

@@ -2429,11 +2429,11 @@ class pdata(object):
             if prop.permeability_min_scale_factor:
                 outfile.write('  PERMEABILITY_MIN_SCALE_FACTOR ' + prop.permeability_min_scale_factor + '\n')
             if prop.longitudinal_dispersivity:
-                outfile.write('  LONGITUDINAL_DISPERSIVITY' + strD(prop.longitudinal_dispersivity) + '\n')
+                outfile.write('  LONGITUDINAL_DISPERSIVITY ' + strD(prop.longitudinal_dispersivity) + '\n')
             if prop.transverse_dispersivity_h:
-                outfile.write('  TRANSVERSE_DISPERSIVITY_H' + strD(prop.transverse_dispersivity_h) + '\n')
+                outfile.write('  TRANSVERSE_DISPERSIVITY_H ' + strD(prop.transverse_dispersivity_h) + '\n')
             if prop.transverse_dispersivity_v:
-                outfile.write('  TRANSVERSE_DISPERSIVITY_V' + strD(prop.transverse_dispersivity_v) + '\n')
+                outfile.write('  TRANSVERSE_DISPERSIVITY_V ' + strD(prop.transverse_dispersivity_v) + '\n')
 
 
 

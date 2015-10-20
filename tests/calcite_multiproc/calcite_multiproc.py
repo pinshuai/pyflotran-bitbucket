@@ -77,8 +77,7 @@ def simulation(i, rate):
     grid.type = 'structured'
     grid.lower_bounds = [0.0, 0.0, 0.0]
     grid.upper_bounds = [100.0, 1.0, 1.0]
-    grid.bounds_bool = True
-    grid.orign = [0.0, 0.0, 0.0]
+    grid.origin = [0.0, 0.0, 0.0]
     grid.nxyz = [100, 1, 1]
     dat.grid = grid
     # --------------------------------------------------------------

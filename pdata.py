@@ -1276,7 +1276,7 @@ class pdata(object):
         else:
             return
 
-    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False):
+    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False,num_realizations='', num_groups=''):
         """
         Run a pflotran simulation for a given input file with specified number of processors.
 
@@ -1288,9 +1288,16 @@ class pdata(object):
         :type exe: str
         :param num_procs: Number of processors
         :type num_procs: int
+        :param num_realizations: Number of realizations 
+        :type num_realizations: int
+        :param num_groups: Number of groups 
+        :type num_groups: int
         :param silent: Hide screen output
         :type silent: bool
         """
+
+        num_realizations = 1
+        num_groups = 1
 
         # set up and check path to executable
         exe_path = ppath()
@@ -1343,7 +1350,10 @@ class pdata(object):
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
         else:
-            arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename
+            if num_realizations > 1:
+                arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename + ' -stochastic -num_realizations ' + str(num_realizations) + ' -num_groups ' + str(num_groups)  
+            else:
+                arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
 
         if input_prefix:

@@ -88,11 +88,11 @@ characteristic_curves_liquid_permeability_function_types_allowed = ['MAULEM', 'B
 # all valid entries
 
 # flow_conditions - allowed strings
-flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION',
-                                     'ENTHALPY']
+flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'WELL','ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
+well_types_allowed = ['well']
 flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic, conductance', 'zero_gradient',
                       'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium']
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'neumann']
@@ -2284,13 +2284,13 @@ class pdata(object):
         if self.timestepper.run_as_steady_state:
             outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
         if self.timestepper.max_pressure_change:
-            outfile.write('  ' + 'MAX_PRESSURE_CHANGE' + strD(self.timestepper.max_pressure_change) + '\n')
+            outfile.write('  ' + 'MAX_PRESSURE_CHANGE ' + strD(self.timestepper.max_pressure_change) + '\n')
         if self.timestepper.max_temperature_change:
-            outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE' + strD(self.timestepper.max_temperature_change) + '\n')
+            outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE ' + strD(self.timestepper.max_temperature_change) + '\n')
         if self.timestepper.max_concentration_change:
-            outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE' + strD(self.timestepper.max_concentration_change) + '\n')
+            outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE ' + strD(self.timestepper.max_concentration_change) + '\n')
         if self.timestepper.max_saturation_change:
-            outfile.write('  ' + 'MAX_SATURATION_CHANGE' + strD(self.timestepper.max_saturation_change) + '\n')
+            outfile.write('  ' + 'MAX_SATURATION_CHANGE ' + strD(self.timestepper.max_saturation_change) + '\n')
         outfile.write('END\n\n')
 
     def _read_prop(self, infile, line):
@@ -3584,11 +3584,11 @@ class pdata(object):
                     print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type + '\' is invalid.')
                 return 0  # Break out of function
-            elif condition_name.upper() == 'FLUX':
-                if condition_type.lower() in flux_types_allowed:
+            elif condition_name.upper() == 'WELL':
+                if condition_type.lower() in well_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'
+                    print '       valid well_conditions well_types_allowed:', well_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR('flow.varlist.type: \'' + condition_type + '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'TEMPERATURE':
@@ -3669,7 +3669,10 @@ class pdata(object):
                 if a_flow.valuelist:
                     outfile.write('    ' + a_flow.name.upper())
                     if isinstance(a_flow.valuelist[0], str):
-                        outfile.write(' DATASET ' + a_flow.valuelist[0])
+                        if a_flow.valuelist[0] == 'file':
+                            outfile.write(' FILE ' + a_flow.valuelist[1])
+                        else:
+                            outfile.write(' DATASET ' + a_flow.valuelist[0])
                     else:
                         for flow_val in a_flow.valuelist:
                             outfile.write(' ' + strD(flow_val))

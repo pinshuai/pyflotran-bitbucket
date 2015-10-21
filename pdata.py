@@ -1006,10 +1006,12 @@ class pdataset(Frozen):
     :type map_hdf5_dataset_name: str
     :param max_buffer_size: size of internal buffer for storing transient data
     :type max_buffer_size: float
-    """
+    :param realization_dependent: Add when doing stochastic multiple realizations 
+    :type realization_dependent: bool 
+   """
 
     def __init__(self, dataset_name='', dataset_mapped_name='', name='', file_name='', hdf5_dataset_name='',
-                 map_hdf5_dataset_name='', max_buffer_size=''):
+                 map_hdf5_dataset_name='', max_buffer_size='',realization_dependent=''):
         self.dataset_name = dataset_name  # name of dataset
         self.dataset_mapped_name = dataset_mapped_name
         self.name = name  # name of dataset (overwrites dataset_name)
@@ -1017,6 +1019,7 @@ class pdataset(Frozen):
         self.hdf5_dataset_name = hdf5_dataset_name  # name of hdf5 group
         self.map_hdf5_dataset_name = map_hdf5_dataset_name
         self.max_buffer_size = max_buffer_size
+        self.realization_dependent = realization_dependent
         self._freeze()
 
 
@@ -4051,6 +4054,8 @@ class pdata(object):
                 dataset.map_hdf5_dataset_name = self.splitter(line)
             elif key == 'max_buffer_size':
                 dataset.max_buffer_size = floatD(self.splitter(line))
+            elif key == 'realization_dependent':
+                dataset.realization_dependent = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -4076,6 +4081,8 @@ class pdata(object):
                 outfile.write('  MAP_HDF5_DATASET_NAME ' + dataset.map_hdf5_dataset_name + '\n')
             if dataset.max_buffer_size:
                 outfile.write('  MAX_BUFFER_SIZE ' + strD(dataset.max_buffer_size) + '\n')
+            if dataset.realization_dependent:
+                outfile.write('  REALIZATION_DEPENDENT ' + '\n')
             outfile.write('END\n\n')
 
     def _add_dataset(self, dat=pdataset(), overwrite=False):  # Adds a dataset object.

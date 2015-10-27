@@ -779,7 +779,7 @@ class pflow(Frozen):
     """
 
     def __init__(self, name='', units_list=None, iphase=None, sync_timestep_with_update=False, datum=None,
-                 datum_type='', varlist=None):
+                 datum_type='', varlist=None, gradient=None):
 
         if datum is None:
             datum = []
@@ -796,6 +796,7 @@ class pflow(Frozen):
         self.datum = datum  # x, y, z, and a file name. [float,float,float,str]
         self.varlist = varlist
         self.datum_type = datum_type
+        self.gradient = gradient
         self._freeze()
 
 
@@ -3659,7 +3660,10 @@ class pdata(object):
                     outfile.write(strD(flow.datum[0][1]) + ' ')
                     outfile.write(strD(flow.datum[0][2]))
                 outfile.write('\n')
-
+                if flow.gradient:
+                    outfile.write('    GRADIENT\n')
+                    outfile.write('      ' + flow.gradient[0].upper() + ' ' + str(flow.gradient[1]) + ' ' + str(flow.gradient[2]) + ' ' +  str(flow.gradient[3]) + '\n')
+                    outfile.write('    /\n')
             outfile.write('  TYPE\n')  # Following code is paired w/ this statement.
             # variable name and type from lists go here
             for a_flow in flow.varlist:

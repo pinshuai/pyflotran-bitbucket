@@ -1322,7 +1322,7 @@ class pdata(object):
         else:
             return
 
-    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False,num_realizations='', num_groups=''):
+    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False,num_realizations=1, num_groups=1):
         """
         Run a pflotran simulation for a given input file with specified number of processors.
 
@@ -1341,9 +1341,6 @@ class pdata(object):
         :param silent: Hide screen output
         :type silent: bool
         """
-
-        num_realizations = 1
-        num_groups = 1
 
         # set up and check path to executable
         exe_path = ppath()
@@ -1529,7 +1526,7 @@ class pdata(object):
             data = np.genfromtxt(FILE, skip_header=1)
             data = data.T.tolist()
             var_values_dict = dict(zip(variable, data))
-            combined_dict.update(var_values_dict)
+            combined_dict = dict(var_values_dict,**combined_dict)
 
         for key in combined_dict.keys():
             if 'Time' in key:
@@ -1552,6 +1549,7 @@ class pdata(object):
         for item in combined_var_obs_list:
             for key in combined_dict.keys():
                 if item[0] in key and item[1] in key:
+		    print item, key
                     time_new = [t * x_factor for t in time]
                     var_new = [v * y_factor for v in combined_dict[key]]
                     ln, = ax.plot(time_new, var_new)
@@ -1560,7 +1558,7 @@ class pdata(object):
         if plot_filename:
             fig.savefig(plot_filename)
 
-        return 0
+        return combined_dict
 
     def read(self, filename=''):
         """

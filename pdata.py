@@ -1475,7 +1475,7 @@ class pdata(object):
 
         return 0
 
-    def plot_observation(self, variable_list=None, observation_list=None, observation_filenames=None, plot_filename='',
+    def plot_observation(self, variable_list=None, observation_list=None, observation_filenames=None, plot_filename='plot.pdf',
                          legend_list=None, fontsize=10, x_label='', y_label='', x_type='linear', y_type='linear',
                          x_range=(), y_range=(), x_factor=1.0, y_factor=1.0):
         """
@@ -1526,11 +1526,7 @@ class pdata(object):
             data = np.genfromtxt(FILE, skip_header=1)
             data = data.T.tolist()
             var_values_dict = dict(zip(variable, data))
-            combined_dict = dict(var_values_dict,**combined_dict)
-
-        for key in combined_dict.keys():
-            if 'Time' in key:
-                time = combined_dict[key]
+            combined_dict[FILE] = var_values_dict
 
         combined_var_obs_list = [variable_list, observation_list]
         combined_var_obs_list = list(it.product(*combined_var_obs_list))
@@ -1546,19 +1542,29 @@ class pdata(object):
         if y_range:
             ax.set_ylim(y_range)
         lns = []
-        for item in combined_var_obs_list:
-            for key in combined_dict.keys():
-                if item[0] in key and item[1] in key:
-		    print item, key
+        
+        for file in combined_dict.keys():
+            for key in combined_dict[file].keys():
+                if 'Time' in key:
+                    time = combined_dict[file][key]
                     time_new = [t * x_factor for t in time]
-                    var_new = [v * y_factor for v in combined_dict[key]]
-                    ln, = ax.plot(time_new, var_new)
-                    lns.append(ln)
-        ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
-        if plot_filename:
-            fig.savefig(plot_filename)
+            for item in combined_var_obs_list:
+                if item[0] == '' or item [1] == '':
+                    print('Please provide a variable name and an observation name')
+                else:
+                    print item
+                    keys = [key for key in combined_dict[file].keys() if item[0] in key and item[1] in key]
+                    print keys
+                    for key in keys:
+                        var_new = [v * y_factor for v in combined_dict[file][key]]
+                        ln, = ax.plot(time_new, var_new)
+                        lns.append(ln)
 
-        return combined_dict
+        ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
+        
+        fig.savefig(plot_filename)
+
+        return 0
 
     def read(self, filename=''):
         """

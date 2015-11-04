@@ -108,13 +108,13 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity', 'simulation'
          'dataset', 'chemistry', 'grid', 'timestepper', 'material_property', 'time', 'linear_solver', 'newton_solver',
          'output', 'fluid_property', 'saturation_function', 'characteristic_curves', 'region', 'observation',
          'flow_condition', 'transport_condition', 'initial_condition', 'boundary_condition', 'source_sink', 'strata',
-         'constraint', 'hydroquake']
+         'constraint', 'hydroquake','multiple_continuum','secondary_continuum']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity', 'simulation', 'regression', 'checkpoint',
            'restart', 'dataset', 'chemistry', 'grid', 'time stepping', 'material properties', 'time', 'linear solver',
            'newton solver', 'output', 'fluid properties', 'saturation functions', 'characteristic curves', 'regions',
            'observation', 'flow conditions', 'transport conditions', 'initial condition', 'boundary conditions',
-           'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake']
+           'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake','multiple continuum','secondary continuum']
 
 headers = dict(zip(cards, headers))
 
@@ -194,7 +194,8 @@ class pmaterial(Frozen):
     def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
                  specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
                  permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor='',
-		 longitudinal_dispersivity='',transverse_dispersivity_h='',transverse_dispersivity_v =''):
+                 longitudinal_dispersivity='',transverse_dispersivity_h='',transverse_dispersivity_v ='',  
+                 secondary_continuum=''):
         if permeability is None:
             permeability = []
 
@@ -212,9 +213,52 @@ class pmaterial(Frozen):
         self.permeability_power = permeability_power
         self.permeability_critical_porosity = permeability_critical_porosity
         self.permeability_min_scale_factor = permeability_min_scale_factor
-	self.longitudinal_dispersivity = longitudinal_dispersivity
-	self.transverse_dispersivity_h = transverse_dispersivity_h
-	self.transverse_dispersivity_v = transverse_dispersivity_v
+        self.longitudinal_dispersivity = longitudinal_dispersivity
+        self.transverse_dispersivity_h = transverse_dispersivity_h
+        self.transverse_dispersivity_v = transverse_dispersivity_v
+        self.secondary_continuum = secondary_continuum
+        self._freeze()
+
+class psecondary_continuum(Frozen):
+    """
+    Class for defining a secondary continuum material property.
+
+    :param type: Type of secondary continuum material, e.g., 'nested_spheres', 'nested_cubes', 'slab'.
+    :type name: str
+    :param log_spacing: Turn this on if you need log spacing
+    :type log_spacing: bool
+    :param outer_spacing: Specify the outer spacing for log spacing
+    :type outer_spacing: float
+    :param fracture_spacing: Specify the spacing between fratures in secondary continuum for nested cubes
+    :type fracture_spacing: float
+    :param num_cells: Specify number of grid cells in the secondary continuum
+    :type num_cells: int
+    :param epsilon: Specify the volume fraction of the secondary continuum 
+    :type epsilon: float
+    :param temperature: Initial temperature in the secondary continuum
+    :type temperature: float
+    :param diffusion_coefficient: Specify the diffusion coefficient in the secondary continuum for transport
+    :type diffusion_coefficient: float
+    :param porosity: Specify the porosity of the secondary continuum 
+    :type porosity: float
+ 
+
+    """
+
+    # definitions are put on one line to work better with rst/latex/sphinx.
+    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None, epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None):
+
+        self.id = id
+        self.type = type 
+        self.log_spacing = log_spacing
+        self.outer_spacing = outer_spacing
+        self.fracture_spacing = fracture_spacing
+        self.num_cells = num_cells
+        self.epsilon = epsilon
+        self.temperature = temperature
+        self.diffusion_coefficient = diffusion_coefficient
+        self.porosity = porosity
+
         self._freeze()
 
 
@@ -1227,6 +1271,7 @@ class pdata(object):
         self.uniform_velocity = puniform_velocity()
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
+        self.multiple_continuum = False
         self.regression = pregression()
         self.simulation = psimulation()
         self.checkpoint = pcheckpoint()
@@ -1512,7 +1557,8 @@ class pdata(object):
                     ln, = ax.plot(time_new, var_new)
                     lns.append(ln)
         ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
-        fig.savefig(plot_filename)
+        if plot_filename:
+            fig.savefig(plot_filename)
 
         return 0
 
@@ -1641,6 +1687,9 @@ class pdata(object):
         if self.co2_database:
             self._write_co2_database(outfile)
 
+        if self.multiple_continuum:
+            self._write_multiple_continuum(outfile)
+
         if self.overwrite_restart_flow_params:
             self._write_overwrite_restart(outfile)
 
@@ -1765,7 +1814,7 @@ class pdata(object):
 
         add_checklist = [pmaterial, pdataset, psaturation, pcharacteristic_curves, pchemistry_m_kinetic, plsolver,
                          pnsolver, pregion, pobservation, pflow, pflow_variable, pinitial_condition,
-                         pboundary_condition, psource_sink, pstrata, ptransport, pconstraint, pconstraint_concentration]
+                         pboundary_condition, psource_sink, pstrata, ptransport, pconstraint, pconstraint_concentration,psecondary_continuum]
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
@@ -1777,6 +1826,8 @@ class pdata(object):
             index = index.lower()
         if isinstance(obj, pmaterial):
             self._add_prop(obj, overwrite)
+        if isinstance(obj, psecondary_continuum):
+            self._add_sec(obj, overwrite)
         if isinstance(obj, pdataset):
             self._add_dataset(obj, overwrite)
         if isinstance(obj, psaturation):
@@ -1825,6 +1876,13 @@ class pdata(object):
         elif isinstance(obj, list):
             for obji in copy(obj):  # obji = object index
                 if isinstance(obji, pmaterial):
+                    self._delete_prop(obji)
+
+        if isinstance(obj, psecondary_continuum):
+            self._delete_prop(obj)
+        elif isinstance(obj, list):
+            for obji in copy(obj):  # obji = object index
+                if isinstance(obji, psecondary_continuum):
                     self._delete_prop(obji)
 
         if isinstance(obj, pcharacteristic_curves):
@@ -2077,6 +2135,11 @@ class pdata(object):
         self._header(outfile, headers['co2_database'])
         outfile.write('CO2_DATABASE ' + self.co2_database + '\n\n')
 
+    def _write_multiple_continuum(self, outfile):
+        self._header(outfile, headers['multiple_continuum'])
+        outfile.write('MULTIPLE_CONTINUUM\n\n')
+
+
     def _read_regression(self, infile, line):
         regression = pregression()
         keep_reading = True
@@ -2324,9 +2387,9 @@ class pdata(object):
         np_permeability_critical_porosity = p.permeability_critical_porosity
         np_permeability_power = p.permeability_power
         np_permeability_min_scale_factor = p.permeability_min_scale_factor
-	np_longitudinal_dispersivity = p.longitudinal_dispersivity
-	np_transverse_dispersivity_h = p.transverse_dispersivity_h
-	np_transverse_dispersivity_v = p.transverse_dispersivity_v
+        np_longitudinal_dispersivity = p.longitudinal_dispersivity
+        np_transverse_dispersivity_h = p.transverse_dispersivity_h
+        np_transverse_dispersivity_v = p.transverse_dispersivity_v
         keep_reading = True
 
         while keep_reading:  # read through all cards
@@ -2449,11 +2512,9 @@ class pdata(object):
             if prop.transverse_dispersivity_v:
                 outfile.write('  TRANSVERSE_DISPERSIVITY_V ' + strD(prop.transverse_dispersivity_v) + '\n')
 
-
-
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
-		if type(prop.permeability) is str:
+                if type(prop.permeability) is str:
                     outfile.write('    DATASET ' + prop.permeability + '\n')
                 elif len(prop.permeability) == 1:
                     outfile.write('    PERM_ISO ' + strD(prop.permeability[0]) + '\n')
@@ -2462,7 +2523,34 @@ class pdata(object):
                     outfile.write('    PERM_Y ' + strD(prop.permeability[1]) + '\n')
                     outfile.write('    PERM_Z ' + strD(prop.permeability[2]) + '\n')
                 outfile.write('  /\n')
+
+            if prop.secondary_continuum:
+                self._write_sec(prop.secondary_continuum, outfile)
+
             outfile.write('END\n\n')
+
+    def _write_sec(self, sec, outfile):
+        self._header(outfile, headers['secondary_continuum'])
+        outfile.write('  SECONDARY_CONTINUUM\n')
+        if sec.type:
+            outfile.write('    TYPE ' + str(sec.type).upper() + '\n')
+        if sec.log_spacing:
+            outfile.write('    LOG_GRID_SPACING '  + '\n')
+        if sec.outer_spacing:
+            outfile.write('    OUTER_SPACING ' + str(sec.outer_spacing) +  '\n')
+        if sec.fracture_spacing:
+            outfile.write('    FRACTURE_SPACING ' + str(sec.fracture_spacing) + '\n')
+        if sec.num_cells:
+            outfile.write('    NUM_CELLS ' + str(int(sec.num_cells)) + '\n')
+        if sec.epsilon:
+            outfile.write('    EPSILON ' + str(sec.epsilon) + '\n')
+        if sec.temperature:
+            outfile.write('    TEMPERATURE ' + str(sec.temperature) + '\n')
+        if sec.diffusion_coefficient:
+            outfile.write('    DIFFUSION_COEFFICIENT ' + str(sec.diffusion_coefficient) + '\n')
+        if sec.porosity:
+            outfile.write('    POROSITY ' + str(sec.porosity) + '\n')
+        outfile.write('  /\n')
 
     def _read_time(self, infile):
         time = ptime()

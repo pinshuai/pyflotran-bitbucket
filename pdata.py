@@ -235,6 +235,8 @@ class psecondary_continuum(Frozen):
     :type num_cells: int
     :param epsilon: Specify the volume fraction of the secondary continuum 
     :type epsilon: float
+    :param aperture: Specify the aperture of the secondary continuum 
+    :type aperture: float
     :param temperature: Initial temperature in the secondary continuum
     :type temperature: float
     :param diffusion_coefficient: Specify the diffusion coefficient in the secondary continuum for transport
@@ -246,7 +248,7 @@ class psecondary_continuum(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None, epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None):
+    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None, epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None, aperture=None):
 
         self.id = id
         self.type = type 
@@ -255,6 +257,7 @@ class psecondary_continuum(Frozen):
         self.fracture_spacing = fracture_spacing
         self.num_cells = num_cells
         self.epsilon = epsilon
+        self.aperture = aperture
         self.temperature = temperature
         self.diffusion_coefficient = diffusion_coefficient
         self.porosity = porosity
@@ -790,8 +793,11 @@ class pobservation(Frozen):
     :type region: str
     """
 
-    def __init__(self, region=None):
+    def __init__(self, region=None, secondary_temperature=None, secondary_concentration=None, secondary_mineral_volfrac=None):
         self.region = region
+        self.secondary_temperature = secondary_temperature
+        self.secondary_concentration = secondary_concentration
+        self.secondary_mineral_volfrac = secondary_mineral_volfrac
         self._freeze()
 
 
@@ -1147,11 +1153,12 @@ class pchemistry_m_kinetic(Frozen):
     :type rate_constant_list: [float, str]
     """
 
-    def __init__(self, name=None, rate_constant_list=None):
+    def __init__(self, name=None, rate_constant_list=None, activation_energy=None):
         if rate_constant_list is None:
             rate_constant_list = []
         self.name = name
         self.rate_constant_list = rate_constant_list
+        self.activation_energy = activation_energy 
         self._freeze()
 
 
@@ -1200,7 +1207,7 @@ class pconstraint(Frozen):
     :type mineral_list: [pconstraint_mineral]
     """
 
-    def __init__(self, name='', concentration_list=None, mineral_list=None):
+    def __init__(self, name='', concentration_list=None, mineral_list=None, secondary_continuum=False):
         if concentration_list is None:
             concentration_list = []
         if mineral_list is None:
@@ -1208,8 +1215,8 @@ class pconstraint(Frozen):
         self.name = name.lower()
         self.concentration_list = concentration_list  # Composed of pconstraint_concentration objects
         self.mineral_list = mineral_list  # list of minerals
+        self.secondary_continuum = secondary_continuum
         self._freeze()
-
 
 class pconstraint_concentration(Frozen):
     """
@@ -3482,6 +3489,15 @@ class pdata(object):
             outfile.write('OBSERVATION\n')
             if observation.region:
                 outfile.write('  REGION ' + observation.region.lower() + '\n')
+            if self.multiple_continuum:
+                if observation.secondary_temperature:
+                    outfile.write('  SECONDARY_TEMPERATURE\n')
+                if observation.secondary_concentration:
+                    outfile.write('  SECONDARY_CONCENTRATION\n')
+                if observation.secondary_mineral_volfrac:
+                    outfile.write('  SECONDARY_MINERAL_VOLFRAC\n')
+            else:
+                raise PyFLOTRAN_ERROR('Make sure you have multiple_continuum defined in the PyFLOTRAN script!')
             outfile.write('END\n\n')
 
     def _read_flow(self, infile, line):
@@ -4634,8 +4650,12 @@ class pdata(object):
         cl = self.constraint_list
 
         for c in cl:  # c = constraint, cl = constraint_list
+            if c.secondary_continuum:
+                outfile.write('SECONDARY_CONSTRAINT ')
+            else:
+                outfile.write('CONSTRAINT ')
             if c.name:
-                outfile.write('CONSTRAINT ' + c.name.lower() + '\n')
+                outfile.write(c.name.lower() + '\n')
             else:
                 raise PyFLOTRAN_ERROR('constraint_list[' + str(cl.index(c)) + '].name is required.')
 

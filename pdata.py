@@ -35,6 +35,18 @@ import matplotlib.pyplot as plt
 import itertools as it
 from matplotlib import rc
 
+try:
+    pflotran_dir = os.environ['PFLOTRAN_DIR']
+except:
+    pflotran_dir = ''
+
+try:
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.mplot3d import axes3d
+    from scipy import spatial as spsp
+except ImportError:
+    'placeholder'
+
 rc('text', usetex=True)
 
 from ptool import *
@@ -88,7 +100,8 @@ characteristic_curves_liquid_permeability_function_types_allowed = ['MAULEM', 'B
 # all valid entries
 
 # flow_conditions - allowed strings
-flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'WELL','ENTHALPY']
+flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'WELL',
+                                     'ENTHALPY']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
@@ -108,13 +121,14 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity', 'simulation'
          'dataset', 'chemistry', 'grid', 'timestepper', 'material_property', 'time', 'linear_solver', 'newton_solver',
          'output', 'fluid_property', 'saturation_function', 'characteristic_curves', 'region', 'observation',
          'flow_condition', 'transport_condition', 'initial_condition', 'boundary_condition', 'source_sink', 'strata',
-         'constraint', 'hydroquake','multiple_continuum','secondary_continuum']
+         'constraint', 'hydroquake', 'multiple_continuum', 'secondary_continuum']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity', 'simulation', 'regression', 'checkpoint',
            'restart', 'dataset', 'chemistry', 'grid', 'time stepping', 'material properties', 'time', 'linear solver',
            'newton solver', 'output', 'fluid properties', 'saturation functions', 'characteristic curves', 'regions',
            'observation', 'flow conditions', 'transport conditions', 'initial condition', 'boundary conditions',
-           'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake','multiple continuum','secondary continuum']
+           'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake', 'multiple continuum',
+           'secondary continuum']
 
 headers = dict(zip(cards, headers))
 
@@ -194,7 +208,7 @@ class pmaterial(Frozen):
     def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
                  specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
                  permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor='',
-                 longitudinal_dispersivity='',transverse_dispersivity_h='',transverse_dispersivity_v ='',  
+                 longitudinal_dispersivity='', transverse_dispersivity_h='', transverse_dispersivity_v='',
                  secondary_continuum=''):
         if permeability is None:
             permeability = []
@@ -218,6 +232,7 @@ class pmaterial(Frozen):
         self.transverse_dispersivity_v = transverse_dispersivity_v
         self.secondary_continuum = secondary_continuum
         self._freeze()
+
 
 class psecondary_continuum(Frozen):
     """
@@ -248,10 +263,10 @@ class psecondary_continuum(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None, epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None, aperture=None):
-
+    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None,
+                 epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None, aperture=None):
         self.id = id
-        self.type = type 
+        self.type = type
         self.log_spacing = log_spacing
         self.outer_spacing = outer_spacing
         self.fracture_spacing = fracture_spacing
@@ -369,6 +384,398 @@ class pgrid(Frozen):
         self.gravity = gravity
         self.filename = filename
         self._freeze()
+
+    @property
+    def xmin(self):
+        return self.lower_bounds[0]
+
+    @property
+    def ymin(self):
+        return self.lower_bounds[1]
+
+    @property
+    def zmin(self):
+        return self.lower_bounds[2]
+
+    @property
+    def xmax(self):
+        return self.upper_bounds[0]
+
+    @property
+    def ymax(self):
+        return self.upper_bounds[1]
+
+    @property
+    def zmax(self):
+        return self.upper_bounds[2]
+
+    @property
+    def nodelist(self):
+        if self.type == 'structured':
+            nx = self.nxyz[0]
+            ny = self.nxyz[1]
+            nz = self.nxyz[2]
+
+            x_vert = np.linspace(self.xmin, self.xmax, num=nx+1)
+            y_vert = np.linspace(self.ymin, self.ymax, num=ny+1)
+            z_vert = np.linspace(self.zmin, self.zmax, num=nz+1)
+
+            nodes = list(it.product(x_vert, y_vert, z_vert))
+        else:
+            print("pgrid nodelist not implemented for unstructured yet!")
+            nodes = []
+        return nodes
+
+    @property
+    def celllist(self):
+        if self.type == 'structured':
+            nx = self.nxyz[0]
+            ny = self.nxyz[1]
+            nz = self.nxyz[2]
+
+            x_vert = np.linspace(self.xmin, self.xmax, num=nx+1)
+            x_cell = [np.mean([x_vert[i], x_vert[i+1]]) for i in range(len(x_vert)-1)]
+            y_vert = np.linspace(self.ymin, self.ymax, num=ny+1)
+            y_cell = [np.mean([y_vert[i], y_vert[i+1]]) for i in range(len(y_vert)-1)]
+            z_vert = np.linspace(self.zmin, self.zmax, num=nz+1)
+            z_cell = [np.mean([z_vert[i], z_vert[i+1]]) for i in range(len(z_vert)-1)]
+
+            cells = list(it.product(x_cell, y_cell, z_cell))
+        else:
+            print("pgrid celllist not implemented for unstructured yet!")
+            cells = []
+        return cells
+
+    def plot(self, filename='', angle=[45, 45], color='k', connections=False, equal_axes=True,
+             xlabel='x [m]', ylabel='y [m]', zlabel='z [m]', title='', font_size='small',
+             cutaway=[]):  # generates a 3-D plot of the zone.
+        """
+        Generates and saves a 3-D plot of the grid.
+
+        :param filename: Name of saved zone file.
+        :type filename: str
+        :param angle: 	View angle of zone. First number is tilt angle in degrees, second number is azimuth. Alternatively, if angle is 'x', 'y', 'z', view is aligned along the corresponding axis.
+        :type angle: [fl64,fl64], str
+        :param color: Colour of zone.
+        :type color: str, [fl64,fl64,fl64]
+        :param connections: Plot connections. If ``True`` all connections plotted. If between 0 and 1, random proportion plotted. If greater than 1, specified number plotted.
+        :type connections: bool
+        :param equal_axes: Force plotting with equal aspect ratios for all axes.
+        :type equal_axes: bool
+
+        :param xlabel: Label on x-axis.
+        :type xlabel: str
+        :param ylabel: Label on y-axis.
+        :type ylabel: str
+        :param zlabel: Label on z-axis.
+        :type zlabel: str
+        :param title: Title of plot.
+        :type title: str
+
+        :param font_size: Size of text on plot.
+        :type font_size: str, int
+
+        :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','centre' with choose the centre of the grid as the cutaway point.
+        :type cutaway: [fl64,fl64,fl64], str
+
+        """
+
+        if cutaway in ['middle', 'center', 'centre', 'mid']:
+            cutaway = [(self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2, (self.zmin + self.zmax) / 2]
+        if isinstance(angle, str):
+            if angle == 'x':
+                angle = [0, 0]
+            elif angle == 'y':
+                angle = [0, 90]
+            elif angle == 'z':
+                angle = [90, 90]
+            else:
+                return
+            face1 = True
+            face2 = True
+            face3 = True
+            face4 = True
+            face5 = True
+            face6 = True
+        else:
+            while angle[0] < -90: angle[0] += 180
+            while angle[0] > 90: angle[0] -= 180
+            while angle[1] < 0: angle[1] += 180
+            while angle[1] > 360: angle[1] -= 180
+            if angle[0] > 0:
+                face1 = True
+                face2 = False
+            else:
+                face1 = False
+                face2 = True
+            if angle[1] > 270 or angle[1] <= 90:
+                face3 = True
+                face4 = False
+            else:
+                face3 = False
+                face4 = True
+            if angle[1] > 0 and angle[1] <= 180:
+                face5 = True
+                face6 = False
+            else:
+                face5 = False
+                face6 = True
+        # plot bounding box
+        plt.clf()
+        fig = plt.figure(figsize=[10.5, 8.275])
+        ax = plt.axes(projection='3d')
+        ax.set_aspect('equal', 'datalim')
+
+        ax.set_xlabel(xlabel, size=font_size)
+        ax.set_ylabel(ylabel, size=font_size)
+        ax.set_zlabel(zlabel, size=font_size)
+        ax.set_title(title, size=font_size)
+
+        for t in ax.get_xticklabels():
+            t.set_fontsize(font_size)
+        for t in ax.get_yticklabels():
+            t.set_fontsize(font_size)
+        for t in ax.get_zticklabels():
+            t.set_fontsize(font_size)
+
+        xmin, xmax = self.xmin, self.xmax
+        ymin, ymax = self.ymin, self.ymax
+        zmin, zmax = self.zmin, self.zmax
+
+        if equal_axes:
+            MAX = np.max([xmax - xmin, ymax - ymin, zmax - zmin]) / 2
+            C = np.array([xmin + xmax, ymin + ymax, zmin + zmax]) / 2
+            for direction in (-1, 1):
+                for point in np.diag(direction * MAX * np.array([1, 1, 1])):
+                    ax.plot([point[0] + C[0]], [point[1] + C[1]], [point[2] + C[2]], 'w')
+        ax.view_init(angle[0], angle[1])
+
+        if cutaway:
+            xmid, ymid, zmid = cutaway
+        else:
+            if face1:
+                if face5:
+                    if face3:
+                        xmid, ymid, zmid = xmax, ymax, zmax
+                    else:
+                        xmid, ymid, zmid = xmin, ymax, zmax
+                else:
+                    if face3:
+                        xmid, ymid, zmid = xmax, ymin, zmax
+                    else:
+                        xmid, ymid, zmid = xmin, ymin, zmax
+            else:
+                if face5:
+                    if face3:
+                        xmid, ymid, zmid = xmax, ymax, zmin
+                    else:
+                        xmid, ymid, zmid = xmin, ymax, zmin
+                else:
+                    if face3:
+                        xmid, ymid, zmid = xmax, ymin, zmin
+                    else:
+                        xmid, ymid, zmid = xmin, ymin, zmin
+
+        p13 = [xmid, ymid, zmid]
+        if face1:
+            if face5:
+                if face3:
+                    p1 = [xmin, ymin, zmax]
+                    p2 = [xmin, ymax, zmax]
+                    p3 = [xmin, ymax, zmin]
+                    p4 = [xmax, ymax, zmin]
+                    p5 = [xmax, ymin, zmin]
+                    p6 = [xmax, ymin, zmax]
+                    p7 = [xmax, ymid, zmax]
+                    p8 = [xmid, ymid, zmax]
+                    p9 = [xmid, ymax, zmax]
+                    p10 = [xmid, ymax, zmid]
+                    p11 = [xmax, ymax, zmid]
+                    p12 = [xmax, ymid, zmid]
+                else:
+                    p1 = [xmax, ymin, zmax]
+                    p2 = [xmax, ymax, zmax]
+                    p3 = [xmax, ymax, zmin]
+                    p4 = [xmin, ymax, zmin]
+                    p5 = [xmin, ymin, zmin]
+                    p6 = [xmin, ymin, zmax]
+                    p7 = [xmin, ymid, zmax]
+                    p8 = [xmid, ymid, zmax]
+                    p9 = [xmid, ymax, zmax]
+                    p10 = [xmid, ymax, zmid]
+                    p11 = [xmin, ymax, zmid]
+                    p12 = [xmin, ymid, zmid]
+            else:
+                if face3:
+                    p1 = [xmin, ymax, zmax]
+                    p2 = [xmin, ymin, zmax]
+                    p3 = [xmin, ymin, zmin]
+                    p4 = [xmax, ymin, zmin]
+                    p5 = [xmax, ymax, zmin]
+                    p6 = [xmax, ymax, zmax]
+                    p7 = [xmax, ymid, zmax]
+                    p8 = [xmid, ymid, zmax]
+                    p9 = [xmid, ymin, zmax]
+                    p10 = [xmid, ymin, zmid]
+                    p11 = [xmax, ymin, zmid]
+                    p12 = [xmax, ymid, zmid]
+                else:
+                    p1 = [xmax, ymax, zmax]
+                    p2 = [xmax, ymin, zmax]
+                    p3 = [xmax, ymin, zmin]
+                    p4 = [xmin, ymin, zmin]
+                    p5 = [xmin, ymax, zmin]
+                    p6 = [xmin, ymax, zmax]
+                    p7 = [xmin, ymid, zmax]
+                    p8 = [xmid, ymid, zmax]
+                    p9 = [xmid, ymin, zmax]
+                    p10 = [xmid, ymin, zmid]
+                    p11 = [xmin, ymin, zmid]
+                    p12 = [xmin, ymid, zmid]
+        else:
+            if face5:
+                if face3:
+                    p1 = [xmin, ymin, zmin]
+                    p2 = [xmin, ymax, zmin]
+                    p3 = [xmin, ymax, zmax]
+                    p4 = [xmax, ymax, zmax]
+                    p5 = [xmax, ymin, zmax]
+                    p6 = [xmax, ymin, zmin]
+                    p7 = [xmax, ymid, zmin]
+                    p8 = [xmid, ymid, zmin]
+                    p9 = [xmid, ymax, zmin]
+                    p10 = [xmid, ymax, zmid]
+                    p11 = [xmax, ymax, zmid]
+                    p12 = [xmax, ymid, zmid]
+                else:
+                    p1 = [xmax, ymin, zmin]
+                    p2 = [xmax, ymax, zmin]
+                    p3 = [xmax, ymax, zmax]
+                    p4 = [xmin, ymax, zmax]
+                    p5 = [xmin, ymin, zmax]
+                    p6 = [xmin, ymin, zmin]
+                    p7 = [xmin, ymid, zmin]
+                    p8 = [xmid, ymid, zmin]
+                    p9 = [xmid, ymax, zmin]
+                    p10 = [xmid, ymax, zmid]
+                    p11 = [xmin, ymax, zmid]
+                    p12 = [xmin, ymid, zmid]
+            else:
+                if face3:
+                    p1 = [xmin, ymax, zmin]
+                    p2 = [xmin, ymin, zmin]
+                    p3 = [xmin, ymin, zmax]
+                    p4 = [xmax, ymin, zmax]
+                    p5 = [xmax, ymax, zmax]
+                    p6 = [xmax, ymax, zmin]
+                    p7 = [xmax, ymid, zmin]
+                    p8 = [xmid, ymid, zmin]
+                    p9 = [xmid, ymin, zmin]
+                    p10 = [xmid, ymin, zmid]
+                    p11 = [xmax, ymin, zmid]
+                    p12 = [xmax, ymid, zmid]
+                else:
+                    p1 = [xmax, ymax, zmin]
+                    p2 = [xmax, ymin, zmin]
+                    p3 = [xmax, ymin, zmax]
+                    p4 = [xmin, ymin, zmax]
+                    p5 = [xmin, ymax, zmax]
+                    p6 = [xmin, ymax, zmin]
+                    p7 = [xmin, ymid, zmin]
+                    p8 = [xmid, ymid, zmin]
+                    p9 = [xmid, ymin, zmin]
+                    p10 = [xmid, ymin, zmid]
+                    p11 = [xmin, ymin, zmid]
+                    p12 = [xmin, ymid, zmid]
+        pt1 = p1
+        pt2 = p2
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p9
+        pt2 = p2
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p3
+        pt2 = p2
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p3
+        pt2 = p4
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p11
+        pt2 = p4
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p5
+        pt2 = p4
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p5
+        pt2 = p6
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p1
+        pt2 = p6
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p7
+        pt2 = p6
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p7
+        pt2 = p8
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p7
+        pt2 = p12
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p11
+        pt2 = p12
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p13
+        pt2 = p12
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p13
+        pt2 = p8
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p13
+        pt2 = p10
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p9
+        pt2 = p8
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p9
+        pt2 = p10
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+        pt1 = p11
+        pt2 = p10
+        ax.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], [pt1[2], pt2[2]], 'k-')
+
+        # minor lines
+        xs = np.unique([nd[0] for nd in self.nodelist])
+        ys = np.unique([nd[1] for nd in self.nodelist])
+        zs = np.unique([nd[2] for nd in self.nodelist])
+
+        for x in xs:
+            if x >= np.min([p2[0], p9[0]]) and x <= np.max([p2[0], p9[0]]):
+                ax.plot([x, x], [p1[1], p2[1]], [p2[2], p2[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p2[1], p2[1]], [p2[2], p3[2]], color=color, linewidth=0.5)
+            else:
+                ax.plot([x, x], [p12[1], p2[1]], [p10[2], p10[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p12[1], p6[1]], [p2[2], p2[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p7[1], p7[1]], [p7[2], p11[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p11[1], p11[1]], [p11[2], p3[2]], color=color, linewidth=0.5)
+        for y in ys:
+            if y >= np.min([p6[1], p7[1]]) and y <= np.max([p6[1], p7[1]]):
+                ax.plot([p6[0], p1[0]], [y, y], [p2[2], p2[2]], color=color, linewidth=0.5)
+                ax.plot([p6[0], p6[0]], [y, y], [p2[2], p3[2]], color=color, linewidth=0.5)
+            else:
+                ax.plot([p10[0], p11[0]], [y, y], [p10[2], p10[2]], color=color, linewidth=0.5)
+                ax.plot([p9[0], p2[0]], [y, y], [p2[2], p2[2]], color=color, linewidth=0.5)
+                ax.plot([p4[0], p4[0]], [y, y], [p4[2], p11[2]], color=color, linewidth=0.5)
+                ax.plot([p10[0], p10[0]], [y, y], [p10[2], p9[2]], color=color, linewidth=0.5)
+        for z in zs:
+            if z >= np.min([p4[2], p11[2]]) and z <= np.max([p4[2], p11[2]]):
+                ax.plot([p4[0], p4[0]], [p5[1], p4[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p4[0], p3[0]], [p4[1], p4[1]], [z, z], color=color, linewidth=0.5)
+            else:
+                ax.plot([p4[0], p4[0]], [p6[1], p7[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p10[0], p10[0]], [p7[1], p11[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p2[0], p8[0]], [p4[1], p4[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p7[0], p8[0]], [p7[1], p7[1]], [z, z], color=color, linewidth=0.5)
+
+        if filename: plt.savefig(filename)
 
 
 class psimulation(Frozen):
@@ -793,7 +1200,8 @@ class pobservation(Frozen):
     :type region: str
     """
 
-    def __init__(self, region=None, secondary_temperature=None, secondary_concentration=None, secondary_mineral_volfrac=None):
+    def __init__(self, region=None, secondary_temperature=None, secondary_concentration=None,
+                 secondary_mineral_volfrac=None):
         self.region = region
         self.secondary_temperature = secondary_temperature
         self.secondary_concentration = secondary_concentration
@@ -1062,7 +1470,7 @@ class pdataset(Frozen):
    """
 
     def __init__(self, dataset_name='', dataset_mapped_name='', name='', file_name='', hdf5_dataset_name='',
-                 map_hdf5_dataset_name='', max_buffer_size='',realization_dependent=''):
+                 map_hdf5_dataset_name='', max_buffer_size='', realization_dependent=''):
         self.dataset_name = dataset_name  # name of dataset
         self.dataset_mapped_name = dataset_mapped_name
         self.name = name  # name of dataset (overwrites dataset_name)
@@ -1158,7 +1566,7 @@ class pchemistry_m_kinetic(Frozen):
             rate_constant_list = []
         self.name = name
         self.rate_constant_list = rate_constant_list
-        self.activation_energy = activation_energy 
+        self.activation_energy = activation_energy
         self._freeze()
 
 
@@ -1218,6 +1626,7 @@ class pconstraint(Frozen):
         self.secondary_continuum = secondary_continuum
         self._freeze()
 
+
 class pconstraint_concentration(Frozen):
     """
     Concentration unit, Sub-class for constraint. There can be multiple pconstraint_concentration objects appended to a
@@ -1274,7 +1683,10 @@ class pdata(object):
     def __init__(self, filename='', work_dir=''):
         # Note that objects need to be instantiated when hard-coded when it's set to
         # None here.
-        self.co2_database = ''
+        if pflotran_dir:
+            self.co2_database = pflotran_dir + '/database/co2data0.dat'
+        else:
+            self.co2_database = ''
         self.uniform_velocity = puniform_velocity()
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
@@ -1329,7 +1741,8 @@ class pdata(object):
         else:
             return
 
-    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path,silent=False,num_realizations=1, num_groups=1):
+    def run(self, input='', input_prefix='', num_procs=1, exe=pdflt().pflotran_path, silent=False, num_realizations=1,
+            num_groups=1):
         """
         Run a pflotran simulation for a given input file with specified number of processors.
 
@@ -1401,9 +1814,11 @@ class pdata(object):
             run_popen(arg)
         else:
             if num_realizations > 1:
-                arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename + ' -stochastic -num_realizations ' + str(num_realizations) + ' -num_groups ' + str(num_groups)  
+                arg = 'mpirun -np ' + str(
+                    num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename + ' -stochastic -num_realizations ' + str(
+                    num_realizations) + ' -num_groups ' + str(num_groups)
             else:
-                arg = 'mpirun -np ' + str(num_procs) + ' ' +  exe_path.full_path + ' -pflotranin ' + self._path.filename
+                arg = 'mpirun -np ' + str(num_procs) + ' ' + exe_path.full_path + ' -pflotranin ' + self._path.filename
             run_popen(arg)
 
         if input_prefix:
@@ -1468,7 +1883,7 @@ class pdata(object):
                     if not found:
                         print 'Variable ' + var + ' not found in ' + FILE
                     try:
-                        ln, = ax.plot(xval, dat)
+                        ln, = plot(xval, dat)
                         lns.append(ln)
                     except UnboundLocalError:
                         pass
@@ -1482,7 +1897,8 @@ class pdata(object):
 
         return 0
 
-    def plot_observation(self, variable_list=None, observation_list=None, observation_filenames=None, plot_filename='plot.pdf',
+    def plot_observation(self, variable_list=None, observation_list=None, observation_filenames=None,
+                         plot_filename='plot.pdf',
                          legend_list=None, fontsize=10, x_label='', y_label='', x_type='linear', y_type='linear',
                          x_range=(), y_range=(), x_factor=1.0, y_factor=1.0):
         """
@@ -1549,14 +1965,14 @@ class pdata(object):
         if y_range:
             ax.set_ylim(y_range)
         lns = []
-        
+
         for file in combined_dict.keys():
             for key in combined_dict[file].keys():
                 if 'Time' in key:
                     time = combined_dict[file][key]
                     time_new = [t * x_factor for t in time]
             for item in combined_var_obs_list:
-                if item[0] == '' or item [1] == '':
+                if item[0] == '' or item[1] == '':
                     print('Please provide a variable name and an observation name')
                 else:
                     print item
@@ -1564,11 +1980,11 @@ class pdata(object):
                     print keys
                     for key in keys:
                         var_new = [v * y_factor for v in combined_dict[file][key]]
-                        ln, = ax.plot(time_new, var_new)
+                        ln, = plot(time_new, var_new)
                         lns.append(ln)
 
         ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')
-        
+
         fig.savefig(plot_filename)
 
         return 0
@@ -1613,7 +2029,7 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint],
-                           ))  # associate each card name with a read function, defined further below
+        ))  # associate each card name with a read function, defined further below
 
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
@@ -1825,7 +2241,8 @@ class pdata(object):
 
         add_checklist = [pmaterial, pdataset, psaturation, pcharacteristic_curves, pchemistry_m_kinetic, plsolver,
                          pnsolver, pregion, pobservation, pflow, pflow_variable, pinitial_condition,
-                         pboundary_condition, psource_sink, pstrata, ptransport, pconstraint, pconstraint_concentration,psecondary_continuum]
+                         pboundary_condition, psource_sink, pstrata, ptransport, pconstraint, pconstraint_concentration,
+                         psecondary_continuum]
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
@@ -2191,6 +2608,7 @@ class pdata(object):
 
     def _read_grid(self, infile, line):
         grid = pgrid()  # assign defaults before reading in values
+        self.co2_database = ''
 
         keep_reading = True
         bounds_key = False
@@ -2461,7 +2879,7 @@ class pdata(object):
         new_prop = pmaterial(np_id, np_name, np_characteristic_curves, np_porosity, np_tortuosity, np_density,
                              np_specific_heat, np_cond_dry, np_cond_wet, np_saturation, np_permeability,
                              np_permeability_power, np_permeability_critical_porosity, np_permeability_min_scale_factor,
-			     np_longitudinal_dispersivity,np_transverse_dispersivity_h,np_transverse_dispersivity_v)
+                             np_longitudinal_dispersivity, np_transverse_dispersivity_h, np_transverse_dispersivity_v)
 
         self.add(new_prop)
 
@@ -2546,9 +2964,9 @@ class pdata(object):
         if sec.type:
             outfile.write('    TYPE ' + str(sec.type).upper() + '\n')
         if sec.log_spacing:
-            outfile.write('    LOG_GRID_SPACING '  + '\n')
+            outfile.write('    LOG_GRID_SPACING ' + '\n')
         if sec.outer_spacing:
-            outfile.write('    OUTER_SPACING ' + str(sec.outer_spacing) +  '\n')
+            outfile.write('    OUTER_SPACING ' + str(sec.outer_spacing) + '\n')
         if sec.fracture_spacing:
             outfile.write('    FRACTURE_SPACING ' + str(sec.fracture_spacing) + '\n')
         if sec.num_cells:
@@ -3618,7 +4036,7 @@ class pdata(object):
         if isinstance(flow, pflow):
             if flow.name in self.flow.keys():
                 if not overwrite:
-                    warning = 'WARNING: A flow with name \'' + str(flow.name) + '\' already exists. Flow will not be ' +\
+                    warning = 'WARNING: A flow with name \'' + str(flow.name) + '\' already exists. Flow will not be ' + \
                               'defined, use overwrite = True in add() to overwrite the old flow.'
                     print warning,
                     build_warnings.append(warning)
@@ -3770,7 +4188,8 @@ class pdata(object):
                 outfile.write('\n')
                 if flow.gradient:
                     outfile.write('    GRADIENT\n')
-                    outfile.write('      ' + flow.gradient[0].upper() + ' ' + str(flow.gradient[1]) + ' ' + str(flow.gradient[2]) + ' ' +  str(flow.gradient[3]) + '\n')
+                    outfile.write('      ' + flow.gradient[0].upper() + ' ' + str(flow.gradient[1]) + ' ' + str(
+                        flow.gradient[2]) + ' ' + str(flow.gradient[3]) + '\n')
                     outfile.write('    /\n')
             outfile.write('  TYPE\n')  # Following code is paired w/ this statement.
             # variable name and type from lists go here
@@ -4074,7 +4493,7 @@ class pdata(object):
             if strata.region:
                 outfile.write('  REGION ' + strata.region.lower() + '\n')
             # else:
-            #    raise PyFLOTRAN_ERROR('strata.region is required')
+            # raise PyFLOTRAN_ERROR('strata.region is required')
             if strata.material:
                 outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
             else:
@@ -4606,7 +5025,8 @@ class pdata(object):
         # check if constraint.name was specified
         if index:
             if isinstance(index, str):
-                constraint = self.constraint.get(index)  # Assign constraint object to existing constraint object with string type name/index
+                constraint = self.constraint.get(
+                    index)  # Assign constraint object to existing constraint object with string type name/index
                 if not constraint:  # Occurs if index/string is not found in constraint object
                     print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found ' \
                                                                                       'entries are:', \
@@ -4813,12 +5233,12 @@ class pdata(object):
         process = subprocess.Popen('paraview --script=paraview-script.py',
                                    shell=True, stdout=subprocess.PIPE, stderr=sys.stderr)
         while True:
-                out = process.stdout.read(1)
-                if out == '' and process.poll() is not None:
-                    break
-                if out != '':
-                    sys.stdout.write(out)
-                    sys.stdout.flush()
+            out = process.stdout.read(1)
+            if out == '' and process.poll() is not None:
+                break
+            if out != '':
+                sys.stdout.write(out)
+                sys.stdout.flush()
 
 
 class pquake(Frozen):

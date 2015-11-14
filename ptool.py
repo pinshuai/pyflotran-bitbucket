@@ -30,6 +30,8 @@ class Frozen(object):
     def _freeze(self):
         self.__frozen = True
 
+    def _unfreeze(self):
+        self.__frozen = False
 
 def powspace(x0, x1, N=10, power=1):
     """Returns a sequence of numbers spaced according to the power law (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0

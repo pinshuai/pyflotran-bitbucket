@@ -51,6 +51,7 @@ rc('text', usetex=True)
 
 from ptool import *
 from pdflt import *
+import math
 
 dflt = pdflt()
 
@@ -383,6 +384,7 @@ class pgrid(Frozen):
         self.dz = dz
         self.gravity = gravity
         self.filename = filename
+        self._nodelist = []
         self._parent = None
         self._path = ppath(parent=self)
         self._freeze()
@@ -420,21 +422,25 @@ class pgrid(Frozen):
 
     @property
     def nodelist(self):
-        if self.type == 'structured':
-            nx = self.nxyz[0]
-            ny = self.nxyz[1]
-            nz = self.nxyz[2]
+        if self._nodelist == []:
+            if self.type == 'structured':
+                nx = self.nxyz[0]
+                ny = self.nxyz[1]
+                nz = self.nxyz[2]
 
-            x_vert = np.linspace(self.xmin, self.xmax, num=nx + 1)
-            y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
-            z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
+                x_vert = np.linspace(self.xmin, self.xmax, num=nx + 1)
+                y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
+                z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
 
-            nodes = list(it.product(x_vert, y_vert, z_vert))
-        else:
-            print("pgrid nodelist not implemented for unstructured yet!")
-            nodes = []
-        return nodes
+                nodes = list(it.product(x_vert, y_vert, z_vert))
+                self._nodelist = [list(node) for node in nodes]
+            else:
+                print("pgrid nodelist not implemented for unstructured yet!")
+        return self._nodelist
 
+    @nodelist.setter
+    def nodelist(self,value):
+        self._nodelist = value
 
     @property
     def celllist(self):
@@ -451,6 +457,7 @@ class pgrid(Frozen):
             z_cell = [np.mean([z_vert[i], z_vert[i + 1]]) for i in range(len(z_vert) - 1)]
 
             cells = list(it.product(x_cell, y_cell, z_cell))
+            cells = [list(cell) for cell in cells]
         else:
             print("pgrid celllist not implemented for unstructured yet!")
             cells = []
@@ -486,12 +493,12 @@ class pgrid(Frozen):
             :param font_size: Size of text on plot.
             :type font_size: str, int
 
-            :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','centre' with choose the centre of the grid as the cutaway point.
+            :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','center' with choose the center of the grid as the cutaway point.
             :type cutaway: [fl64,fl64,fl64], str
 
             """
 
-        if cutaway in ['middle', 'center', 'centre', 'mid']:
+        if cutaway in ['middle', 'center', 'center', 'mid']:
             cutaway = [(self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2, (self.zmin + self.zmax) / 2]
         if isinstance(angle, str):
             if angle == 'x':
@@ -801,6 +808,27 @@ class pgrid(Frozen):
             plt.savefig(save_fname, dpi=200, facecolor='w', edgecolor='w', orientation='portrait',
                         format=extension, transparent=True, bbox_inches=None, pad_inches=0.1)
 
+
+    def rotate(self, angle=0., center=[0., 0.]):
+        '''Rotates the grid by some angle about a specified vertical axis.
+
+        :param angle: Clockwise angle by which to rotate grid.
+        :type angle: fl64
+        :param center: x and y coordinates of vertical axis about which to rotate. Alternatively, the center of the computational domain can be specified by passing 'mid','middle','center', or 'center'.
+        :type center: [fl64,fl64], str
+        '''
+        if center in ['middle', 'mid', 'center', 'center']:
+            center = [(self.xmin + self.xmax) / 2., (self.ymin + self.ymax) / 2.]
+        nodes = []
+        for nd in self.nodelist:
+            old_pos = np.array(nd[0:2]) - np.array(center)  # position relative to center of rotation
+            theta_f = math.atan2(old_pos[1], old_pos[0]) + angle / 180. * math.pi
+            dist = np.sqrt(np.dot(old_pos, old_pos))
+            new_pos = [dist * math.cos(theta_f), dist * math.sin(theta_f)]
+            nd[0] = new_pos[0] + center[0]
+            nd[1] = new_pos[1] + center[1]
+            nodes.append(nd)
+            self._nodelist = nodes
 
 class psimulation(Frozen):
     """
@@ -1567,7 +1595,10 @@ class pchemistry(Frozen):
         self.log_formulation = log_formulation
         self.update_permeability = update_permeability
         self.update_porosity = update_porosity
-        self.database = database  # Database path (String)
+        if pflotran_dir:
+            self.database = pflotran_dir + '/database/hanford.dat'
+        else:
+            self.database = database  # Database path (String)
         self.activity_coefficients = activity_coefficients
         self.molal = molal  # boolean
         self.output_list = output_list  # incl. molarity/all, species and mineral names - string

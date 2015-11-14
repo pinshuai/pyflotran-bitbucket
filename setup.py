@@ -8,5 +8,4 @@ setup(name='PyFLOTRAN',
 	author_email='satkarra@lanl.gov',
 	py_modules=['ptool','pdata','pdflt'],
 #	packages=['pyvtk'],
-#	scripts = ['scripts/diagnose.py','scripts/fehm_paraview.py']
 	)

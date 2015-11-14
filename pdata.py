@@ -387,7 +387,7 @@ class psimulation(Frozen):
     :type mode: str
     """
 
-    def __init__(self, simulation_type='subsurface', subsurface_flow='', subsurface_transport='', mode='richards',
+    def __init__(self, simulation_type='subsurface', subsurface_flow='flow', subsurface_transport='', mode='richards',
                  flowtran_coupling=''):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
@@ -4810,7 +4810,7 @@ class pdata(object):
                 f.write(imports + '\n')
                 f.write(legacy_reader + '\n')
                 f.write('simple.Show()\nsimple.Render()')
-        process = subprocess.Popen('paraview --script=' + os.path.dirname(vtk_filepath_list[0]) + '/paraview-script.py',
+        process = subprocess.Popen('paraview --script=paraview-script.py',
                                    shell=True, stdout=subprocess.PIPE, stderr=sys.stderr)
         while True:
                 out = process.stdout.read(1)

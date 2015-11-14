@@ -439,7 +439,7 @@ class pgrid(Frozen):
         return self._nodelist
 
     @nodelist.setter
-    def nodelist(self,value):
+    def nodelist(self, value):
         self._nodelist = value
 
     @property
@@ -829,6 +829,7 @@ class pgrid(Frozen):
             nd[1] = new_pos[1] + center[1]
             nodes.append(nd)
             self._nodelist = nodes
+
 
 class psimulation(Frozen):
     """

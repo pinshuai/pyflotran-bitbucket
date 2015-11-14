@@ -325,7 +325,7 @@ class ptime(Frozen):
 
 class pgrid(Frozen):
     """
-    Class for defining a grid. Used to define type, resolution and geometry of the gird
+    Class for defining a grid. Used to define type, resolution and geometry of the grid
 
     :param type: Grid type. Valid entries include: 'structured', 'unstructured'.
     :type type: str
@@ -383,31 +383,40 @@ class pgrid(Frozen):
         self.dz = dz
         self.gravity = gravity
         self.filename = filename
+        self._parent = None
+        self._path = ppath(parent=self)
         self._freeze()
+
 
     @property
     def xmin(self):
         return self.lower_bounds[0]
 
+
     @property
     def ymin(self):
         return self.lower_bounds[1]
+
 
     @property
     def zmin(self):
         return self.lower_bounds[2]
 
+
     @property
     def xmax(self):
         return self.upper_bounds[0]
+
 
     @property
     def ymax(self):
         return self.upper_bounds[1]
 
+
     @property
     def zmax(self):
         return self.upper_bounds[2]
+
 
     @property
     def nodelist(self):
@@ -416,15 +425,16 @@ class pgrid(Frozen):
             ny = self.nxyz[1]
             nz = self.nxyz[2]
 
-            x_vert = np.linspace(self.xmin, self.xmax, num=nx+1)
-            y_vert = np.linspace(self.ymin, self.ymax, num=ny+1)
-            z_vert = np.linspace(self.zmin, self.zmax, num=nz+1)
+            x_vert = np.linspace(self.xmin, self.xmax, num=nx + 1)
+            y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
+            z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
 
             nodes = list(it.product(x_vert, y_vert, z_vert))
         else:
             print("pgrid nodelist not implemented for unstructured yet!")
             nodes = []
         return nodes
+
 
     @property
     def celllist(self):
@@ -433,12 +443,12 @@ class pgrid(Frozen):
             ny = self.nxyz[1]
             nz = self.nxyz[2]
 
-            x_vert = np.linspace(self.xmin, self.xmax, num=nx+1)
-            x_cell = [np.mean([x_vert[i], x_vert[i+1]]) for i in range(len(x_vert)-1)]
-            y_vert = np.linspace(self.ymin, self.ymax, num=ny+1)
-            y_cell = [np.mean([y_vert[i], y_vert[i+1]]) for i in range(len(y_vert)-1)]
-            z_vert = np.linspace(self.zmin, self.zmax, num=nz+1)
-            z_cell = [np.mean([z_vert[i], z_vert[i+1]]) for i in range(len(z_vert)-1)]
+            x_vert = np.linspace(self.xmin, self.xmax, num=nx + 1)
+            x_cell = [np.mean([x_vert[i], x_vert[i + 1]]) for i in range(len(x_vert) - 1)]
+            y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
+            y_cell = [np.mean([y_vert[i], y_vert[i + 1]]) for i in range(len(y_vert) - 1)]
+            z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
+            z_cell = [np.mean([z_vert[i], z_vert[i + 1]]) for i in range(len(z_vert) - 1)]
 
             cells = list(it.product(x_cell, y_cell, z_cell))
         else:
@@ -446,39 +456,40 @@ class pgrid(Frozen):
             cells = []
         return cells
 
+
     def plot(self, filename='', angle=[45, 45], color='k', connections=False, equal_axes=True,
              xlabel='x [m]', ylabel='y [m]', zlabel='z [m]', title='', font_size='small',
              cutaway=[]):  # generates a 3-D plot of the zone.
         """
-        Generates and saves a 3-D plot of the grid.
+            Generates and saves a 3-D plot of the grid.
 
-        :param filename: Name of saved zone file.
-        :type filename: str
-        :param angle: 	View angle of zone. First number is tilt angle in degrees, second number is azimuth. Alternatively, if angle is 'x', 'y', 'z', view is aligned along the corresponding axis.
-        :type angle: [fl64,fl64], str
-        :param color: Colour of zone.
-        :type color: str, [fl64,fl64,fl64]
-        :param connections: Plot connections. If ``True`` all connections plotted. If between 0 and 1, random proportion plotted. If greater than 1, specified number plotted.
-        :type connections: bool
-        :param equal_axes: Force plotting with equal aspect ratios for all axes.
-        :type equal_axes: bool
+            :param filename: Name of saved zone file.
+            :type filename: str
+            :param angle: 	View angle of zone. First number is tilt angle in degrees, second number is azimuth. Alternatively, if angle is 'x', 'y', 'z', view is aligned along the corresponding axis.
+            :type angle: [fl64,fl64], str
+            :param color: Colour of zone.
+            :type color: str, [fl64,fl64,fl64]
+            :param connections: Plot connections. If ``True`` all connections plotted. If between 0 and 1, random proportion plotted. If greater than 1, specified number plotted.
+            :type connections: bool
+            :param equal_axes: Force plotting with equal aspect ratios for all axes.
+            :type equal_axes: bool
 
-        :param xlabel: Label on x-axis.
-        :type xlabel: str
-        :param ylabel: Label on y-axis.
-        :type ylabel: str
-        :param zlabel: Label on z-axis.
-        :type zlabel: str
-        :param title: Title of plot.
-        :type title: str
+            :param xlabel: Label on x-axis.
+            :type xlabel: str
+            :param ylabel: Label on y-axis.
+            :type ylabel: str
+            :param zlabel: Label on z-axis.
+            :type zlabel: str
+            :param title: Title of plot.
+            :type title: str
 
-        :param font_size: Size of text on plot.
-        :type font_size: str, int
+            :param font_size: Size of text on plot.
+            :type font_size: str, int
 
-        :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','centre' with choose the centre of the grid as the cutaway point.
-        :type cutaway: [fl64,fl64,fl64], str
+            :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','centre' with choose the centre of the grid as the cutaway point.
+            :type cutaway: [fl64,fl64,fl64], str
 
-        """
+            """
 
         if cutaway in ['middle', 'center', 'centre', 'mid']:
             cutaway = [(self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2, (self.zmin + self.zmax) / 2]
@@ -775,7 +786,20 @@ class pgrid(Frozen):
                 ax.plot([p2[0], p8[0]], [p4[1], p4[1]], [z, z], color=color, linewidth=0.5)
                 ax.plot([p7[0], p8[0]], [p7[1], p7[1]], [z, z], color=color, linewidth=0.5)
 
-        if filename: plt.savefig(filename)
+        extension, save_fname = save_name(filename, variable='grid', time=1)
+        if self._parent:
+            if self._parent.work_dir and not os.path.isdir(self._parent.work_dir):
+                os.makedirs(self._parent.work_dir)
+            if self._parent.work_dir:
+                plt.savefig(self._parent.work_dir + slash + save_fname, dpi=200, facecolor='w', edgecolor='w',
+                            orientation='portrait',
+                            format=extension, transparent=True, bbox_inches=None, pad_inches=0.1)
+            else:
+                plt.savefig(save_fname, dpi=200, facecolor='w', edgecolor='w', orientation='portrait',
+                            format=extension, transparent=True, bbox_inches=None, pad_inches=0.1)
+        else:
+            plt.savefig(save_fname, dpi=200, facecolor='w', edgecolor='w', orientation='portrait',
+                        format=extension, transparent=True, bbox_inches=None, pad_inches=0.1)
 
 
 class psimulation(Frozen):

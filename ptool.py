@@ -14,6 +14,7 @@ from pdflt import *
 
 dflt = pdflt()
 
+
 class Frozen(object):
     """
     Prevents adding new attributes to classes once _freeze() is called on the class.
@@ -28,6 +29,7 @@ class Frozen(object):
 
     def _freeze(self):
         self.__frozen = True
+
 
 def powspace(x0, x1, N=10, power=1):
     """Returns a sequence of numbers spaced according to the power law (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0
@@ -49,7 +51,7 @@ def powspace(x0, x1, N=10, power=1):
 
 # Suggested for determining file path when reading an input file in-case it is relative
 # def produce_valid_file_path(path):
-#	# Return the string without modifications if it's an absolute file path
+# # Return the string without modifications if it's an absolute file path
 #	if path[0] == '/':  
 #		return path
 #	# Determine PLOFTRAN installation directory and made appropriate changes to string
@@ -186,3 +188,40 @@ def os_path(path):
     else:
         path = path.replace('\\', '/')
     return path
+
+
+def save_name(save='', variable='', time=0., node=0):  # returns file name and extension for saving
+    if save:
+        save = save.split('.')
+        if len(save) == 1:
+            print 'No extension specified, default to .png'
+            ext = 'png'
+        elif len(save) > 2:
+            print 'Too many dots!'; return
+        else:
+            if save[1] in ['png', 'eps', 'pdf']:
+                ext = save[1]
+            else:
+                print 'Unrecognized extension'; return
+        save_fname = save[0] + '.' + ext
+    else:
+        from glob import glob
+
+        ext = 'png'
+        if time:
+            varStr = variable + '_time' + str(time)
+        elif node:
+            varStr = variable + '_node' + str(node)
+        else:
+            varStr = variable
+        files = glob('pyflotran_sliceplot_' + varStr + '_*.png')
+        if not files:
+            ind = 1
+        else:
+            inds = []
+            for file in files:
+                file = file.split('pyflotran_sliceplot_' + varStr + '_')
+                inds.append(int(file[1].split('.png')[0]))
+            ind = np.max(inds) + 1
+        save_fname = "pyflotran_sliceplot_" + varStr + '_' + str(ind) + '.png'
+    return ext, save_fname

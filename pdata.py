@@ -34,11 +34,13 @@ import subprocess
 import matplotlib.pyplot as plt
 import itertools as it
 from matplotlib import rc
+import os, sys
 
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
-except:
-    pflotran_dir = ''
+except KeyError:
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    sys.exit(1)
 
 try:
     from matplotlib import pyplot as plt
@@ -3970,8 +3972,6 @@ class pdata(object):
                     outfile.write('  SECONDARY_CONCENTRATION\n')
                 if observation.secondary_mineral_volfrac:
                     outfile.write('  SECONDARY_MINERAL_VOLFRAC\n')
-            else:
-                raise PyFLOTRAN_ERROR('Make sure you have multiple_continuum defined in the PyFLOTRAN script!')
             outfile.write('END\n\n')
 
     def _read_flow(self, infile, line):

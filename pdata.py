@@ -1941,7 +1941,7 @@ class pdata(object):
                     if not found:
                         print 'Variable ' + var + ' not found in ' + FILE
                     try:
-                        ln, = plot(xval, dat)
+                        ln, = ax.plot(xval, dat)
                         lns.append(ln)
                     except UnboundLocalError:
                         pass
@@ -2038,7 +2038,7 @@ class pdata(object):
                     print keys
                     for key in keys:
                         var_new = [v * y_factor for v in combined_dict[file][key]]
-                        ln, = plot(time_new, var_new)
+                        ln, = ax.plot(time_new, var_new)
                         lns.append(ln)
 
         ax.legend(lns, legend_list, ncol=1, fancybox=True, shadow=False, prop={'size': str(fontsize)}, loc='best')

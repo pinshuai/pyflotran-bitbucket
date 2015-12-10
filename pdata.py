@@ -1778,6 +1778,7 @@ class pdata(object):
         self.constraint_list = []
         self.filename = filename
         self.hydroquake = pquake()
+        self.reference_temperature = ''
 
         # run object
         self._path = ppath(parent=self)
@@ -2178,6 +2179,9 @@ class pdata(object):
 
         if self.overwrite_restart_flow_params:
             self._write_overwrite_restart(outfile)
+
+        if self.reference_temperature:
+            self._reference_temperature(outfile)
 
         if self.checkpoint.frequency:
             self._write_checkpoint(outfile)
@@ -2617,6 +2621,9 @@ class pdata(object):
 
     def _write_overwrite_restart(self, outfile):
         outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
+
+    def _write_reference_temperature(self, outfile):
+        outfile.write('REFERENCE_TEMPERATURE ' + strD(self.reference_temperature) '\n\n')
 
     def _write_co2_database(self, outfile):
         self._header(outfile, headers['co2_database'])

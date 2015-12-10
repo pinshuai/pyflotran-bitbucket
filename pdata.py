@@ -76,7 +76,7 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake']
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
-grid_types_allowed = ['structured', 'structured_mimetic', 'unstructured', 'amr']
+grid_types_allowed = ['structured', 'unstructured_explicit', 'unstructured_implicit'] 
 grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']  # cartesian is default in pflotran
 
 # output - allowed strings
@@ -1233,7 +1233,7 @@ class pregion(Frozen):
     :type face: str
     """
 
-    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None, face=None):
+    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None, face=None, filename=''):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:
@@ -1243,6 +1243,7 @@ class pregion(Frozen):
         self.coordinates_upper = coordinates_upper  # 3D coordinates
         self.face = face
         self.point_list = []
+	self.filename = filename
         self._freeze()
 
 
@@ -2726,54 +2727,54 @@ class pdata(object):
         self._header(outfile, headers['grid'])
         grid = self.grid
         outfile.write('GRID\n')
-        if grid.type in grid_types_allowed:
-            outfile.write('  TYPE ' + grid.type + '\n')
-        else:
+        if not grid.type in grid_types_allowed:
             print '       valid grid.types:', grid_types_allowed
             raise PyFLOTRAN_ERROR('grid.type: \'' + grid.type + '\' is invalid!')
-        if grid.lower_bounds:
-            outfile.write('  BOUNDS\n')
-            outfile.write('    ')
+	if grid.type == 'structured':
+            outfile.write('  TYPE ' + grid.type + '\n')
+            if grid.lower_bounds:
+                outfile.write('  BOUNDS\n')
+                outfile.write('    ')
+                for i in range(3):
+                    outfile.write(strD(grid.lower_bounds[i]) + ' ')
+                outfile.write('\n    ')
+                for i in range(3):
+                    outfile.write(strD(grid.upper_bounds[i]) + ' ')
+                outfile.write('\n  /\n')  # / marks end of writing out bounds
+            else:  # DXYZ is only written if no bounds are provided
+                outfile.write('  DXYZ\n')
+                for j in range(len(grid.dx)):
+                    outfile.write('    ' + strD(grid.dx[j]))
+                    if j % 5 == 4:
+                        outfile.write('   ' + '\\' + '\n')
+                outfile.write('\n')
+                for j in range(len(grid.dy)):
+                    outfile.write('    ' + strD(grid.dy[j]))
+                    if j % 5 == 4:
+                        outfile.write('   ' + '\\' + '\n')
+                outfile.write('\n')
+                for j in range(len(grid.dz)):
+                    outfile.write('    ' + strD(grid.dz[j]))
+                    if j % 5 == 4:
+                        outfile.write('   ' + '\\' + '\n')
+                outfile.write('\n')
+                outfile.write('  END\n')
+            outfile.write('  NXYZ' + ' ')
             for i in range(3):
-                outfile.write(strD(grid.lower_bounds[i]) + ' ')
-            outfile.write('\n    ')
-            for i in range(3):
-                outfile.write(strD(grid.upper_bounds[i]) + ' ')
-            outfile.write('\n  /\n')  # / marks end of writing out bounds
-        else:  # DXYZ is only written if no bounds are provided
-            outfile.write('  DXYZ\n')
-            for j in range(len(grid.dx)):
-                outfile.write('    ' + strD(grid.dx[j]))
-                if j % 5 == 4:
-                    outfile.write('   ' + '\\' + '\n')
+                outfile.write(strD(grid.nxyz[i]) + ' ')
             outfile.write('\n')
-            for j in range(len(grid.dy)):
-                outfile.write('    ' + strD(grid.dy[j]))
-                if j % 5 == 4:
-                    outfile.write('   ' + '\\' + '\n')
-            outfile.write('\n')
-            for j in range(len(grid.dz)):
-                outfile.write('    ' + strD(grid.dz[j]))
-                if j % 5 == 4:
-                    outfile.write('   ' + '\\' + '\n')
-            outfile.write('\n')
-            outfile.write('  END\n')
+        else:
+            outfile.write('  TYPE ' + grid.type + ' ' +  grid.filename + '\n')
         if grid.origin:
             outfile.write('  ORIGIN' + ' ')
             for i in range(3):
                 outfile.write(strD(grid.origin[i]) + ' ')
             outfile.write('\n')
-        outfile.write('  NXYZ' + ' ')
-        for i in range(3):
-            outfile.write(strD(grid.nxyz[i]) + ' ')
-        outfile.write('\n')
         if grid.gravity:
             outfile.write('  GRAVITY' + ' ')
             for i in range(3):
                 outfile.write(strD(grid.gravity[i]) + ' ')
             outfile.write('\n')
-        if grid.type == 'unstructured':
-            outfile.write('  FILENAME' + grid.filename + '\n')
         outfile.write('END\n\n')
 
     def _read_timestepper(self, infile, line):
@@ -3902,25 +3903,28 @@ class pdata(object):
         for region in self.regionlist:
             outfile.write('REGION ')
             outfile.write(region.name.lower() + '\n')
-            if region.face:
-                outfile.write('  FACE ' + region.face.lower() + '\n')
-            # no if statement below to ensure 0's are accepted for coordinates
-            if region.point_list:
-                for point in region.point_list:
-                    outfile.write('  COORDINATE ')
-                    for i in range(3):
-                        outfile.write(strD(point.coordinate[i]) + ' ')
-                    outfile.write('\n')
+            if region.filename:
+                outfile.write(' FILE ' + region.filename + '\n')
             else:
-                outfile.write('  COORDINATES\n')
-                outfile.write('    ')
-                for i in range(3):
-                    outfile.write(strD(region.coordinates_lower[i]) + ' ')
-                outfile.write('\n    ')
-                for i in range(3):
-                    outfile.write(strD(region.coordinates_upper[i]) + ' ')
-                outfile.write('\n')
-                outfile.write('  END\n')
+                if region.face:
+                    outfile.write('  FACE ' + region.face.lower() + '\n')
+            # no if statement below to ensure 0's are accepted for coordinates
+                if region.point_list:
+                    for point in region.point_list:
+                        outfile.write('  COORDINATE ')
+                        for i in range(3):
+                            outfile.write(strD(point.coordinate[i]) + ' ')
+                        outfile.write('\n')
+                else:
+                    outfile.write('  COORDINATES\n')
+                    outfile.write('    ')
+                    for i in range(3):
+                        outfile.write(strD(region.coordinates_lower[i]) + ' ')
+                    outfile.write('\n    ')
+                    for i in range(3):
+                        outfile.write(strD(region.coordinates_upper[i]) + ' ')
+                    outfile.write('\n')
+                    outfile.write('  END\n')
             outfile.write('END\n\n')
 
     def _read_observation(self, infile):

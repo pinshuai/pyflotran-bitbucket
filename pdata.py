@@ -1233,7 +1233,7 @@ class pregion(Frozen):
     :type face: str
     """
 
-    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None, face=None, filename=''):
+    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None, face=None, filename='', point_list=[]):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:

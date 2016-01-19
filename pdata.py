@@ -2623,7 +2623,7 @@ class pdata(object):
         outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
 
     def _write_reference_temperature(self, outfile):
-        outfile.write('REFERENCE_TEMPERATURE ' + strD(self.reference_temperature) '\n\n')
+        outfile.write('REFERENCE_TEMPERATURE ' + strD(self.reference_temperature) + '\n\n')
 
     def _write_co2_database(self, outfile):
         self._header(outfile, headers['co2_database'])

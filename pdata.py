@@ -1,9 +1,9 @@
 """ Class for pyflotran data """
 
 """
-PyFLOTRAN v1.0.0 LA-CC-14-094 
+PyFLOTRAN v1.0.0 LA-CC-14-094
 
-Copyright (c) 2014, Los Alamos National Security, LLC.  
+Copyright (c) 2014, Los Alamos National Security, LLC.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
@@ -50,6 +50,8 @@ except ImportError:
     'placeholder'
 
 rc('text', usetex=True)
+plt.rcParams['font.family'] = ['sans-serif']
+plt.rcParams['font.sans-serif'] = ['Lucida Grande']
 
 from ptool import *
 from pdflt import *
@@ -76,7 +78,7 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake']
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing', 'th freezing', 'immis']
 
 # grid - allowed strings
-grid_types_allowed = ['structured', 'unstructured_explicit', 'unstructured_implicit'] 
+grid_types_allowed = ['structured', 'unstructured_explicit', 'unstructured_implicit']
 grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']  # cartesian is default in pflotran
 
 # output - allowed strings
@@ -98,8 +100,8 @@ characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BRO
 characteristic_curves_gas_permeability_function_types_allowed = ['MAULEM_VG_GAS', 'BURDINE_BC_GAS']
 characteristic_curves_liquid_permeability_function_types_allowed = ['MAULEM', 'BURDINE', 'MUALEM_VG_LIQ']
 
-# material_property, region, initial_condition, boundary_condition, 
-# source_sink, stratigraphy_couplers - manual does not appear to document 
+# material_property, region, initial_condition, boundary_condition,
+# source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
 
 # flow_conditions - allowed strings
@@ -197,7 +199,7 @@ class pmaterial(Frozen):
     :param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in
     unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
     :type permeability: [float]*3
-    :param longitudinal_dispersivity: Longitudinal dispersion coefficient 
+    :param longitudinal_dispersivity: Longitudinal dispersion coefficient
     :type longitudinal_dispersivity: float
     :param transverse_dispersivity_h: Transverse dispersion coefficient horizontal
     :type transverse_dispersivity_h: float
@@ -251,17 +253,17 @@ class psecondary_continuum(Frozen):
     :type fracture_spacing: float
     :param num_cells: Specify number of grid cells in the secondary continuum
     :type num_cells: int
-    :param epsilon: Specify the volume fraction of the secondary continuum 
+    :param epsilon: Specify the volume fraction of the secondary continuum
     :type epsilon: float
-    :param aperture: Specify the aperture of the secondary continuum 
+    :param aperture: Specify the aperture of the secondary continuum
     :type aperture: float
     :param temperature: Initial temperature in the secondary continuum
     :type temperature: float
     :param diffusion_coefficient: Specify the diffusion coefficient in the secondary continuum for transport
     :type diffusion_coefficient: float
-    :param porosity: Specify the porosity of the secondary continuum 
+    :param porosity: Specify the porosity of the secondary continuum
     :type porosity: float
- 
+
 
     """
 
@@ -880,7 +882,7 @@ class pregression(Frozen):
 class ptimestepper(Frozen):
     """
     Class for controling time stepping.
-        
+
     :param ts_mode: FLOW or TRAN mode
     :type ts_mode: string
     :param ts_acceleration: Integer for time step acceleration ramp.
@@ -1521,8 +1523,8 @@ class pdataset(Frozen):
     :type map_hdf5_dataset_name: str
     :param max_buffer_size: size of internal buffer for storing transient data
     :type max_buffer_size: float
-    :param realization_dependent: Add when doing stochastic multiple realizations 
-    :type realization_dependent: bool 
+    :param realization_dependent: Add when doing stochastic multiple realizations
+    :type realization_dependent: bool
    """
 
     def __init__(self, dataset_name='', dataset_mapped_name='', name='', file_name='', hdf5_dataset_name='',
@@ -1814,9 +1816,9 @@ class pdata(object):
         :type exe: str
         :param num_procs: Number of processors
         :type num_procs: int
-        :param num_realizations: Number of realizations 
+        :param num_realizations: Number of realizations
         :type num_realizations: int
-        :param num_groups: Number of groups 
+        :param num_groups: Number of groups
         :type num_groups: int
         :param silent: Hide screen output
         :type silent: bool

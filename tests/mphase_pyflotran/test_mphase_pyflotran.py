@@ -16,12 +16,12 @@ class mphase_read(unittest.TestCase):
         test = ''
         with open(dir + '/mphase.in', 'r') as f:
             line = f.readline()
-            if not 'CO2_DATABASE' in line:
+            if 'CO2_DATABASE' not in line:
                 test += line
 
         with open(dir + '/mphase.gold', 'r') as f:
             line = f.readline()
-            if not 'CO2_DATABASE' in line:
+            if 'CO2_DATABASE' not in line:
                 gold += line
 
         self.assertEqual(gold, test)

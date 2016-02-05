@@ -1,10 +1,12 @@
 import sys
 import os
+from pdata import *
 
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
-    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory \
+     and be defined in system environment variables.')
     sys.exit(1)
 sys.path.append(pflotran_dir + '/src/python')
 
@@ -12,10 +14,10 @@ try:
     pyflotran_dir = os.environ['PYFLOTRAN_DIR']
 except KeyError:
     print(
-        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory \
+        and be defined in system environment variables.')
     sys.exit(1)
 sys.path.append(pyflotran_dir)
-from pdata import *
 
 test_dir = '/tests/mphase_pyflotran'
 
@@ -149,7 +151,8 @@ saturation = psaturation('', '')
 saturation.name = 'sf2'
 saturation.permeability_function_type = 'NMT_EXP'
 saturation.saturation_function_type = 'NMT_EXP'
-# saturation.residual_saturation = 0.03 # float - testing - does not work with pflotran with this deck.
+# saturation.residual_saturation = 0.03 # float - testing - does not work
+# with pflotran with this deck.
 saturation.residual_saturation_liquid = 0.1
 saturation.residual_saturation_gas = 0.0
 saturation.a_lambda = 0.762
@@ -233,8 +236,10 @@ dat.add(variable, flow)  # alternative
 variable = pflow_variable('')  # new flow var object
 variable.name = 'ENTHALPY'
 variable.type = 'dirichlet'
-variable.valuelist = [0.e0, 0.e0]  # alternative, specify flow object by passing in direct reference
-dat.add(variable, index='initial')  # alternative, specify flow object by its' name
+# alternative, specify flow object by passing in direct reference
+variable.valuelist = [0.e0, 0.e0]
+# alternative, specify flow object by its' name
+dat.add(variable, index='initial')
 
 # top flow condition
 flow = pflow()
@@ -284,11 +289,13 @@ variable.name = 'rate'
 variable.type = 'mass_rate'
 variable.time_unit_type = 'y'
 variable.data_unit_type = 'kg/s'
-tlist = pflow_variable_list()  # sub-class of pflow_variable, assigned to list attribute
+# sub-class of pflow_variable, assigned to list attribute
+tlist = pflow_variable_list()
 tlist.time_unit_value = 0.  # tlist = temporary list
 tlist.data_unit_value_list = [0., 1.e-4]
 variable.list.append(tlist)
-tlist = pflow_variable_list()  # sub-class of pflow_variable, assigned to list attribute
+# sub-class of pflow_variable, assigned to list attribute
+tlist = pflow_variable_list()
 tlist.time_unit_value = 10.
 tlist.data_unit_value_list = [0., 0.]
 variable.list.append(tlist)

@@ -2456,7 +2456,7 @@ class pdata(object):
         if self.nonuniform_velocity.filename:
             self._write_nonuniform_velocity(outfile)
 
-        if self.co2_database:
+        if self.simulation.mode.upper() == 'MPHASE' and self.co2_database:
             self._write_co2_database(outfile)
 
         if self.multiple_continuum:

@@ -1,21 +1,21 @@
 import sys
 import os
+from pdata import *
+
 
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
-    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory \
+           and be defined in system environment variables.')
     sys.exit(1)
 
 try:
     pyflotran_dir = os.environ['PYFLOTRAN_DIR']
 except KeyError:
-    print(
-        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+    print('PYFLOTRAN_DIR must point to PYFLOTRAN installation directory \
+           and be defined in system environment variables.')
     sys.exit(1)
-sys.path.append(pyflotran_dir)
-
-from pdata import *
 
 test_dir = '/tests/tracer_1D_pyflotran'
 

@@ -6,23 +6,22 @@
 
 import sys
 import os
+from pdata import *
 
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
-    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory \
+     and be defined in system environment variables.')
     sys.exit(1)
-sys.path.append(pflotran_dir + '/src/python')
 
 try:
     pyflotran_dir = os.environ['PYFLOTRAN_DIR']
 except KeyError:
     print(
-        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory \
+        and be defined in system environment variables.')
     sys.exit(1)
-sys.path.append(pyflotran_dir)
-
-from pdata import *
 
 test_dir = '/tests/calcite_tran_only_pyflotran'
 
@@ -47,7 +46,8 @@ dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
 # --------------------------------------------------------------
 chemistry = pchemistry()
 chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
-chemistry.sec_species_list = ['OH-', 'CO3--', 'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
+chemistry.sec_species_list = ['OH-', 'CO3--',
+                              'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
 chemistry.gas_species_list = ['CO2(g)']
 chemistry.minerals_list = ['Calcite']
 chemistry.database = pflotran_dir + '/database/hanford.dat'

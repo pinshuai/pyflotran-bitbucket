@@ -8,7 +8,8 @@ class vsat_read(unittest.TestCase):
     """Test for running calcite tran only"""
 
     def setUp(self):
-        os.system('python ' + dir + '/calcite_tran_only_read.py > /dev/null 2>&1')
+        os.system('python ' + dir +
+                  '/calcite_tran_only_read.py > /dev/null 2>&1')
 
     def test_vsat_flow_read(self):
         """Test for running calcite tran only
@@ -18,12 +19,12 @@ class vsat_read(unittest.TestCase):
         test = ''
         with open(dir + '/calcite_tran_only_2.in', 'r') as f:
             line = f.readline()
-            if not 'DATABASE' in line:
+            if 'DATABASE' not in line:
                 test += line
 
         with open(dir + '/calcite_tran_only.gold', 'r') as f:
             line = f.readline()
-            if not 'DATABASE' in line:
+            if 'DATABASE' not in line:
                 gold += line
 
         self.assertEqual(gold, test)

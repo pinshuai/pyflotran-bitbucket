@@ -16,12 +16,12 @@ class vsat_read(unittest.TestCase):
         test = ''
         with open(dir + '/calcite_tran_only.in', 'r') as f:
             line = f.readline()
-            if not 'DATABASE' in line:
+            if 'DATABASE' not in line:
                 test += line
 
         with open(dir + '/calcite_tran_only.gold', 'r') as f:
             line = f.readline()
-            if not 'DATABASE' in line:
+            if 'DATABASE' not in line:
                 gold += line
 
         self.assertEqual(gold, test)

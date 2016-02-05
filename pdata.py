@@ -1937,7 +1937,7 @@ class pconstraint_concentration(Frozen):
     :param value: Concentration value.
     :type value: float
     :param constraint: Constraint name for concentration.
-     Options include: 'F', 'FREE', 'T', 'TOTAL', 'TOTAL_SORB', 'P', 
+     Options include: 'F', 'FREE', 'T', 'TOTAL', 'TOTAL_SORB', 'P',
      'pH', 'L', 'LOG', 'M', 'MINERAL', 'MNRL', 'G', 'GAS', 'SC',
      'CONSTRAINT_SUPERCRIT_CO2
     :type constraint: str
@@ -2364,7 +2364,9 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint],
-                           ))  # associate each card name with a read function, defined further below
+                           ))  
+                           # associate each card name with
+                           # a read function, defined further below
 
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
@@ -2737,7 +2739,8 @@ class pdata(object):
                 if isinstance(obji, pflow):
                     self._delete_flow(obji)
 
-        if isinstance(obj, pflow_variable):  # Flow object needs to be specified
+        if isinstance(obj, pflow_variable):  
+        # Flow object needs to be specified
             self._delete_flow_variable(obj, super_obj)
         elif isinstance(obj, list):  # Condition not tested
             for obji in copy(obj):
@@ -3430,7 +3433,8 @@ class pdata(object):
             if key == 'final_time':
                 tstring = line.split()[1:]  # temp list of strings,
                 # do not include 1st sub-string
-                if len(tstring) == 2:  # Do this if there is a time unit to read
+                if len(tstring) == 2:
+                    # Do this if there is a time unit to read
                     time.tf.append(floatD(tstring[0]))
                     time.tf.append(tstring[-1])
                 else:  # No time unit being read in
@@ -3504,10 +3508,12 @@ class pdata(object):
                 else:
                     print '       valid time.units', time_units_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'PyFLOTRAN ERROR: time.tf[1]: \'' + time.tf[1] + '\' is invalid!')
+                        'PyFLOTRAN ERROR: time.tf[1]: ' +
+                        time.tf[1] + ' is invalid!')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'time.tf (final time) input is invalid. Format should be a list: [number, string]')
+                    'time.tf (final time) input is invalid. ' +
+                    'Format should be a list: [number, string]')
 
         # write INITIAL_TIMESTEP_SIZE statement (dti)
         if time.dti:
@@ -3522,7 +3528,8 @@ class pdata(object):
                         'time.dti[1]: \'' + time.dti[1] + '\' is invalid.')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'time.dti (initial timestep size) input is invalid. Format should be a list: [number, string]')
+                    'time.dti (initial timestep size) input is invalid. ' +
+                    'Format should be a list: [number, string]')
 
         # write MAXIMUM_TIMESTEP_SIZE statement	dtf
         if time.dtf:
@@ -3536,7 +3543,8 @@ class pdata(object):
                         'time.dtf[1]: \'' + time.dtf[1] + '\' is invalid.')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'time.dtf (maximum timestep size) input is invalid. Format should be a list: [number, string]')
+                    'time.dtf (maximum timestep size) input is invalid.' +
+                    'Format should be a list: [number, string]')
 
         # Write more MAXIMUM_TIME_STEP_SIZE statements if applicable
         for dtf in time.dtf_list:
@@ -3548,14 +3556,16 @@ class pdata(object):
                     outfile.write(strD(dtf[0]) + ' ')
                 else:
                     raise PyFLOTRAN_ERROR(
-                        'The 1st variable in a dtf_list is not recognized as a float.')
+                        'The 1st variable in a dtf_list is ' +
+                        'not recognized as a float.')
 
                 # Write 1st time unit before 'at'
                 if isinstance(dtf[1], str):
                     outfile.write((dtf[1]) + ' ')
                 else:
                     raise PyFLOTRAN_ERROR(
-                        'The 2nd variable in a dtf_list is not recognized as a str (string).')
+                        'The 2nd variable in a dtf_list is not ' +
+                        'recognized as a str (string).')
 
                 outfile.write('at ')
 
@@ -3564,65 +3574,24 @@ class pdata(object):
                     outfile.write(strD(dtf[2]) + ' ')
                 else:
                     raise PyFLOTRAN_ERROR(
-                        'The 3rd variable in a dtf_list is not recognized as a float.')
+                        'The 3rd variable in a dtf_list is not ' +
+                        'recognized as a float.')
 
                 # Write 2nd time unit after 'at'
                 if isinstance(dtf[3], str):
                     outfile.write((dtf[3]))
                 else:
-                    raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: The 4th variable in a dtf_list is not recognized as a '
+                    raise PyFLOTRAN_ERROR('PyFLOTRAN ERROR: The 4th ' +
+                                          'variable in a dtf_list ' +
+                                          'is not recognized as a ' +
                                           'str (string).')
             except:
                 raise PyFLOTRAN_ERROR(
-                    'PyFLOTRAN ERROR: time.dtf_list (maximum timestep size with \'at\') is invalid. Format should be a '
+                    'PyFLOTRAN ERROR: time.dtf_list ' +
+                    '(maximum timestep size with \'at\') is invalid.' +
+                    ' Format should be a ' +
                     'list: [float, str, float, str]')
             outfile.write('\n')
-        '''
-        # Determine dtf_i size, the length of the smallest sized list being used
-        # with MAXIMUM_TIMESTEP_SIZE with key word  'at'.
-        # Displays a warning if the lists are not all of equal length.
-        if time.dtf_i == 0:	# Checks to see if user manually specified length so that
-                    # it does not re-assign user input
-            # Assign minimum value
-            time.dtf_i = min(len(time.dtf_lv), len(time.dtf_li),
-                     len(time.dtf_lv_unit), len(time.dtf_li_unit))
-
-            # Display warning if lists are not all of equal length
-            # This check may not be needed.
-            if not all(i == time.dtf_i for i in (len(time.dtf_lv), len(time.dtf_li),
-                                 len(time.dtf_lv_unit),
-                                 len(time.dtf_li_unit))):
-                print 'WARNING: The lengths of time.dtf_lv, time.dtf_li, time.dtf_lv, and time.dtf_li are not all of
-                equal length.\n\tSome values assigned will be missing.\n'
-
-        # Write more MAXIMUM_TIMESTEP_SIZE statements if applicable
-        for i in range(0, time.dtf_i):
-            try:
-                # write before key word 'AT'
-                time.dtf_lv_unit[i] = time.dtf_lv_unit[i].lower()# lower capitalization
-                outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
-                outfile.write(strD(time.dtf_lv[i]) + ' ') # Write Value
-                if time.dtf_lv_unit[i] in time_units_allowed:
-                    outfile.write(time.dtf_lv_unit[i])# Write Time Unit
-                else:
-                    print 'PyFLOTRAN ERROR: time.dtf_lv_unit: \'' + time.dtf_lv_unit[i] + '\' is invalid.'
-                    print '       valid time.units', time_units_allowed, '\n'
-
-                # write after key word 'AT'
-                time.dtf_li_unit[i] = time.dtf_li_unit[i].lower()# lower capitalization
-                outfile.write(' at ')
-                outfile.write(strD(time.dtf_li[i]) + ' ') # Write Value
-                if time.dtf_li_unit[i] in time_units_allowed:
-                    outfile.write(time.dtf_li_unit[i]) # Write Time Unit
-                else:
-                    print 'PyFLOTRAN ERROR: time.dtf_li_unit: \'' + time.dtf_li_unit[i] + '\' is invalid.'
-                    print '       valid time.units', time_units_allowed, '\n'
-                outfile.write('\n')
-            except:
-                print 'PyFLOTRAN ERROR: Invalid input at maximum_time_step_size with key word \'at\'. time.dtf_lv and
-                time.dtf_li should be a list of floats. time_dtf_lv_unit and time_dtf_li_unit should be a list of
-                strings. All lists should be of equal length.\n'
-        '''
         outfile.write('END\n\n')
 
     def _read_lsolver(self, infile, line):
@@ -3651,9 +3620,11 @@ class pdata(object):
         if isinstance(lsolver, plsolver):
             if lsolver.name in self.lsolver.keys():
                 if not overwrite:
-                    warning = 'WARNING: A linear solver with name \'' + str(
-                        lsolver.name) + '\' already exists. lsolver will not be defined, use overwrite = True in add() ' \
-                                        'to overwrite the old lsolver.'
+                    warning = 'WARNING: A linear solver with name ' + \
+                        str(lsolver.name) + ' already exists. ' + \
+                        'lsolver will not be defined, ' + \
+                        'use overwrite = True in add() ' + \
+                        'to overwrite the old lsolver.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3720,8 +3691,11 @@ class pdata(object):
         if isinstance(nsolver, pnsolver):
             if nsolver.name in self.nsolver.keys():
                 if not overwrite:
-                    warning = 'WARNING: A newton solver with name \'' + str(nsolver.name) + '\' already exists. ' + \
-                              'nsolver will not be defined, use overwrite = True in add() to overwrite the old nsolver.'
+                    warning = 'WARNING: A newton solver with name ' + \
+                        str(nsolver.name) + '\' already exists. ' + \
+                        'nsolver will not be defined, ' + \
+                        'use overwrite = True in add()' + \
+                        ' to overwrite the old nsolver.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3834,7 +3808,8 @@ class pdata(object):
                         keep_reading_1 = False
                     else:
                         raise PyFLOTRAN_ERROR(
-                            'variable ' + str(key1) + ' cannot be an output variable.')
+                            'variable ' + str(key1) +
+                            ' cannot be an output variable.')
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -3857,7 +3832,8 @@ class pdata(object):
             else:
                 print '       valid time.units', time_units_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
-                    'output.time_list[0]: \'' + output.time_list[0] + '\' is invalid.')
+                    'output.time_list[0]: ' + output.time_list[0] +
+                    ' is invalid.')
             outfile.write('\n')
 
         # This is here on purpose - Needed later
@@ -3869,8 +3845,9 @@ class pdata(object):
                 output.screen_output = bool(output.screen_output)
                 outfile.write('  ' + 'SCREEN OFF' + '\n')
             except ValueError:
-                raise PyFLOTRAN_ERROR(
-                    'output.screen_output: \'' + str(output.screen_output) + '\' is not bool.')
+                raise PyFLOTRAN_ERROR('output.screen_output:' +
+                                      str(output.screen_output) +
+                                      ' is not bool.')
 
         if output.screen_periodic:
             try:  # Error checking to ensure screen_periodic is int (integer).
@@ -3879,7 +3856,8 @@ class pdata(object):
                               str(output.screen_periodic) + '\n')
             except ValueError:
                 raise PyFLOTRAN_ERROR(
-                    'output.screen_periodic: \'' + str(output.screen_periodic) + '\' is not int (integer).')
+                    'output.screen_periodic: \'' +
+                    str(output.screen_periodic) + '\' is not int (integer).')
         if output.periodic_time:
             try:  # Error checking to ensure periodic_time is [float, str].
                 output.periodic_time[0] = floatD(output.periodic_time[0])
@@ -3889,13 +3867,17 @@ class pdata(object):
                 else:
                     output.periodic_time[1] = str(
                         output.periodic_time[1].lower())
-                    raise PyFLOTRAN_ERROR('time unit in output.periodic_time[1] is invalid. Valid time units are:',
+                    raise PyFLOTRAN_ERROR('time unit in ' +
+                                          'output.periodic_time[1]' +
+                                          ' is invalid. Valid time' +
+                                          'units are:',
                                           time_units_allowed)
                 outfile.write('  ' + 'PERIODIC TIME ')
                 outfile.write(strD(output.periodic_time[0]) + ' ')
                 outfile.write(output.periodic_time[1] + '\n')
             except:
-                raise PyFLOTRAN_ERROR('output.periodic_time: \'' + str(output.periodic_time) +
+                raise PyFLOTRAN_ERROR('output.periodic_time: \'' +
+                                      str(output.periodic_time) +
                                       '\' is not [float, str].')
         if output.periodic_timestep:
             try:  # Error checking to ensure periodic_timestep is [float].
@@ -3903,7 +3885,8 @@ class pdata(object):
                 outfile.write('  ' + 'PERIODIC TIMESTEP ')
                 outfile.write(strD(output.periodic_timestep) + '\n')
             except:
-                raise PyFLOTRAN_ERROR('output.periodic_timestep: \'' + str(output.periodic_timestep) +
+                raise PyFLOTRAN_ERROR('output.periodic_timestep: \'' +
+                                      str(output.periodic_timestep) +
                                       '\' is not [float].')
         if output.periodic_observation_time:
             try:
@@ -3911,13 +3894,17 @@ class pdata(object):
                 # str].
                 output.periodic_observation_time[0] = floatD(
                     output.periodic_observation_time[0])
-                if output.periodic_observation_time[1].lower() in time_units_allowed:
+                if output.periodic_observation_time[1].lower() in \
+                        time_units_allowed:
                     output.periodic_observation_time[1] = str(
                         output.periodic_observation_time[1].lower())
                 else:
                     output.periodic_observation_time[1] = str(
                         output.periodic_observation_time[1].lower())
-                    raise PyFLOTRAN_ERROR('time unit in output.periodic_observation_time[1] is invalid. Valid time '
+                    raise PyFLOTRAN_ERROR('time unit in ' +
+                                          'output. ' +
+                                          'periodic_observation_time[1] ' +
+                                          ' is invalid. Valid time '
                                           'units are:', time_units_allowed)
 
                 # Writing out results
@@ -3925,8 +3912,10 @@ class pdata(object):
                 outfile.write(strD(output.periodic_observation_time[0]) + ' ')
                 outfile.write(output.periodic_observation_time[1] + '\n')
             except:
-                raise PyFLOTRAN_ERROR('output.periodic_observation_time: \'' + str(output.periodic_observation_time) +
-                                      '\' is not [float, str].')
+                raise PyFLOTRAN_ERROR(
+                    'output.periodic_observation_time: \'' +
+                    str(output.periodic_observation_time) +
+                    '\' is not [float, str].')
         if output.periodic_observation_timestep:
             outfile.write('  PERIODIC_OBSERVATION TIMESTEP ' +
                           str(output.periodic_observation_timestep) + '\n')
@@ -3937,7 +3926,8 @@ class pdata(object):
                 outfile.write('  FORMAT ')
                 outfile.write(out_format.upper() + '\n')
             else:
-                print '       valid output.format:', output_formats_allowed, '\n'
+                print '       valid output.format:', \
+                    output_formats_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
                     'output.format: \'' + out_format + '\' is invalid.')
         if output.velocities:
@@ -3954,7 +3944,8 @@ class pdata(object):
                 if variable.lower() in output_variables_allowed:
                     outfile.write('    ' + variable.upper() + '\n')
                 else:
-                    print '       valid output.variable:', output_variables_allowed, '\n'
+                    print '       valid output.variable:', \
+                        output_variables_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'output.variable: \'' + variable + '\' is invalid.')
             outfile.write('  /\n')
@@ -3989,7 +3980,8 @@ class pdata(object):
         # Write out requested (not null) fluid properties
         if fluid.diffusion_coefficient:
             outfile.write('  DIFFUSION_COEFFICIENT ' +
-                          strD(fluid.diffusion_coefficient) + '\n')  # Read last entry
+                          strD(fluid.diffusion_coefficient) +
+                          '\n')  # Read last entry
         outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
@@ -4047,9 +4039,10 @@ class pdata(object):
         if isinstance(sat, psaturation):
             if sat.name in self.saturation.keys():
                 if not overwrite:
-                    warning = 'WARNING: A saturation function with name \'' + str(
-                        sat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old saturation ' \
-                                    'function.'
+                    warning = 'WARNING: A saturation function with name \'' + \
+                        str(sat.name) + '\' already exists. ' + \
+                        ' Use overwrite = True in add() ' + \
+                        ' to overwrite the old saturation function.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4072,25 +4065,30 @@ class pdata(object):
             else:
                 outfile.write('\n')
             if sat.permeability_function_type:
-                if sat.permeability_function_type in permeability_function_types_allowed:
+                if sat.permeability_function_type in \
+                        permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION_TYPE ' +
                                   sat.permeability_function_type + '\n')
                 else:
                     print('valid saturation.permeability_function_types',
                           saturation_function_types_allowed, '\n')
                     raise PyFLOTRAN_ERROR(
-                        'saturation.saturation_function_type: \'' + sat.saturation_function_type + '\' is invalid.')
+                        'saturation.saturation_function_type: \'' +
+                        sat.saturation_function_type + '\' is invalid.')
             if sat.saturation_function_type:
-                if sat.saturation_function_type in saturation_function_types_allowed:
+                if sat.saturation_function_type in \
+                        saturation_function_types_allowed:
                     outfile.write('  SATURATION_FUNCTION_TYPE ' +
                                   sat.saturation_function_type + '\n')
             if sat.residual_saturation or sat.residual_saturation == 0:
                 outfile.write('  RESIDUAL_SATURATION ' +
                               strD(sat.residual_saturation) + '\n')
-            if sat.residual_saturation_liquid or sat.residual_saturation_liquid == 0:
+            if sat.residual_saturation_liquid or \
+                    sat.residual_saturation_liquid == 0:
                 outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' +
                               strD(sat.residual_saturation_liquid) + '\n')
-            if sat.residual_saturation_gas or sat.residual_saturation_gas == 0:
+            if sat.residual_saturation_gas or\
+                    sat.residual_saturation_gas == 0:
                 outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' +
                               strD(sat.residual_saturation_gas) + '\n')
             if sat.a_lambda:
@@ -4144,8 +4142,8 @@ class pdata(object):
             elif key == 'default':
                 characteristic_curves.default = floatD(self.splitter(line))
             elif key == 'liquid_permeability_function_type':
-                characteristic_curves.liquid_permeability_function_type = self.splitter(
-                    line)
+                characteristic_curves.liquid_permeability_function_type = \
+                    self.splitter(line)
             elif key == 'lpf_m':
                 characteristic_curves.lpf_m = floatD(self.splitter(line))
             elif key == 'lpf_lambda':
@@ -4154,47 +4152,65 @@ class pdata(object):
                 characteristic_curves.lpf_liquid_residual_saturation = floatD(
                     self.splitter(line))
             elif key == 'gas_permeability_function_type':
-                characteristic_curves.gas_permeability_function_type = self.splitter(
-                    line)
+                characteristic_curves.gas_permeability_function_type = \
+                    self.splitter(line)
             elif key == 'gpf_m':
                 characteristic_curves.gpf_m = floatD(self.splitter(line))
             elif key == 'gpf_lambda':
                 characteristic_curves.gpf_lambda = floatD(self.splitter(line))
             elif key == 'gpf_liquid_residual_saturation':
-                characteristic_curves.gpf_liquid_residual_saturation = floatD(
-                    self.splitter(line))
+                characteristic_curves.gpf_liquid_residual_saturation = \
+                    floatD(self.splitter(line))
             elif key == 'gpf_gas_residual_saturation':
                 characteristic_curves.gpf_gas_residual_saturation = floatD(
                     self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
-        new_cc = pcharacteristic_curves(characteristic_curves.name, characteristic_curves.saturation_function_type,
-                                        characteristic_curves.sf_alpha, characteristic_curves.sf_m,
+        new_cc = pcharacteristic_curves(characteristic_curves.name,
+                                        characteristic_curves.
+                                        saturation_function_type,
+                                        characteristic_curves.sf_alpha,
+                                        characteristic_curves.sf_m,
                                         characteristic_curves.sf_lambda,
-                                        characteristic_curves.sf_liquid_residual_saturation,
-                                        characteristic_curves.sf_gas_residual_saturation,
-                                        characteristic_curves.max_capillary_pressure, characteristic_curves.smooth,
-                                        characteristic_curves.power, characteristic_curves.default,
-                                        characteristic_curves.liquid_permeability_function_type,
-                                        characteristic_curves.lpf_m, characteristic_curves.lpf_lambda,
-                                        characteristic_curves.lpf_liquid_residual_saturation,
-                                        characteristic_curves.gas_permeability_function_type,
-                                        characteristic_curves.gpf_m, characteristic_curves.gpf_lambda,
-                                        characteristic_curves.gpf_liquid_residual_saturation,
-                                        characteristic_curves.gpf_gas_residual_saturation)
+                                        characteristic_curves.
+                                        sf_liquid_residual_saturation,
+                                        characteristic_curves.
+                                        sf_gas_residual_saturation,
+                                        characteristic_curves.
+                                        max_capillary_pressure,
+                                        characteristic_curves.smooth,
+                                        characteristic_curves.power,
+                                        characteristic_curves.default,
+                                        characteristic_curves.
+                                        liquid_permeability_function_type,
+                                        characteristic_curves.lpf_m,
+                                        characteristic_curves.lpf_lambda,
+                                        characteristic_curves.
+                                        lpf_liquid_residual_saturation,
+                                        characteristic_curves.
+                                        gas_permeability_function_type,
+                                        characteristic_curves.gpf_m,
+                                        characteristic_curves.gpf_lambda,
+                                        characteristic_curves.
+                                        gpf_liquid_residual_saturation,
+                                        characteristic_curves.
+                                        gpf_gas_residual_saturation)
 
         self.add(new_cc)
 
     # Adds a char object.
-    def _add_characteristic_curves(self, char=pcharacteristic_curves(), overwrite=False):
+    def _add_characteristic_curves(self, char=pcharacteristic_curves(),
+                                   overwrite=False):
         # check if char already exists
         if isinstance(char, pcharacteristic_curves):
             if char.name in self.char.keys():
                 if not overwrite:
-                    warning = 'WARNING: A Characteristic Curve with name \'' + str(char.name) + '\' already exists.' + \
-                              'Characteristic curve will not be defined, use overwrite = True ' 'in add() to' + \
-                              'overwrite the old characteristic curve.'
+                    warning = 'WARNING: A Characteristic Curve with name \'' +\
+                        str(char.name) + '\' already exists.' + \
+                        'Characteristic curve will not be defined, ' + \
+                        ' use overwrite = True ' 'in add() to' + \
+                        'overwrite the old characteristic curve.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4216,24 +4232,29 @@ class pdata(object):
             if char.name:
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
             if char.saturation_function_type:
-                if char.saturation_function_type in characteristic_curves_saturation_function_types_allowed:
+                if char.saturation_function_type in \
+                        characteristic_curves_saturation_function_types_allowed:
                     outfile.write('  SATURATION_FUNCTION ' +
                                   char.saturation_function_type + '\n')
                 else:
                     print '       valid  char.saturation_function_types', \
                         characteristic_curves_saturation_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'char.saturation_function_type: \'' + char.saturation_function_type + '\' is invalid.')
+                        'char.saturation_function_type: \'' +
+                        char.saturation_function_type + '\' is invalid.')
                 if char.sf_alpha:
                     outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
                 if char.sf_m:
                     outfile.write('   M ' + strD(char.sf_m) + '\n')
                 if char.sf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
-                if char.sf_liquid_residual_saturation or char.sf_liquid_residual_saturation == 0:
+                if char.sf_liquid_residual_saturation or \
+                        char.sf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.sf_liquid_residual_saturation) + '\n')
-                if char.sf_gas_residual_saturation or char.sf_gas_residual_saturation == 0:
+                                  strD(char.sf_liquid_residual_saturation) +
+                                  '\n')
+                if char.sf_gas_residual_saturation or \
+                        char.sf_gas_residual_saturation == 0:
                     outfile.write('   GAS_RESIDUAL_SATURATION ' +
                                   strD(char.sf_gas_residual_saturation) + '\n')
                 if char.max_capillary_pressure:
@@ -4253,7 +4274,8 @@ class pdata(object):
                 if char.liquid_permeability_function_type in \
                         characteristic_curves_liquid_permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.liquid_permeability_function_type + '\n')
+                                  char.liquid_permeability_function_type +
+                                  '\n')
                 # outfile.write('   PHASE LIQUID' + '\n')
                 else:
                     print '       valid  char.liquid_permeability_function_types', \
@@ -4264,13 +4286,16 @@ class pdata(object):
                     outfile.write('   M ' + strD(char.lpf_m) + '\n')
                 if char.lpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
-                if char.lpf_liquid_residual_saturation or char.lpf_liquid_residual_saturation == 0:
+                if char.lpf_liquid_residual_saturation or \
+                        char.lpf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.lpf_liquid_residual_saturation) + '\n')
+                                  strD(char.lpf_liquid_residual_saturation) +
+                                  '\n')
                 outfile.write('  / ' + '\n')
 
             if char.gas_permeability_function_type:
-                if char.gas_permeability_function_type in characteristic_curves_gas_permeability_function_types_allowed:
+                if char.gas_permeability_function_type in \
+                        characteristic_curves_gas_permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION ' +
                                   char.gas_permeability_function_type + '\n')
                     outfile.write('   PHASE GAS' + '\n')
@@ -4279,18 +4304,23 @@ class pdata(object):
                     print '       valid  char.gas_permeability_function_types', \
                         characteristic_curves_gas_permeability_function_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'char.gas_permeability_function_type: \'' + char.gas_permeability_function_type +
+                        'char.gas_permeability_function_type: \'' +
+                        char.gas_permeability_function_type +
                         '\' is invalid.')
                 if char.gpf_m:
                     outfile.write('   M ' + strD(char.gpf_m) + '\n')
                 if char.gpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
-                if char.gpf_liquid_residual_saturation or char.gpf_liquid_residual_saturation == 0:
+                if char.gpf_liquid_residual_saturation or \
+                        char.gpf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_liquid_residual_saturation) + '\n')
-                if char.gpf_gas_residual_saturation or char.gpf_gas_residual_saturation == 0:
+                                  strD(char.gpf_liquid_residual_saturation) +
+                                  '\n')
+                if char.gpf_gas_residual_saturation or \
+                        char.gpf_gas_residual_saturation == 0:
                     outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_gas_residual_saturation) + '\n')
+                                  strD(char.gpf_gas_residual_saturation) +
+                                  '\n')
                 outfile.write('  / ' + '\n')
 
             outfile.write('END\n\n')
@@ -4342,8 +4372,10 @@ class pdata(object):
         if isinstance(region, pregion):
             if region.name in self.region.keys():
                 if not overwrite:
-                    warning = 'WARNING: A region with name \'' + str(region.name) + '\' already exists. Region will' + \
-                              'not be defined, use overwrite = True in add() to overwrite the old region.'
+                    warning = 'WARNING: A region with name \'' + \
+                        str(region.name) + '\' already exists. Region will' + \
+                        'not be defined, use overwrite = ' + \
+                        'True in add() to overwrite the old region.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4408,9 +4440,11 @@ class pdata(object):
         if isinstance(observation, pobservation):
             if observation.region in self.observation.keys():
                 if not overwrite:
-                    warning = 'WARNING: A observation with region \'' + str(observation.region) + '\' already ' \
-                                                                                                  'exists. Observation will not be defined, use overwrite = True in add() to overwrite' \
-                                                                                                  'the old observation.'
+                    warning = 'WARNING: A observation with region \'' + \
+                        str(observation.region) + '\' already ' \
+                        'exists. Observation will not be defined,' + \
+                        ' use overwrite = True in add() to overwrite' + \
+                        'the old observation.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4448,7 +4482,8 @@ class pdata(object):
         flow.name = self.splitter(line).lower()
 
         keep_reading = True
-        is_valid = False  # Used so that entries outside flow conditions are ignored
+        is_valid = False
+        # Used so that entries outside flow conditions are ignored
         end_count = 0
         total_end_count = 1
         while keep_reading:  # Read through all cards
@@ -4461,12 +4496,15 @@ class pdata(object):
                 # This # indicates how many time a / or 'end'
                 # can be read before loop terminates.
 
-            elif key == 'rate' or key == 'pressure' or key == 'temperature' or key == 'concentration' or key == \
+            elif key == 'rate' or key == 'pressure' or \
+                key == 'temperature' or key == 'concentration' or key == \
                     'enthalpy' or key == 'flux':
                 if end_count == 0:
                     '''
-                    Appending and instantiation of new flow_variables occur here. Only two entries are filled,
-                    the rest are assigned in the elif code block where end_count == 1
+                    Appending and instantiation of new flow_variables
+                    occur here. Only two entries are filled,
+                    the rest are assigned in the elif code block
+                    where end_count == 1
                     '''
                     var = pflow_variable()
                     var.name = key
@@ -4474,7 +4512,8 @@ class pdata(object):
                     var.valuelist = []
                     var.list = []
 
-                    is_valid = True  # Indicates the entries read here should be written so that entries outside
+                    is_valid = True  # Indicates the entries
+                    # read here should be written so that entries outside
                     # flow conditions are ignored.
                     flow.varlist.append(var)
 
@@ -4489,7 +4528,8 @@ class pdata(object):
                     if tstring2[0].lower() == 'list':
 
                         # for each list in a pflow_variable object, check all
-                        # pflow_variable objects by name to determine correct assignment
+                        # pflow_variable objects by name to
+                        # determine correct assignment
                         # before assigning in values from a list
                         keep_reading_list = True
                         while keep_reading_list:
@@ -4497,9 +4537,11 @@ class pdata(object):
                             line = infile.readline()  # get next line
                             # split the whole string/line
                             tstring2 = line.split()[:]
-                            for var in flow.varlist:  # var represents a pflow_variable object
+                            for var in flow.varlist:  # var represents
+                                # a pflow_variable object
                                 if tstring2name.lower() == var.name.lower():
-                                    if line[0] == ':' or line[0] == '#' or line[0] == '/':
+                                    if line[0] == ':' or line[0] == '#'\
+                                            or line[0] == '/':
                                         pass  # ignore a commented line
                                     # line[0] == '/' is a temporary fix
                                     elif tstring2[0].lower() == 'time_units':
@@ -4516,17 +4558,20 @@ class pdata(object):
                                         tvarlist.data_unit_value_list.append(
                                             floatD(tstring2[1]))
                                         if len(tstring2) > 2:
-                                            tvarlist.data_unit_value_list.append(
-                                                floatD(tstring2[2]))
+                                            tvarlist.\
+                                                data_unit_value_list.append(
+                                                    floatD(tstring2[2]))
                                         var.list.append(tvarlist)
                             if line.split()[0] in ['/', 'end']:
                                 keep_reading_list = False
                     else:
-                        # for each single variable in a pflow_variable object, check all
-                        # pflow_variable object by name to determine correct
-                        # assignment
-                        for substring in tstring2:  # Checks all values/types on this line
-                            for var in flow.varlist:  # var represents a pflow_variable object
+                        # for each single variable in a pflow_variable object,
+                        # check all pflow_variable object by name to
+                        # determine correct assignment
+                        for substring in tstring2:
+                            # Checks all values/types on this line
+                            for var in flow.varlist:
+                                # var represents a pflow_variable object
                                 if tstring2name.lower() == var.name.lower():
                                     try:
                                         var.valuelist.append(floatD(substring))
@@ -4567,8 +4612,11 @@ class pdata(object):
         if isinstance(flow, pflow):
             if flow.name in self.flow.keys():
                 if not overwrite:
-                    warning = 'WARNING: A flow with name \'' + str(flow.name) + '\' already exists. Flow will not be ' + \
-                              'defined, use overwrite = True in add() to overwrite the old flow.'
+                    warning = 'WARNING: A flow with name \'' + \
+                        str(flow.name) + \
+                        '\' already exists. Flow will not be ' + \
+                        'defined, use overwrite = True in add() ' +\
+                        ' to overwrite the old flow.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4582,22 +4630,26 @@ class pdata(object):
         self.flowlist.remove(flow)
 
     '''
-    Automate adding the sub-class flow_variable to a flow object. The flow object
-    can be specified by name. If flow object name is not specified, the function
-    will append pflow_variable to the last flow object added to the list.
-    Function will provided a warning if a flow_variable.name already exists
+    Automate adding the sub-class flow_variable to a flow object.
+    The flow object can be specified by name. If flow object name
+    is not specified, the function will append pflow_variable to the
+    last flow object added to the list. Function will provided a
+    warning if a flow_variable.name already exists
     in the flow object it is trying to add it to.
     '''
 
-    def _add_flow_variable(self, flow_variable=pflow_variable(), index='', overwrite=False):
+    def _add_flow_variable(self, flow_variable=pflow_variable(),
+                           index='', overwrite=False):
         # check if flow.name was specified
         if index:
             if isinstance(index, str):
                 # Assign flow object to existing flow object with string type
                 # name/index
                 flow = self.flow.get(index)
-                if not flow:  # Occurs if index/string is not found in flow object
-                    print 'WARNING: a flow object with flow.name', index, 'was not found. Current found entries are:', \
+                if not flow:
+                    # Occurs if index/string is not found in flow object
+                    print 'WARNING: a flow object with flow.name', \
+                        index, 'was not found. Current found entries are:', \
                         self.flow.keys(), 'pflow_variable was not added.\n'
                     return
 
@@ -4611,10 +4663,14 @@ class pdata(object):
             if flow_variable.name in self.flow_variable(flow).keys():
                 if not overwrite:
                     warning = 'WARNING: A flow_variable with name \'' + str(
-                        flow_variable.name) + '\' already exists in flow with name \'' + str(
-                        flow.name) + '\'. Flow_variable will not be defined, use overwrite = True in add() to ' \
-                                     'overwrite the old flow_variable. Use flow=\'name\' if you want to specify the ' \
-                                     'flow object to add flow_variable to.'
+                        flow_variable.name) + \
+                        '\' already exists in flow with name \'' + \
+                        str(flow.name) + \
+                        '\'. Flow_variable will not be defined, ' + \
+                        'use overwrite = True in add() to ' + \
+                        'overwrite the old flow_variable. ' + \
+                        'Use flow=\'name\' if you want to specify the ' + \
+                        'flow object to add flow_variable to.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4627,7 +4683,8 @@ class pdata(object):
         if flow_variable not in flow.varlist:
             flow.varlist.append(flow_variable)
 
-    def _delete_flow_variable(self, flow_variable=pflow_variable(), flow=pflow()):
+    def _delete_flow_variable(self, flow_variable=pflow_variable(),
+                              flow=pflow()):
         flow.varlist.remove(flow_variable)
 
     def _write_flow(self, outfile):
@@ -4641,67 +4698,90 @@ class pdata(object):
                 if condition_type.lower() in pressure_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition pressure_types_allowed:', pressure_types_allowed, '\n'
+                    print '       valid ' + \
+                        'flow_condition pressure_types_allowed:', \
+                        pressure_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'FLUX':
                 if condition_type.lower() in flux_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition flux_types_allowed:', flux_types_allowed, '\n'
+                    print '       valid ' + \
+                        'flow_condition flux_types_allowed:', \
+                        flux_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'RATE':
                 if condition_type.lower() in rate_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition rate_types_allowed:', rate_types_allowed, '\n'
+                    print '       valid flow_condition rate_types_allowed:', \
+                        rate_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'WELL':
                 if condition_type.lower() in well_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid well_conditions well_types_allowed:', well_types_allowed, '\n'
+                    print '       valid well_conditions well_types_allowed:', \
+                        well_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'TEMPERATURE':
                 if condition_type.lower() in temperature_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition temperature_types_allowed:', temperature_types_allowed, '\n'
+                    print '       valid flow_condition ' + \
+                        'temperature_types_allowed:', \
+                        temperature_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'CONCENTRATION':
                 if condition_type.lower() in concentration_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition concentration_types_allowed:', concentration_types_allowed, '\n'
+                    print '       valid flow_condition ' + \
+                        'concentration_types_allowed:', \
+                        concentration_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'SATURATION':
                 if condition_type.lower() in saturation_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print 'PyFLOTRAN ERROR: flow.varlist.type: \'' + condition_type + '\' is invalid.'
-                    print '       valid flow_condition saturation_types_allowed:', saturation_types_allowed, '\n'
+                    print 'PyFLOTRAN ERROR: flow.varlist.type: \'' + \
+                        condition_type + '\' is invalid.'
+                    print '       valid flow_condition ' + \
+                        'saturation_types_allowed:', \
+                        saturation_types_allowed, '\n'
                 return 0  # Break out of function
             elif condition_name.upper() == 'ENTHALPY':
                 if condition_type.lower() in enthalpy_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
-                    print '       valid flow_condition enthalpy_types_allowed:', enthalpy_types_allowed, '\n'
+                    print '       valid flow_condition ' + \
+                        'enthalpy_types_allowed:', \
+                        enthalpy_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.type: \'' + condition_type + '\' is invalid.')
+                        'flow.varlist.type: \'' +
+                        conition_type + '\' is invalid.')
                 return 0  # Break out of function
             else:
-                pass  # Error reporting for flow_condition.name is done elsewhere
+                pass
+                # Error reporting for flow_condition.name is done elsewhere
                 # name should be validated before this function is called.
 
         # Write out all valid flow_conditions objects with FLOW_CONDITION as
@@ -4730,7 +4810,8 @@ class pdata(object):
                 outfile.write('\n')
                 if flow.gradient:
                     outfile.write('    GRADIENT\n')
-                    outfile.write('      ' + flow.gradient[0].upper() + ' ' + str(flow.gradient[1]) + ' ' + str(
+                    outfile.write('      ' + flow.gradient[0].upper() +
+                                  ' ' + str(flow.gradient[1]) + ' ' + str(
                         flow.gradient[2]) + ' ' + str(flow.gradient[3]) + '\n')
                     outfile.write('    /\n')
             # Following code is paired w/ this statement.
@@ -4740,9 +4821,11 @@ class pdata(object):
                 if a_flow.name.upper() in flow_condition_type_names_allowed:
                     outfile.write('    ' + a_flow.name.upper() + '  ')
                 else:
-                    print '       valid flow_condition.names:', flow_condition_type_names_allowed, '\n'
+                    print '       valid flow_condition.names:', \
+                        flow_condition_type_names_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
-                        'flow.varlist.name: \'' + a_flow.name + '\' is invalid.')
+                        'flow.varlist.name: \'' +
+                        a_flow.name + '\' is invalid.')
 
                 # Checks a_flow.type and performs write or error reporting
                 check_condition_type(a_flow.name, a_flow.type)
@@ -4818,14 +4901,18 @@ class pdata(object):
         self.add(new_initial_condition)
 
     def _add_initial_condition(self, initial_condition=pinitial_condition(),
-                               overwrite=False):  # Adds a initial_condition object.
+                               overwrite=False):
+                                # Adds a initial_condition object.
         # check if flow already exists
         if isinstance(initial_condition, pinitial_condition):
             if initial_condition.region in self.initial_condition.keys():
                 if not overwrite:
-                    warning = 'WARNING: A initial_condition with region \'' + str(
-                        initial_condition.region) + '\' already exists. initial_condition will not be defined, use ' \
-                                                    'overwrite = True in add() to overwrite the old initial_condition.'
+                    warning = 'WARNING: A initial_condition with region \'' +\
+                        str(initial_condition.region) + \
+                        '\' already exists. initial_condition will ' + \
+                        'not be defined, use ' + \
+                        'overwrite = True in add() to overwrite ' + \
+                        'the old initial_condition.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4836,7 +4923,8 @@ class pdata(object):
         if initial_condition not in self.initial_condition_list:
             self.initial_condition_list.append(initial_condition)
 
-    def _delete_initial_condition(self, initial_condition=pinitial_condition()):
+    def _delete_initial_condition(self,
+                                  initial_condition=pinitial_condition()):
         self.initial_condition_list.remove(initial_condition)
 
     def _write_initial_condition(self, outfile):
@@ -4861,7 +4949,8 @@ class pdata(object):
                 outfile.write('END\n\n')
         except:
             raise PyFLOTRAN_ERROR(
-                'At least one initial condition with valid attributes is required')
+                'At least one initial condition with ' +
+                'valid attributes is required')
 
     def _read_boundary_condition(self, infile, line):
         if len(line.split()) > 1:
@@ -4895,14 +4984,18 @@ class pdata(object):
         self.add(new_boundary_condition)
 
     def _add_boundary_condition(self, boundary_condition=pboundary_condition(),
-                                overwrite=False):  # Adds a boundary_condition object.
+                                overwrite=False):
+        # Adds a boundary_condition object.
         # check if flow already exists
         if isinstance(boundary_condition, pboundary_condition):
             if boundary_condition.region in self.boundary_condition.keys():
                 if not overwrite:
-                    warning = 'WARNING: A boundary_condition with region \'' + str(boundary_condition.region) + '\'' + \
-                              ' already exists. boundary_condition will not be defined, use overwrite = True in add()' + \
-                              'to overwrite the old boundary_condition.'
+                    warning = 'WARNING: A boundary_condition with region \'' +\
+                        str(boundary_condition.region) + '\'' + \
+                        ' already exists. boundary_condition will ' + \
+                        ' not be defined, use overwrite = ' + \
+                        'True in add()' + \
+                        'to overwrite the old boundary_condition.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4913,7 +5006,8 @@ class pdata(object):
         if boundary_condition not in self.boundary_condition_list:
             self.boundary_condition_list.append(boundary_condition)
 
-    def _delete_boundary_condition(self, boundary_condition=pboundary_condition()):
+    def _delete_boundary_condition(self,
+                                   boundary_condition=pboundary_condition()):
         self.boundary_condition_list.remove(boundary_condition)
 
     def _write_boundary_condition(self, outfile):
@@ -4938,7 +5032,8 @@ class pdata(object):
                 outfile.write('END\n\n')
         except:
             raise PyFLOTRAN_ERROR(
-                'At least one boundary_condition with valid attributes is required')
+                'At least one boundary_condition with valid ' +
+                'attributes is required')
 
     def _read_source_sink(self, infile, line):
         p = psource_sink()
@@ -4974,9 +5069,11 @@ class pdata(object):
         if isinstance(source_sink, psource_sink):
             if source_sink.region in self.source_sink.keys():
                 if not overwrite:
-                    warning = 'WARNING: A source_sink with region \'' + str(
-                        source_sink.region) + '\' already exists. source_sink will not be defined, use overwrite = True ' \
-                                              'in add() to overwrite the old source_sink.'
+                    warning = 'WARNING: A source_sink with region \'' + \
+                        str(source_sink.region) + '\' already exists. ' + \
+                        'source_sink will not be defined,' + \
+                        ' use overwrite = True ' + \
+                        'in add() to overwrite the old source_sink.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5036,8 +5133,11 @@ class pdata(object):
         if isinstance(strata, pstrata):
             if strata.region in self.strata.keys():
                 if not overwrite:
-                    warning = 'WARNING: A strata with name \'' + str(strata.region) + '\' already exists. strata will' + \
-                              'not be defined, use overwrite = True in add() to overwrite the old strata.'
+                    warning = 'WARNING: A strata with name \'' + \
+                        str(strata.region) + \
+                        '\' already exists. strata will' + \
+                        'not be defined, use overwrite = True in' + \
+                        ' add() to overwrite the old strata.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5137,8 +5237,10 @@ class pdata(object):
             else:
                 outfile.write(restart.time_unit)
 
-                raise PyFLOTRAN_ERROR('restart.time_unit \'', restart.time_unit,
-                                      '\' is invalid. Valid times units are:', time_units_allowed, '\n')
+                raise PyFLOTRAN_ERROR('restart.time_unit \'',
+                                      restart.time_unit,
+                                      '\' is invalid. Valid times units are:',
+                                      time_units_allowed, '\n')
 
         outfile.write('\n\n')
 
@@ -5203,8 +5305,10 @@ class pdata(object):
         if isinstance(dat, pdataset):
             if dat.name in self.dataset.keys():
                 if not overwrite:
-                    warning = 'WARNING: A dataset with name \'' + str(
-                        dat.name) + '\' already exists. Use overwrite = True in add() to overwrite the old dataset.'
+                    warning = 'WARNING: A dataset with name \'' + \
+                        str(dat.name) + '\' already exists. ' + \
+                        'Use overwrite = True in add() to overwrite' + \
+                        'the old dataset.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5324,7 +5428,8 @@ class pdata(object):
     '''
 
     def _add_chemistry_m_kinetic(self, m_kinetic=pchemistry_m_kinetic(),
-                                 overwrite=False):  # Adds a mineral_kinetic object
+                                 overwrite=False):
+        # Adds a mineral_kinetic object
 
         chemistry = self.chemistry
 
@@ -5332,12 +5437,13 @@ class pdata(object):
         if isinstance(m_kinetic, pchemistry_m_kinetic):
             if m_kinetic.name in self.m_kinetic.keys():
                 if not overwrite:
-                    warning = 'WARNING: A m_kinetic with name \'' + str(m_kinetic.name) + '\' already exists in ' \
-                                                                                          'chemistry. Mineral_Kinetic ' \
-                                                                                          'will not be defined, use ' \
-                                                                                          'overwrite = True in add() ' \
-                                                                                          'to overwrite the old ' \
-                                                                                          'm_kinetic.'
+                    warning = 'WARNING: A m_kinetic with name \'' + \
+                        str(m_kinetic.name) + '\' already exists in ' + \
+                        'chemistry. Mineral_Kinetic ' + \
+                        'will not be defined, use ' + \
+                        'overwrite = True in add() ' + \
+                        'to overwrite the old ' + \
+                        'm_kinetic.'
                     print warning
                     print
                     build_warnings.append(warning)
@@ -5361,7 +5467,8 @@ class pdata(object):
         # Write out chemistry variables
         if c.pspecies_list:
             outfile.write('  PRIMARY_SPECIES\n')
-            for p in c.pspecies_list:  # p = primary_specie in primary_species_list
+            for p in c.pspecies_list:
+                # p = primary_specie in primary_species_list
                 outfile.write('    ' + p + '\n')
             outfile.write('  /\n')
         if c.sec_species_list:
@@ -5428,7 +5535,8 @@ class pdata(object):
             key = line.split()[0].lower()  # take first key word
 
             if key == 'type':
-                if len(line.split()) == 2:  # Only Assign if 2 words are on the line
+                if len(line.split()) == 2:
+                    # Only Assign if 2 words are on the line
                     np_type = self.splitter(line)  # take last word
             elif key == 'constraint_list':
                 keep_reading_2 = True
@@ -5438,12 +5546,17 @@ class pdata(object):
                         # print
                         # np_constraint_list_value,line.split()[0].lower()
                         np_constraint_list_value.append(
-                            floatD(line.split()[0].lower()))  # Read 1st word online
+                            floatD(line.split()[0].lower()))
+                        # Read 1st word online
                         np_constraint_list_type.append(
                             line.split()[1].lower())  # Read 2nd word on line
                     except:
-                        raise PyFLOTRAN_ERROR('constraint_list_value and constraint_list_type requires at least one' +
-                                              'value. Value should = Number and type should = String\n')
+                        raise PyFLOTRAN_ERROR('constraint_list_value and ' +
+                                              'constraint_list_type ' +
+                                              'requires at least one' +
+                                              'value. Value should = ' +
+                                              'Number and type should = ' +
+                                              ' String\n')
 
                     line = infile.readline()  # get next line
                     # Used to stop loop when / or end is read
@@ -5464,9 +5577,12 @@ class pdata(object):
         if isinstance(transport, ptransport):
             if transport.name in self.transport.keys():
                 if not overwrite:
-                    warning = 'WARNING: A transport with name \'' + str(transport.name) + '\' already exists.' + \
-                              'transport will not be defined, use overwrite = True in add() to overwrite the' + \
-                              'old transport.'
+                    warning = 'WARNING: A transport with name \'' + \
+                        str(transport.name) + '\' already exists.' + \
+                        'transport will not be defined, ' + \
+                        'use overwrite = True in add() to ' + \
+                        'overwrite the' + \
+                        'old transport.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5487,11 +5603,13 @@ class pdata(object):
                 outfile.write('TRANSPORT_CONDITION ' + t.name.lower() + '\n')
             else:
                 raise PyFLOTRAN_ERROR(
-                    'transport_condition[' + str(tl.index(t)) + '].name is required.\n')
+                    'transport_condition[' +
+                    str(tl.index(t)) + '].name is required.\n')
             if t.type.lower() in transport_condition_types_allowed:
                 outfile.write('  TYPE ' + t.type.lower() + '\n')
             else:
-                print '       valid transport_condition.types:', transport_condition_types_allowed, '\n'
+                print '       valid transport_condition.types:', \
+                    transport_condition_types_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
                     'transport.type: \'' + t.type + '\' is invalid.')
             try:
@@ -5509,13 +5627,20 @@ class pdata(object):
                         else:
                             outfile.write('  ' + str(clt[i]).lower() + '\n')
                     else:
-                        raise PyFLOTRAN_ERROR('transport[' + str(tl.index(t)) + '].constraint_list_type[' +
+                        raise PyFLOTRAN_ERROR('transport[' +
+                                              str(tl.index(t)) +
+                                              '].constraint_list_type[' +
                                               str(clt.index(i)) +
-                                              '] is required to have a value when'
-                                              ' transport.constraint_list_value does.')
+                                              '] is required to have ' +
+                                              'a value when' +
+                                              ' transport.' +
+                                              'constraint_list_value does.')
             except:
-                raise PyFLOTRAN_ERROR('transport.constraint_list_value and transport.constraint_list_type should be' +
-                                      'in list format, be equal in length, and have at least one value.\n')
+                raise PyFLOTRAN_ERROR('transport.constraint_list_value ' +
+                                      'and transport.constraint_list_type ' +
+                                      'should be' +
+                                      'in list format, be equal in length, ' +
+                                      'and have at least one value.\n')
             outfile.write('\n  END\n')  # END FOR CONSTRAINT_LIST
             outfile.write('END\n\n')  # END FOR TRANSPORT_CONDITION
 
@@ -5535,7 +5660,8 @@ class pdata(object):
             if key == 'concentrations':
                 while True:
                     line = infile.readline()  # get next line
-                    tstring = line.split()  # Convert line to temporary list of strings
+                    tstring = line.split()
+                    # Convert line to temporary list of strings
 
                     if line.strip().lower() in ['/', 'end']:
                         break  # Stop loop if line is a / or 'end'
@@ -5595,9 +5721,12 @@ class pdata(object):
         if isinstance(constraint, pconstraint):
             if constraint.name in self.constraint.keys():
                 if not overwrite:
-                    warning = 'WARNING: A constraint with name \'' + str(constraint.name) + '\' already exists. ' + \
-                              'constraint will not be defined, use overwrite = True in add() to overwrite the old ' + \
-                              'constraint.'
+                    warning = 'WARNING: A constraint with name \'' + \
+                        str(constraint.name) + '\' already exists. ' + \
+                        'constraint will not be defined, ' + \
+                        'use overwrite = True in add() to ' +  \
+                        'overwrite the old ' + \
+                        'constraint.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5611,35 +5740,50 @@ class pdata(object):
         self.constraint_list.remove(constraint)
 
     # Adds a constraint_concentration object
-    def _add_constraint_concentration(self, constraint_concentration=pconstraint_concentration(), index='',
+    def _add_constraint_concentration(self,
+                                      constraint_concentration=pconstraint_concentration(),
+                                      index='',
                                       overwrite=False):
 
         # check if constraint.name was specified
         if index:
             if isinstance(index, str):
                 constraint = self.constraint.get(
-                    index)  # Assign constraint object to existing constraint object with string type name/index
-                if not constraint:  # Occurs if index/string is not found in constraint object
-                    print 'WARNING: a constraint object with constraint.name', index, 'was not found. Current found ' \
-                                                                                      'entries are:', \
-                        self.constraint.keys(), 'pconstraint_concentration was not added.\n'
+                    index)
+                # Assign constraint object to existing constraint object with
+                # string type name/index
+                if not constraint:
+                    # Occurs if index/string is not found in constraint object
+                    print 'WARNING: a constraint object with ' + \
+                        'constraint.name', index, 'was not found. ' + \
+                        ' Current found entries are:', \
+                        self.constraint.keys(), \
+                        'pconstraint_concentration was not added.\n'
                     return
 
             elif isinstance(index, pconstraint):
-                constraint = index  # Assigns if index is the constraint object reference
+                constraint = index
+                # Assigns if index is the constraint object reference
         else:  # Set constraint to last constraint object in list
             constraint = self.constraint_list[-1]
 
         # check if constraint_concentration already exists
         if isinstance(constraint_concentration, pconstraint_concentration):
-            if constraint_concentration.pspecies in self.constraint_concentration(constraint).keys():
+            if constraint_concentration.pspecies in \
+                    self.constraint_concentration(constraint).keys():
                 if not overwrite:
-                    warning = 'WARNING: A constraint_concentration with pspecies \'' + str(
-                        constraint_concentration.pspecies) + '\' already exists in constraint with name \'' + str(
-                        constraint.name) + '\'. constraint_concentration will not be defined, use overwrite = True in ' \
-                                           'add() to overwrite the old constraint_concentration. Use constraint=\'name\' ' \
-                                           'if you want to specify the constraint object to ' \
-                                           'add constraint_concentration to.'
+                    warning = 'WARNING: A constraint_concentration ' + \
+                        'with pspecies \'' + \
+                        str(constraint_concentration.pspecies) + \
+                        '\' already exists in constraint with name \'' + \
+                        str(constraint.name) + \
+                        '\'. constraint_concentration will not be ' + \
+                        'defined, use overwrite = True in ' \
+                        'add() to overwrite the old ' + \
+                        'constraint_concentration. ' + \
+                        'Use constraint=\'name\' ' \
+                        'if you want to specify the constraint object to ' \
+                        'add constraint_concentration to.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5647,7 +5791,8 @@ class pdata(object):
                     self.delete(self.constraint_concentration(constraint)[constraint_concentration.pspecies],
                                 constraint)
 
-        # Add constraint_concentration to constraint (as a sub-class) if constraint_concentration does not exist in
+        # Add constraint_concentration to constraint (as a sub-class)
+        # if constraint_concentration does not exist in
         # specified constraint object
         if constraint_concentration not in constraint.concentration_list:
             constraint.concentration_list.append(constraint_concentration)
@@ -5670,11 +5815,13 @@ class pdata(object):
                 outfile.write(c.name.lower() + '\n')
             else:
                 raise PyFLOTRAN_ERROR(
-                    'constraint_list[' + str(cl.index(c)) + '].name is required.')
+                    'constraint_list[' +
+                    str(cl.index(c)) + '].name is required.')
 
             outfile.write('  CONCENTRATIONS\n')
 
-            for concn in c.concentration_list:  # concn = concentration, c = constraint
+            for concn in c.concentration_list:
+                # concn = concentration, c = constraint
                 if concn.pspecies:
                     outfile.write('    ' + concn.pspecies)
                 if concn.value:
@@ -5734,7 +5881,9 @@ class pdata(object):
 
     @property
     def prop(self):
-        return dict([(p.id, p) for p in self.proplist] + [(p.id, p) for p in self.proplist])
+        return dict([(p.id, p) for p in self.proplist] + [(p.id, p)
+                                                          for p in
+                                                          self.proplist])
 
     @property
     def dataset(self):
@@ -5746,71 +5895,88 @@ class pdata(object):
 
     @property
     def lsolver(self):
-        return dict([lsolv.name, lsolv] for lsolv in self.lsolverlist if lsolv.name)
+        return dict([lsolv.name, lsolv] for lsolv in self.lsolverlist
+                    if lsolv.name)
 
     @property
     def nsolver(self):
-        return dict([nsolv.name, nsolv] for nsolv in self.nsolverlist if nsolv.name)
+        return dict([nsolv.name, nsolv] for nsolv in self.nsolverlist
+                    if nsolv.name)
 
     @property
     def char(self):
         return dict(
-            [(characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in self.charlist] +
-            [(characteristic_curves.name.lower(), characteristic_curves) for characteristic_curves in self.charlist])
+            [(characteristic_curves.name.lower(), characteristic_curves)
+             for characteristic_curves in self.charlist] +
+            [(characteristic_curves.name.lower(), characteristic_curves)
+             for characteristic_curves in self.charlist])
 
     @property
     def region(self):
-        return dict([region.name.lower(), region] for region in self.regionlist if region.name)
+        return dict([region.name.lower(), region] for region in
+                    self.regionlist if region.name)
 
     @property
     def observation(self):
         return dict(
-            [observation.region.lower(), observation] for observation in self.observation_list if observation.region)
+            [observation.region.lower(), observation] for observation in
+            self.observation_list if observation.region)
 
     @property
     def flow(self):
-        return dict([flow.name.lower(), flow] for flow in self.flowlist if flow.name.lower)
+        return dict([flow.name.lower(), flow] for flow in self.flowlist if
+                    flow.name.lower)
 
     def flow_variable(self, flow=pflow()):
-        return dict([flow_variable.name.lower(), flow_variable] for flow_variable in flow.varlist
+        return dict([flow_variable.name.lower(), flow_variable] for
+                    flow_variable in flow.varlist
                     if flow_variable.name.lower())
 
     @property
     def initial_condition(self):
-        return dict([initial_condition.region, initial_condition] for initial_condition in self.initial_condition_list
+        return dict([initial_condition.region, initial_condition] for
+                    initial_condition in self.initial_condition_list
                     if initial_condition.region)
 
     @property
     def boundary_condition(self):
         return dict(
-            [boundary_condition.region, boundary_condition] for boundary_condition in self.boundary_condition_list if
+            [boundary_condition.region, boundary_condition] for
+            boundary_condition in self.boundary_condition_list if
             boundary_condition.region)
 
     @property
     def source_sink(self):
-        return dict([source_sink.region, source_sink] for source_sink in self.source_sink_list if source_sink.region)
+        return dict([source_sink.region, source_sink] for
+                    source_sink in self.source_sink_list if source_sink.region)
 
     @property
     def strata(self):
-        return dict([strata.region, strata] for strata in self.strata_list if strata.region)
+        return dict([strata.region, strata] for
+                    strata in self.strata_list if strata.region)
 
     @property
     def m_kinetic(self):
         chemistry = self.chemistry
-        return dict([m_kinetic.name, m_kinetic] for m_kinetic in chemistry.m_kinetics_list if m_kinetic.name)
+        return dict([m_kinetic.name, m_kinetic] for
+                    m_kinetic in chemistry.m_kinetics_list if m_kinetic.name)
 
     @property
     def transport(self):
-        return dict([transport.name, transport] for transport in self.transportlist if transport.name)
+        return dict([transport.name, transport] for
+                    transport in self.transportlist if transport.name)
 
     @property
     def constraint(self):
         return dict(
-            [constraint.name.lower(), constraint] for constraint in self.constraint_list if constraint.name.lower())
+            [constraint.name.lower(), constraint] for
+            constraint in self.constraint_list if constraint.name.lower())
 
     def constraint_concentration(self, constraint=pconstraint()):
-        return dict([constraint_concentration.pspecies, constraint_concentration] for constraint_concentration in
-                    constraint.concentration_list if constraint_concentration.pspecies)
+        return dict([constraint_concentration.pspecies,
+                     constraint_concentration] for constraint_concentration in
+                    constraint.concentration_list if
+                    constraint_concentration.pspecies)
 
     @staticmethod
     def paraview(vtk_filepath_list=None):
@@ -5823,7 +5989,8 @@ class pdata(object):
                         vtk_filepath + ' is not a valid filepath!')
                 elif vtk_filepath[-3:] != 'vtk':
                     raise PyFLOTRAN_ERROR(
-                        vtk_filepath + ' does not have a valid extension (.vtk)!')
+                        vtk_filepath + '\
+                         does not have a valid extension (.vtk)!')
             legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(
                 vtk_filepath_list).replace(' ', '\n') + ')\n'
             with open('paraview-script.py', 'w+') as f:
@@ -5831,7 +5998,9 @@ class pdata(object):
                 f.write(legacy_reader + '\n')
                 f.write('simple.Show()\nsimple.Render()')
         process = subprocess.Popen('paraview --script=paraview-script.py',
-                                   shell=True, stdout=subprocess.PIPE, stderr=sys.stderr)
+                                   shell=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=sys.stderr)
         while True:
             out = process.stdout.read(1)
             if out == '' and process.poll() is not None:
@@ -5848,13 +6017,15 @@ class pquake(Frozen):
     :param name: Specify name of the physics for which the linear solver is
      being defined. Options include: 'tran', 'transport','flow'.
     :type name: str
-    :param solver: Specify solver type: Options include: 'solver', 'krylov_type', 'krylov', 'ksp', 'ksp_type'
+    :param solver: Specify solver type: Options include: 'solver',
+     'krylov_type', 'krylov', 'ksp', 'ksp_type'
     :type solver: str
     :param preconditioner: Specify preconditioner type: Options include: 'ilu'
     :type solver: str
     """
 
-    def __init__(self, mapping_file='mapping.dat', time_scaling=1.0, pressure_scaling=1.0):
+    def __init__(self, mapping_file='mapping.dat', time_scaling=1.0,
+                 pressure_scaling=1.0):
         self.mapping_file = mapping_file
         self.time_scaling = time_scaling
         self.pressure_scaling = pressure_scaling

@@ -6,30 +6,30 @@
 
 import sys
 import os
+import multiprocessing
+from pdata import *
 
 try:
     pyflotran_dir = os.environ['PYFLOTRAN_DIR']
 except KeyError:
-    print(
-        'PYFLOTRAN_DIR must point to PYFLOTRAN installation directory and be defined in system environment variables.')
+    print('PYFLOTRAN_DIR must point to PFYLOTRAN installation directory ' +
+          'and be defined in system environment variables.')
     sys.exit(1)
-sys.path.append(pyflotran_dir)
-from pdata import *
 
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
-    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory ' +
+          'and be defined in system environment variables.')
     sys.exit(1)
-sys.path.append(pflotran_dir + '/src/python')
-import multiprocessing
 
 ###############################################################
 
-procs = 2
+procs = 1
 rate_realizations = [1.e-6, 1.e-8, 1.e-10, 1e-12]
 realizations = range(1, 5)
 test_dir = '/tests/calcite_multiproc/'
+
 
 def execute(j):
     simulation(j, rate_realizations[j - 1])
@@ -46,6 +46,7 @@ def simulation(i, rate):
     simulation = psimulation()
     simulation.simulation_type = 'subsurface'
     simulation.subsurface_transport = 'transport'
+    simulation.subsurface_flow = ''
     dat.simulation = simulation
 
     # set uniform_velocity
@@ -57,7 +58,8 @@ def simulation(i, rate):
     # --------------------------------------------------------------
     chemistry = pchemistry()
     chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
-    chemistry.sec_species_list = ['OH-', 'CO3--', 'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
+    chemistry.sec_species_list = ['OH-', 'CO3--',
+                                  'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
     chemistry.gas_species_list = ['CO2(g)']
     chemistry.minerals_list = ['Calcite']
     chemistry.database = pflotran_dir + '/database/hanford.dat'
@@ -68,7 +70,8 @@ def simulation(i, rate):
     mineral_kinetic = pchemistry_m_kinetic()  # new mineral kinetic object
     mineral_kinetic.name = 'Calcite'
     mineral_kinetic.rate_constant_list = [rate, 'mol/m^2-sec']
-    dat.add(mineral_kinetic, overwrite=True)  # append mineral kinetic object to chemistry object
+    # append mineral kinetic object to chemistry object
+    dat.add(mineral_kinetic, overwrite=True)
     # --------------------------------------------------------------
 
     # set grid

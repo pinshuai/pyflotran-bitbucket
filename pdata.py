@@ -1,3 +1,17 @@
+from copy import copy
+import subprocess
+import itertools as it
+from matplotlib import rc
+import os
+import sys
+from ptool import *
+from pdflt import *
+import math
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+from scipy import spatial as spsp
+
+
 """ Class for pyflotran data """
 
 """
@@ -6,22 +20,27 @@ PyFLOTRAN v1.0.0 LA-CC-14-094
 Copyright (c) 2014, Los Alamos National Security, LLC.
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the
-   following disclaimer.
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-   disclaimer in the documentation and/or other materials provided with the distribution.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 __author__ = "Satish Karra, Cory Kitay"
@@ -29,33 +48,17 @@ __version__ = "1.0.0"
 __maintainer__ = "Satish Karra"
 __email__ = "satkarra@lanl.gov"
 
-from copy import copy
-import subprocess
-import matplotlib.pyplot as plt
-import itertools as it
-from matplotlib import rc
-import os, sys
-
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
-    print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
+    print('PFLOTRAN_DIR must point to PFLOTRAN installation' +
+          'directory and be defined in system environment variables.')
     sys.exit(1)
 
-try:
-    from matplotlib import pyplot as plt
-    from mpl_toolkits.mplot3d import axes3d
-    from scipy import spatial as spsp
-except ImportError:
-    'placeholder'
 
 rc('text', usetex=True)
 plt.rcParams['font.family'] = ['sans-serif']
 plt.rcParams['font.sans-serif'] = ['Lucida Grande']
-
-from ptool import *
-from pdflt import *
-import math
 
 dflt = pdflt()
 
@@ -70,69 +73,102 @@ else:
     slash = '/'
 
 # Multiple classes/key words - allowed strings
-time_units_allowed = ['s', 'sec', 'm', 'min', 'h', 'hr', 'd', 'day', 'w', 'week', 'mo', 'month', 'y']
+time_units_allowed = ['s', 'sec', 'm', 'min', 'h', 'hr', 'd', 'day', 'w',
+                      'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow']  # newton and linear
 # simulation type - allowed strings
 simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake']
 # mode - allowed strings
-mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing', 'th freezing', 'immis']
+mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
+                      'th freezing', 'immis']
 
 # grid - allowed strings
-grid_types_allowed = ['structured', 'unstructured_explicit', 'unstructured_implicit']
-grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']  # cartesian is default in pflotran
+grid_types_allowed = ['structured', 'unstructured_explicit',
+                      'unstructured_implicit']
+
+# cartesian is default in pflotran
+grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']
 
 # output - allowed strings
-output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5', 'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
+output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
+                          'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
-output_variables_allowed = ['liquid_pressure', 'liquid_saturation', 'liquid_density', 'liquid_mobility',
-                            'liquid_energy', 'liquid_mole_fractions', 'gas_pressure', 'gas_saturation', 'gas_density',
-                            'gas_mobility', 'gas_mole_fractions', 'air_pressure', 'capillary_pressure',
-                            'thermodynamic_state', 'temperature', 'residual', 'porosity', 'mineral_porosity',
-                            'permeability', 'mineral_porosity']
+output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
+                            'liquid_density', 'liquid_mobility',
+                            'liquid_energy', 'liquid_mole_fractions',
+                            'gas_pressure', 'gas_saturation',
+                            'gas_density', 'gas_mobility',
+                            'gas_mole_fractions', 'air_pressure',
+                            'capillary_pressure', 'thermodynamic_state',
+                            'temperature', 'residual', 'porosity',
+                            'mineral_porosity', 'permeability',
+                            'mineral_porosity']
 
 # saturation_function - allowed strings
-saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY', 'THOMEER_COREY', 'NMT_EXP', 'PRUESS_1']
+saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
+                                     'THOMEER_COREY', 'NMT_EXP',
+                                     'PRUESS_1']
 
-permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE', 'NMT_EXP', 'PRUESS_1']
+permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
+                                       'NMT_EXP', 'PRUESS_1']
 
 # characteristic_curves - allowed strings - saturation & permeability functions
-characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY']
-characteristic_curves_gas_permeability_function_types_allowed = ['MAULEM_VG_GAS', 'BURDINE_BC_GAS']
-characteristic_curves_liquid_permeability_function_types_allowed = ['MAULEM', 'BURDINE', 'MUALEM_VG_LIQ']
+characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN',
+                                                           'BROOKS_COREY']
+characteristic_curves_gas_permeability_function_types_allowed = [
+                                            'MAULEM_VG_GAS', 'BURDINE_BC_GAS']
+characteristic_curves_liquid_permeability_function_types_allowed = [
+                                        'MAULEM', 'BURDINE', 'MUALEM_VG_LIQ']
 
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
 
 # flow_conditions - allowed strings
-flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION', 'SATURATION', 'WELL',
+flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
+                                     'CONCENTRATION', 'SATURATION', 'WELL',
                                      'ENTHALPY']
-pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet', 'hydrostatic', 'zero_gradient', 'conductance',
+pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
+                          'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
 well_types_allowed = ['well']
-flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic, conductance', 'zero_gradient',
-                      'production_well', 'seepage', 'volumetric', 'volumetric_rate', 'equilibrium']
-temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'neumann']
+flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic',
+                      'conductance', 'zero_gradient',
+                      'production_well', 'seepage', 'volumetric',
+                      'volumetric_rate', 'equilibrium']
+temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient',
+                             'neumann']
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 saturation_types_allowed = ['dirichlet']
 enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 
 # transport_condition - allowed strings
-transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient', 'equilibrium', 'neumann', 'mole',
+transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
+                                     'equilibrium', 'neumann', 'mole',
                                      'mole_rate', 'zero_gradient']
 
-cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity', 'simulation', 'regression', 'checkpoint', 'restart',
-         'dataset', 'chemistry', 'grid', 'timestepper', 'material_property', 'time', 'linear_solver', 'newton_solver',
-         'output', 'fluid_property', 'saturation_function', 'characteristic_curves', 'region', 'observation',
-         'flow_condition', 'transport_condition', 'initial_condition', 'boundary_condition', 'source_sink', 'strata',
-         'constraint', 'hydroquake', 'multiple_continuum', 'secondary_continuum']
+cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
+         'simulation', 'regression', 'checkpoint', 'restart',
+         'dataset', 'chemistry', 'grid', 'timestepper', 'material_property',
+         'time', 'linear_solver', 'newton_solver',
+         'output', 'fluid_property', 'saturation_function',
+         'characteristic_curves', 'region', 'observation',
+         'flow_condition', 'transport_condition', 'initial_condition',
+         'boundary_condition', 'source_sink', 'strata',
+         'constraint', 'hydroquake', 'multiple_continuum',
+         'secondary_continuum']
 
-headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity', 'simulation', 'regression', 'checkpoint',
-           'restart', 'dataset', 'chemistry', 'grid', 'time stepping', 'material properties', 'time', 'linear solver',
-           'newton solver', 'output', 'fluid properties', 'saturation functions', 'characteristic curves', 'regions',
-           'observation', 'flow conditions', 'transport conditions', 'initial condition', 'boundary conditions',
-           'source sink', 'stratigraphy couplers', 'constraints', 'hydroquake', 'multiple continuum',
+headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
+           'simulation', 'regression', 'checkpoint',
+           'restart', 'dataset', 'chemistry', 'grid', 'time stepping',
+           'material properties', 'time', 'linear solver',
+           'newton solver', 'output', 'fluid properties',
+           'saturation functions', 'characteristic curves', 'regions',
+           'observation', 'flow conditions', 'transport conditions',
+           'initial condition', 'boundary conditions',
+           'source sink', 'stratigraphy couplers', 'constraints',
+           'hydroquake', 'multiple continuum',
            'secondary continuum']
 
 headers = dict(zip(cards, headers))
@@ -142,11 +178,13 @@ build_warnings = []
 
 class puniform_velocity(Frozen):
     """
-    Class for specifiying uniform velocity with transport. Optional with transport problem when not coupling with
+    Class for specifiying uniform velocity with transport. Optional with
+    transport problem when not coupling with
     any flow mode.  If not specified, assumes diffusion transport only.
 
-    :param value_list: List of variables of uniform_velocity. First 3 variables are vlx, vly, vlz in unit [m/s]. 4th
-    variable specifies unit. e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
+    :param value_list: List of variables of uniform_velocity. First 3
+     variables are vlx, vly, vlz in unit [m/s]. 4th variable specifies
+     unit. e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
     :type value_list: [float,float,float,str]
     """
 
@@ -160,7 +198,8 @@ class puniform_velocity(Frozen):
 class pnonuniform_velocity(Frozen):
     """
     Class for specifiying nonuniform velocity with transport. Optional
-    with transport problem when not coupling with any flow mode. If not specified, assumes diffusion transport only.
+    with transport problem when not coupling with any flow mode.
+    If not specified, assumes diffusion transport only.
 
     :param filename: Filename of the non uniform velocities
     :type filename: str
@@ -180,7 +219,8 @@ class pmaterial(Frozen):
     :type id: int
     :param name: Name of material property. e.g., 'soil1'.
     :type name: str
-    :param characteristic_curves: Unique identifier of material characteristic curves
+    :param characteristic_curves: Unique identifier of material
+     characteristic curves
     :type characteristic_curves: str
     :param porosity: Porosity of material.
     :type porosity: float
@@ -196,24 +236,32 @@ class pmaterial(Frozen):
     :type cond_wet: float
     :param saturation: Saturation function of material property. e.g., 'sf2'
     :type saturation: str
-    :param permeability: Permeability of material property. Input is a list of 3 floats. Uses diagonal permeability in
-    unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2]. e.g., [1.e-15,1.e-15,1.e-17].
+    :param permeability: Permeability of material property. Input is a list
+     of 3 floats. Uses diagonal permeability in
+     unit order: k_xx [m^2], k_yy [m^2], k_zz [m^2].
+     e.g., [1.e-15,1.e-15,1.e-17].
     :type permeability: [float]*3
     :param longitudinal_dispersivity: Longitudinal dispersion coefficient
     :type longitudinal_dispersivity: float
-    :param transverse_dispersivity_h: Transverse dispersion coefficient horizontal
+    :param transverse_dispersivity_h: Transverse dispersion coefficient
+     horizontal
     :type transverse_dispersivity_h: float
-    :param transverse_dispersivity_v: Transverse dispersion coefficient vertical
+    :param transverse_dispersivity_v: Transverse dispersion coefficient
+     vertical
     :type transverse_dispersivity_v: float
 
 
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, id=None, name='', characteristic_curves='', porosity=None, tortuosity=None, density=None,
-                 specific_heat=None, cond_dry=None, cond_wet=None, saturation='', permeability=None,
-                 permeability_power='', permeability_critical_porosity='', permeability_min_scale_factor='',
-                 longitudinal_dispersivity='', transverse_dispersivity_h='', transverse_dispersivity_v='',
+    def __init__(self, id=None, name='', characteristic_curves='',
+                 porosity=None, tortuosity=None, density=None,
+                 specific_heat=None, cond_dry=None,
+                 cond_wet=None, saturation='', permeability=None,
+                 permeability_power='', permeability_critical_porosity='',
+                 permeability_min_scale_factor='',
+                 longitudinal_dispersivity='', transverse_dispersivity_h='',
+                 transverse_dispersivity_v='',
                  secondary_continuum=''):
         if permeability is None:
             permeability = []
@@ -243,13 +291,15 @@ class psecondary_continuum(Frozen):
     """
     Class for defining a secondary continuum material property.
 
-    :param type: Type of secondary continuum material, e.g., 'nested_spheres', 'nested_cubes', 'slab'.
+    :param type: Type of secondary continuum material, e.g., 'nested_spheres',
+     'nested_cubes', 'slab'.
     :type name: str
     :param log_spacing: Turn this on if you need log spacing
     :type log_spacing: bool
     :param outer_spacing: Specify the outer spacing for log spacing
     :type outer_spacing: float
-    :param fracture_spacing: Specify the spacing between fratures in secondary continuum for nested cubes
+    :param fracture_spacing: Specify the spacing between fratures in
+     secondary continuum for nested cubes
     :type fracture_spacing: float
     :param num_cells: Specify number of grid cells in the secondary continuum
     :type num_cells: int
@@ -259,7 +309,8 @@ class psecondary_continuum(Frozen):
     :type aperture: float
     :param temperature: Initial temperature in the secondary continuum
     :type temperature: float
-    :param diffusion_coefficient: Specify the diffusion coefficient in the secondary continuum for transport
+    :param diffusion_coefficient: Specify the diffusion coefficient in the
+     secondary continuum for transport
     :type diffusion_coefficient: float
     :param porosity: Specify the porosity of the secondary continuum
     :type porosity: float
@@ -268,8 +319,10 @@ class psecondary_continuum(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, id=None, type=None, log_spacing=False, outer_spacing=None, fracture_spacing=None, num_cells=None,
-                 epsilon=None, temperature=None, diffusion_coefficient=None, porosity=None, aperture=None):
+    def __init__(self, id=None, type=None, log_spacing=False,
+                 outer_spacing=None, fracture_spacing=None, num_cells=None,
+                 epsilon=None, temperature=None, diffusion_coefficient=None,
+                 porosity=None, aperture=None):
         self.id = id
         self.type = type
         self.log_spacing = log_spacing
@@ -292,23 +345,28 @@ class ptime(Frozen):
     simulation or a particular instant of time). Time values and
     units need to be specified. Acceptable time units are: (s, m, h, d, mo, y).
 
-    :param tf: final tim. 1st variable is time value. 2nd variable specifies time unit. e.g., [0.25e0, 'y']
+    :param tf: final tim. 1st variable is time value. 2nd variable specifies
+     time unit. e.g., [0.25e0, 'y']
     :type tf: [float, str]
-    :param dti: delta (change) time initial a.k.a. initial timestep size. 1st variable is time value. 2nd variable
+    :param dti: delta (change) time initial a.k.a. initial timestep size.
+     1st variable is time value. 2nd variable
     specifies time unit. e.g., [0.25e0, 'y']
     :type dti: [float, str]
-    :param dtf: delta (change) time final a.k.a. maximum timestep size. 1st variable is time value. 2nd variable
+    :param dtf: delta (change) time final a.k.a. maximum timestep size.
+     1st variable is time value. 2nd variable
     specifies time unit. e.g., [50.e0, 'y']
     :type dtf: [float, str]
-    :param dtf_list: delta (change) time starting at a given time instant.  Input is a list that can have multiple lists
-    appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
+    :param dtf_list: delta (change) time starting at a given time instant.
+     Input is a list that can have multiple lists
+     appended to it. e.g., time.dtf_list.append([1.e2, 's', 5.e3, 's'])
     :type dtf_list: [ [float, str, float, str] ]
     :param steady_state: Run as steady state.
     :type steady_state: Bool
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, tf=None, dti=None, dtf=None, steady_state=False, dtf_list=None):
+    def __init__(self, tf=None, dti=None, dtf=None, steady_state=False,
+                 dtf_list=None):
         if tf is None:
             tf = []
         if dti is None:
@@ -330,37 +388,49 @@ class ptime(Frozen):
 
 class pgrid(Frozen):
     """
-    Class for defining a grid. Used to define type, resolution and geometry of the grid
+    Class for defining a grid. Used to define type, resolution and
+    geometry of the grid
 
-    :param type: Grid type. Valid entries include: 'structured', 'unstructured'.
+    :param type: Grid type. Valid entries include: 'structured',
+     'unstructured'.
     :type type: str
-    :param lower_bounds: Lower/Minimum 3D boundaries coordinates in order of x_min, y_min, z_min. Input is a list of 3
-    floats. e.g., [0.e0, 0.e0, 0.e0].
+    :param lower_bounds: Lower/Minimum 3D boundaries coordinates in
+     order of x_min, y_min, z_min. Input is a list of 3
+     floats. e.g., [0.e0, 0.e0, 0.e0].
     :type lower_bounds: [float]*3
-    :param upper_bounds: Upper/Maximum 3D boundaries coordinates in order of x_max, y_max, z_max. Input is a list of 3
-    floats. e.g., [321.e0, 1.e0, 51.e0].
+    :param upper_bounds: Upper/Maximum 3D boundaries coordinates in
+     order of x_max, y_max, z_max. Input is a list of 3
+     floats. e.g., [321.e0, 1.e0, 51.e0].
     :type lower_bounds: [float]*3
-    :param origin: Coordinates of grid origin. Optional. Input is a list of 3 floats. Default: [0.e0, 0.e0, 0.e0].
+    :param origin: Coordinates of grid origin. Optional. Input is a list
+     of 3 floats. Default: [0.e0, 0.e0, 0.e0].
     :type origin: [float]*3
-    :param nxyz: Number of grid cells in x,y,z directions. Only works with type='structured'. Input is a list of 3
-    floats. e.g., [107, 1, 51].
+    :param nxyz: Number of grid cells in x,y,z directions. Only works with
+     type='structured'. Input is a list of 3
+     floats. e.g., [107, 1, 51].
     :type nxyz: [float]*3
-    :param dx: Specifies grid spacing of structured cartesian grid in the x-direction. e.g., [0.1, 0.2, 0.3, 0.4, 1, 1,
-    1, 1].
+    :param dx: Specifies grid spacing of structured cartesian grid in the
+     x-direction. e.g., [0.1, 0.2, 0.3, 0.4, 1, 1,
+     1, 1].
     :type dx: [float]
-    :param dy: Specifies grid spacing of structured cartesian grid in the y-direction.
+    :param dy: Specifies grid spacing of structured cartesian grid in the
+     y-direction.
     :type dy: [float]
-    :param dz: Specifies grid spacing of structured cartesian grid in the z-direction
+    :param dz: Specifies grid spacing of structured cartesian grid in the
+     z-direction
     :type dz: [float]
-    :param gravity: Specifies gravity vector in m/s^2. Input is a list of 3 floats.
+    :param gravity: Specifies gravity vector in m/s^2. Input is a list of
+     3 floats.
     :type gravity: [float]*3
-    :param filename: Specify name of file containing grid information. Only works with type='unstructured'.
+    :param filename: Specify name of file containing grid information.
+     Only works with type='unstructured'.
     :type filename: str
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, type='structured', lower_bounds=None, upper_bounds=None,
-                 origin=None, nxyz=None, dx=None, dy=None, dz=None, gravity=None, filename=''):
+                 origin=None, nxyz=None, dx=None, dy=None, dz=None,
+                 gravity=None, filename=''):
         if lower_bounds is None:
             lower_bounds = [0.0, 0.0, 0.0]
         if upper_bounds is None:
@@ -393,36 +463,29 @@ class pgrid(Frozen):
         self._path = ppath(parent=self)
         self._freeze()
 
-
     @property
     def xmin(self):
         return self.lower_bounds[0]
-
 
     @property
     def ymin(self):
         return self.lower_bounds[1]
 
-
     @property
     def zmin(self):
         return self.lower_bounds[2]
-
 
     @property
     def xmax(self):
         return self.upper_bounds[0]
 
-
     @property
     def ymax(self):
         return self.upper_bounds[1]
 
-
     @property
     def zmax(self):
         return self.upper_bounds[2]
-
 
     @property
     def nodelist(self):
@@ -454,11 +517,14 @@ class pgrid(Frozen):
             nz = self.nxyz[2]
 
             x_vert = np.linspace(self.xmin, self.xmax, num=nx + 1)
-            x_cell = [np.mean([x_vert[i], x_vert[i + 1]]) for i in range(len(x_vert) - 1)]
+            x_cell = [np.mean([x_vert[i], x_vert[i + 1]]) for i in
+                      range(len(x_vert) - 1)]
             y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
-            y_cell = [np.mean([y_vert[i], y_vert[i + 1]]) for i in range(len(y_vert) - 1)]
+            y_cell = [np.mean([y_vert[i], y_vert[i + 1]]) for i in
+                      range(len(y_vert) - 1)]
             z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
-            z_cell = [np.mean([z_vert[i], z_vert[i + 1]]) for i in range(len(z_vert) - 1)]
+            z_cell = [np.mean([z_vert[i], z_vert[i + 1]]) for i in
+                      range(len(z_vert) - 1)]
 
             cells = list(it.product(x_cell, y_cell, z_cell))
             cells = [list(cell) for cell in cells]
@@ -468,42 +534,52 @@ class pgrid(Frozen):
         return cells
 
 
-    def plot(self, filename='', angle=[45, 45], color='k', connections=False, equal_axes=True,
-             xlabel='x [m]', ylabel='y [m]', zlabel='z [m]', title='', font_size='small',
+    def plot(self, filename='', angle=[45, 45], color='k', connections=False,
+             equal_axes=True, xlabel='x [m]', ylabel='y [m]', zlabel='z [m]',
+             title='', font_size='small',
              cutaway=[]):  # generates a 3-D plot of the zone.
         """
-            Generates and saves a 3-D plot of the grid.
+        Generates and saves a 3-D plot of the grid.
 
-            :param filename: Name of saved zone file.
-            :type filename: str
-            :param angle: 	View angle of zone. First number is tilt angle in degrees, second number is azimuth. Alternatively, if angle is 'x', 'y', 'z', view is aligned along the corresponding axis.
-            :type angle: [fl64,fl64], str
-            :param color: Colour of zone.
-            :type color: str, [fl64,fl64,fl64]
-            :param connections: Plot connections. If ``True`` all connections plotted. If between 0 and 1, random proportion plotted. If greater than 1, specified number plotted.
-            :type connections: bool
-            :param equal_axes: Force plotting with equal aspect ratios for all axes.
-            :type equal_axes: bool
+        :param filename: Name of saved zone file.
+        :type filename: str
+        :param angle: 	View angle of zone. First number is tilt angle
+         in degrees, second number is azimuth. Alternatively, if angle
+         is 'x', 'y', 'z', view is aligned along the corresponding axis.
+        :type angle: [fl64,fl64], str
+        :param color: Colour of zone.
+        :type color: str, [fl64,fl64,fl64]
+        :param connections: Plot connections. If ``True`` all connections
+         plotted. If between 0 and 1, random proportion plotted.
+         If greater than 1, specified number plotted.
+        :type connections: bool
+        :param equal_axes: Force plotting with equal aspect ratios for
+         all axes.
+        :type equal_axes: bool
 
-            :param xlabel: Label on x-axis.
-            :type xlabel: str
-            :param ylabel: Label on y-axis.
-            :type ylabel: str
-            :param zlabel: Label on z-axis.
-            :type zlabel: str
-            :param title: Title of plot.
-            :type title: str
+        :param xlabel: Label on x-axis.
+        :type xlabel: str
+        :param ylabel: Label on y-axis.
+        :type ylabel: str
+        :param zlabel: Label on z-axis.
+        :type zlabel: str
+        :param title: Title of plot.
+        :type title: str
 
-            :param font_size: Size of text on plot.
-            :type font_size: str, int
+        :param font_size: Size of text on plot.
+        :type font_size: str, int
 
-            :param cutaway: Coordinate from which cutaway begins. Alternatively, specifying 'middle','center' with choose the center of the grid as the cutaway point.
-            :type cutaway: [fl64,fl64,fl64], str
+        :param cutaway: Coordinate from which cutaway begins.
+         Alternatively, specifying 'middle','center' with choose
+         the center of the grid as the cutaway point.
+        :type cutaway: [fl64,fl64,fl64], str
 
-            """
+        """
 
         if cutaway in ['middle', 'center', 'center', 'mid']:
-            cutaway = [(self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2, (self.zmin + self.zmax) / 2]
+            cutaway = [(self.xmin + self.xmax) / 2,
+                       (self.ymin + self.ymax) / 2,
+                       (self.zmin + self.zmax) / 2]
         if isinstance(angle, str):
             if angle == 'x':
                 angle = [0, 0]
@@ -569,7 +645,8 @@ class pgrid(Frozen):
             C = np.array([xmin + xmax, ymin + ymax, zmin + zmax]) / 2
             for direction in (-1, 1):
                 for point in np.diag(direction * MAX * np.array([1, 1, 1])):
-                    ax.plot([point[0] + C[0]], [point[1] + C[1]], [point[2] + C[2]], 'w')
+                    ax.plot([point[0] + C[0]], [point[1] + C[1]],
+                            [point[2] + C[2]], 'w')
         ax.view_init(angle[0], angle[1])
 
         if cutaway:
@@ -771,31 +848,49 @@ class pgrid(Frozen):
 
         for x in xs:
             if x >= np.min([p2[0], p9[0]]) and x <= np.max([p2[0], p9[0]]):
-                ax.plot([x, x], [p1[1], p2[1]], [p2[2], p2[2]], color=color, linewidth=0.5)
-                ax.plot([x, x], [p2[1], p2[1]], [p2[2], p3[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p1[1], p2[1]], [p2[2], p2[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([x, x], [p2[1], p2[1]], [p2[2], p3[2]],
+                 color=color, linewidth=0.5)
             else:
-                ax.plot([x, x], [p12[1], p2[1]], [p10[2], p10[2]], color=color, linewidth=0.5)
-                ax.plot([x, x], [p12[1], p6[1]], [p2[2], p2[2]], color=color, linewidth=0.5)
-                ax.plot([x, x], [p7[1], p7[1]], [p7[2], p11[2]], color=color, linewidth=0.5)
-                ax.plot([x, x], [p11[1], p11[1]], [p11[2], p3[2]], color=color, linewidth=0.5)
+                ax.plot([x, x], [p12[1], p2[1]], [p10[2], p10[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([x, x], [p12[1], p6[1]], [p2[2], p2[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([x, x], [p7[1], p7[1]], [p7[2], p11[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([x, x], [p11[1], p11[1]], [p11[2], p3[2]],
+                 color=color, linewidth=0.5)
         for y in ys:
             if y >= np.min([p6[1], p7[1]]) and y <= np.max([p6[1], p7[1]]):
-                ax.plot([p6[0], p1[0]], [y, y], [p2[2], p2[2]], color=color, linewidth=0.5)
-                ax.plot([p6[0], p6[0]], [y, y], [p2[2], p3[2]], color=color, linewidth=0.5)
+                ax.plot([p6[0], p1[0]], [y, y], [p2[2], p2[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([p6[0], p6[0]], [y, y], [p2[2], p3[2]],
+                 color=color, linewidth=0.5)
             else:
-                ax.plot([p10[0], p11[0]], [y, y], [p10[2], p10[2]], color=color, linewidth=0.5)
-                ax.plot([p9[0], p2[0]], [y, y], [p2[2], p2[2]], color=color, linewidth=0.5)
-                ax.plot([p4[0], p4[0]], [y, y], [p4[2], p11[2]], color=color, linewidth=0.5)
-                ax.plot([p10[0], p10[0]], [y, y], [p10[2], p9[2]], color=color, linewidth=0.5)
+                ax.plot([p10[0], p11[0]], [y, y], [p10[2], p10[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([p9[0], p2[0]], [y, y], [p2[2], p2[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([p4[0], p4[0]], [y, y], [p4[2], p11[2]],
+                 color=color, linewidth=0.5)
+                ax.plot([p10[0], p10[0]], [y, y], [p10[2], p9[2]],
+                 color=color, linewidth=0.5)
         for z in zs:
             if z >= np.min([p4[2], p11[2]]) and z <= np.max([p4[2], p11[2]]):
-                ax.plot([p4[0], p4[0]], [p5[1], p4[1]], [z, z], color=color, linewidth=0.5)
-                ax.plot([p4[0], p3[0]], [p4[1], p4[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p4[0], p4[0]], [p5[1], p4[1]], [z, z],
+                 color=color, linewidth=0.5)
+                ax.plot([p4[0], p3[0]], [p4[1], p4[1]], [z, z],
+                 color=color, linewidth=0.5)
             else:
-                ax.plot([p4[0], p4[0]], [p6[1], p7[1]], [z, z], color=color, linewidth=0.5)
-                ax.plot([p10[0], p10[0]], [p7[1], p11[1]], [z, z], color=color, linewidth=0.5)
-                ax.plot([p2[0], p8[0]], [p4[1], p4[1]], [z, z], color=color, linewidth=0.5)
-                ax.plot([p7[0], p8[0]], [p7[1], p7[1]], [z, z], color=color, linewidth=0.5)
+                ax.plot([p4[0], p4[0]], [p6[1], p7[1]], [z, z],
+                 color=color, linewidth=0.5)
+                ax.plot([p10[0], p10[0]], [p7[1], p11[1]], [z, z],
+                 color=color, linewidth=0.5)
+                ax.plot([p2[0], p8[0]], [p4[1], p4[1]], [z, z],
+                 color=color, linewidth=0.5)
+                ax.plot([p7[0], p8[0]], [p7[1], p7[1]], [z, z],
+                 color=color, linewidth=0.5)
 
         extension, save_fname = save_name(filename, variable='grid', time=1)
         if self._parent:

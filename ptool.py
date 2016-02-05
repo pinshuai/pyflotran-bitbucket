@@ -1,8 +1,10 @@
 """Tools for use with pflotran python"""
 
 import numpy as np
-import os, platform, string
-import sys
+import os
+import platform
+import string
+from pdflt import *
 
 WINDOWS = platform.system() == 'Windows'
 if WINDOWS:
@@ -10,14 +12,14 @@ if WINDOWS:
 else:
     slash = '/'
 
-from pdflt import *
 
 dflt = pdflt()
 
 
 class Frozen(object):
     """
-    Prevents adding new attributes to classes once _freeze() is called on the class.
+    Prevents adding new attributes to classes once _freeze() is
+    called on the class.
     """
     __frozen = False
 
@@ -25,7 +27,9 @@ class Frozen(object):
         if not self.__frozen or hasattr(self, key):
             object.__setattr__(self, key, value)
         else:
-            raise AttributeError(str(key) + ' is not a valid attribute for ' + self.__class__.__name__)
+            raise AttributeError(
+                str(key) + ' is not a valid attribute for ' +
+                self.__class__.__name__)
 
     def _freeze(self):
         self.__frozen = True
@@ -33,8 +37,11 @@ class Frozen(object):
     def _unfreeze(self):
         self.__frozen = False
 
+
 def powspace(x0, x1, N=10, power=1):
-    """Returns a sequence of numbers spaced according to the power law (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0
+    """
+    Returns a sequence of numbers spaced according to the power law
+    (x1-x0)**(1-power)*linspace(0,(x1-x0),N)**base + x0
 
     :param x0: First number in sequence.
     :type x0: fl64
@@ -42,30 +49,17 @@ def powspace(x0, x1, N=10, power=1):
     :type x1: fl64
     :param N: Total items in sequence.
     :type N: int
-    :param power: Index of power law. If negative, spacing order will be reversed from "big-to-small".
+    :param power: Index of power law. If negative, spacing order will be
+     reversed from "big-to-small".
     :type power: fl64
     """
     if power > 0:
-        return (x1 - x0) ** (1 - power) * np.linspace(0, x1 - x0, N) ** power + x0
+        return (x1 - x0) ** (1 - power) * np.linspace(0, x1 - x0, N) ** \
+            power + x0
     elif power < 0:
-        return np.sort(x1 - ((x1 - x0) ** (1 - abs(power)) * np.linspace(0, x1 - x0, N) ** abs(power)))
+        return np.sort(x1 - ((x1 - x0) ** (1 - abs(power)) *
+                             np.linspace(0, x1 - x0, N) ** abs(power)))
 
-
-# Suggested for determining file path when reading an input file in-case it is relative
-# def produce_valid_file_path(path):
-# # Return the string without modifications if it's an absolute file path
-#	if path[0] == '/':  
-#		return path
-#	# Determine PLOFTRAN installation directory and made appropriate changes to string
-#	else:
-#		try:
-#			pflotran_dir = os.environ['PFLOTRAN_DIR']
-#		except KeyError:
-#			print('PFLOTRAN_DIR must point to PFLOTRAN installation directory and be defined in system environment variables.')
-
-# Simple Function to determine if a '/' already exists somewhere in a relative file path name
-# Don't use with absolute file path name
-# NOT TESTED WITH WINDOWS
 
 def del_extra_slash(path):
     return path.replace(slash + slash, slash)
@@ -113,15 +107,16 @@ def pyflotran_print(s):
         print s
 
 
-# -----------------------------------------------------------------------------------------------------
-# ------------------------------ FUNCTIONS AND CLASSES FOR INTERNAL USE -------------------------------
-# -----------------------------------------------------------------------------------------------------
+# -- FUNCTIONS AND CLASSES FOR INTERNAL USE --
 
 class ppath(object):
+
     def __init__(self, filename='', work_dir='', parent=None):
         self._filename = filename
-        self.absolute_to_file = ''  # location where originally read DOES NOT CHANGE
-        self.absolute_to_workdir = ''  # working directory CAN CHANGE
+        self.absolute_to_file = ''
+        # location where originally read DOES NOT CHANGE
+        self.absolute_to_workdir = ''
+        # working directory CAN CHANGE
         self.parent = parent
 
     def update(self, wd):
@@ -192,19 +187,22 @@ def os_path(path):
     return path
 
 
-def save_name(save='', variable='', time=0., node=0):  # returns file name and extension for saving
+# returns file name and extension for saving
+def save_name(save='', variable='', time=0., node=0):
     if save:
         save = save.split('.')
         if len(save) == 1:
             print 'No extension specified, default to .png'
             ext = 'png'
         elif len(save) > 2:
-            print 'Too many dots!'; return
+            print 'Too many dots!'
+            return
         else:
             if save[1] in ['png', 'eps', 'pdf']:
                 ext = save[1]
             else:
-                print 'Unrecognized extension'; return
+                print 'Unrecognized extension'
+                return
         save_fname = save[0] + '.' + ext
     else:
         from glob import glob

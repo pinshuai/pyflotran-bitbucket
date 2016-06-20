@@ -5465,32 +5465,49 @@ class pdata(object):
         outfile.write('CHEMISTRY\n')
 
         # Write out chemistry variables
+        if not isinstance(c.pspecies_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to pspecies_list!')
         if c.pspecies_list:
             outfile.write('  PRIMARY_SPECIES\n')
             for p in c.pspecies_list:
                 # p = primary_specie in primary_species_list
                 outfile.write('    ' + p + '\n')
             outfile.write('  /\n')
+        if not isinstance(c.sec_species_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to sec_species_list!')
         if c.sec_species_list:
             outfile.write('  SECONDARY_SPECIES\n')
             for s in c.sec_species_list:  # s = secondary_specie
                 outfile.write('    ' + s + '\n')
             outfile.write('  /\n')
+        if not isinstance(c.gas_species_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to gas_species_list!')
         if c.gas_species_list:
             outfile.write('  GAS_SPECIES\n')
             for g in c.gas_species_list:  # s = gas_specie
                 outfile.write('    ' + g + '\n')
             outfile.write('  /\n')
+        if not isinstance(c.minerals_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to mineral_list!')
         if c.minerals_list:
             outfile.write('  MINERALS\n')
             for m in c.minerals_list:  # m = mineral
                 outfile.write('    ' + m + '\n')
             outfile.write('  /\n')
+        if not isinstance(c.m_kinetics_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to m_kinetics_list!')
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')
             for mk in c.m_kinetics_list:  # mk = mineral_kinetics
                 outfile.write('    ' + mk.name + '\n')
-
+                if not isinstance(mk.rate_constant_list, list):
+                    raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                          'to rate_constant_list!')
                 if mk.rate_constant_list:
                     outfile.write('      RATE_CONSTANT ')
                 for rate in mk.rate_constant_list:
@@ -5513,6 +5530,9 @@ class pdata(object):
                           c.activity_coefficients.upper() + '\n')
         if c.molal:
             outfile.write('  MOLAL\n')
+        if not isinstance(c.output_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to output_list!')    
         if c.output_list:
             outfile.write('  OUTPUT\n')
             for o in c.output_list:  # o = output in in output_list

@@ -3359,13 +3359,13 @@ class pdata(object):
                               prop.saturation + '\n')
             if prop.permeability_power:
                 outfile.write('  PERMEABILITY_POWER ' +
-                              prop.permeability_power + '\n')
+                              strD(prop.permeability_power) + '\n')
             if prop.permeability_critical_porosity:
                 outfile.write('  PERMEABILITY_CRITICAL_POROSITY ' +
-                              prop.permeability_critical_porosity + '\n')
+                              strD(prop.permeability_critical_porosity) + '\n')
             if prop.permeability_min_scale_factor:
                 outfile.write('  PERMEABILITY_MIN_SCALE_FACTOR ' +
-                              prop.permeability_min_scale_factor + '\n')
+                              strD(prop.permeability_min_scale_factor) + '\n')
             if prop.longitudinal_dispersivity:
                 outfile.write('  LONGITUDINAL_DISPERSIVITY ' +
                               strD(prop.longitudinal_dispersivity) + '\n')

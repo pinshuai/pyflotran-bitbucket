@@ -7,6 +7,7 @@ import sys
 from ptool import *
 from pdflt import *
 import math
+import shutil
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from scipy import spatial as spsp
@@ -2364,9 +2365,9 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint],
-                           ))  
-                           # associate each card name with
-                           # a read function, defined further below
+                           ))
+        # associate each card name with
+        # a read function, defined further below
 
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
@@ -2739,8 +2740,8 @@ class pdata(object):
                 if isinstance(obji, pflow):
                     self._delete_flow(obji)
 
-        if isinstance(obj, pflow_variable):  
-        # Flow object needs to be specified
+        if isinstance(obj, pflow_variable):
+            # Flow object needs to be specified
             self._delete_flow_variable(obj, super_obj)
         elif isinstance(obj, list):  # Condition not tested
             for obji in copy(obj):
@@ -5532,7 +5533,7 @@ class pdata(object):
             outfile.write('  MOLAL\n')
         if not isinstance(c.output_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
-                                  'to output_list!')    
+                                  'to output_list!')
         if c.output_list:
             outfile.write('  OUTPUT\n')
             for o in c.output_list:  # o = output in in output_list
@@ -5898,6 +5899,196 @@ class pdata(object):
             outfile.write('  PRESSURE_SCALING ' +
                           strD(self.hydroquake.pressure_scaling) + '\n')
         outfile.write('END_HYDROQUAKE')
+
+    def generate_geomech_grid(self, x_verts=5, y_verts=5, z_verts=5,
+                              x_min=0.0, y_min=0.0, z_min=0.0, x_max=1.0,
+                              y_max=1.0, z_max=1.0):
+
+        Total_verts = x_verts * y_verts * z_verts
+        N_cells = (x_verts - 1) * (y_verts - 1) * (z_verts - 1)
+        delta_x = (x_max - x_min) / (x_verts - 1)
+        delta_y = (y_max - y_min) / (y_verts - 1)
+        delta_z = (z_max - z_min) / (z_verts - 1)
+
+        Coord = np.zeros((Total_verts, 3), 'float')
+        for i in range(1, x_verts + 1):
+            for j in range(1, y_verts + 1):
+                for k in range(1, z_verts + 1):
+                    id = i + (j - 1) * x_verts + (k - 1) * \
+                        x_verts * y_verts - 1
+                    Coord[id, 0] = (i - 1) * delta_x
+                    Coord[id, 1] = (j - 1) * delta_y
+                    Coord[id, 2] = (k - 1) * delta_z
+
+        # Storing vertices in each element
+        # Assuming all elements are hexes
+        Vertices = np.zeros((N_cells, 8), 'int')
+
+        count = 0
+        for k in range(1, z_verts):
+            for j in range(1, y_verts):
+                for i in range(1, x_verts):
+                    id = i + (j - 1) * x_verts + (k - 1) * x_verts * y_verts
+                    Vertices[count, 0] = id
+                    Vertices[count, 1] = id + 1
+                    Vertices[count, 2] = id + x_verts + 1
+                    Vertices[count, 3] = id + x_verts
+                    Vertices[count, 4] = id + x_verts * y_verts
+                    Vertices[count, 5] = id + x_verts * y_verts + 1
+                    Vertices[count, 6] = id + x_verts * y_verts + x_verts + 1
+                    Vertices[count, 7] = id + x_verts * y_verts + x_verts
+                    count = count + 1
+
+        # Writing list of all vertices
+        all_nodes = []
+        print('--> Writing geomechanics mesh files')
+        print('--> Writing vertices')
+        fid = open('all.vset', 'w')
+        for i in range(1, Total_verts + 1):
+            fid.write('%i\n' % i)
+            all_nodes.append(i)
+        fid.close()
+        print('--> Finished writing all.vset')
+
+        # Writing mesh file
+        print('--> Writing usg file')
+        fid = open('usg.mesh', 'w')
+        fid.write('%i %i\n' % (N_cells, Total_verts))
+        for id in range(count):
+            fid.write('H %i %i %i %i %i %i %i %i\n' % (Vertices[id, 0],
+                                                       Vertices[id, 1],
+                                                       Vertices[id, 2],
+                                                       Vertices[id, 3],
+                                                       Vertices[id, 4],
+                                                       Vertices[id, 5],
+                                                       Vertices[id, 6],
+                                                       Vertices[id, 7]))
+        for id in range(Total_verts):
+            fid.write('%f %f %f\n' %
+                      (Coord[id, 0], Coord[id, 1], Coord[id, 2]))
+        fid.close()
+        print('--> Finished writing usg.mesh')
+
+        # Writing vertex numbers on faces
+        # Bottom (z=z_min)
+        bottom = []
+        print('--> Writing bottom vertices')
+        fid = open('bottom.vset', 'w')
+        for i in range(1, x_verts * y_verts + 1):
+            fid.write('%i\n' % i)
+            bottom.append(i)
+        fid.close()
+        print('--> Finished writing bottom.vset')
+
+        # Top (z=z_max)
+        top = []
+        print('--> Writing top vertices')
+        fid = open('top.vset', 'w')
+        for i in range(x_verts * y_verts * (z_verts - 1),
+                       x_verts * y_verts * z_verts + 1):
+            fid.write('%i\n' % i)
+            top.append(i)
+        fid.close()
+        print('--> Finished writing top.vset')
+
+        # North (y=y_max)
+        north = []
+        print('--> Writing north vertices')
+        fid = open('north.vset', 'w')
+        for i in range(1, x_verts + 1):
+            for k in range(1, z_verts + 1):
+                j = y_verts
+                id = i + (j - 1) * x_verts + (k - 1) * x_verts * y_verts
+                fid.write('%i\n' % id)
+                north.append(id)
+        fid.close()
+        print('--> Finished writing north.vset')
+
+        # South (y=y_min)
+        south = []
+        print('--> Writing south vertices')
+        fid = open('south.vset', 'w')
+        for i in range(1, x_verts + 1):
+            for k in range(1, z_verts + 1):
+                j = 1
+                id = i + (j - 1) * x_verts + (k - 1) * x_verts * y_verts
+                fid.write('%i\n' % id)
+                south.append(id)
+        fid.close()
+        print('--> Finished writing south.vset')
+
+        # East (x=x_max)
+        east = []
+        print('--> Writing east vertices')
+        fid = open('east.vset', 'w')
+        for j in range(1, y_verts + 1):
+            for k in range(1, z_verts + 1):
+                i = x_verts
+                id = i + (j - 1) * x_verts + (k - 1) * x_verts * y_verts
+                fid.write('%i\n' % id)
+                east.append(id)
+        fid.close()
+        print('--> Finished writing east.vset')
+
+        # West (x=x_min)
+        west = []
+        print('--> Writing west vertices')
+        fid = open('west.vset', 'w')
+        for j in range(1, y_verts + 1):
+            for k in range(1, z_verts + 1):
+                i = 1
+                id = i + (j - 1) * x_verts + (k - 1) * x_verts * y_verts
+                fid.write('%i\n' % id)
+                west.append(id)
+        fid.close()
+        print('--> Finished writing west.vset')
+
+        # Create a subdirectory
+        d = 'geomech_dual_dat'
+        if os.path.isdir(d):  # check if d exists
+            shutil.rmtree(d)  # remove old directory
+        os.mkdir(d)  # create new directory
+
+        # Move *.vset *.mesh files to new subdirectory
+        cmd = 'mv' + ' *.vset' + ' usg.mesh' + ' %s/.' % d
+        failure = os.system(cmd)
+        if failure:
+            print 'Unable to move *.vset, *.mesh files to subdirectory'
+            sys.exit(1)
+        print('--> Finished with moving files to dat directory')
+
+        all_nodes = set(all_nodes) - set(east)
+        all_nodes = all_nodes - set(west)
+        all_nodes = all_nodes - set(north)
+        all_nodes = all_nodes - set(south)
+        all_nodes = all_nodes - set(top)
+        all_nodes = all_nodes - set(bottom)
+
+        internal_nodes = list(all_nodes)  # convert set to a list
+        # sort them in ascending manner
+        internal_nodes = sorted(internal_nodes, key=int)
+
+        print('--> Done with identifying internal nodes in geomech mesh')
+        print('--> Writing the mapping')
+
+        # The mapping is as follows:
+        #  flow mesh     geomech mesh
+        # ============================
+        #  cell_id1      vertex_id1
+        #  cell_id2      vertex_id2
+        #  cell_id3      vertex_id3
+        #     .              .
+        #     .              .
+        #     .              .
+        #  cell_idN      vertex_idsN
+
+        fid = open('flow_geomech_mapping.dat', 'w')
+        for i in range(len(internal_nodes)):
+            fid.write('%i %i\n' % (i + 1, int(internal_nodes[i])))
+
+        fid.close()
+
+        print('--> Done writing geomechanics mesh files!')
 
     @property
     def prop(self):

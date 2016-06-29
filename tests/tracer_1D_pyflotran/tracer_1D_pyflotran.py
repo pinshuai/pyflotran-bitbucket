@@ -96,6 +96,7 @@ dat.fluid = f
 material_property = pmaterial()  # For assigning defaults
 material_property.name = 'soil1'
 material_property.id = 1
+material_property.characteristic_curves = ''
 material_property.porosity = 1.e0
 material_property.tortuosity = 1.e0
 material_property.density = 2.8e3  # Rock Density

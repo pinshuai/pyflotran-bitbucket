@@ -5,6 +5,7 @@ import os
 import platform
 import string
 from pdflt import *
+import warnings
 
 WINDOWS = platform.system() == 'Windows'
 if WINDOWS:
@@ -87,6 +88,20 @@ def strD(number):
         return ('%8.3e' % number).replace('e', 'd')
     else:
         return tstring
+
+
+def strI(number):
+    """Converts input integer to string
+
+    :param number: Number to be converted.
+    :type number: int
+    """
+    tstring = str(int(number))
+    return tstring
+
+
+def PyFLOTRAN_WARNING(string):
+    return warnings.warn(string)
 
 
 class PyFLOTRAN_ERROR(Exception):

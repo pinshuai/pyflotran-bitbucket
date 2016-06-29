@@ -9,8 +9,6 @@ from pdflt import *
 import math
 import shutil
 from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import axes3d
-from scipy import spatial as spsp
 
 
 """ Class for pyflotran data """
@@ -78,7 +76,8 @@ time_units_allowed = ['s', 'sec', 'm', 'min', 'h', 'hr', 'd', 'day', 'w',
                       'week', 'mo', 'month', 'y']
 solver_names_allowed = ['transport', 'tran', 'flow']  # newton and linear
 # simulation type - allowed strings
-simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake']
+simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
+                            'geomechanics_subsurface']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis']
@@ -109,6 +108,10 @@ output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
                                      'THOMEER_COREY', 'NMT_EXP',
                                      'PRUESS_1']
+lower_list = [sat.lower() for sat in saturation_function_types_allowed]
+
+saturation_function_types_allowed = list(set(saturation_function_types_allowed +
+                                             lower_list))
 
 permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
                                        'NMT_EXP', 'PRUESS_1']
@@ -116,11 +119,29 @@ permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
 # characteristic_curves - allowed strings - saturation & permeability functions
 characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN',
                                                            'BROOKS_COREY']
+lower_list = [sat.lower() for sat in
+              characteristic_curves_saturation_function_types_allowed]
+
+characteristic_curves_saturation_function_types_allowed = list(set(
+    characteristic_curves_saturation_function_types_allowed + lower_list))
+
 characteristic_curves_gas_permeability_function_types_allowed = [
     'MAULEM_VG_GAS', 'BURDINE_BC_GAS']
+
+lower_list = [sat.lower() for sat in
+              characteristic_curves_gas_permeability_function_types_allowed]
+
+characteristic_curves_gas_permeability_function_types_allowed = list(set(
+    characteristic_curves_gas_permeability_function_types_allowed + lower_list))
+
 characteristic_curves_liquid_permeability_function_types_allowed = [
     'MAULEM', 'BURDINE', 'MUALEM_VG_LIQ']
 
+lower_list = [sat.lower() for sat in
+              characteristic_curves_liquid_permeability_function_types_allowed]
+
+characteristic_curves_liquid_permeability_function_types_allowed = list(set(
+    characteristic_curves_liquid_permeability_function_types_allowed + lower_list))
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
@@ -158,7 +179,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'flow_condition', 'transport_condition', 'initial_condition',
          'boundary_condition', 'source_sink', 'strata',
          'constraint', 'hydroquake', 'multiple_continuum',
-         'secondary_continuum']
+         'secondary_continuum', 'geomechanics']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression', 'checkpoint',
@@ -170,7 +191,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'initial condition', 'boundary conditions',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
-           'secondary continuum']
+           'secondary continuum', 'geomechanics']
 
 headers = dict(zip(cards, headers))
 
@@ -255,10 +276,10 @@ class pmaterial(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, id=None, name='', characteristic_curves='',
-                 porosity=None, tortuosity=None, density=None,
+    def __init__(self, id=1, name='default', characteristic_curves='default',
+                 porosity=0.25, tortuosity=1.0, density=None,
                  specific_heat=None, cond_dry=None,
-                 cond_wet=None, saturation='', permeability=None,
+                 cond_wet=None, saturation='', permeability=[1e-15],
                  permeability_power='', permeability_critical_porosity='',
                  permeability_min_scale_factor='',
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
@@ -366,8 +387,8 @@ class ptime(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, tf=None, dti=None, dtf=None, steady_state=False,
-                 dtf_list=None):
+    def __init__(self, tf=[1.0, 'd'], dti=[1e-3, 'd'], dtf=[1.0, 'd'],
+                 steady_state=False, dtf_list=None):
         if tf is None:
             tf = []
         if dti is None:
@@ -463,6 +484,7 @@ class pgrid(Frozen):
         self._parent = None
         self._path = ppath(parent=self)
         self._freeze()
+        self._parent = None
 
     @property
     def xmin(self):
@@ -965,11 +987,12 @@ class psimulation(Frozen):
 
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
                  subsurface_transport='', mode='richards',
-                 flowtran_coupling=''):
+                 flowtran_coupling='', geomechanics_subsurface='geomech'):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
         self.flowtran_coupling = flowtran_coupling
+        self.geomechanics_subsurface = geomechanics_subsurface
         self.mode = mode
         self._freeze()
 
@@ -1341,13 +1364,15 @@ class pcharacteristic_curves(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, name='', saturation_function_type=None, sf_alpha=None,
-                 sf_m=None, sf_lambda=None,
-                 sf_liquid_residual_saturation=None,
-                 sf_gas_residual_saturation=None, max_capillary_pressure=None,
+    def __init__(self, name='default',
+                 saturation_function_type='van_genuchten', sf_alpha=1e-4,
+                 sf_m=0.5, sf_lambda=None,
+                 sf_liquid_residual_saturation=0.1,
+                 sf_gas_residual_saturation=None, max_capillary_pressure=1e8,
                  smooth='', power=None, default=None,
-                 liquid_permeability_function_type=None, lpf_m=None,
-                 lpf_lambda=None, lpf_liquid_residual_saturation=None,
+                 liquid_permeability_function_type='mualem_vg_liq',
+                 lpf_m=0.5, lpf_lambda=None,
+                 lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
                  gpf_gas_residual_saturation=None):
@@ -1656,7 +1681,7 @@ class pstrata(Frozen):
     :type material: str
     """
 
-    def __init__(self, region=None, material=None):
+    def __init__(self, region='all', material='default'):
         self.region = region
         self.material = material
         self._freeze()
@@ -2022,6 +2047,7 @@ class pdata(object):
         self.filename = filename
         self.hydroquake = pquake()
         self.reference_temperature = ''
+        self.geomech_grid = pgeomech_grid()
 
         # run object
         self._path = ppath(parent=self)
@@ -2423,7 +2449,18 @@ class pdata(object):
                     else:
                         read_fn[card](infile)
 
-    def write(self, filename=''):
+    def print_inputfile_to_screen(self, filename=''):
+        if filename:
+            file = filename
+        elif self.filename:
+            file = self.filename
+        else:
+            raise PyFLOTRAN_ERROR('PFLOTRAN input file name that is to be ' +
+                                  'printed on screen needs to be specified!')
+        outfile = open(file, 'r')
+        print outfile.read()
+
+    def write(self, filename='pflotran.in'):
         """
         Write pdata object to PFLOTRAN input file. Does not execute
         the input file - only writes a corresponding
@@ -2504,8 +2541,11 @@ class pdata(object):
         if self.proplist:
             self._write_prop(outfile)
         else:
-            raise PyFLOTRAN_ERROR(
-                'proplist is required, it is currently reading as empty!')
+            PyFLOTRAN_WARNING(
+                'material property list is empty! ' +
+                ' Using default material property settings')
+            self.add(pmaterial())
+            self._write_prop(outfile)
 
         if self.lsolverlist:
             self._write_lsolver(outfile)
@@ -2529,14 +2569,15 @@ class pdata(object):
 
         if self.saturationlist:
             self._write_saturation(outfile)
-
-        if self.charlist:
+        elif self.charlist:
             self._write_characteristic_curves(outfile)
-
-        # if (not self.charlist and not self.saturationlist
-        #  self.simulation.subsurface_flow=''):
-        # raise PyFLOTRAN_ERROR('either saturation or
-        # characteristic curves need to be defined!')
+        else:
+            self.add(pcharacteristic_curves())
+            self._write_characteristic_curves(outfile)
+            PyFLOTRAN_WARNING(
+                'characteristic_curves list or saturation list ' +
+                'is required, it is currently reading as empty! ' +
+                ' Using default characteristic_curves settings')
 
         if self.regionlist:
             self._write_region(outfile)
@@ -2575,9 +2616,12 @@ class pdata(object):
         if self.strata_list:
             self._write_strata(outfile)
         else:
-            raise PyFLOTRAN_ERROR(
-                '(stratigraphy_coupler) strata is required, ' +
-                'it is currently reading as empty!')
+            PyFLOTRAN_WARNING(
+                'stratigraphy_coupler is required, ' +
+                'it is currently reading as empty! ' +
+                'Using default settings')
+            self.add(pstrata())
+            self._write_strata(outfile)
 
         if self.constraint_list:
             self._write_constraint(outfile)
@@ -2588,6 +2632,9 @@ class pdata(object):
 
         if self.simulation.simulation_type == 'hydroquake':
             self._write_hydroquake(outfile)
+
+        if self.simulation.simulation_type == 'geomechanics_subsurface':
+            self._write_geomechanics(outfile)
 
         outfile.close()
 
@@ -2927,6 +2974,9 @@ class pdata(object):
                       simulation.mode + '\' is invalid!')
                 print '       valid simulation.mode:', mode_names_allowed, '\n'
             outfile.write('    / ' + '\n')
+            if simulation.simulation_type.lower() == 'geomechanics_subsurface':
+                outfile.write('    GEOMECHANICS_SUBSURFACE ' +
+                              simulation.geomechanics_subsurface + '\n')
             outfile.write('  / ' + '\n')
             outfile.write('END' + '\n\n')
         elif simulation.subsurface_transport:
@@ -3103,7 +3153,7 @@ class pdata(object):
                 outfile.write('  END\n')
             outfile.write('  NXYZ' + ' ')
             for i in range(3):
-                outfile.write(strD(grid.nxyz[i]) + ' ')
+                outfile.write(strI(grid.nxyz[i]) + ' ')
             outfile.write('\n')
         else:
             outfile.write('  TYPE ' + grid.type + ' ' + grid.filename + '\n')
@@ -3216,10 +3266,10 @@ class pdata(object):
         outfile.write('END\n\n')
 
     def _read_prop(self, infile, line):
-
         np_name = self.splitter(line)  # property name
         np_id = None
-        p = pmaterial(0, '')  # assign defaults before reading in values
+        p = pmaterial(id=None, name=None, characteristic_curves=None,
+                      porosity=None, tortuosity=None, permeability=None)  # assign defaults before reading in values
         np_porosity = p.porosity
         np_characteristic_curves = p.characteristic_curves
         np_tortuosity = p.tortuosity
@@ -3426,6 +3476,12 @@ class pdata(object):
     def _read_time(self, infile):
         time = ptime()
         time.dtf_list = []
+        if time.tf:
+            time.tf = []
+        if time.dti:
+            time.dti = []
+        if time.dtf:
+            time.dtf = []
 
         keep_reading = True
         while keep_reading:
@@ -4236,7 +4292,7 @@ class pdata(object):
                 if char.saturation_function_type in \
                         characteristic_curves_saturation_function_types_allowed:
                     outfile.write('  SATURATION_FUNCTION ' +
-                                  char.saturation_function_type + '\n')
+                                  char.saturation_function_type.upper() + '\n')
                 else:
                     print '       valid  char.saturation_function_types', \
                         characteristic_curves_saturation_function_types_allowed, '\n'
@@ -4275,7 +4331,7 @@ class pdata(object):
                 if char.liquid_permeability_function_type in \
                         characteristic_curves_liquid_permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.liquid_permeability_function_type +
+                                  char.liquid_permeability_function_type.upper() +
                                   '\n')
                 # outfile.write('   PHASE LIQUID' + '\n')
                 else:
@@ -4298,7 +4354,7 @@ class pdata(object):
                 if char.gas_permeability_function_type in \
                         characteristic_curves_gas_permeability_function_types_allowed:
                     outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.gas_permeability_function_type + '\n')
+                                  char.gas_permeability_function_type.upper() + '\n')
                     outfile.write('   PHASE GAS' + '\n')
                 else:
 
@@ -4596,7 +4652,7 @@ class pdata(object):
                 else:
                     temp_list = [floatD(line.split()[1]), floatD(
                         line.split()[2]), floatD(line.split()[3])]
-                    flow.datum.append(temp_list)
+                    flow.datum = temp_list
 
             # Detect if there is carriage return after '/' or 'end' to end loop
             # Alternative method of count implemented by Satish
@@ -4802,12 +4858,16 @@ class pdata(object):
                     if flow.datum_type == 'dataset':
                         outfile.write(' DATASET ')
                     outfile.write(flow.datum)
-                else:  # Applies if datum is a list of [d_dx, d_dy, d_dz]
+                elif all(isinstance(elem, list) for elem in flow.datum):  # Checks if list of lists
+                    # Applies if datum is a list of [d_dx, d_dy, d_dz]
                     # write out d_dx, d_dy, d_dz
+                    raise PyFLOTRAN_ERROR('DATUM LIST not implemented. ' +
+                                          'Contact Satish if you need it.')
+                else:  # only a single list
                     outfile.write(' ')
-                    outfile.write(strD(flow.datum[0][0]) + ' ')
-                    outfile.write(strD(flow.datum[0][1]) + ' ')
-                    outfile.write(strD(flow.datum[0][2]))
+                    outfile.write(strD(flow.datum[0]) + ' ')
+                    outfile.write(strD(flow.datum[1]) + ' ')
+                    outfile.write(strD(flow.datum[2]))
                 outfile.write('\n')
                 if flow.gradient:
                     outfile.write('    GRADIENT\n')
@@ -5030,6 +5090,9 @@ class pdata(object):
                                   b.transport.lower() + '\n')
                 if b.region:
                     outfile.write('  REGION ' + b.region.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'boundary_condition.region is required')
                 outfile.write('END\n\n')
         except:
             raise PyFLOTRAN_ERROR(
@@ -5900,10 +5963,152 @@ class pdata(object):
                           strD(self.hydroquake.pressure_scaling) + '\n')
         outfile.write('END_HYDROQUAKE')
 
-    def generate_geomech_grid(self, x_verts=5, y_verts=5, z_verts=5,
-                              x_min=0.0, y_min=0.0, z_min=0.0, x_max=1.0,
-                              y_max=1.0, z_max=1.0):
+    def _write_geomechanics(self, outfile):
+        self._header(outfile, headers['geomechanics'])
+        outfile.write('GEOMECHANICS\n')
 
+        outfile.write('END_GEOMECHANICS')
+
+    @property
+    def prop(self):
+        return dict([(p.id, p) for p in self.proplist] + [(p.id, p)
+                                                          for p in
+                                                          self.proplist])
+
+    @property
+    def dataset(self):
+        return dict([(p.dataset_name, p) for p in self.datasetlist])
+
+    @property
+    def saturation(self):
+        return dict([(p.name, p) for p in self.saturationlist])
+
+    @property
+    def lsolver(self):
+        return dict([lsolv.name, lsolv] for lsolv in self.lsolverlist
+                    if lsolv.name)
+
+    @property
+    def nsolver(self):
+        return dict([nsolv.name, nsolv] for nsolv in self.nsolverlist
+                    if nsolv.name)
+
+    @property
+    def char(self):
+        return dict(
+            [(characteristic_curves.name.lower(), characteristic_curves)
+             for characteristic_curves in self.charlist] +
+            [(characteristic_curves.name.lower(), characteristic_curves)
+             for characteristic_curves in self.charlist])
+
+    @property
+    def region(self):
+        return dict([region.name.lower(), region] for region in
+                    self.regionlist if region.name)
+
+    @property
+    def observation(self):
+        return dict(
+            [observation.region.lower(), observation] for observation in
+            self.observation_list if observation.region)
+
+    @property
+    def flow(self):
+        return dict([flow.name.lower(), flow] for flow in self.flowlist if
+                    flow.name.lower)
+
+    def flow_variable(self, flow=pflow()):
+        return dict([flow_variable.name.lower(), flow_variable] for
+                    flow_variable in flow.varlist
+                    if flow_variable.name.lower())
+
+    @property
+    def initial_condition(self):
+        return dict([initial_condition.region, initial_condition] for
+                    initial_condition in self.initial_condition_list
+                    if initial_condition.region)
+
+    @property
+    def boundary_condition(self):
+        return dict(
+            [boundary_condition.region, boundary_condition] for
+            boundary_condition in self.boundary_condition_list if
+            boundary_condition.region)
+
+    @property
+    def source_sink(self):
+        return dict([source_sink.region, source_sink] for
+                    source_sink in self.source_sink_list if source_sink.region)
+
+    @property
+    def strata(self):
+        return dict([strata.region, strata] for
+                    strata in self.strata_list if strata.region)
+
+    @property
+    def m_kinetic(self):
+        chemistry = self.chemistry
+        return dict([m_kinetic.name, m_kinetic] for
+                    m_kinetic in chemistry.m_kinetics_list if m_kinetic.name)
+
+    @property
+    def transport(self):
+        return dict([transport.name, transport] for
+                    transport in self.transportlist if transport.name)
+
+    @property
+    def constraint(self):
+        return dict(
+            [constraint.name.lower(), constraint] for
+            constraint in self.constraint_list if constraint.name.lower())
+
+    def constraint_concentration(self, constraint=pconstraint()):
+        return dict([constraint_concentration.pspecies,
+                     constraint_concentration] for constraint_concentration in
+                    constraint.concentration_list if
+                    constraint_concentration.pspecies)
+
+    @staticmethod
+    def paraview(vtk_filepath_list=None):
+        if vtk_filepath_list is not None:
+            imports = 'from paraview import simple'
+            legacy_reader = ''
+            for vtk_filepath in vtk_filepath_list:
+                if not os.path.isfile(vtk_filepath):
+                    raise PyFLOTRAN_ERROR(
+                        vtk_filepath + ' is not a valid filepath!')
+                elif vtk_filepath[-3:] != 'vtk':
+                    raise PyFLOTRAN_ERROR(
+                        vtk_filepath +
+                        'does not have a valid extension (.vtk)!')
+            legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(
+                vtk_filepath_list).replace(' ', '\n') + ')\n'
+            with open('paraview-script.py', 'w+') as f:
+                f.write(imports + '\n')
+                f.write(legacy_reader + '\n')
+                f.write('simple.Show()\nsimple.Render()')
+        process = subprocess.Popen('paraview --script=paraview-script.py',
+                                   shell=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=sys.stderr)
+        while True:
+            out = process.stdout.read(1)
+            if out == '' and process.poll() is not None:
+                break
+            if out != '':
+                sys.stdout.write(out)
+                sys.stdout.flush()
+
+    def generate_geomech_grid(self):
+        x_verts = self.grid.nxyz[0] + 2
+        y_verts = self.grid.nxyz[1] + 2
+        z_verts = self.grid.nxyz[2] + 2
+        x_max = self.grid.xmax
+        y_max = self.grid.ymax
+        z_max = self.grid.zmax
+        x_min = self.grid.xmin
+        y_min = self.grid.ymin
+        z_min = self.grid.zmin
         Total_verts = x_verts * y_verts * z_verts
         N_cells = (x_verts - 1) * (y_verts - 1) * (z_verts - 1)
         delta_x = (x_max - x_min) / (x_verts - 1)
@@ -6044,7 +6249,7 @@ class pdata(object):
         print('--> Finished writing west.vset')
 
         # Create a subdirectory
-        d = 'geomech_dual_dat'
+        d = self.geomech_grid.dirname
         if os.path.isdir(d):  # check if d exists
             shutil.rmtree(d)  # remove old directory
         os.mkdir(d)  # create new directory
@@ -6090,154 +6295,41 @@ class pdata(object):
 
         print('--> Done writing geomechanics mesh files!')
 
-    @property
-    def prop(self):
-        return dict([(p.id, p) for p in self.proplist] + [(p.id, p)
-                                                          for p in
-                                                          self.proplist])
-
-    @property
-    def dataset(self):
-        return dict([(p.dataset_name, p) for p in self.datasetlist])
-
-    @property
-    def saturation(self):
-        return dict([(p.name, p) for p in self.saturationlist])
-
-    @property
-    def lsolver(self):
-        return dict([lsolv.name, lsolv] for lsolv in self.lsolverlist
-                    if lsolv.name)
-
-    @property
-    def nsolver(self):
-        return dict([nsolv.name, nsolv] for nsolv in self.nsolverlist
-                    if nsolv.name)
-
-    @property
-    def char(self):
-        return dict(
-            [(characteristic_curves.name.lower(), characteristic_curves)
-             for characteristic_curves in self.charlist] +
-            [(characteristic_curves.name.lower(), characteristic_curves)
-             for characteristic_curves in self.charlist])
-
-    @property
-    def region(self):
-        return dict([region.name.lower(), region] for region in
-                    self.regionlist if region.name)
-
-    @property
-    def observation(self):
-        return dict(
-            [observation.region.lower(), observation] for observation in
-            self.observation_list if observation.region)
-
-    @property
-    def flow(self):
-        return dict([flow.name.lower(), flow] for flow in self.flowlist if
-                    flow.name.lower)
-
-    def flow_variable(self, flow=pflow()):
-        return dict([flow_variable.name.lower(), flow_variable] for
-                    flow_variable in flow.varlist
-                    if flow_variable.name.lower())
-
-    @property
-    def initial_condition(self):
-        return dict([initial_condition.region, initial_condition] for
-                    initial_condition in self.initial_condition_list
-                    if initial_condition.region)
-
-    @property
-    def boundary_condition(self):
-        return dict(
-            [boundary_condition.region, boundary_condition] for
-            boundary_condition in self.boundary_condition_list if
-            boundary_condition.region)
-
-    @property
-    def source_sink(self):
-        return dict([source_sink.region, source_sink] for
-                    source_sink in self.source_sink_list if source_sink.region)
-
-    @property
-    def strata(self):
-        return dict([strata.region, strata] for
-                    strata in self.strata_list if strata.region)
-
-    @property
-    def m_kinetic(self):
-        chemistry = self.chemistry
-        return dict([m_kinetic.name, m_kinetic] for
-                    m_kinetic in chemistry.m_kinetics_list if m_kinetic.name)
-
-    @property
-    def transport(self):
-        return dict([transport.name, transport] for
-                    transport in self.transportlist if transport.name)
-
-    @property
-    def constraint(self):
-        return dict(
-            [constraint.name.lower(), constraint] for
-            constraint in self.constraint_list if constraint.name.lower())
-
-    def constraint_concentration(self, constraint=pconstraint()):
-        return dict([constraint_concentration.pspecies,
-                     constraint_concentration] for constraint_concentration in
-                    constraint.concentration_list if
-                    constraint_concentration.pspecies)
-
-    @staticmethod
-    def paraview(vtk_filepath_list=None):
-        if vtk_filepath_list is not None:
-            imports = 'from paraview import simple'
-            legacy_reader = ''
-            for vtk_filepath in vtk_filepath_list:
-                if not os.path.isfile(vtk_filepath):
-                    raise PyFLOTRAN_ERROR(
-                        vtk_filepath + ' is not a valid filepath!')
-                elif vtk_filepath[-3:] != 'vtk':
-                    raise PyFLOTRAN_ERROR(
-                        vtk_filepath + '\
-                         does not have a valid extension (.vtk)!')
-            legacy_reader += 'simple.LegacyVTKReader(FileNames=' + str(
-                vtk_filepath_list).replace(' ', '\n') + ')\n'
-            with open('paraview-script.py', 'w+') as f:
-                f.write(imports + '\n')
-                f.write(legacy_reader + '\n')
-                f.write('simple.Show()\nsimple.Render()')
-        process = subprocess.Popen('paraview --script=paraview-script.py',
-                                   shell=True,
-                                   stdout=subprocess.PIPE,
-                                   stderr=sys.stderr)
-        while True:
-            out = process.stdout.read(1)
-            if out == '' and process.poll() is not None:
-                break
-            if out != '':
-                sys.stdout.write(out)
-                sys.stdout.flush()
-
 
 class pquake(Frozen):
-    """
-    Class for specifying pflotran-qk3 related information
 
-    :param name: Specify name of the physics for which the linear solver is
-     being defined. Options include: 'tran', 'transport','flow'.
-    :type name: str
-    :param solver: Specify solver type: Options include: 'solver',
-     'krylov_type', 'krylov', 'ksp', 'ksp_type'
-    :type solver: str
-    :param preconditioner: Specify preconditioner type: Options include: 'ilu'
-    :type solver: str
-    """
+    """Class for specifying pflotran-qk3 related information
+       :param mapping_file: Name of the mapping file
+       :type name: str
+       :param time_scaling: Time scaling factor
+       :type time_scaling: float
+       :param pressure_scaling: Pressure scaling factor
+       :type pressure_scaling: float
+       """
 
     def __init__(self, mapping_file='mapping.dat', time_scaling=1.0,
                  pressure_scaling=1.0):
         self.mapping_file = mapping_file
         self.time_scaling = time_scaling
         self.pressure_scaling = pressure_scaling
+        self._freeze()
+
+
+class pgeomech_grid(Frozen):
+    """
+    Class for defining a geomech grid.
+
+    :param gravity: Specifies gravity vector in m/s^2. Input is a list of
+     3 floats.
+    :type gravity: [float]*3
+    :param filename: Specify name of file containing geomech grid information.
+    :type filename: str
+    """
+
+    # definitions are put on one line to work better with rst/latex/sphinx.
+    def __init__(self, dirname='geomech_dat',
+                 gravity=[0.0, 0.0, -9.81]):
+
+        self.gravity = gravity
+        self.dirname = dirname
         self._freeze()

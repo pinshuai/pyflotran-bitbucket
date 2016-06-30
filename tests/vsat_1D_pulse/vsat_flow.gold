@@ -80,17 +80,17 @@ REGION bottom
   END
 END
 
-FLOW_CONDITION  initial
+FLOW_CONDITION initial
   DATUM 0.0 0.0 1.0
   TYPE
-    PRESSURE  hydrostatic
+    PRESSURE hydrostatic
   END
     PRESSURE 101325.0
 END
 
-FLOW_CONDITION  recharge
+FLOW_CONDITION recharge
   TYPE
-    FLUX  neumann
+    FLUX neumann
   END
     FLUX LIST
       TIME_UNITS y

@@ -150,6 +150,8 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
                                      'ENTHALPY']
+geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
+                                  'DISPLACEMENT_Z']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
@@ -1423,7 +1425,7 @@ class pregion(Frozen):
     """
 
     def __init__(self, name='', coordinates_lower=None, coordinates_upper=None,
-                 face=None, filename='', point_list=[]):
+                 face=None, filename='', point_list=[], pm=''):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:
@@ -1434,6 +1436,7 @@ class pregion(Frozen):
         self.face = face
         self.point_list = []
         self.filename = filename
+        self.pm = pm
         self._freeze()
 
 
@@ -1491,7 +1494,7 @@ class pflow(Frozen):
 
     def __init__(self, name='', units_list=None, iphase=None,
                  sync_timestep_with_update=False, datum=None,
-                 datum_type='', varlist=None, gradient=None):
+                 datum_type='', varlist=None, gradient=None, pm=''):
 
         if datum is None:
             datum = []
@@ -1510,6 +1513,7 @@ class pflow(Frozen):
         self.varlist = varlist
         self.datum_type = datum_type
         self.gradient = gradient
+        self.pm = pm
         self._freeze()
 
 
@@ -1641,11 +1645,12 @@ class pboundary_condition(Frozen):
     :type region: str
     """
 
-    def __init__(self, name='', flow='', transport='', region=''):
+    def __init__(self, name='', flow='', transport='', region='', geomech=''):
         self.name = name  # Name of boundary condition. (e.g., west, east)
         self.flow = flow  # Flow Condition (e.g., initial)
         # Transport Condition (e.g., river_chemistry)
         self.transport = transport
+        self.geomech = geomech
         self.region = region  # Define region (e.g., west, east, well)
         self._freeze()
 
@@ -1681,9 +1686,10 @@ class pstrata(Frozen):
     :type material: str
     """
 
-    def __init__(self, region='all', material='default'):
+    def __init__(self, region='all', material='default', pm=''):
         self.region = region
         self.material = material
+        self.pm = pm
         self._freeze()
 
 
@@ -2002,6 +2008,174 @@ class pconstraint_mineral(Frozen):
         self._freeze()
 
 
+class pquake(Frozen):
+
+    """Class for specifying pflotran-qk3 related information
+       :param mapping_file: Name of the mapping file
+       :type name: str
+       :param time_scaling: Time scaling factor
+       :type time_scaling: float
+       :param pressure_scaling: Pressure scaling factor
+       :type pressure_scaling: float
+       """
+
+    def __init__(self, mapping_file='mapping.dat', time_scaling=1.0,
+                 pressure_scaling=1.0):
+        self.mapping_file = mapping_file
+        self.time_scaling = time_scaling
+        self.pressure_scaling = pressure_scaling
+        self._freeze()
+
+
+class pgeomech_subsurface_coupling(Frozen):
+
+    """Class for specifying geomechanics-flow coupling
+       :param mapping_file: Name of the mapping file
+       :type name: str
+       :param coupling_type: time of coupling -- one way / two way
+       :type coupling_type: str
+       """
+
+    def __init__(self, mapping_file='flow_geomech_mapping.dat',
+                 coupling_type='two_way_coupled'):
+        self.mapping_file = mapping_file
+        self.coupling_type = coupling_type
+        self._freeze()
+
+
+class pgeomech_material(Frozen):
+    """
+    Class for defining geomechanics material property.
+
+    :param id: Unique identifier of material property.
+    :type id: int
+    :param name: Name of material property. e.g., 'soil1'.
+    :type name: str
+    :param density: Rock density of material in kg/m^3.
+    :type density: float
+    :youngs_modulus: Young's modulus of the material
+    :type youngs_modulus: float
+    :poissons_ratio: Poisson's ratio of the material
+    :type poissons_ratio: float
+    :biot_coefficient: Biot coefficient of the material
+    :type biot_coefficient: float
+    :thermal_expansion_coefficient: Coefficient of thermal expansion
+    :type thermal_expansion_coefficient: float
+
+    """
+
+    def __init__(self, id=1, name='default', density='', youngs_modulus='',
+                 poissons_ratio='', biot_coefficient='',
+                 thermal_expansion_coefficient=''):
+
+        self.id = id
+        self.name = name
+        self.density = density
+        self.youngs_modulus = youngs_modulus
+        self.poissons_ratio = poissons_ratio
+        self.biot_coefficient = biot_coefficient
+        self.thermal_expansion_coefficient = thermal_expansion_coefficient
+        self._freeze()
+
+
+class pgeomech_grid(Frozen):
+    """
+    Class for defining a geomech grid.
+
+    :param gravity: Specifies gravity vector in m/s^2. Input is a list of
+     3 floats.
+    :type gravity: [float]*3
+    :param filename: Specify name of file containing geomech grid information.
+    :type filename: str
+    """
+
+    # definitions are put on one line to work better with rst/latex/sphinx.
+    def __init__(self, dirname='geomech_dat',
+                 gravity=[0.0, 0.0, -9.81]):
+
+        self.gravity = gravity
+        self.dirname = dirname
+        self._freeze()
+
+
+class pgeomech_time(Frozen):
+    """
+    Class for geomechanics time. Essentially has times for coupling with flow
+
+    :param coupling_timestep: Frequency of coupling. e.g., [0.25e0, 'y']
+    :type coupling_timestep: [float, str]
+    """
+
+    # definitions are put on one line to work better with rst/latex/sphinx.
+    def __init__(self, coupling_timestep=[0.1, 'd']):
+        self.coupling_timestep = coupling_timestep
+        self._freeze()
+
+
+class pgeomech_output(Frozen):
+    """
+    Class for dumping simulation output.
+    Acceptable time units (units of measurements) are: 's', 'min', 'h',
+     'd', 'w', 'mo', 'y'.
+
+    :param time_list: List of time values. 1st variable specifies time unit
+     to be used. Remaining variable(s) are floats
+    :type time_list: [str, float*]
+    :param print_column_ids: Flag to indicate whether to print column numbers
+     in observation
+     and mass balance output files. Default: False
+    :type print_column_ids: bool - True or False
+    :param screen_output: Turn the screen output on/off.
+    :type screen_periodic: bool
+    :param screen_periodic: Print to screen every <integer> time steps.
+    :type screen_periodic: int
+    :param periodic_time: 1st variable is value, 2nd variable is time unit.
+    :type periodic_time: [float, str]
+    :param periodic_timestep: 1st variable is value, 2nd variable is time unit.
+    :type periodic_timestep: [float, str]
+    :param periodic_observation_time: Output the results at observation points
+     and mass balance output at specified output time.
+     1st variable is value, 2nd variable is time unit.
+    :type periodic_observation_time: [float, str]
+    :param periodic_observation_timestep: Outputs the results at observation
+     points and mass balance output at specified time steps.
+    :type periodic_observation_timestep: int
+    :param format_list: Specify the file format for time snapshot of the
+     simulation in time file type. Input is a list of strings.
+     Multiple formats can be specified.
+     File format options include: 'TECPLOT BLOCK' - TecPlot block format,
+     'TECPLOT POINT' -- TecPlot point format (requires a single processor),
+     'HDF5' -- produces single HDF5 file and xml for unstructured grids,
+     'HDF5 MULTIPLE_FILES' -- produces a separate HDF5 file
+     at each output time, 'VTK' - VTK format.
+    :type format_list: [str]
+    :param velocities: Turn velocity output on/off.
+    :type velocities: bool - True or False
+    :param velocity_at_center: Turn velocity output on/off.
+    :type velocity_at_center: bool - True or False
+    :param velocity_at_face: Turn velocity output at face on/off.
+    :type velocity_at_face: bool - True or False
+    :param mass_balance: Flag to indicate whether to output the mass
+     balance of the system.
+    :type mass_balance: bool - True or False
+    :param variables_list: List of variables to be printed in the output file
+    :type variables_list: [str]
+    """
+
+    # definitions are put on one line to work better with rst/latex/sphinx.
+    def __init__(self, time_list=None, print_column_ids=False,
+                 format_list=None):
+        if time_list is None:
+            time_list = []
+        if format_list is None:
+            format_list = []
+
+        self.time_list = time_list
+        self.print_column_ids = print_column_ids
+        self.format_list = format_list
+        self._freeze()
+
+
 class pdata(object):
     """
     Class for pflotran data file. Use 'from pdata import*' to
@@ -2048,6 +2222,10 @@ class pdata(object):
         self.hydroquake = pquake()
         self.reference_temperature = ''
         self.geomech_grid = pgeomech_grid()
+        self.geomech_proplist = []
+        self.geomech_subsurface_coupling = pgeomech_subsurface_coupling()
+        self.geomech_time = pgeomech_time()
+        self.geomech_output = pgeomech_output()
 
         # run object
         self._path = ppath(parent=self)
@@ -2657,7 +2835,7 @@ class pdata(object):
         :type overwrite: bool
         """
 
-        add_checklist = [pmaterial, pdataset, psaturation,
+        add_checklist = [pmaterial, pgeomech_material, pdataset, psaturation,
                          pcharacteristic_curves, pchemistry_m_kinetic,
                          plsolver, pnsolver, pregion, pobservation, pflow,
                          pflow_variable, pinitial_condition,
@@ -2677,6 +2855,8 @@ class pdata(object):
             index = index.lower()
         if isinstance(obj, pmaterial):
             self._add_prop(obj, overwrite)
+        if isinstance(obj, pgeomech_material):
+            self._add_geomech_prop(obj, overwrite)
         if isinstance(obj, psecondary_continuum):
             self._add_sec(obj, overwrite)
         if isinstance(obj, pdataset):
@@ -2730,6 +2910,13 @@ class pdata(object):
             for obji in copy(obj):  # obji = object index
                 if isinstance(obji, pmaterial):
                     self._delete_prop(obji)
+
+        if isinstance(obj, pgeomech_material):
+            self._delete_geomech_prop(obj)
+        elif isinstance(obj, list):
+            for obji in copy(obj):  # obji = object index
+                if isinstance(obji, pgeomech_material):
+                    self._delete_geomech_prop(obji)
 
         if isinstance(obj, psecondary_continuum):
             self._delete_prop(obj)
@@ -3269,7 +3456,7 @@ class pdata(object):
         np_name = self.splitter(line)  # property name
         np_id = None
         p = pmaterial(id=None, name=None, characteristic_curves=None,
-                      porosity=None, tortuosity=None, permeability=None)  # assign defaults before reading in values
+                      porosity=None, tortuosity=None, permeability=None)
         np_porosity = p.porosity
         np_characteristic_curves = p.characteristic_curves
         np_tortuosity = p.tortuosity
@@ -4450,31 +4637,35 @@ class pdata(object):
 
         # Write out all valid region object entries with Region as Key word
         for region in self.regionlist:
-            outfile.write('REGION ')
-            outfile.write(region.name.lower() + '\n')
-            if region.filename:
-                outfile.write(' FILE ' + region.filename + '\n')
-            else:
-                if region.face:
-                    outfile.write('  FACE ' + region.face.lower() + '\n')
-            # no if statement below to ensure 0's are accepted for coordinates
-                if region.point_list:
-                    for point in region.point_list:
-                        outfile.write('  COORDINATE ')
-                        for i in range(3):
-                            outfile.write(strD(point.coordinate[i]) + ' ')
-                        outfile.write('\n')
+            if region.pm is '':
+                outfile.write('REGION ')
+                outfile.write(region.name.lower() + '\n')
+                if region.filename:
+                    outfile.write(' FILE ' + region.filename + '\n')
                 else:
-                    outfile.write('  COORDINATES\n')
-                    outfile.write('    ')
-                    for i in range(3):
-                        outfile.write(strD(region.coordinates_lower[i]) + ' ')
-                    outfile.write('\n    ')
-                    for i in range(3):
-                        outfile.write(strD(region.coordinates_upper[i]) + ' ')
-                    outfile.write('\n')
-                    outfile.write('  END\n')
-            outfile.write('END\n\n')
+                    if region.face:
+                        outfile.write('  FACE ' + region.face.lower() + '\n')
+                # no if statement below to ensure 0's are accepted for
+                # coordinates
+                    if region.point_list:
+                        for point in region.point_list:
+                            outfile.write('  COORDINATE ')
+                            for i in range(3):
+                                outfile.write(strD(point.coordinate[i]) + ' ')
+                            outfile.write('\n')
+                    else:
+                        outfile.write('  COORDINATES\n')
+                        outfile.write('    ')
+                        for i in range(3):
+                            outfile.write(strD(region.coordinates_lower[i]) +
+                                          ' ')
+                        outfile.write('\n    ')
+                        for i in range(3):
+                            outfile.write(strD(region.coordinates_upper[i]) +
+                                          ' ')
+                        outfile.write('\n')
+                        outfile.write('  END\n')
+                outfile.write('END\n\n')
 
     def _read_observation(self, infile):
         observation = pobservation()
@@ -4844,91 +5035,95 @@ class pdata(object):
         # Write out all valid flow_conditions objects with FLOW_CONDITION as
         # keyword
         for flow in self.flowlist:
-            outfile.write('FLOW_CONDITION  ' + flow.name.lower() + '\n')
+            if flow.pm == '':
+                outfile.write('FLOW_CONDITION ' + flow.name.lower() + '\n')
 
-            if flow.sync_timestep_with_update:
-                outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
+                if flow.sync_timestep_with_update:
+                    outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
 
-            if flow.datum:  # error-checking not yet added
-                outfile.write('  DATUM')
+                if flow.datum:  # error-checking not yet added
+                    outfile.write('  DATUM')
 
-                if isinstance(flow.datum, str):
-                    if flow.datum_type == 'file':
-                        outfile.write(' FILE ')
-                    if flow.datum_type == 'dataset':
-                        outfile.write(' DATASET ')
-                    outfile.write(flow.datum)
-                elif all(isinstance(elem, list) for elem in flow.datum):  # Checks if list of lists
-                    # Applies if datum is a list of [d_dx, d_dy, d_dz]
-                    # write out d_dx, d_dy, d_dz
-                    raise PyFLOTRAN_ERROR('DATUM LIST not implemented. ' +
-                                          'Contact Satish if you need it.')
-                else:  # only a single list
-                    outfile.write(' ')
-                    outfile.write(strD(flow.datum[0]) + ' ')
-                    outfile.write(strD(flow.datum[1]) + ' ')
-                    outfile.write(strD(flow.datum[2]))
-                outfile.write('\n')
-                if flow.gradient:
-                    outfile.write('    GRADIENT\n')
-                    outfile.write('      ' + flow.gradient[0].upper() +
-                                  ' ' + str(flow.gradient[1]) + ' ' + str(
-                        flow.gradient[2]) + ' ' + str(flow.gradient[3]) + '\n')
-                    outfile.write('    /\n')
-            # Following code is paired w/ this statement.
-            outfile.write('  TYPE\n')
-            # variable name and type from lists go here
-            for a_flow in flow.varlist:
-                if a_flow.name.upper() in flow_condition_type_names_allowed:
-                    outfile.write('    ' + a_flow.name.upper() + '  ')
-                else:
-                    print '       valid flow_condition.names:', \
-                        flow_condition_type_names_allowed, '\n'
-                    raise PyFLOTRAN_ERROR(
-                        'flow.varlist.name: \'' +
-                        a_flow.name + '\' is invalid.')
-
-                # Checks a_flow.type and performs write or error reporting
-                check_condition_type(a_flow.name, a_flow.type)
-                outfile.write('\n')
-
-            outfile.write('  END\n')
-            if flow.iphase:
-                outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
-
-            # variable name and values from lists along with units go here
-            for a_flow in flow.varlist:
-                if a_flow.valuelist:
-                    outfile.write('    ' + a_flow.name.upper())
-                    if isinstance(a_flow.valuelist[0], str):
-                        if a_flow.valuelist[0] == 'file':
-                            outfile.write(' FILE ' + a_flow.valuelist[1])
-                        else:
-                            outfile.write(' DATASET ' + a_flow.valuelist[0])
-                    else:
-                        for flow_val in a_flow.valuelist:
-                            outfile.write(' ' + strD(flow_val))
-                    if a_flow.unit:
-                        outfile.write(' ' + a_flow.unit.lower())
+                    if isinstance(flow.datum, str):
+                        if flow.datum_type == 'file':
+                            outfile.write(' FILE ')
+                        if flow.datum_type == 'dataset':
+                            outfile.write(' DATASET ')
+                        outfile.write(flow.datum)
+                    elif all(isinstance(elem, list) for elem in flow.datum):
+                        # Checks if list of lists
+                        # Applies if datum is a list of [d_dx, d_dy, d_dz]
+                        # write out d_dx, d_dy, d_dz
+                        raise PyFLOTRAN_ERROR('DATUM LIST not implemented. ' +
+                                              'Contact Satish if you need it.')
+                    else:  # only a single list
+                        outfile.write(' ')
+                        outfile.write(strD(flow.datum[0]) + ' ')
+                        outfile.write(strD(flow.datum[1]) + ' ')
+                        outfile.write(strD(flow.datum[2]))
                     outfile.write('\n')
-                elif a_flow.list:
-                    outfile.write(
-                        '    ' + a_flow.name.upper() + ' LIST' + '\n')
-                    if a_flow.time_unit_type:
-                        outfile.write('      TIME_UNITS ' +
-                                      a_flow.time_unit_type + '\n')
-                    if a_flow.data_unit_type:
-                        outfile.write('      DATA_UNITS ' +
-                                      a_flow.data_unit_type + '\n')
-                    for k in a_flow.list:
-                        outfile.write('        ' + strD(k.time_unit_value))
-                        for p in range(len(k.data_unit_value_list)):
-                            outfile.write(
-                                '  ' + strD(k.data_unit_value_list[p]))
-                        outfile.write('\n')
-                    outfile.write('    /\n')
+                    if flow.gradient:
+                        outfile.write('    GRADIENT\n')
+                        outfile.write('      ' + flow.gradient[0].upper() +
+                                      ' ' + str(flow.gradient[1]) + ' ' + str(
+                                      flow.gradient[2]) + ' ' +
+                                      str(flow.gradient[3]) + '\n')
+                        outfile.write('    /\n')
+                # Following code is paired w/ this statement.
+                outfile.write('  TYPE\n')
+                # variable name and type from lists go here
+                for a_flow in flow.varlist:
+                    if a_flow.name.upper() in flow_condition_type_names_allowed:
+                        outfile.write('    ' + a_flow.name.upper() + ' ')
+                    else:
+                        print '       valid flow_condition.names:', \
+                            flow_condition_type_names_allowed, '\n'
+                        raise PyFLOTRAN_ERROR(
+                            'flow.varlist.name: \'' +
+                            a_flow.name + '\' is invalid.')
 
-            outfile.write('END\n\n')
+                    # Checks a_flow.type and performs write or error reporting
+                    check_condition_type(a_flow.name, a_flow.type)
+                    outfile.write('\n')
+
+                outfile.write('  END\n')
+                if flow.iphase:
+                    outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
+
+                # variable name and values from lists along with units go here
+                for a_flow in flow.varlist:
+                    if a_flow.valuelist:
+                        outfile.write('    ' + a_flow.name.upper())
+                        if isinstance(a_flow.valuelist[0], str):
+                            if a_flow.valuelist[0] == 'file':
+                                outfile.write(' FILE ' + a_flow.valuelist[1])
+                            else:
+                                outfile.write(
+                                    ' DATASET ' + a_flow.valuelist[0])
+                        else:
+                            for flow_val in a_flow.valuelist:
+                                outfile.write(' ' + strD(flow_val))
+                        if a_flow.unit:
+                            outfile.write(' ' + a_flow.unit.lower())
+                        outfile.write('\n')
+                    elif a_flow.list:
+                        outfile.write(
+                            '    ' + a_flow.name.upper() + ' LIST' + '\n')
+                        if a_flow.time_unit_type:
+                            outfile.write('      TIME_UNITS ' +
+                                          a_flow.time_unit_type + '\n')
+                        if a_flow.data_unit_type:
+                            outfile.write('      DATA_UNITS ' +
+                                          a_flow.data_unit_type + '\n')
+                        for k in a_flow.list:
+                            outfile.write('        ' + strD(k.time_unit_value))
+                            for p in range(len(k.data_unit_value_list)):
+                                outfile.write(
+                                    '  ' + strD(k.data_unit_value_list[p]))
+                            outfile.write('\n')
+                        outfile.write('    /\n')
+
+                outfile.write('END\n\n')
 
     def _read_initial_condition(self, infile, line):
         if len(line.split()) > 1:
@@ -5077,23 +5272,25 @@ class pdata(object):
         # Write all boundary conditions to file
         try:
             for b in self.boundary_condition_list:  # b = boundary_condition
-                if b.name:
-                    outfile.write('BOUNDARY_CONDITION ' +
-                                  b.name.lower() + '\n')
-                else:
-                    raise PyFLOTRAN_ERROR(
-                        'Give a name for boundary condition!')
-                if b.flow:
-                    outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
-                if b.transport:
-                    outfile.write('  TRANSPORT_CONDITION ' +
-                                  b.transport.lower() + '\n')
-                if b.region:
-                    outfile.write('  REGION ' + b.region.lower() + '\n')
-                else:
-                    raise PyFLOTRAN_ERROR(
-                        'boundary_condition.region is required')
-                outfile.write('END\n\n')
+                if b.geomech == '':
+                    if b.name:
+                        outfile.write('BOUNDARY_CONDITION ' +
+                                      b.name.lower() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'Give a name for boundary condition!')
+                    if b.flow:
+                        outfile.write('  FLOW_CONDITION ' +
+                                      b.flow.lower() + '\n')
+                    if b.transport:
+                        outfile.write('  TRANSPORT_CONDITION ' +
+                                      b.transport.lower() + '\n')
+                    if b.region:
+                        outfile.write('  REGION ' + b.region.lower() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'boundary_condition.region is required')
+                    outfile.write('END\n\n')
         except:
             raise PyFLOTRAN_ERROR(
                 'At least one boundary_condition with valid ' +
@@ -5217,17 +5414,18 @@ class pdata(object):
 
         # Write out strata condition variables
         for strata in self.strata_list:
-
-            outfile.write('STRATA\n')
-            if strata.region:
-                outfile.write('  REGION ' + strata.region.lower() + '\n')
-            # else:
-            # raise PyFLOTRAN_ERROR('strata.region is required')
-            if strata.material:
-                outfile.write('  MATERIAL ' + strata.material.lower() + '\n')
-            else:
-                raise PyFLOTRAN_ERROR('strata.material is required')
-            outfile.write('END\n\n')
+            if strata.pm == '':
+                outfile.write('STRATA\n')
+                if strata.region:
+                    outfile.write('  REGION ' + strata.region.lower() + '\n')
+                # else:
+                # raise PyFLOTRAN_ERROR('strata.region is required')
+                if strata.material:
+                    outfile.write('  MATERIAL ' +
+                                  strata.material.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('strata.material is required')
+                outfile.write('END\n\n')
 
     def _read_checkpoint(self, infile, line):
         checkpoint = pcheckpoint()
@@ -5965,15 +6163,243 @@ class pdata(object):
 
     def _write_geomechanics(self, outfile):
         self._header(outfile, headers['geomechanics'])
-        outfile.write('GEOMECHANICS\n')
-
+        outfile.write('GEOMECHANICS\n\n')
+        if self.geomech_grid.dirname:
+            outfile.write('GEOMECHANICS_GRID\n')
+            outfile.write('  TYPE unstructured ' + self.geomech_grid.dirname +
+                          '/usg.mesh\n')
+            outfile.write('  GRAVITY ')
+            for item in self.geomech_grid.gravity:
+                outfile.write(strD(item) + ' ')
+            outfile.write('\n')
+            outfile.write('END\n\n')
+        self._write_geomech_subsurface_coupling(outfile)
+        self._write_geomech_time(outfile)
+        self._write_geomechanics_region(outfile)
+        self._write_geomechanics_condition(outfile)
+        self._write_geomech_boundary_condition(outfile)
+        self._write_geomech_strata(outfile)
+        self._write_geomech_output(outfile)
+        if self.geomech_proplist:
+            self._write_geomech_prop(outfile)
         outfile.write('END_GEOMECHANICS')
+
+    def _write_geomechanics_region(self, outfile):
+        self._header(outfile, headers['region'])
+
+        # Write out all valid region object entries with Region as Key word
+        for region in self.regionlist:
+            if region.pm in ['geomech', 'geomechanics', 'geo']:
+                outfile.write('GEOMECHANICS_REGION ')
+                outfile.write(region.name.lower() + '\n')
+                if region.filename:
+                    outfile.write('  FILE ' + region.filename + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('Geomechanics regions can only ' +
+                                          'be defined using files ' +
+                                          'with list of vertices')
+                outfile.write('END\n\n')
+
+    def _write_geomechanics_condition(self, outfile):
+
+        def check_condition_type(condition_name, condition_type):
+            if condition_name.upper()[:-2] == 'DISPLACEMENT':
+                if condition_type.lower() in pressure_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'geomechanics condition type ' + condition_type +
+                        '\' is invalid.')
+                return 0  # Break out of function
+            else:
+                pass
+
+        for flow in self.flowlist:
+            if flow.pm in ['geomech', 'geomechanics', 'geo']:
+                outfile.write('GEOMECHANICS_CONDITION ' +
+                              flow.name.lower() + '\n')
+                outfile.write('  TYPE\n')
+                # variable name and type from lists go here
+                for a_flow in flow.varlist:
+                    if a_flow.name.upper() in geomech_condition_type_allowed:
+                        outfile.write('    ' + a_flow.name.upper() + ' ')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'geomechanics condition ' +
+                            a_flow.name + ' is invalid.')
+
+                    # Checks a_flow.type and performs write or error reporting
+                    check_condition_type(a_flow.name, a_flow.type)
+                    outfile.write('\n')
+
+                outfile.write('  END\n')
+
+                # variable name and values from lists along with units go here
+                for a_flow in flow.varlist:
+                    if a_flow.valuelist:
+                        outfile.write('    ' + a_flow.name.upper())
+                        for flow_val in a_flow.valuelist:
+                            outfile.write(' ' + strD(flow_val))
+                        outfile.write('\n')
+                outfile.write('END\n\n')
+
+    def _write_geomech_boundary_condition(self, outfile):
+       # self._header(outfile, headers['boundary_condition'])
+
+        # Write all boundary conditions to file
+        try:
+            for b in self.boundary_condition_list:  # b = boundary_condition
+                if b.geomech:
+                    if b.name:
+                        outfile.write('GEOMECHANICS_BOUNDARY_CONDITION ' +
+                                      b.name.lower() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'Give a name for geomechanics boundary condition!')
+                    outfile.write('  GEOMECHANICS_CONDITION ' +
+                                  b.geomech.lower() + '\n')
+                    if b.region:
+                        outfile.write('  GEOMECHANICS_REGION ' +
+                                      b.region.lower() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'boundary_condition.region is required')
+                    outfile.write('END\n\n')
+        except:
+            raise PyFLOTRAN_ERROR(
+                'At least one geomechanics boundary_condition with valid ' +
+                'attributes is required')
+
+    def _write_geomech_strata(self, outfile):
+        self._header(outfile, headers['strata'])
+        # strata = self.strata
+
+        # Write out strata condition variables
+        for strata in self.strata_list:
+            if strata.pm in ['geomech', 'geo', 'geomechanics']:
+                outfile.write('GEOMECHANICS_STRATA\n')
+                if strata.region:
+                    outfile.write('  GEOMECHANICS_REGION ' +
+                                  strata.region.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('strata.region is required')
+                if strata.material:
+                    outfile.write('  GEOMECHANICS_MATERIAL ' +
+                                  strata.material.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('strata.material is required')
+                outfile.write('END\n\n')
+
+    def _write_geomech_subsurface_coupling(self, outfile):
+        outfile.write('GEOMECHANICS_SUBSURFACE_COUPLING ' +
+                      self.geomech_subsurface_coupling.coupling_type.upper())
+        outfile.write('\n  ')
+        outfile.write('MAPPING_FILE ' +
+                      self.geomech_subsurface_coupling.mapping_file)
+        outfile.write('\n')
+        outfile.write('END\n\n')
+
+    def _write_geomech_time(self, outfile):
+        outfile.write('GEOMECHANICS_TIME\n  ')
+        outfile.write('COUPLING_TIMESTEP_SIZE ' +
+                      strD(self.geomech_time.coupling_timestep[0]) +
+                      ' ' + strD(self.geomech_time.coupling_timestep[1]))
+        outfile.write('\n')
+        outfile.write('END\n\n')
+
+    def _write_geomech_output(self, outfile):
+        self._header(outfile, headers['output'])
+        output = self.geomech_output
+
+        outfile.write('GEOMECHANICS_OUTPUT\n')
+
+        if output.time_list:
+            # Check if 1st variable in list a valid time unit
+            if output.time_list[0].lower() in time_units_allowed:
+                outfile.write('  TIMES ')
+                # Write remaining number(s) after time unit is specified
+                for value in output.time_list:
+                    outfile.write(' ' + strD(value).lower())
+            else:
+                print '       valid time.units', time_units_allowed, '\n'
+                raise PyFLOTRAN_ERROR(
+                    'output.time_list[0]: ' + output.time_list[0] +
+                    ' is invalid.')
+            outfile.write('\n')
+
+        if output.print_column_ids:
+            outfile.write('  ' + 'PRINT_COLUMN_IDS' + '\n')
+        for out_format in output.format_list:
+            if out_format.upper() in output_formats_allowed:
+                outfile.write('  FORMAT ')
+                outfile.write(out_format.upper() + '\n')
+            else:
+                print '       valid output.format:', \
+                    output_formats_allowed, '\n'
+                raise PyFLOTRAN_ERROR(
+                    'output.format: \'' + out_format + '\' is invalid.')
+
+        outfile.write('END\n\n')
+
+    # Adds a prop object.
+    def _add_geomech_prop(self, prop=pgeomech_material(), overwrite=False):
+        # check if prop already exists
+        if isinstance(prop, pgeomech_material):
+            if prop.id in self.geomech_prop.keys():
+                if not overwrite:
+                    warning = 'A geoemchanics material property with id ' + \
+                        str(prop.id) + ' already exists. Prop ' + \
+                        'will not be defined, use overwrite ' + \
+                        '= True in add() to overwrite the old prop.'
+                    print warning,
+                    build_warnings.append(warning)
+                    return
+                else:  # Executes if overwrite = True
+                    self.delete(self.prop[prop.id])
+
+        if prop not in self.geomech_proplist:
+            self.geomech_proplist.append(prop)
+
+    def _delete_geomech_prop(self, prop=pgeomech_material()):
+        self.geomech_proplist.remove(prop)
+
+    def _write_geomech_prop(self, outfile):
+        self._header(outfile, headers['material_property'])
+        for prop in self.geomech_proplist:
+            if prop.name:
+                outfile.write('GEOMECHANICS_MATERIAL_PROPERTY ' +
+                              prop.name + '\n')
+            if not prop.id == '':
+                outfile.write('  ID ' + str(prop.id) + '\n')
+            if not prop.density == '':
+                outfile.write('  ROCK_DENSITY ' + strD(prop.density) + '\n')
+            if not prop.youngs_modulus == '':
+                outfile.write('  YOUNGS_MODULUS ' +
+                              strD(prop.youngs_modulus) + '\n')
+            if not prop.poissons_ratio == '':
+                outfile.write('  POISSONS_RATIO ' +
+                              strD(prop.poissons_ratio) + '\n')
+            if not prop.biot_coefficient == '':
+                outfile.write('  BIOT_COEFFICIENT ' +
+                              strD(prop.biot_coefficient) + '\n')
+            if not prop.thermal_expansion_coefficient == '':
+                outfile.write('  THERMAL_EXPANSION_COEFFICIENT ' +
+                              strD(prop.thermal_expansion_coefficient) + '\n')
+            outfile.write('END\n\n')
+
+    @property
+    def geomech_dirname(self):
+        return self.geomech_grid.dirname
 
     @property
     def prop(self):
-        return dict([(p.id, p) for p in self.proplist] + [(p.id, p)
-                                                          for p in
-                                                          self.proplist])
+        return dict([(p.id, p) for p in self.proplist] +
+                    [(p.id, p) for p in self.proplist])
+
+    @property
+    def geomech_prop(self):
+        return dict([(p.id, p) for p in self.geomech_proplist] +
+                    [(p.id, p) for p in self.geomech_proplist])
 
     @property
     def dataset(self):
@@ -6294,42 +6720,3 @@ class pdata(object):
         fid.close()
 
         print('--> Done writing geomechanics mesh files!')
-
-
-class pquake(Frozen):
-
-    """Class for specifying pflotran-qk3 related information
-       :param mapping_file: Name of the mapping file
-       :type name: str
-       :param time_scaling: Time scaling factor
-       :type time_scaling: float
-       :param pressure_scaling: Pressure scaling factor
-       :type pressure_scaling: float
-       """
-
-    def __init__(self, mapping_file='mapping.dat', time_scaling=1.0,
-                 pressure_scaling=1.0):
-        self.mapping_file = mapping_file
-        self.time_scaling = time_scaling
-        self.pressure_scaling = pressure_scaling
-        self._freeze()
-
-
-class pgeomech_grid(Frozen):
-    """
-    Class for defining a geomech grid.
-
-    :param gravity: Specifies gravity vector in m/s^2. Input is a list of
-     3 floats.
-    :type gravity: [float]*3
-    :param filename: Specify name of file containing geomech grid information.
-    :type filename: str
-    """
-
-    # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, dirname='geomech_dat',
-                 gravity=[0.0, 0.0, -9.81]):
-
-        self.gravity = gravity
-        self.dirname = dirname
-        self._freeze()

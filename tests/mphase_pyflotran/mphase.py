@@ -35,26 +35,11 @@ simulation.subsurface_flow = 'flow'
 simulation.mode = 'mphase'
 dat.simulation = simulation
 
-
 # --------------------------------------------------------------
 
 # set co2 database
 # --------------------------------------------------------------
-dat.co2_database = del_extra_slash(pflotran_dir + '/database/co2data0.dat')
-# --------------------------------------------------------------
-
-# set checkpoint # testing
-# --------------------------------------------------------------
-# dat.checkpoint.frequency = 1000 # testing
-# --------------------------------------------------------------
-
-# set restart - Has not been tested with PFLOTRAN - testing
-# --------------------------------------------------------------
-# restart = prestart() # testing
-# restart.file_name = 'restart.chk' # testing
-# restart.time_value = 5.e0 # testing
-# restart.time_unit = 'y' # testing
-# dat.restart = restart # testing
+dat.co2_database = pflotran_dir + '/database/co2data0.dat'
 # --------------------------------------------------------------
 
 # set grid
@@ -124,12 +109,6 @@ dat.add(newton_solver)
 # --------------------------------------------------------------
 output = poutput()
 output.print_column_ids = True
-# output.screen_periodic = 2 # testing
-# output.periodic_time = [4.e1, 'y'] # testing
-# output.periodic_timestep = [4.e1, 'y'] # testing - Does not work in PFLOTRAN
-# output.periodic_observation_time = [3.2e1, 'y']# testing
-# output.permeability = True # testing
-# output.porosity = True # testing
 output.mass_balance = True
 output.periodic_observation_timestep = 1
 output.format_list.append('TECPLOT POINT')
@@ -151,8 +130,6 @@ saturation = psaturation('', '')
 saturation.name = 'sf2'
 saturation.permeability_function_type = 'NMT_EXP'
 saturation.saturation_function_type = 'NMT_EXP'
-# saturation.residual_saturation = 0.03 # float - testing - does not work
-# with pflotran with this deck.
 saturation.residual_saturation_liquid = 0.1
 saturation.residual_saturation_gas = 0.0
 saturation.a_lambda = 0.762
@@ -207,10 +184,7 @@ flow.name = 'initial'
 flow.units_list = None
 flow.iphase = 1
 flow.sync_timestep_with_update = False
-flow.datum.append([3., 5., 2.])  # testing - not tested with PFLOTRAN
-# flow.datum.append([2., 1., 6.])	 # testing - not tested with PFLOTRAN
-# flow.datum = 'file_name' 		 # testing - not tested with PFLOTRAN
-# flow.varlist = [] 	# Assigning for this done below
+flow.datum = [3., 5., 2.]  
 dat.add(flow)
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('')  # new flow var object
@@ -223,14 +197,12 @@ variable = pflow_variable('')  # new flow var object
 variable.name = 'TEMPERATURE'
 variable.type = 'zero_gradient'
 variable.valuelist = [50.0]
-# variable.unit = 'C'
 dat.add(variable)
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('')  # new flow var object
 variable.name = 'CONCENTRATION'
 variable.type = 'zero_gradient'
 variable.valuelist = [1e-6]
-# variable.unit = 'm'
 dat.add(variable, flow)  # alternative
 # adding flow_variable to inital flow_condition
 variable = pflow_variable('')  # new flow var object
@@ -238,7 +210,6 @@ variable.name = 'ENTHALPY'
 variable.type = 'dirichlet'
 # alternative, specify flow object by passing in direct reference
 variable.valuelist = [0.e0, 0.e0]
-# alternative, specify flow object by its' name
 dat.add(variable, index='initial')
 
 # top flow condition
@@ -272,7 +243,6 @@ variable.name = 'enthalpy'
 variable.type = 'dirichlet'
 variable.valuelist = [0.e0, 0.e0]
 dat.add(variable)  # assigning for flow var done here
-
 
 # source flow condition
 flow = pflow('')
@@ -378,8 +348,8 @@ dat.add(stratigraphy_coupler)
 # --------------------------------------------------------------
 
 # Test write
-# dat.write('mphase.in')
+dat.write('mphase.in')
 
-pflotran_exe = del_extra_slash(pflotran_dir + '/src/pflotran/pflotran')
+pflotran_exe = pflotran_dir + '/src/pflotran/pflotran'
 # Write to file and execute that input file
 dat.run(input='mphase.in', exe=pflotran_exe)

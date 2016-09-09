@@ -8,8 +8,9 @@ from ptool import *
 from pdflt import *
 import math
 import shutil
+import matplotlib as mpl
+mpl.use('Agg')
 from matplotlib import pyplot as plt
-
 
 """ Class for pyflotran data """
 
@@ -151,7 +152,8 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
                                      'ENTHALPY']
 geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
-                                  'DISPLACEMENT_Z']
+                                  'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
+                                  'FORCE_Z']
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
@@ -2176,6 +2178,24 @@ class pgeomech_output(Frozen):
         self._freeze()
 
 
+class pgeomech_regression(Frozen):
+    """
+    Class for specifying geomechanics regression.
+
+    :param vertices: Specify cells for regression.
+    :type vertices: list of int
+    :param vertices_per_process: Specify the number cells per process.
+    :type vertices_per_process: int
+    """
+
+    def __init__(self, vertices=None, vertices_per_process=''):
+        if vertices is None:
+            vertices = []
+        self.vertices = vertices
+        self.vertices_per_process = vertices_per_process
+        self._freeze()
+
+
 class pdata(object):
     """
     Class for pflotran data file. Use 'from pdata import*' to
@@ -2226,6 +2246,7 @@ class pdata(object):
         self.geomech_subsurface_coupling = pgeomech_subsurface_coupling()
         self.geomech_time = pgeomech_time()
         self.geomech_output = pgeomech_output()
+        self.geomech_regression = pgeomech_regression()
 
         # run object
         self._path = ppath(parent=self)
@@ -6174,6 +6195,7 @@ class pdata(object):
             outfile.write('\n')
             outfile.write('END\n\n')
         self._write_geomech_subsurface_coupling(outfile)
+        self._write_geomech_regression(outfile)
         self._write_geomech_time(outfile)
         self._write_geomechanics_region(outfile)
         self._write_geomechanics_condition(outfile)
@@ -6204,6 +6226,14 @@ class pdata(object):
 
         def check_condition_type(condition_name, condition_type):
             if condition_name.upper()[:-2] == 'DISPLACEMENT':
+                if condition_type.lower() in pressure_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'geomechanics condition type ' + condition_type +
+                        '\' is invalid.')
+                return 0  # Break out of function
+            elif condition_name.upper()[:-2] == 'FORCE':
                 if condition_type.lower() in pressure_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
@@ -6340,6 +6370,20 @@ class pdata(object):
                     'output.format: \'' + out_format + '\' is invalid.')
 
         outfile.write('END\n\n')
+
+    def _write_geomech_regression(self, outfile):
+        self._header(outfile, headers['regression'])
+        regression = self.geomech_regression
+        outfile.write('GEOMECHANICS_REGRESSION' + '\n')
+        if regression.vertices and regression.vertices[0] != '':
+            outfile.write('  VERTICES' + '\n')
+            for vertex in regression.vertices:
+                outfile.write('    ' + str(vertex) + '\n')
+            outfile.write('  /' + '\n')
+        if regression.vertices_per_process:
+            outfile.write('  VERTICES_PER_PROCESS' + ' ' +
+                          str(regression.vertices_per_process) + '\n')
+        outfile.write('END' + '\n\n')
 
     # Adds a prop object.
     def _add_geomech_prop(self, prop=pgeomech_material(), overwrite=False):
@@ -6525,6 +6569,110 @@ class pdata(object):
                 sys.stdout.write(out)
                 sys.stdout.flush()
 
+    def apply_traction(self, traction=-1e6, face='top'):
+        x_verts = self.grid.nxyz[0] + 2
+        y_verts = self.grid.nxyz[1] + 2
+        z_verts = self.grid.nxyz[2] + 2
+        x_max = self.grid.xmax
+        y_max = self.grid.ymax
+        z_max = self.grid.zmax
+        x_min = self.grid.xmin
+        y_min = self.grid.ymin
+        z_min = self.grid.zmin
+        delta_x = (x_max - x_min) / (x_verts - 1)
+        delta_y = (y_max - y_min) / (y_verts - 1)
+        delta_z = (z_max - z_min) / (z_verts - 1)
+
+        if face == 'top':
+            # Top corner
+            top_corner = []
+            top_corner.append(x_verts * y_verts * (z_verts - 1) + 1)
+            top_corner.append(x_verts * y_verts * z_verts)
+            top_corner.append(x_verts * y_verts *
+                              (z_verts - 1) + x_verts)
+            top_corner.append(x_verts * y_verts * z_verts - x_verts + 1)
+            fid = open(self.geomech_grid.dirname + '/top_corner.vset', 'w')
+            for i in top_corner:
+                fid.write('%i\n' % i)
+            fid.close()
+
+            # Top boundary
+            top_boundary = []
+            top_boundary.extend([i for i in
+                                 range(x_verts * y_verts * (z_verts - 1) + 1,
+                                       x_verts * y_verts *
+                                       (z_verts - 1) + x_verts + 1)])
+            top_boundary.extend([i for i in range(
+                x_verts * y_verts * z_verts - x_verts + 1,
+                x_verts * y_verts * z_verts + 1)])
+            for j in range(1, y_verts + 1):
+                top_boundary.append(x_verts * y_verts *
+                                    (z_verts - 1) + 1 + (j - 1) * x_verts)
+            for j in range(1, y_verts + 1):
+                top_boundary.append(x_verts * y_verts *
+                                    (z_verts - 1) + x_verts + (j - 1) *
+                                    x_verts)
+            # remove duplicates and corners
+            top_boundary = list(set(top_boundary) - set(top_corner))
+            fid = open(self.geomech_grid.dirname + '/top_boundary.vset', 'w')
+            for i in top_boundary:
+                fid.write('%i\n' % i)
+            fid.close()
+
+            # Top internal
+            top_internal = []
+            for i in range(x_verts * y_verts * (z_verts - 1) + 1,
+                           x_verts * y_verts * z_verts + 1):
+                top_internal.append(i)
+            top_internal = list(set(top_internal) -
+                                set(top_boundary) - set(top_corner))
+            fid = open(self.geomech_grid.dirname + '/top_internal.vset', 'w')
+            for i in top_internal:
+                fid.write('%i\n' % i)
+            fid.close()
+
+            # top corner force
+            area = delta_x * delta_y / 4
+            top_corner_force = traction * area
+
+            # top boundary force
+            area = delta_x * delta_y / 2
+            top_boundary_force = traction * area
+
+            # top internal force
+            area = delta_x * delta_y
+            top_internal_force = traction * area
+
+            self.add(pflow(name='top_corner_force', pm='geomech'))
+            self.add(pflow_variable(name='force_z', type='dirichlet',
+                                    valuelist=[top_corner_force]),
+                     index='top_corner_force')
+            self.add(pflow(name='top_boundary_force', pm='geomech'))
+            self.add(pflow_variable(name='force_z', type='dirichlet',
+                                    valuelist=[top_boundary_force]),
+                     index='top_boundary_force')
+            self.add(pflow(name='top_internal_force', pm='geomech'))
+            self.add(pflow_variable(name='force_z', type='dirichlet',
+                                    valuelist=[top_internal_force]),
+                     index='top_internal_force')
+
+            files = ['top_boundary.vset',
+                     'top_corner.vset', 'top_internal.vset']
+            for file in files:
+                self.add(pregion(name=file[:-5],
+                                 filename=self.geomech_grid.dirname +
+                                 '/' + file, pm='geomech'))
+
+            self.add(pboundary_condition(name='top_corner_force',
+                                         region='top_corner',
+                                         geomech='top_corner_force'))
+            self.add(pboundary_condition(name='top_boundary_force',
+                                         region='top_boundary',
+                                         geomech='top_boundary_force'))
+            self.add(pboundary_condition(name='top_internal_force',
+                                         region='top_internal',
+                                         geomech='top_internal_force'))
+
     def generate_geomech_grid(self):
         x_verts = self.grid.nxyz[0] + 2
         y_verts = self.grid.nxyz[1] + 2
@@ -6572,17 +6720,17 @@ class pdata(object):
 
         # Writing list of all vertices
         all_nodes = []
-        print('--> Writing geomechanics mesh files')
-        print('--> Writing vertices')
+#        print('--> Writing geomechanics mesh files')
+#        print('--> Writing vertices')
         fid = open('all.vset', 'w')
         for i in range(1, Total_verts + 1):
             fid.write('%i\n' % i)
             all_nodes.append(i)
         fid.close()
-        print('--> Finished writing all.vset')
+#        print('--> Finished writing all.vset')
 
         # Writing mesh file
-        print('--> Writing usg file')
+#        print('--> Writing usg file')
         fid = open('usg.mesh', 'w')
         fid.write('%i %i\n' % (N_cells, Total_verts))
         for id in range(count):
@@ -6598,33 +6746,33 @@ class pdata(object):
             fid.write('%f %f %f\n' %
                       (Coord[id, 0], Coord[id, 1], Coord[id, 2]))
         fid.close()
-        print('--> Finished writing usg.mesh')
+#        print('--> Finished writing usg.mesh')
 
         # Writing vertex numbers on faces
         # Bottom (z=z_min)
         bottom = []
-        print('--> Writing bottom vertices')
+#        print('--> Writing bottom vertices')
         fid = open('bottom.vset', 'w')
         for i in range(1, x_verts * y_verts + 1):
             fid.write('%i\n' % i)
             bottom.append(i)
         fid.close()
-        print('--> Finished writing bottom.vset')
+#        print('--> Finished writing bottom.vset')
 
         # Top (z=z_max)
         top = []
-        print('--> Writing top vertices')
+#        print('--> Writing top vertices')
         fid = open('top.vset', 'w')
-        for i in range(x_verts * y_verts * (z_verts - 1),
+        for i in range(x_verts * y_verts * (z_verts - 1) + 1,
                        x_verts * y_verts * z_verts + 1):
             fid.write('%i\n' % i)
             top.append(i)
         fid.close()
-        print('--> Finished writing top.vset')
+#        print('--> Finished writing top.vset')
 
         # North (y=y_max)
         north = []
-        print('--> Writing north vertices')
+#        print('--> Writing north vertices')
         fid = open('north.vset', 'w')
         for i in range(1, x_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6633,11 +6781,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 north.append(id)
         fid.close()
-        print('--> Finished writing north.vset')
+#        print('--> Finished writing north.vset')
 
         # South (y=y_min)
         south = []
-        print('--> Writing south vertices')
+#        print('--> Writing south vertices')
         fid = open('south.vset', 'w')
         for i in range(1, x_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6646,11 +6794,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 south.append(id)
         fid.close()
-        print('--> Finished writing south.vset')
+#        print('--> Finished writing south.vset')
 
         # East (x=x_max)
         east = []
-        print('--> Writing east vertices')
+#        print('--> Writing east vertices')
         fid = open('east.vset', 'w')
         for j in range(1, y_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6659,11 +6807,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 east.append(id)
         fid.close()
-        print('--> Finished writing east.vset')
+#        print('--> Finished writing east.vset')
 
         # West (x=x_min)
         west = []
-        print('--> Writing west vertices')
+#        print('--> Writing west vertices')
         fid = open('west.vset', 'w')
         for j in range(1, y_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6672,7 +6820,7 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 west.append(id)
         fid.close()
-        print('--> Finished writing west.vset')
+#        print('--> Finished writing west.vset')
 
         # Create a subdirectory
         d = self.geomech_grid.dirname
@@ -6686,7 +6834,7 @@ class pdata(object):
         if failure:
             print 'Unable to move *.vset, *.mesh files to subdirectory'
             sys.exit(1)
-        print('--> Finished with moving files to dat directory')
+#        print('--> Finished with moving files to dat directory')
 
         all_nodes = set(all_nodes) - set(east)
         all_nodes = all_nodes - set(west)
@@ -6699,8 +6847,8 @@ class pdata(object):
         # sort them in ascending manner
         internal_nodes = sorted(internal_nodes, key=int)
 
-        print('--> Done with identifying internal nodes in geomech mesh')
-        print('--> Writing the mapping')
+#        print('--> Done with identifying internal nodes in geomech mesh')
+#        print('--> Writing the mapping')
 
         # The mapping is as follows:
         #  flow mesh     geomech mesh
@@ -6719,4 +6867,4 @@ class pdata(object):
 
         fid.close()
 
-        print('--> Done writing geomechanics mesh files!')
+#        print('--> Done writing geomechanics mesh files!')

@@ -5125,7 +5125,7 @@ class pdata(object):
                             for flow_val in a_flow.valuelist:
                                 outfile.write(' ' + strD(flow_val))
                         if a_flow.unit:
-                            outfile.write(' ' + a_flow.unit.lower())
+                            outfile.write(' ' + a_flow.unit.upper()) # pyflotran gives an error with lower case for celcius (c) unit.
                         outfile.write('\n')
                     elif a_flow.list:
                         outfile.write(

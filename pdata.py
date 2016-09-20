@@ -81,7 +81,7 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
                             'geomechanics_subsurface']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
-                      'th freezing', 'immis']
+                      'th freezing', 'immis', 'general']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'unstructured_explicit',
@@ -991,13 +991,20 @@ class psimulation(Frozen):
 
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
                  subsurface_transport='', mode='richards',
-                 flowtran_coupling='', geomechanics_subsurface='geomech'):
+                 flowtran_coupling='', geomechanics_subsurface='geomech',
+                 isothermal='', max_pressure_change='', max_saturation_change='',
+                 max_temperature_change='', max_concentration_change=''):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
         self.flowtran_coupling = flowtran_coupling
         self.geomechanics_subsurface = geomechanics_subsurface
         self.mode = mode
+        self.isothermal = isothermal
+        self.max_saturation_change = max_saturation_change
+        self.max_temperature_change = max_temperature_change
+        self.max_pressure_change = max_pressure_change
+        self.max_concentration_change = max_concentration_change
         self._freeze()
 
 
@@ -3156,7 +3163,19 @@ class pdata(object):
             outfile.write('    SUBSURFACE_FLOW ' +
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
-                outfile.write('      MODE ' + simulation.mode + '\n')
+                outfile.write('      MODE ' + simulation.mode.upper() + '\n')
+                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change\
+                        or simulation.max_saturation_change:
+                    outfile.write('      OPTIONS\n')
+                    if simulation.isothermal:
+                        outfile.write('          ISOTHERMAL\n')
+                    if simulation.max_pressure_change:
+                        outfile.write('          MAXIMUM_PRESSURE_CHANGE ' +
+                                      strD(simulation.max_pressure_change) + '\n')
+                    if simulation.max_saturation_change:
+                        outfile.write('          MAX_SATURATION_CHANGE ' +
+                                      strD(simulation.max_saturation_change) + '\n')
+                    outfile.write('      /\n')
             else:
                 print '       valid simulation.mode:', mode_names_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
@@ -3165,6 +3184,7 @@ class pdata(object):
             outfile.write('    / ' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
+            outfile.write('      GLOBAL_IMPLICIT ' + '\n')
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
@@ -3177,6 +3197,18 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode + '\n')
+                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change\
+                        or simulation.max_saturation_change:
+                    outfile.write('      OPTIONS\n')
+                    if simulation.isothermal:
+                        outfile.write('          ISOTHERMAL\n')
+                    if simulation.max_pressure_change:
+                        outfile.write('          MAXIMUM_PRESSURE_CHANGE ' +
+                                      strD(simulation.max_pressure_change) + '\n')
+                    if simulation.max_saturation_change:
+                        outfile.write('          MAX_SATURATION_CHANGE ' +
+                                      strD(simulation.max_saturation_change) + '\n')
+                    outfile.write('      /\n')
             else:
                 print('simulation.mode: \'' +
                       simulation.mode + '\' is invalid!')

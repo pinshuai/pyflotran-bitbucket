@@ -9,6 +9,7 @@ from pdflt import *
 import math
 import shutil
 import matplotlib as mpl
+
 mpl.use('Agg')
 from matplotlib import pyplot as plt
 
@@ -54,7 +55,6 @@ except KeyError:
     print('PFLOTRAN_DIR must point to PFLOTRAN installation' +
           'directory and be defined in system environment variables.')
     sys.exit(1)
-
 
 rc('text', usetex=True)
 plt.rcParams['font.family'] = ['sans-serif']
@@ -219,7 +219,6 @@ class puniform_velocity(Frozen):
             value_list = []
         self.value_list = value_list
         self._freeze()
-
 
 class pnonuniform_velocity(Frozen):
     """
@@ -963,7 +962,7 @@ class pgrid(Frozen):
             # position relative to center of rotation
             old_pos = np.array(nd[0:2]) - np.array(center)
             theta_f = math.atan2(old_pos[1], old_pos[
-                                 0]) + angle / 180. * math.pi
+                0]) + angle / 180. * math.pi
             dist = np.sqrt(np.dot(old_pos, old_pos))
             new_pos = [dist * math.cos(theta_f), dist * math.sin(theta_f)]
             nd[0] = new_pos[0] + center[0]
@@ -2018,7 +2017,6 @@ class pconstraint_mineral(Frozen):
 
 
 class pquake(Frozen):
-
     """Class for specifying pflotran-qk3 related information
        :param mapping_file: Name of the mapping file
        :type name: str
@@ -2037,7 +2035,6 @@ class pquake(Frozen):
 
 
 class pgeomech_subsurface_coupling(Frozen):
-
     """Class for specifying geomechanics-flow coupling
        :param mapping_file: Name of the mapping file
        :type name: str
@@ -2076,7 +2073,6 @@ class pgeomech_material(Frozen):
     def __init__(self, id=1, name='default', density='', youngs_modulus='',
                  poissons_ratio='', biot_coefficient='',
                  thermal_expansion_coefficient=''):
-
         self.id = id
         self.name = name
         self.density = density
@@ -2101,7 +2097,6 @@ class pgeomech_grid(Frozen):
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, dirname='geomech_dat',
                  gravity=[0.0, 0.0, -9.81]):
-
         self.gravity = gravity
         self.dirname = dirname
         self._freeze()
@@ -2358,25 +2353,25 @@ class pdata(object):
         else:
             if num_realizations > 1:
                 arg = 'mpirun -np ' + str(num_procs) + ' ' + \
-                    exe_path.full_path + ' -pflotranin ' + \
-                    self._path.filename + \
-                    ' -stochastic -num_realizations ' + \
-                    str(num_realizations) + \
-                    ' -num_groups ' + str(num_groups)
+                      exe_path.full_path + ' -pflotranin ' + \
+                      self._path.filename + \
+                      ' -stochastic -num_realizations ' + \
+                      str(num_realizations) + \
+                      ' -num_groups ' + str(num_groups)
             else:
                 arg = 'mpirun -np ' + \
-                    str(num_procs) + ' ' + exe_path.full_path + \
-                    ' -pflotranin ' + self._path.filename
+                      str(num_procs) + ' ' + exe_path.full_path + \
+                      ' -pflotranin ' + self._path.filename
             run_popen(arg)
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + \
-                    self._path.filename
+                      self._path.filename
                 run_popen(arg)
             else:
                 arg = 'mpirun -np ' + str(num_procs) + ' ' + \
-                    exe_path.full_path + ' -input_prefix ' + \
+                      exe_path.full_path + ' -input_prefix ' + \
                       self._path.filename
                 run_popen(arg)
 
@@ -2450,7 +2445,7 @@ class pdata(object):
                 var = var.replace(" ", "_")
             if found:
                 print 'Plotting variable [' + var + '] in [' + \
-                    direction + '] direction'
+                      direction + '] direction'
             fig.savefig(plot_filename + '_' + var + '.pdf')
 
         return 0
@@ -2597,7 +2592,7 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint],
-                           ))
+        ))
         # associate each card name with
         # a read function, defined further below
 
@@ -3164,7 +3159,7 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode.upper() + '\n')
-                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change\
+                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change \
                         or simulation.max_saturation_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
@@ -3197,7 +3192,7 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode + '\n')
-                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change\
+                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change \
                         or simulation.max_saturation_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
@@ -3602,9 +3597,9 @@ class pdata(object):
             if prop.id in self.prop.keys():
                 if not overwrite:
                     warning = 'A material property with id ' + \
-                        str(prop.id) + ' already exists. Prop ' + \
-                        'will not be defined, use overwrite ' + \
-                        '= True in add() to overwrite the old prop.'
+                              str(prop.id) + ' already exists. Prop ' + \
+                              'will not be defined, use overwrite ' + \
+                              '= True in add() to overwrite the old prop.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3918,10 +3913,10 @@ class pdata(object):
             if lsolver.name in self.lsolver.keys():
                 if not overwrite:
                     warning = 'WARNING: A linear solver with name ' + \
-                        str(lsolver.name) + ' already exists. ' + \
-                        'lsolver will not be defined, ' + \
-                        'use overwrite = True in add() ' + \
-                        'to overwrite the old lsolver.'
+                              str(lsolver.name) + ' already exists. ' + \
+                              'lsolver will not be defined, ' + \
+                              'use overwrite = True in add() ' + \
+                              'to overwrite the old lsolver.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -3989,10 +3984,10 @@ class pdata(object):
             if nsolver.name in self.nsolver.keys():
                 if not overwrite:
                     warning = 'WARNING: A newton solver with name ' + \
-                        str(nsolver.name) + '\' already exists. ' + \
-                        'nsolver will not be defined, ' + \
-                        'use overwrite = True in add()' + \
-                        ' to overwrite the old nsolver.'
+                              str(nsolver.name) + '\' already exists. ' + \
+                              'nsolver will not be defined, ' + \
+                              'use overwrite = True in add()' + \
+                              ' to overwrite the old nsolver.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4337,9 +4332,9 @@ class pdata(object):
             if sat.name in self.saturation.keys():
                 if not overwrite:
                     warning = 'WARNING: A saturation function with name \'' + \
-                        str(sat.name) + '\' already exists. ' + \
-                        ' Use overwrite = True in add() ' + \
-                        ' to overwrite the old saturation function.'
+                              str(sat.name) + '\' already exists. ' + \
+                              ' Use overwrite = True in add() ' + \
+                              ' to overwrite the old saturation function.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4381,11 +4376,11 @@ class pdata(object):
                 outfile.write('  RESIDUAL_SATURATION ' +
                               strD(sat.residual_saturation) + '\n')
             if sat.residual_saturation_liquid or \
-                    sat.residual_saturation_liquid == 0:
+                            sat.residual_saturation_liquid == 0:
                 outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' +
                               strD(sat.residual_saturation_liquid) + '\n')
-            if sat.residual_saturation_gas or\
-                    sat.residual_saturation_gas == 0:
+            if sat.residual_saturation_gas or \
+                            sat.residual_saturation_gas == 0:
                 outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' +
                               strD(sat.residual_saturation_gas) + '\n')
             if sat.a_lambda:
@@ -4503,11 +4498,11 @@ class pdata(object):
         if isinstance(char, pcharacteristic_curves):
             if char.name in self.char.keys():
                 if not overwrite:
-                    warning = 'WARNING: A Characteristic Curve with name \'' +\
-                        str(char.name) + '\' already exists.' + \
-                        'Characteristic curve will not be defined, ' + \
-                        ' use overwrite = True ' 'in add() to' + \
-                        'overwrite the old characteristic curve.'
+                    warning = 'WARNING: A Characteristic Curve with name \'' + \
+                              str(char.name) + '\' already exists.' + \
+                              'Characteristic curve will not be defined, ' + \
+                              ' use overwrite = True ' 'in add() to' + \
+                              'overwrite the old characteristic curve.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4546,12 +4541,12 @@ class pdata(object):
                 if char.sf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
                 if char.sf_liquid_residual_saturation or \
-                        char.sf_liquid_residual_saturation == 0:
+                                char.sf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                   strD(char.sf_liquid_residual_saturation) +
                                   '\n')
                 if char.sf_gas_residual_saturation or \
-                        char.sf_gas_residual_saturation == 0:
+                                char.sf_gas_residual_saturation == 0:
                     outfile.write('   GAS_RESIDUAL_SATURATION ' +
                                   strD(char.sf_gas_residual_saturation) + '\n')
                 if char.max_capillary_pressure:
@@ -4584,7 +4579,7 @@ class pdata(object):
                 if char.lpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
                 if char.lpf_liquid_residual_saturation or \
-                        char.lpf_liquid_residual_saturation == 0:
+                                char.lpf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                   strD(char.lpf_liquid_residual_saturation) +
                                   '\n')
@@ -4609,12 +4604,12 @@ class pdata(object):
                 if char.gpf_lambda:
                     outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
                 if char.gpf_liquid_residual_saturation or \
-                        char.gpf_liquid_residual_saturation == 0:
+                                char.gpf_liquid_residual_saturation == 0:
                     outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                   strD(char.gpf_liquid_residual_saturation) +
                                   '\n')
                 if char.gpf_gas_residual_saturation or \
-                        char.gpf_gas_residual_saturation == 0:
+                                char.gpf_gas_residual_saturation == 0:
                     outfile.write('   GAS_RESIDUAL_SATURATION ' +
                                   strD(char.gpf_gas_residual_saturation) +
                                   '\n')
@@ -4670,9 +4665,9 @@ class pdata(object):
             if region.name in self.region.keys():
                 if not overwrite:
                     warning = 'WARNING: A region with name \'' + \
-                        str(region.name) + '\' already exists. Region will' + \
-                        'not be defined, use overwrite = ' + \
-                        'True in add() to overwrite the old region.'
+                              str(region.name) + '\' already exists. Region will' + \
+                              'not be defined, use overwrite = ' + \
+                              'True in add() to overwrite the old region.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4698,8 +4693,8 @@ class pdata(object):
                 else:
                     if region.face:
                         outfile.write('  FACE ' + region.face.lower() + '\n')
-                # no if statement below to ensure 0's are accepted for
-                # coordinates
+                        # no if statement below to ensure 0's are accepted for
+                        # coordinates
                     if region.point_list:
                         for point in region.point_list:
                             outfile.write('  COORDINATE ')
@@ -4742,10 +4737,10 @@ class pdata(object):
             if observation.region in self.observation.keys():
                 if not overwrite:
                     warning = 'WARNING: A observation with region \'' + \
-                        str(observation.region) + '\' already ' \
-                        'exists. Observation will not be defined,' + \
-                        ' use overwrite = True in add() to overwrite' + \
-                        'the old observation.'
+                              str(observation.region) + '\' already ' \
+                                                        'exists. Observation will not be defined,' + \
+                              ' use overwrite = True in add() to overwrite' + \
+                              'the old observation.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4798,7 +4793,7 @@ class pdata(object):
                 # can be read before loop terminates.
 
             elif key == 'rate' or key == 'pressure' or \
-                key == 'temperature' or key == 'concentration' or key == \
+                            key == 'temperature' or key == 'concentration' or key == \
                     'enthalpy' or key == 'flux':
                 if end_count == 0:
                     '''
@@ -4841,7 +4836,7 @@ class pdata(object):
                             for var in flow.varlist:  # var represents
                                 # a pflow_variable object
                                 if tstring2name.lower() == var.name.lower():
-                                    if line[0] == ':' or line[0] == '#'\
+                                    if line[0] == ':' or line[0] == '#' \
                                             or line[0] == '/':
                                         pass  # ignore a commented line
                                     # line[0] == '/' is a temporary fix
@@ -4859,9 +4854,9 @@ class pdata(object):
                                         tvarlist.data_unit_value_list.append(
                                             floatD(tstring2[1]))
                                         if len(tstring2) > 2:
-                                            tvarlist.\
+                                            tvarlist. \
                                                 data_unit_value_list.append(
-                                                    floatD(tstring2[2]))
+                                                floatD(tstring2[2]))
                                         var.list.append(tvarlist)
                             if line.split()[0] in ['/', 'end']:
                                 keep_reading_list = False
@@ -4914,10 +4909,10 @@ class pdata(object):
             if flow.name in self.flow.keys():
                 if not overwrite:
                     warning = 'WARNING: A flow with name \'' + \
-                        str(flow.name) + \
-                        '\' already exists. Flow will not be ' + \
-                        'defined, use overwrite = True in add() ' +\
-                        ' to overwrite the old flow.'
+                              str(flow.name) + \
+                              '\' already exists. Flow will not be ' + \
+                              'defined, use overwrite = True in add() ' + \
+                              ' to overwrite the old flow.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -4965,19 +4960,19 @@ class pdata(object):
                 if not overwrite:
                     warning = 'WARNING: A flow_variable with name \'' + str(
                         flow_variable.name) + \
-                        '\' already exists in flow with name \'' + \
-                        str(flow.name) + \
-                        '\'. Flow_variable will not be defined, ' + \
-                        'use overwrite = True in add() to ' + \
-                        'overwrite the old flow_variable. ' + \
-                        'Use flow=\'name\' if you want to specify the ' + \
-                        'flow object to add flow_variable to.'
+                              '\' already exists in flow with name \'' + \
+                              str(flow.name) + \
+                              '\'. Flow_variable will not be defined, ' + \
+                              'use overwrite = True in add() to ' + \
+                              'overwrite the old flow_variable. ' + \
+                              'Use flow=\'name\' if you want to specify the ' + \
+                              'flow object to add flow_variable to.'
                     print warning,
                     build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.flow_variable(flow)[
-                                flow_variable.name], flow)
+                                    flow_variable.name], flow)
 
         # Add flow_variable to flow (as a sub-class) if flow_variable does
         # not exist in specified flow object
@@ -5000,7 +4995,7 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print '       valid ' + \
-                        'flow_condition pressure_types_allowed:', \
+                          'flow_condition pressure_types_allowed:', \
                         pressure_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' + condition_type +
@@ -5011,7 +5006,7 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print '       valid ' + \
-                        'flow_condition flux_types_allowed:', \
+                          'flow_condition flux_types_allowed:', \
                         flux_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' + condition_type +
@@ -5042,7 +5037,7 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print '       valid flow_condition ' + \
-                        'temperature_types_allowed:', \
+                          'temperature_types_allowed:', \
                         temperature_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' + condition_type +
@@ -5053,7 +5048,7 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print '       valid flow_condition ' + \
-                        'concentration_types_allowed:', \
+                          'concentration_types_allowed:', \
                         concentration_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' + condition_type +
@@ -5064,9 +5059,9 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print 'PyFLOTRAN ERROR: flow.varlist.type: \'' + \
-                        condition_type + '\' is invalid.'
+                          condition_type + '\' is invalid.'
                     print '       valid flow_condition ' + \
-                        'saturation_types_allowed:', \
+                          'saturation_types_allowed:', \
                         saturation_types_allowed, '\n'
                 return 0  # Break out of function
             elif condition_name.upper() == 'ENTHALPY':
@@ -5074,7 +5069,7 @@ class pdata(object):
                     outfile.write(condition_type.lower())
                 else:
                     print '       valid flow_condition ' + \
-                        'enthalpy_types_allowed:', \
+                          'enthalpy_types_allowed:', \
                         enthalpy_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' +
@@ -5119,7 +5114,7 @@ class pdata(object):
                         outfile.write('    GRADIENT\n')
                         outfile.write('      ' + flow.gradient[0].upper() +
                                       ' ' + str(flow.gradient[1]) + ' ' + str(
-                                      flow.gradient[2]) + ' ' +
+                            flow.gradient[2]) + ' ' +
                                       str(flow.gradient[3]) + '\n')
                         outfile.write('    /\n')
                 # Following code is paired w/ this statement.
@@ -5157,7 +5152,8 @@ class pdata(object):
                             for flow_val in a_flow.valuelist:
                                 outfile.write(' ' + strD(flow_val))
                         if a_flow.unit:
-                            outfile.write(' ' + a_flow.unit.upper()) # pyflotran gives an error with lower case for celcius (c) unit.
+                            outfile.write(
+                                ' ' + a_flow.unit.upper())  # pyflotran gives an error with lower case for celcius (c) unit.
                         outfile.write('\n')
                     elif a_flow.list:
                         outfile.write(
@@ -5211,23 +5207,23 @@ class pdata(object):
 
     def _add_initial_condition(self, initial_condition=pinitial_condition(),
                                overwrite=False):
-                                # Adds a initial_condition object.
+        # Adds a initial_condition object.
         # check if flow already exists
         if isinstance(initial_condition, pinitial_condition):
             if initial_condition.region in self.initial_condition.keys():
                 if not overwrite:
-                    warning = 'WARNING: A initial_condition with region \'' +\
-                        str(initial_condition.region) + \
-                        '\' already exists. initial_condition will ' + \
-                        'not be defined, use ' + \
-                        'overwrite = True in add() to overwrite ' + \
-                        'the old initial_condition.'
+                    warning = 'WARNING: A initial_condition with region \'' + \
+                              str(initial_condition.region) + \
+                              '\' already exists. initial_condition will ' + \
+                              'not be defined, use ' + \
+                              'overwrite = True in add() to overwrite ' + \
+                              'the old initial_condition.'
                     print warning,
                     build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.initial_condition[
-                                initial_condition.region])
+                        initial_condition.region])
 
         if initial_condition not in self.initial_condition_list:
             self.initial_condition_list.append(initial_condition)
@@ -5299,18 +5295,18 @@ class pdata(object):
         if isinstance(boundary_condition, pboundary_condition):
             if boundary_condition.region in self.boundary_condition.keys():
                 if not overwrite:
-                    warning = 'WARNING: A boundary_condition with region \'' +\
-                        str(boundary_condition.region) + '\'' + \
-                        ' already exists. boundary_condition will ' + \
-                        ' not be defined, use overwrite = ' + \
-                        'True in add()' + \
-                        'to overwrite the old boundary_condition.'
+                    warning = 'WARNING: A boundary_condition with region \'' + \
+                              str(boundary_condition.region) + '\'' + \
+                              ' already exists. boundary_condition will ' + \
+                              ' not be defined, use overwrite = ' + \
+                              'True in add()' + \
+                              'to overwrite the old boundary_condition.'
                     print warning,
                     build_warnings.append(warning)
                     return
                 else:
                     self.delete(self.boundary_condition[
-                                boundary_condition.region])
+                        boundary_condition.region])
 
         if boundary_condition not in self.boundary_condition_list:
             self.boundary_condition_list.append(boundary_condition)
@@ -5384,10 +5380,10 @@ class pdata(object):
             if source_sink.region in self.source_sink.keys():
                 if not overwrite:
                     warning = 'WARNING: A source_sink with region \'' + \
-                        str(source_sink.region) + '\' already exists. ' + \
-                        'source_sink will not be defined,' + \
-                        ' use overwrite = True ' + \
-                        'in add() to overwrite the old source_sink.'
+                              str(source_sink.region) + '\' already exists. ' + \
+                              'source_sink will not be defined,' + \
+                              ' use overwrite = True ' + \
+                              'in add() to overwrite the old source_sink.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5448,10 +5444,10 @@ class pdata(object):
             if strata.region in self.strata.keys():
                 if not overwrite:
                     warning = 'WARNING: A strata with name \'' + \
-                        str(strata.region) + \
-                        '\' already exists. strata will' + \
-                        'not be defined, use overwrite = True in' + \
-                        ' add() to overwrite the old strata.'
+                              str(strata.region) + \
+                              '\' already exists. strata will' + \
+                              'not be defined, use overwrite = True in' + \
+                              ' add() to overwrite the old strata.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5621,9 +5617,9 @@ class pdata(object):
             if dat.name in self.dataset.keys():
                 if not overwrite:
                     warning = 'WARNING: A dataset with name \'' + \
-                        str(dat.name) + '\' already exists. ' + \
-                        'Use overwrite = True in add() to overwrite' + \
-                        'the old dataset.'
+                              str(dat.name) + '\' already exists. ' + \
+                              'Use overwrite = True in add() to overwrite' + \
+                              'the old dataset.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -5753,12 +5749,12 @@ class pdata(object):
             if m_kinetic.name in self.m_kinetic.keys():
                 if not overwrite:
                     warning = 'WARNING: A m_kinetic with name \'' + \
-                        str(m_kinetic.name) + '\' already exists in ' + \
-                        'chemistry. Mineral_Kinetic ' + \
-                        'will not be defined, use ' + \
-                        'overwrite = True in add() ' + \
-                        'to overwrite the old ' + \
-                        'm_kinetic.'
+                              str(m_kinetic.name) + '\' already exists in ' + \
+                              'chemistry. Mineral_Kinetic ' + \
+                              'will not be defined, use ' + \
+                              'overwrite = True in add() ' + \
+                              'to overwrite the old ' + \
+                              'm_kinetic.'
                     print warning
                     print
                     build_warnings.append(warning)
@@ -5913,11 +5909,11 @@ class pdata(object):
             if transport.name in self.transport.keys():
                 if not overwrite:
                     warning = 'WARNING: A transport with name \'' + \
-                        str(transport.name) + '\' already exists.' + \
-                        'transport will not be defined, ' + \
-                        'use overwrite = True in add() to ' + \
-                        'overwrite the' + \
-                        'old transport.'
+                              str(transport.name) + '\' already exists.' + \
+                              'transport will not be defined, ' + \
+                              'use overwrite = True in add() to ' + \
+                              'overwrite the' + \
+                              'old transport.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -6057,11 +6053,11 @@ class pdata(object):
             if constraint.name in self.constraint.keys():
                 if not overwrite:
                     warning = 'WARNING: A constraint with name \'' + \
-                        str(constraint.name) + '\' already exists. ' + \
-                        'constraint will not be defined, ' + \
-                        'use overwrite = True in add() to ' +  \
-                        'overwrite the old ' + \
-                        'constraint.'
+                              str(constraint.name) + '\' already exists. ' + \
+                              'constraint will not be defined, ' + \
+                              'use overwrite = True in add() to ' + \
+                              'overwrite the old ' + \
+                              'constraint.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -6090,8 +6086,8 @@ class pdata(object):
                 if not constraint:
                     # Occurs if index/string is not found in constraint object
                     print 'WARNING: a constraint object with ' + \
-                        'constraint.name', index, 'was not found. ' + \
-                        ' Current found entries are:', \
+                          'constraint.name', index, 'was not found. ' + \
+                                                    ' Current found entries are:', \
                         self.constraint.keys(), \
                         'pconstraint_concentration was not added.\n'
                     return
@@ -6108,17 +6104,17 @@ class pdata(object):
                     self.constraint_concentration(constraint).keys():
                 if not overwrite:
                     warning = 'WARNING: A constraint_concentration ' + \
-                        'with pspecies \'' + \
-                        str(constraint_concentration.pspecies) + \
-                        '\' already exists in constraint with name \'' + \
-                        str(constraint.name) + \
-                        '\'. constraint_concentration will not be ' + \
-                        'defined, use overwrite = True in ' \
-                        'add() to overwrite the old ' + \
-                        'constraint_concentration. ' + \
-                        'Use constraint=\'name\' ' \
-                        'if you want to specify the constraint object to ' \
-                        'add constraint_concentration to.'
+                              'with pspecies \'' + \
+                              str(constraint_concentration.pspecies) + \
+                              '\' already exists in constraint with name \'' + \
+                              str(constraint.name) + \
+                              '\'. constraint_concentration will not be ' + \
+                              'defined, use overwrite = True in ' \
+                              'add() to overwrite the old ' + \
+                              'constraint_concentration. ' + \
+                              'Use constraint=\'name\' ' \
+                              'if you want to specify the constraint object to ' \
+                              'add constraint_concentration to.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -6306,7 +6302,7 @@ class pdata(object):
                 outfile.write('END\n\n')
 
     def _write_geomech_boundary_condition(self, outfile):
-       # self._header(outfile, headers['boundary_condition'])
+        # self._header(outfile, headers['boundary_condition'])
 
         # Write all boundary conditions to file
         try:
@@ -6424,9 +6420,9 @@ class pdata(object):
             if prop.id in self.geomech_prop.keys():
                 if not overwrite:
                     warning = 'A geoemchanics material property with id ' + \
-                        str(prop.id) + ' already exists. Prop ' + \
-                        'will not be defined, use overwrite ' + \
-                        '= True in add() to overwrite the old prop.'
+                              str(prop.id) + ' already exists. Prop ' + \
+                              'will not be defined, use overwrite ' + \
+                              '= True in add() to overwrite the old prop.'
                     print warning,
                     build_warnings.append(warning)
                     return
@@ -6693,7 +6689,7 @@ class pdata(object):
             for file in files:
                 self.add(pregion(name=file[:-5],
                                  filename=self.geomech_grid.dirname +
-                                 '/' + file, pm='geomech'))
+                                          '/' + file, pm='geomech'))
 
             self.add(pboundary_condition(name='top_corner_force',
                                          region='top_corner',
@@ -6726,7 +6722,7 @@ class pdata(object):
             for j in range(1, y_verts + 1):
                 for k in range(1, z_verts + 1):
                     id = i + (j - 1) * x_verts + (k - 1) * \
-                        x_verts * y_verts - 1
+                                                 x_verts * y_verts - 1
                     Coord[id, 0] = (i - 1) * delta_x
                     Coord[id, 1] = (j - 1) * delta_y
                     Coord[id, 2] = (k - 1) * delta_z
@@ -6752,17 +6748,17 @@ class pdata(object):
 
         # Writing list of all vertices
         all_nodes = []
-#        print('--> Writing geomechanics mesh files')
-#        print('--> Writing vertices')
+        # print('--> Writing geomechanics mesh files')
+        #        print('--> Writing vertices')
         fid = open('all.vset', 'w')
         for i in range(1, Total_verts + 1):
             fid.write('%i\n' % i)
             all_nodes.append(i)
         fid.close()
-#        print('--> Finished writing all.vset')
+        #        print('--> Finished writing all.vset')
 
         # Writing mesh file
-#        print('--> Writing usg file')
+        #        print('--> Writing usg file')
         fid = open('usg.mesh', 'w')
         fid.write('%i %i\n' % (N_cells, Total_verts))
         for id in range(count):
@@ -6778,33 +6774,33 @@ class pdata(object):
             fid.write('%f %f %f\n' %
                       (Coord[id, 0], Coord[id, 1], Coord[id, 2]))
         fid.close()
-#        print('--> Finished writing usg.mesh')
+        #        print('--> Finished writing usg.mesh')
 
         # Writing vertex numbers on faces
         # Bottom (z=z_min)
         bottom = []
-#        print('--> Writing bottom vertices')
+        #        print('--> Writing bottom vertices')
         fid = open('bottom.vset', 'w')
         for i in range(1, x_verts * y_verts + 1):
             fid.write('%i\n' % i)
             bottom.append(i)
         fid.close()
-#        print('--> Finished writing bottom.vset')
+        #        print('--> Finished writing bottom.vset')
 
         # Top (z=z_max)
         top = []
-#        print('--> Writing top vertices')
+        #        print('--> Writing top vertices')
         fid = open('top.vset', 'w')
         for i in range(x_verts * y_verts * (z_verts - 1) + 1,
                        x_verts * y_verts * z_verts + 1):
             fid.write('%i\n' % i)
             top.append(i)
         fid.close()
-#        print('--> Finished writing top.vset')
+        #        print('--> Finished writing top.vset')
 
         # North (y=y_max)
         north = []
-#        print('--> Writing north vertices')
+        #        print('--> Writing north vertices')
         fid = open('north.vset', 'w')
         for i in range(1, x_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6813,11 +6809,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 north.append(id)
         fid.close()
-#        print('--> Finished writing north.vset')
+        #        print('--> Finished writing north.vset')
 
         # South (y=y_min)
         south = []
-#        print('--> Writing south vertices')
+        #        print('--> Writing south vertices')
         fid = open('south.vset', 'w')
         for i in range(1, x_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6826,11 +6822,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 south.append(id)
         fid.close()
-#        print('--> Finished writing south.vset')
+        #        print('--> Finished writing south.vset')
 
         # East (x=x_max)
         east = []
-#        print('--> Writing east vertices')
+        #        print('--> Writing east vertices')
         fid = open('east.vset', 'w')
         for j in range(1, y_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6839,11 +6835,11 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 east.append(id)
         fid.close()
-#        print('--> Finished writing east.vset')
+        #        print('--> Finished writing east.vset')
 
         # West (x=x_min)
         west = []
-#        print('--> Writing west vertices')
+        #        print('--> Writing west vertices')
         fid = open('west.vset', 'w')
         for j in range(1, y_verts + 1):
             for k in range(1, z_verts + 1):
@@ -6852,7 +6848,7 @@ class pdata(object):
                 fid.write('%i\n' % id)
                 west.append(id)
         fid.close()
-#        print('--> Finished writing west.vset')
+        #        print('--> Finished writing west.vset')
 
         # Create a subdirectory
         d = self.geomech_grid.dirname
@@ -6866,7 +6862,7 @@ class pdata(object):
         if failure:
             print 'Unable to move *.vset, *.mesh files to subdirectory'
             sys.exit(1)
-#        print('--> Finished with moving files to dat directory')
+        #        print('--> Finished with moving files to dat directory')
 
         all_nodes = set(all_nodes) - set(east)
         all_nodes = all_nodes - set(west)
@@ -6879,8 +6875,8 @@ class pdata(object):
         # sort them in ascending manner
         internal_nodes = sorted(internal_nodes, key=int)
 
-#        print('--> Done with identifying internal nodes in geomech mesh')
-#        print('--> Writing the mapping')
+        #        print('--> Done with identifying internal nodes in geomech mesh')
+        #        print('--> Writing the mapping')
 
         # The mapping is as follows:
         #  flow mesh     geomech mesh
@@ -6899,4 +6895,4 @@ class pdata(object):
 
         fid.close()
 
-#        print('--> Done writing geomechanics mesh files!')
+# print('--> Done writing geomechanics mesh files!')

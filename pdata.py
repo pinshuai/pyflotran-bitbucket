@@ -5527,18 +5527,17 @@ class pdata(object):
         outfile.write('RESTART ' + str(restart.file_name) + ' ')
 
         # Write time value
-        if restart.time_value:
-            try:
-                # error-checking
-                restart.time_value = floatD(restart.time_value)
+        try:
+            # error-checking
+            restart.time_value = floatD(restart.time_value)
 
-                # writing
-                outfile.write(strD(restart.time_value) + ' ')
-            except:
-                # writing
-                outfile.write(strD(restart.time_value) + ' ')
+            # writing
+            outfile.write(strD(restart.time_value) + ' ')
+        except:
+            # writing
+            outfile.write(strD(restart.time_value) + ' ')
 
-                raise PyFLOTRAN_ERROR('restart.time_value is not float.')
+            raise PyFLOTRAN_ERROR('restart.time_value is not float.')
 
         # Write time unit of measurement
         if restart.time_unit:

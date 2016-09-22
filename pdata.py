@@ -220,6 +220,7 @@ class puniform_velocity(Frozen):
         self.value_list = value_list
         self._freeze()
 
+
 class pnonuniform_velocity(Frozen):
     """
     Class for specifiying nonuniform velocity with transport. Optional
@@ -971,6 +972,46 @@ class pgrid(Frozen):
             self._nodelist = nodes
 
 
+class pcheckpoint(Frozen):
+    """
+    Class for specifying checkpoint options.
+
+    :param frequency: Checkpoint dump frequency.
+    :type frequency: int
+    :param overwrite: Intended to be used for the PFLOTRAN keyword
+     OVERWRITE_RESTART_FLOW_PARAMS.
+    :type overwrite: bool - True or False
+    """
+
+    def __init__(self, frequency=None, overwrite=False):
+        self.frequency = frequency  # int
+        # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how
+        # to write it.
+        self.overwrite = overwrite
+        self._freeze()
+
+
+class prestart(Frozen):
+    """
+    Class for restarting a simulation.
+
+    :param file_name: Specify file path and name for restart.chk file.
+    :type file_name: str
+    :param time_value: Specify time value.
+    :type time_value: float
+    :param time_unit: Specify unit of measurement to use for time.
+     Options include: 's', 'sec','m', 'min', 'h', 'hr',
+     'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
+    :type time_unit: str
+    """
+
+    def __init__(self, file_name='', time_value=None, time_unit=''):
+        self.file_name = file_name  # restart.chk file name
+        self.time_value = time_value  # float
+        self.time_unit = time_unit  # unit of measurement to use for time - str
+        self._freeze()
+
+
 class psimulation(Frozen):
     """
     Class for specifying simulation type and simulation mode.
@@ -986,13 +1027,31 @@ class psimulation(Frozen):
     :type mode: str
     :param flowtran_coupling: Specify the type for the flow transport coupling
     :type mode: str
+    :param isothermal: Turn on isothermal case
+    :type mode: bool
+    :param max_saturation_change: Set maximum saturation change in timestepping
+    :type mode: float
+    :param max_temperature_change: Set maximum temperature change in timestepping
+    :type mode: float
+    :param max_pressure_change: Set maximum pressure change in timestepping
+    :type mode: float
+    :param max_concentration_change: Set maximum concentration change in timestepping
+    :type mode: float
+    :param max_cfl: Set maximum CFL number
+    :type mode: float
+    :param numerical_derivatives: Turn this on if you want numerical derivatives in Jacobian
+    :type mode: bool
+    :param pressure_dampening_factor: Specify the dampening factor value
+    :type mode: float
     """
 
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
                  subsurface_transport='', mode='richards',
                  flowtran_coupling='', geomechanics_subsurface='geomech',
                  isothermal='', max_pressure_change='', max_saturation_change='',
-                 max_temperature_change='', max_concentration_change=''):
+                 max_temperature_change='', max_concentration_change='',
+                 max_cfl='', numerical_derivatives='', pressure_dampening_factor='',
+                 restart=prestart()):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -1004,6 +1063,11 @@ class psimulation(Frozen):
         self.max_temperature_change = max_temperature_change
         self.max_pressure_change = max_pressure_change
         self.max_concentration_change = max_concentration_change
+        self.max_cfl = max_cfl
+        self.numerical_derivatives = numerical_derivatives
+        self.pressure_dampening_factor = pressure_dampening_factor
+        self.restart = restart
+        self.checkpoint = pcheckpoint()
         self._freeze()
 
 
@@ -1701,46 +1765,6 @@ class pstrata(Frozen):
         self._freeze()
 
 
-class pcheckpoint(Frozen):
-    """
-    Class for specifying checkpoint options.
-
-    :param frequency: Checkpoint dump frequency.
-    :type frequency: int
-    :param overwrite: Intended to be used for the PFLOTRAN keyword
-     OVERWRITE_RESTART_FLOW_PARAMS.
-    :type overwrite: bool - True or False
-    """
-
-    def __init__(self, frequency=None, overwrite=False):
-        self.frequency = frequency  # int
-        # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how
-        # to write it.
-        self.overwrite = overwrite
-        self._freeze()
-
-
-class prestart(Frozen):
-    """
-    Class for restarting a simulation.
-
-    :param file_name: Specify file path and name for restart.chk file.
-    :type file_name: str
-    :param time_value: Specify time value.
-    :type time_value: float
-    :param time_unit: Specify unit of measurement to use for time.
-     Options include: 's', 'sec','m', 'min', 'h', 'hr',
-     'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
-    :type time_unit: str
-    """
-
-    def __init__(self, file_name='', time_value=None, time_unit=''):
-        self.file_name = file_name  # restart.chk file name
-        self.time_value = time_value  # float
-        self.time_unit = time_unit  # unit of measurement to use for time - str
-        self._freeze()
-
-
 class pdataset(Frozen):
     """
     Class for incorporating data within a model.
@@ -1790,16 +1814,20 @@ class pchemistry(Frozen):
     """
     Class for specifying chemistry.
 
-    :param pspecies_list: List of primary species that fully describe the
+    :param primary_species_list: List of primary species that fully describe the
      chemical composition of the fluid. The set of primary species must
      form an independent set of species in terms of which all homogeneous
      aqueous equilibrium reactions can be expressed.
-    :type pspecies_list: [str]
-    :param sec_species_list: List of aqueous species in equilibrium with
+    :type primar_species_list: [str]
+    :param secondary_species_list: List of aqueous species in equilibrium with
      primary species.
-    :type sec_species_list: [str]
+    :type secondary_species_list: [str]
     :param gas_species_list: List of gas species.
     :type gas_species_list: [str]
+    :param passive_gas_species_list: List of passive gas species.
+    :type passive_gas_species: [str]
+    :param active_gas_species: List of active gas species.
+    :type active_gas_species: [str]
     :param minerals_list: List of mineral names.
     :type minerals_list: [str]
     :param m_kinetics_list: List of pchemistry_m_kinetic objects.
@@ -1832,18 +1860,23 @@ class pchemistry(Frozen):
     :type output_list: [str]
     """
 
-    def __init__(self, pspecies_list=None, sec_species_list=None,
+    def __init__(self, primary_species_list=None, secondary_species_list=None,
                  gas_species_list=None, minerals_list=None,
                  m_kinetics_list=None, log_formulation=False, database=None,
                  activity_coefficients=None, molal=False,
                  output_list=None, update_permeability=False,
-                 update_porosity=False):
-        if pspecies_list is None:
-            pspecies_list = []
-        if sec_species_list is None:
-            sec_species_list = []
+                 update_porosity=False, active_gas_species_list=None,
+                 passive_gas_species_list=None):
+        if primary_species_list is None:
+            primary_species_list = []
+        if secondary_species_list is None:
+            secondary_species_list = []
         if gas_species_list is None:
             gas_species_list = []
+        if passive_gas_species_list is None:
+            passive_gas_species_list = []
+        if active_gas_species_list is None:
+            active_gas_species_list = []
         if minerals_list is None:
             minerals_list = []
         if m_kinetics_list is None:
@@ -1851,10 +1884,12 @@ class pchemistry(Frozen):
         if output_list is None:
             output_list = []
         # primary_species (eg. 'A(aq') - string
-        self.pspecies_list = pspecies_list
+        self.primary_species_list = primary_species_list
         # Secondary_species (E.g. 'OH-' - string
-        self.sec_species_list = sec_species_list
+        self.secondary_species_list = secondary_species_list
         self.gas_species_list = gas_species_list  # E.g. 'CO2(g)'
+        self.passive_gas_species_list = passive_gas_species_list  # E.g. 'CO2(g)'
+        self.active_gas_species_list = active_gas_species_list  # E.g. 'CO2(g)'
         self.minerals_list = minerals_list  # E.g. 'Calcite'
         # has pchemistry_m_kinetic assigned to it
         self.m_kinetics_list = m_kinetics_list
@@ -1886,12 +1921,19 @@ class pchemistry_m_kinetic(Frozen):
     """
 
     def __init__(self, name=None, rate_constant_list=None,
-                 activation_energy=None):
+                 activation_energy=None, prefactor_rate_constant_list=None,
+                 prefactor_species_list=None, prefactor_alpha_list=None):
         if rate_constant_list is None:
             rate_constant_list = []
         self.name = name
         self.rate_constant_list = rate_constant_list
         self.activation_energy = activation_energy
+        if prefactor_rate_constant_list is None:
+            self.prefactor_rate_constant_list = []
+        if prefactor_species_list is None:
+            self.prefactor_species_list = []
+        if prefactor_alpha_list is None:
+            self.prefactor_alpha_list = []
         self._freeze()
 
 
@@ -2213,11 +2255,10 @@ class pdata(object):
         self.uniform_velocity = puniform_velocity()
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
+        self.overwrite_restart_transport = False
         self.multiple_continuum = False
         self.regression = pregression()
         self.simulation = psimulation()
-        self.checkpoint = pcheckpoint()
-        self.restart = prestart()
         self.datasetlist = []
         self.chemistry = None
         self.grid = pgrid()
@@ -2702,18 +2743,13 @@ class pdata(object):
             self._write_multiple_continuum(outfile)
 
         if self.overwrite_restart_flow_params:
-            self._write_overwrite_restart(outfile)
+            self._write_overwrite_restart_flow(outfile)
+
+        if self.overwrite_restart_transport:
+            self._write_overwrite_restart_transport(outfile)
 
         if self.reference_temperature:
             self._reference_temperature(outfile)
-
-        if self.checkpoint.frequency:
-            self._write_checkpoint(outfile)
-        # else: print 'info: checkpoint not detected\n'
-
-        if self.restart.file_name:
-            self._write_restart(outfile)
-        # else: print 'info: restart not detected\n'
 
         if self.datasetlist:
             self._write_dataset(outfile)
@@ -3165,11 +3201,23 @@ class pdata(object):
                     if simulation.isothermal:
                         outfile.write('          ISOTHERMAL\n')
                     if simulation.max_pressure_change:
-                        outfile.write('          MAXIMUM_PRESSURE_CHANGE ' +
+                        outfile.write('          MAX_PRESSURE_CHANGE ' +
                                       strD(simulation.max_pressure_change) + '\n')
                     if simulation.max_saturation_change:
                         outfile.write('          MAX_SATURATION_CHANGE ' +
                                       strD(simulation.max_saturation_change) + '\n')
+                    if simulation.max_concentration_change:
+                        outfile.write('          MAX_CONCENTRATION_CHANGE ' +
+                                      strD(simulation.max_concentration_change) + '\n')
+                    if simulation.max_cfl:
+                        outfile.write('          MAX_CFL ' +
+                                      strD(simulation.max_cfl) + '\n')
+                    if simulation.pressure_dampening_factor:
+                        outfile.write('          PRESSURE_DAMPENING_FACTOR ' +
+                                      strD(simulation.pressure_dampening_factor) + '\n')
+                    if simulation.numerical_derivatives:
+                        outfile.write('          NUMERICAL_DERIVATIVES ' +
+                                      strD(simulation.numerical_derivatives) + '\n')
                     outfile.write('      /\n')
             else:
                 print '       valid simulation.mode:', mode_names_allowed, '\n'
@@ -3185,7 +3233,6 @@ class pdata(object):
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
             outfile.write('    / ' + '\n')
             outfile.write('  / ' + '\n')
-            outfile.write('END' + '\n\n')
         elif simulation.subsurface_flow:
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_FLOW ' +
@@ -3213,14 +3260,18 @@ class pdata(object):
                 outfile.write('    GEOMECHANICS_SUBSURFACE ' +
                               simulation.geomechanics_subsurface + '\n')
             outfile.write('  / ' + '\n')
-            outfile.write('END' + '\n\n')
         elif simulation.subsurface_transport:
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
             outfile.write('    / ' + '\n')
             outfile.write('  / ' + '\n')
-            outfile.write('END' + '\n\n')
+        if simulation.restart.file_name:
+            self._write_restart(outfile)
+        if simulation.checkpoint.frequency:
+            self._write_checkpoint(outfile)
+        outfile.write('END' + '\n\n')
+
 
     def _write_subsurface_simulation_begin(self, outfile):
         if self.simulation.subsurface_flow or \
@@ -3235,8 +3286,11 @@ class pdata(object):
     def _read_co2_database(self, infile, line):
         self.co2_database = del_extra_slash(self.splitter(line))
 
-    def _write_overwrite_restart(self, outfile):
+    def _write_overwrite_restart_flow(self, outfile):
         outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
+
+    def _write_overwrite_restart_transport(self, outfile):
+        outfile.write('OVERWRITE_RESTART_TRANSPORT' + '\n\n')
 
     def _write_reference_temperature(self, outfile):
         outfile.write('REFERENCE_TEMPERATURE ' +
@@ -5486,19 +5540,19 @@ class pdata(object):
 
     def _write_checkpoint(self, outfile):
         self._header(outfile, headers['checkpoint'])
-        checkpoint = self.checkpoint
+        checkpoint = self.simulation.checkpoint
 
         try:
             # error-checking to make sure checkpoint.frequency is int (integer)
             checkpoint.frequency = int(checkpoint.frequency)
 
             # write results
-            outfile.write('CHECKPOINT ')
+            outfile.write('  CHECKPOINT ')
             outfile.write(str(checkpoint.frequency))
             outfile.write('\n')
         except ValueError:
             # write results
-            outfile.write('CHECKPOINT ')
+            outfile.write('  CHECKPOINT ')
             outfile.write(str(checkpoint.frequency))
             outfile.write('\n')
 
@@ -5521,10 +5575,10 @@ class pdata(object):
 
     def _write_restart(self, outfile):
         self._header(outfile, headers['restart'])
-        restart = self.restart
+        restart = self.simulation.restart
 
         # write file name
-        outfile.write('RESTART ' + str(restart.file_name) + ' ')
+        outfile.write('  RESTART ' + str(restart.file_name) + ' ')
 
         # Write time value
         try:
@@ -5552,7 +5606,7 @@ class pdata(object):
                                       '\' is invalid. Valid times units are:',
                                       time_units_allowed, '\n')
 
-        outfile.write('\n\n')
+        outfile.write('\n')
 
     def _read_dataset(self, infile, line):
         dataset = pdataset()
@@ -5647,7 +5701,7 @@ class pdata(object):
                     line = infile.readline()  # get next line
                     if line.strip() in ['/', 'end']:
                         break
-                    chem.pspecies_list.append(line.strip())
+                    chem.primary_species_list.append(line.strip())
             elif key == 'skip':
                 keep_reading_1 = True
                 while keep_reading_1:
@@ -5659,7 +5713,7 @@ class pdata(object):
                     line = infile.readline()  # get next line
                     if line.strip() in ['/', 'end']:
                         break
-                    chem.sec_species_list.append(line.strip())
+                    chem.secondary_species_list.append(line.strip())
             elif key == 'gas_species':
                 while True:
                     line = infile.readline()  # get next line
@@ -5775,23 +5829,24 @@ class pdata(object):
         outfile.write('CHEMISTRY\n')
 
         # Write out chemistry variables
-        if not isinstance(c.pspecies_list, list):
+        if not isinstance(c.primary_species_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
-                                  'to pspecies_list!')
-        if c.pspecies_list:
+                                  'to primary_species_list!')
+        if c.primary_species_list:
             outfile.write('  PRIMARY_SPECIES\n')
-            for p in c.pspecies_list:
+            for p in c.primary_species_list:
                 # p = primary_specie in primary_species_list
                 outfile.write('    ' + p + '\n')
             outfile.write('  /\n')
-        if not isinstance(c.sec_species_list, list):
+        if not isinstance(c.secondary_species_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
-                                  'to sec_species_list!')
-        if c.sec_species_list:
+                                  'to secondary_species_list!')
+        if c.secondary_species_list:
             outfile.write('  SECONDARY_SPECIES\n')
-            for s in c.sec_species_list:  # s = secondary_specie
+            for s in c.secondary_species_list:  # s = secondary_specie
                 outfile.write('    ' + s + '\n')
             outfile.write('  /\n')
+
         if not isinstance(c.gas_species_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to gas_species_list!')
@@ -5800,6 +5855,25 @@ class pdata(object):
             for g in c.gas_species_list:  # s = gas_specie
                 outfile.write('    ' + g + '\n')
             outfile.write('  /\n')
+
+        if not isinstance(c.passive_gas_species_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to passive_gas_species_list!')
+        if c.passive_gas_species_list:
+            outfile.write('  PASSIVE_GAS_SPECIES\n')
+            for g in c.passive_gas_species_list:
+                outfile.write('    ' + g + '\n')
+            outfile.write('  /\n')
+
+        if not isinstance(c.active_gas_species_list, list):
+            raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                  'to active_gas_species_list!')
+        if c.active_gas_species_list:
+            outfile.write('  ACTIVE_GAS_SPECIES\n')
+            for g in c.active_gas_species_list:
+                outfile.write('    ' + g + '\n')
+            outfile.write('  /\n')
+
         if not isinstance(c.minerals_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to mineral_list!')
@@ -5820,12 +5894,33 @@ class pdata(object):
                                           'to rate_constant_list!')
                 if mk.rate_constant_list:
                     outfile.write('      RATE_CONSTANT ')
-                for rate in mk.rate_constant_list:
-                    try:
-                        outfile.write(strD(rate) + ' ')
-                    except TypeError:
-                        outfile.write(rate + ' ')
-                outfile.write('\n    /\n')  # marks end for mineral name
+                    for rate in mk.rate_constant_list:
+                        try:
+                            outfile.write(strD(rate) + ' ')
+                        except TypeError:
+                            outfile.write(rate + ' ')
+                    outfile.write('\n')
+
+                if not isinstance(mk.prefactor_rate_constant_list, list):
+                    raise PyFLOTRAN_ERROR('A list needs to be passed ' +
+                                          'to prefactor_rate_constant_list!')
+
+                if mk.prefactor_rate_constant_list:
+                    outfile.write('      PREFACTOR\n')
+                    outfile.write('        RATE_CONSTANT ')
+                    for rate in mk.prefactor_rate_constant_list:
+                        try:
+                            outfile.write(strD(rate) + ' ')
+                        except TypeError:
+                            outfile.write(rate + ' ')
+                    outfile.write('\n')
+                    if mk.prefactor_species_list and mk.prefactor_alpha_list:
+                        for item in zip(mk.prefactor_species_list, mk.prefactor_alpha_list):
+                            outfile.write('        PREFACTOR_SPECIES ' + item[0] + '\n')
+                            outfile.write('          ALPHA ' + strD(item[1]) + '\n')
+                            outfile.write('        /\n')
+                    outfile.write('      /\n')
+                outfile.write('    /\n')  # marks end for mineral name
             outfile.write('  /\n')  # marks end for mineral_kinetics
         if c.database:
             outfile.write('  DATABASE ' + c.database + '\n')
@@ -6748,7 +6843,7 @@ class pdata(object):
         # Writing list of all vertices
         all_nodes = []
         # print('--> Writing geomechanics mesh files')
-        #        print('--> Writing vertices')
+        # print('--> Writing vertices')
         fid = open('all.vset', 'w')
         for i in range(1, Total_verts + 1):
             fid.write('%i\n' % i)

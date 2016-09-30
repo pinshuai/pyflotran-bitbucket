@@ -4784,7 +4784,7 @@ class pdata(object):
                     outfile.write(' FILE ' + region.filename + '\n')
                 else:
                     if region.face:
-                        outfile.write('  FACE ' + region.face.lower() + '\n')
+                        outfile.write('  FACE ' + region.face.upper() + '\n')
                         # no if statement below to ensure 0's are accepted for
                         # coordinates
                     if region.point_list:

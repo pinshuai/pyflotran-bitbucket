@@ -1310,10 +1310,13 @@ class pfluid(Frozen):
     :param diffusion_coefficient: Unit of measurement is [m^2/s].
      Default: 1e-09
     :type diffusion_coefficient: float
+    :param phase: liquid or gas phase
+    :type: str
     """
 
-    def __init__(self, diffusion_coefficient=1.e-9):
+    def __init__(self, diffusion_coefficient=1.e-9, phase=''):
         self.diffusion_coefficient = diffusion_coefficient
+        self.phase = phase
         self._freeze()
 
 
@@ -2268,7 +2271,7 @@ class pdata(object):
         self.lsolverlist = []
         self.nsolverlist = []
         self.output = poutput()
-        self.fluid = pfluid()
+        self.fluidlist = []
         self.saturationlist = []
         self.regionlist = []  # There are multiple regions
         self.charlist = []
@@ -2798,11 +2801,11 @@ class pdata(object):
             raise PyFLOTRAN_ERROR(
                 'output is required, it is currently reading as empty!')
 
-        if self.fluid:
+        if self.fluidlist:
             self._write_fluid(outfile)
         else:
             raise PyFLOTRAN_ERROR(
-                'fluid is required, it is currently reading as empty!')
+                'fluidlist is required, it is currently reading as empty!')
 
         if self.saturationlist:
             self._write_saturation(outfile)
@@ -2900,7 +2903,7 @@ class pdata(object):
                          pflow_variable, pinitial_condition,
                          pboundary_condition, psource_sink, pstrata,
                          ptransport, pconstraint, pconstraint_concentration,
-                         psecondary_continuum]
+                         psecondary_continuum, pfluid]
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
@@ -2930,6 +2933,8 @@ class pdata(object):
             self._add_lsolver(obj, overwrite)
         if isinstance(obj, pnsolver):
             self._add_nsolver(obj, overwrite)
+        if isinstance(obj, pfluid):
+            self._add_fluid(obj, overwrite)
         if isinstance(obj, pregion):
             self._add_region(obj, overwrite)
         if isinstance(obj, pobservation):
@@ -3011,6 +3016,13 @@ class pdata(object):
             for obji in copy(obj):
                 if isinstance(obji, pnsolver):
                     self._delete_nsolver(obji)
+
+        if isinstance(obj, pfluid):
+            self._delete_fluid(obj)
+        elif isinstance(obj, list):
+            for obji in copy(obj):
+                if isinstance(obji, pfluid):
+                    self._delete_fluid(obji)
 
         if isinstance(obj, pobservation):
             self._delete_observation(obj)
@@ -4318,17 +4330,43 @@ class pdata(object):
         new_fluid = pfluid(np_diffusion_coefficient)
         self.fluid = new_fluid
 
+    def _add_fluid(self, fluid=pfluid(), overwrite=False):
+        # check if fluid already exists
+        if isinstance(fluid, pfluid):
+            if fluid.phase in self.fluid.keys():
+                if not overwrite:
+                    warning = 'WARNING: Fluid property phase ' + \
+                              str(fluid.phase) + '\' already exists. ' + \
+                              'fluid will not be defined, ' + \
+                              'use overwrite = True in add()' + \
+                              ' to overwrite the old fluid.'
+                    print warning,
+                    build_warnings.append(warning)
+                    return
+                else:
+                    self.delete(self.fluid[fluid.phase])
+
+        if fluid not in self.fluidlist:
+            self.fluidlist.append(fluid)
+
+    def _delete_fluid(self, fluid=pfluid()):
+        self.pfluidlist.remove(fluid)
+
     def _write_fluid(self, outfile):
         self._header(outfile, headers['fluid_property'])
-        fluid = self.fluid
-        outfile.write('FLUID_PROPERTY\n')
+        for fluid in self.fluidlist:
+            outfile.write('FLUID_PROPERTY\n')
 
-        # Write out requested (not null) fluid properties
-        if fluid.diffusion_coefficient:
-            outfile.write('  DIFFUSION_COEFFICIENT ' +
-                          strD(fluid.diffusion_coefficient) +
-                          '\n')  # Read last entry
-        outfile.write('END\n\n')
+            # Write out requested (not null) fluid properties
+            if fluid.phase:
+                outfile.write('  PHASE ' +
+                              str(fluid.phase) +
+                              '\n')  # Read last entry
+            if fluid.diffusion_coefficient:
+                outfile.write('  DIFFUSION_COEFFICIENT ' +
+                              strD(fluid.diffusion_coefficient) +
+                              '\n')  # Read last entry
+            outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
 
@@ -6584,6 +6622,11 @@ class pdata(object):
     def nsolver(self):
         return dict([nsolv.name, nsolv] for nsolv in self.nsolverlist
                     if nsolv.name)
+
+    @property
+    def fluid(self):
+        return dict([flu.phase, flu] for flu in self.fluidlist
+                    if flu.phase)
 
     @property
     def char(self):

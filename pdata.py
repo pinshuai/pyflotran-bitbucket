@@ -45,7 +45,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 __author__ = "Satish Karra, Cory Kitay"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __maintainer__ = "Satish Karra"
 __email__ = "satkarra@lanl.gov"
 
@@ -127,7 +127,7 @@ characteristic_curves_saturation_function_types_allowed = list(set(
     characteristic_curves_saturation_function_types_allowed + lower_list))
 
 characteristic_curves_gas_permeability_function_types_allowed = [
-    'MAULEM_VG_GAS', 'BURDINE_BC_GAS']
+    'MUALEM_VG_GAS', 'BURDINE_BC_GAS']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_gas_permeability_function_types_allowed]
@@ -136,7 +136,7 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
     characteristic_curves_gas_permeability_function_types_allowed + lower_list))
 
 characteristic_curves_liquid_permeability_function_types_allowed = [
-    'MAULEM', 'BURDINE', 'MUALEM_VG_LIQ']
+    'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -150,7 +150,9 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
 # flow_conditions - allowed strings
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
-                                     'ENTHALPY']
+                                     'ENTHALPY', 'LIQUID_PRESSURE', 'GAS_PRESSURE',
+                                     'LIQUID_FLUX', 'GAS_FLUX', 'MOLE_FRACTION',
+                                     'GAS_SATURATION']
 geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
                                   'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
                                   'FORCE_Z']
@@ -167,6 +169,12 @@ temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient',
                              'neumann']
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 saturation_types_allowed = ['dirichlet']
+mole_fraction_types_allowed = ['dirichlet']
+liquid_pressure_types_allowed = ['dirichlet']
+gas_pressure_types_allowed = ['dirichlet']
+liquid_flux_types_allowed = ['neumann']
+gas_flux_types_allowed = ['neumann']
+gas_saturation_types_allowed = ['dirichlet']
 enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 
 # transport_condition - allowed strings
@@ -2052,12 +2060,15 @@ class pconstraint_mineral(Frozen):
     :type volume_fraction: float
     :param surface_area: Surface area. [m^-1]
     :type surface_area: float
+    :param surface_area_units: Surface area units. [m2/m3 or cm2/cm3]
+    :type str
     """
 
-    def __init__(self, name='', volume_fraction=None, surface_area=None):
+    def __init__(self, name='', volume_fraction=None, surface_area=None, surface_area_units=None):
         self.name = name
         self.volume_fraction = volume_fraction
         self.surface_area = surface_area
+        self.surface_area_units = surface_area_units
         self._freeze()
 
 
@@ -2259,6 +2270,7 @@ class pdata(object):
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
         self.overwrite_restart_transport = False
+        self.isothermal = False
         self.multiple_continuum = False
         self.regression = pregression()
         self.simulation = psimulation()
@@ -2751,8 +2763,11 @@ class pdata(object):
         if self.overwrite_restart_transport:
             self._write_overwrite_restart_transport(outfile)
 
+        if self.isothermal:
+            self._write_isothermal(outfile)
+
         if self.reference_temperature:
-            self._reference_temperature(outfile)
+            self._write_reference_temperature(outfile)
 
         if self.datasetlist:
             self._write_dataset(outfile)
@@ -3303,6 +3318,9 @@ class pdata(object):
 
     def _write_overwrite_restart_transport(self, outfile):
         outfile.write('OVERWRITE_RESTART_TRANSPORT' + '\n\n')
+
+    def _write_isothermal(self, outfile):
+        outfile.write('ISOTHERMAL' + '\n\n')
 
     def _write_reference_temperature(self, outfile):
         outfile.write('REFERENCE_TEMPERATURE ' +
@@ -4804,7 +4822,7 @@ class pdata(object):
                             outfile.write(strD(region.coordinates_upper[i]) +
                                           ' ')
                         outfile.write('\n')
-                        outfile.write('  END\n')
+                        outfile.write('  /\n')
                 outfile.write('END\n\n')
 
     def _read_observation(self, infile):
@@ -5167,6 +5185,72 @@ class pdata(object):
                         'flow.varlist.type: \'' +
                         conition_type + '\' is invalid.')
                 return 0  # Break out of function
+            elif condition_name.upper() == 'MOLE_FRACTION':
+                if condition_type.lower() in mole_fraction_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition mole_fraction_types_allowed:', \
+                        mole_fraction_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'LIQUID_PRESSURE':
+                if condition_type.lower() in liquid_pressure_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition liquid_pressure_types_allowed:', \
+                        liquid_pressure_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'LIQUID_FLUX':
+                if condition_type.lower() in liquid_flux_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition liquid_flux_types_allowed:', \
+                        liquid_flux_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'GAS_PRESSURE':
+                if condition_type.lower() in gas_pressure_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition gas_pressure_types_allowed:', \
+                        gas_pressure_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'GAS_FLUX':
+                if condition_type.lower() in gas_flux_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition gas_flux_types_allowed:', \
+                        gas_flux_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'GAS_SATURATION':
+                if condition_type.lower() in gas_saturation_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print '       valid ' + \
+                          'flow_condition gas_saturation_types_allowed:', \
+                        gas_saturation_types_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
             else:
                 pass
                 # Error reporting for flow_condition.name is done elsewhere
@@ -5226,7 +5310,7 @@ class pdata(object):
                     check_condition_type(a_flow.name, a_flow.type)
                     outfile.write('\n')
 
-                outfile.write('  END\n')
+                outfile.write('  /\n')
                 if flow.iphase:
                     outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
 
@@ -6104,7 +6188,7 @@ class pdata(object):
                                       'should be' +
                                       'in list format, be equal in length, ' +
                                       'and have at least one value.\n')
-            outfile.write('\n  END\n')  # END FOR CONSTRAINT_LIST
+            outfile.write('\n  /\n')  # END FOR CONSTRAINT_LIST
             outfile.write('END\n\n')  # END FOR TRANSPORT_CONDITION
 
     def _read_constraint(self, infile, line):
@@ -6286,15 +6370,15 @@ class pdata(object):
             for concn in c.concentration_list:
                 # concn = concentration, c = constraint
                 if concn.pspecies:
-                    outfile.write('    ' + concn.pspecies)
+                    outfile.write('    ' + concn.pspecies.ljust(10))
                 if concn.value:
-                    outfile.write('  ' + strD(concn.value))
+                    outfile.write('  ' + strD(concn.value).ljust(10))
                 else:
                     raise PyFLOTRAN_ERROR('invalid concentration value!')
                 if concn.constraint:
-                    outfile.write('  ' + concn.constraint)
+                    outfile.write('  ' + concn.constraint.ljust(3))
                 if concn.element:
-                    outfile.write('  ' + concn.element)
+                    outfile.write('  ' + concn.element.ljust(3))
                 outfile.write('\n')
 
             outfile.write('  /\n')  # END for concentrations
@@ -6302,16 +6386,20 @@ class pdata(object):
                 outfile.write('  MINERALS\n')
                 for mineral in c.mineral_list:
                     if mineral.name:
-                        outfile.write('    ' + mineral.name)
+                        outfile.write('    ' + mineral.name.ljust(15))
                     if type(mineral.volume_fraction) is str:
                         outfile.write('  ' + 'DATASET ' +
                                       mineral.volume_fraction)
                     else:
-                        outfile.write('  ' + strD(mineral.volume_fraction))
+                        outfile.write('  ' + strD(mineral.volume_fraction).ljust(5))
                     if type(mineral.surface_area) is str:
                         outfile.write('  ' + 'DATASET ' + mineral.surface_area)
                     else:
-                        outfile.write('  ' + strD(mineral.surface_area))
+                        outfile.write('  ' + strD(mineral.surface_area).ljust(5))
+                    if type(mineral.surface_area_units) is str:
+                        outfile.write('  ' + mineral.surface_area_units.ljust(5))
+                    else:
+                        raise PyFLOTRAN_ERROR('mineral surface area units have to be string!')
                     outfile.write('\n')
                 outfile.write('  /\n')  # END for concentrations
             outfile.write('END\n\n')  # END for constraint

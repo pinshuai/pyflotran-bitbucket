@@ -3257,7 +3257,7 @@ class pdata(object):
                     if simulation.isothermal:
                         outfile.write('        ISOTHERMAL\n')
                     if simulation.max_pressure_change:
-                        outfile.write('        MAXIMUM_PRESSURE_CHANGE ' +
+                        outfile.write('        MAX_PRESSURE_CHANGE ' +
                                       strD(simulation.max_pressure_change) + '\n')
                     if simulation.max_saturation_change:
                         outfile.write('        MAX_SATURATION_CHANGE ' +

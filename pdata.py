@@ -1117,50 +1117,29 @@ class ptimestepper(Frozen):
     :param max_ts_cuts: Maximum number of consecutive time step cuts before
      the simulation is terminated.
     :type max_ts_cuts: int
-    :param cfl_limiter: CFL number for transport.
-    :type cfl_limiter: float
     :param initialize_to_steady_state: Boolean flag to initialize a simulation
      to steady state
     :type initialize_to_steady_state: bool - True or False
-    :param uun_as_steady_state: Boolean flag to run a simulation to steady
+    :param run_as_steady_state: Boolean flag to run a simulation to steady
      state
     :type run_as_steady_state: bool - True or False
-    :param max_pressure_change: Maximum change in pressure for a time step.
-     Default: 5.d4 Pa.
-    :type max_pressure_change: float
-    :param max_temperature_change: Maximum change in temperature for a time
-     step. Default: 5 C.
-    :type max_temperature_change: float
-    :param max_concentration_change: Maximum change in pressure for a time
-     step. Default: 1. mol/L.
-    :type max_concentration_change: float
-    :param max_saturation_change: Maximum change in saturation for a time
-     step. Default: 0.5.
-    :type max_saturation_change: float
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, ts_mode='flow', ts_acceleration=None,
                  num_steps_after_cut=None, max_steps=None,
-                 max_ts_cuts=None, cfl_limiter=None,
+                 max_ts_cuts=None, 
                  initialize_to_steady_state=False,
-                 run_as_steady_state=False, max_pressure_change=None,
-                 max_temperature_change=None,
-                 max_concentration_change=None, max_saturation_change=None):
+                 run_as_steady_state=False):
+
         self.ts_mode = ts_mode
         self.ts_acceleration = ts_acceleration
         self.num_steps_after_cut = num_steps_after_cut
         self.max_steps = max_steps
         self.max_ts_cuts = max_ts_cuts
-        self.cfl_limiter = cfl_limiter
         self.initialize_to_steady_state = initialize_to_steady_state
         self.run_as_steady_state = run_as_steady_state
-        self.max_pressure_change = max_pressure_change
-        self.max_temperature_change = max_temperature_change
-        self.max_concentration_change = max_concentration_change
-        self.max_saturation_change = max_saturation_change
         self._freeze()
-
 
 class plsolver(Frozen):
     """
@@ -3498,14 +3477,8 @@ class pdata(object):
         np_num_steps_after_cut = p.num_steps_after_cut
         np_max_steps = p.max_steps
         np_max_ts_cuts = p.max_ts_cuts
-        np_cfl_limiter = p.cfl_limiter
         np_initialize_to_steady_state = p.initialize_to_steady_state
         np_run_as_steady_state = p.run_as_steady_state
-        np_max_pressure_change = p.max_pressure_change
-        np_max_temperature_change = p.max_temperature_change
-        np_max_concentration_change = p.max_concentration_change
-        np_max_saturation_change = p.max_saturation_change
-
         keep_reading = True
 
         while keep_reading:  # read through all cards
@@ -3521,32 +3494,18 @@ class pdata(object):
                 np_max_steps = int(self.splitter(line))
             elif key == 'max_ts_cuts':
                 np_max_ts_cuts = int(self.splitter(line))
-            elif key == 'cfl_limiter':
-                np_cfl_limiter = floatD(self.splitter(line))
             elif key == 'initialize_to_steady_state':
                 np_initialize_to_steady_state = True
             elif key == 'run_as_steady_state':
                 np_run_as_steady_state = True
-            elif key == 'max_pressure_change':
-                np_max_pressure_change = floatD(self.splitter(line))
-            elif key == 'max_temperature_change':
-                np_max_temperature_change = floatD(self.splitter(line))
-            elif key == 'max_concentration_change':
-                np_max_concentration_change = floatD(self.splitter(line))
-            elif key == 'max_saturation_change':
-                np_max_saturation_change = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
         new_timestep = ptimestepper(np_ts_mode, np_ts_acceleration,
                                     np_num_steps_after_cut, np_max_steps,
-                                    np_max_ts_cuts, np_cfl_limiter,
+                                    np_max_ts_cuts, 
                                     np_initialize_to_steady_state,
-                                    np_run_as_steady_state,
-                                    np_max_pressure_change,
-                                    np_max_temperature_change,
-                                    np_max_concentration_change,
-                                    np_max_saturation_change)
+                                    np_run_as_steady_state)
 
         self.timestepper = new_timestep
 
@@ -3565,26 +3524,10 @@ class pdata(object):
         if self.timestepper.max_steps:
             outfile.write('  ' + 'MAX_STEPS ' +
                           str(self.timestepper.max_steps) + '\n')
-        if self.timestepper.cfl_limiter:
-            outfile.write('  ' + 'CFL_LIMITER ' +
-                          strD(self.timestepper.cfl_limiter) + '\n')
         if self.timestepper.initialize_to_steady_state:
             outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
         if self.timestepper.run_as_steady_state:
             outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
-        if self.timestepper.max_pressure_change:
-            outfile.write('  ' + 'MAX_PRESSURE_CHANGE ' +
-                          strD(self.timestepper.max_pressure_change) + '\n')
-        if self.timestepper.max_temperature_change:
-            outfile.write('  ' + 'MAX_TEMPERATURE_CHANGE ' +
-                          strD(self.timestepper.max_temperature_change) + '\n')
-        if self.timestepper.max_concentration_change:
-            outfile.write('  ' + 'MAX_CONCENTRATION_CHANGE ' +
-                          strD(self.timestepper.max_concentration_change) +
-                          '\n')
-        if self.timestepper.max_saturation_change:
-            outfile.write('  ' + 'MAX_SATURATION_CHANGE ' +
-                          strD(self.timestepper.max_saturation_change) + '\n')
         outfile.write('END\n\n')
 
     def _read_prop(self, infile, line):

@@ -3715,9 +3715,9 @@ class pdata(object):
                                   strD(prop.permeability[1]) + '\n')
                     outfile.write('    PERM_Z ' +
                                   strD(prop.permeability[2]) + '\n')
-                outfile.write('  /\n')
                 if prop.anisotropic:
                     outfile.write('    ANISOTROPIC\n')
+                outfile.write('  /\n')
 
             if prop.secondary_continuum:
                 self._write_sec(prop.secondary_continuum, outfile)

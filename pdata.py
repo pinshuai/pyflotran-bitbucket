@@ -274,6 +274,8 @@ class pmaterial(Frozen):
     :param transverse_dispersivity_v: Transverse dispersion coefficient
      vertical
     :type transverse_dispersivity_v: float
+    :param anisotropic: Turn this on if permeability is anisotropic
+    :type anisotropic: Bool
 
 
     """
@@ -287,7 +289,7 @@ class pmaterial(Frozen):
                  permeability_min_scale_factor='',
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
-                 secondary_continuum=''):
+                 secondary_continuum='', anisotropic=False):
         if permeability is None:
             permeability = []
 
@@ -309,6 +311,7 @@ class pmaterial(Frozen):
         self.transverse_dispersivity_h = transverse_dispersivity_h
         self.transverse_dispersivity_v = transverse_dispersivity_v
         self.secondary_continuum = secondary_continuum
+        self.anisotropic = anisotropic
         self._freeze()
 
 
@@ -3677,6 +3680,8 @@ class pdata(object):
                     outfile.write('    PERM_Z ' +
                                   strD(prop.permeability[2]) + '\n')
                 outfile.write('  /\n')
+                if prop.anisotropic:
+                    outfile.write('    ANISOTROPIC\n')
 
             if prop.secondary_continuum:
                 self._write_sec(prop.secondary_continuum, outfile)

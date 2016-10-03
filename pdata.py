@@ -3205,27 +3205,30 @@ class pdata(object):
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode.upper() + '\n')
                 if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change \
-                        or simulation.max_saturation_change:
+                        or simulation.max_saturation_change or simulation.max_temperature_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
                         outfile.write('          ISOTHERMAL\n')
                     if simulation.max_pressure_change:
-                        outfile.write('          MAX_PRESSURE_CHANGE ' +
+                        outfile.write('        MAX_PRESSURE_CHANGE ' +
                                       strD(simulation.max_pressure_change) + '\n')
                     if simulation.max_saturation_change:
-                        outfile.write('          MAX_SATURATION_CHANGE ' +
+                        outfile.write('        MAX_SATURATION_CHANGE ' +
                                       strD(simulation.max_saturation_change) + '\n')
                     if simulation.max_concentration_change:
-                        outfile.write('          MAX_CONCENTRATION_CHANGE ' +
+                        outfile.write('        MAX_CONCENTRATION_CHANGE ' +
                                       strD(simulation.max_concentration_change) + '\n')
+                    if simulation.max_concentration_change:
+                        outfile.write('        MAX_TEMPERATURE_CHANGE ' +
+                                      strD(simulation.max_temperature_change) + '\n')
                     if simulation.max_cfl:
-                        outfile.write('          MAX_CFL ' +
+                        outfile.write('        MAX_CFL ' +
                                       strD(simulation.max_cfl) + '\n')
                     if simulation.pressure_dampening_factor:
-                        outfile.write('          PRESSURE_DAMPENING_FACTOR ' +
+                        outfile.write('        PRESSURE_DAMPENING_FACTOR ' +
                                       strD(simulation.pressure_dampening_factor) + '\n')
                     if simulation.numerical_derivatives:
-                        outfile.write('          NUMERICAL_DERIVATIVES ' +
+                        outfile.write('        NUMERICAL_DERIVATIVES ' +
                                       strD(simulation.numerical_derivatives) + '\n')
                     outfile.write('      /\n')
             else:
@@ -3252,13 +3255,19 @@ class pdata(object):
                         or simulation.max_saturation_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
-                        outfile.write('          ISOTHERMAL\n')
+                        outfile.write('        ISOTHERMAL\n')
                     if simulation.max_pressure_change:
-                        outfile.write('          MAXIMUM_PRESSURE_CHANGE ' +
+                        outfile.write('        MAXIMUM_PRESSURE_CHANGE ' +
                                       strD(simulation.max_pressure_change) + '\n')
                     if simulation.max_saturation_change:
-                        outfile.write('          MAX_SATURATION_CHANGE ' +
+                        outfile.write('        MAX_SATURATION_CHANGE ' +
                                       strD(simulation.max_saturation_change) + '\n')
+                    if simulation.max_concentration_change:
+                        outfile.write('        MAX_CONCENTRATION_CHANGE ' +
+                                      strD(simulation.max_concentration_change) + '\n')
+                    if simulation.max_concentration_change:
+                        outfile.write('        MAX_TEMPERATURE_CHANGE ' +
+                                      strD(simulation.max_temperature_change) + '\n')
                     outfile.write('      /\n')
             else:
                 print('simulation.mode: \'' +

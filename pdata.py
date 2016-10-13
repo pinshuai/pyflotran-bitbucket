@@ -3404,7 +3404,7 @@ class pdata(object):
                 grid.gravity.append(floatD(line.split()[2]))
                 grid.gravity.append(floatD(line.split()[3]))
             elif key == 'filename':
-                if grid.type != 'unstructured':
+                if grid.type == 'structured':
                     raise PyFLOTRAN_ERROR(
                         'filename not need with structure grid!')
                 grid.filename = self.splitter(line)
@@ -4756,7 +4756,7 @@ class pdata(object):
                 outfile.write('REGION ')
                 outfile.write(region.name.lower() + '\n')
                 if region.filename:
-                    outfile.write(' FILE ' + region.filename + '\n')
+                    outfile.write('  FILE ' + region.filename + '\n')
                 else:
                     if region.face:
                         outfile.write('  FACE ' + region.face.upper() + '\n')

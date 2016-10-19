@@ -4303,7 +4303,7 @@ class pdata(object):
         # Create new employ fluid properties object and assign read in values
         # to it
         new_fluid = pfluid(np_diffusion_coefficient)
-        self.fluid = new_fluid
+        self.add(new_fluid)
 
     def _add_fluid(self, fluid=pfluid(), overwrite=False):
         # check if fluid already exists

@@ -10,6 +10,9 @@ for FILE in glob.glob('tests/*/*out'):
 for FILE in glob.glob('tests/*/*.h5'):
     os.remove(FILE)
 
+for FILE in glob.glob('tests/*/*.pdf'):
+    os.remove(FILE)
+
 for FILE in glob.glob('tests/*/*.regression'):
     os.remove(FILE)
 

@@ -12,9 +12,15 @@ for FILE in glob.glob('tests/*/*.h5'):
 
 for FILE in glob.glob('tests/*/*.regression'):
     os.remove(FILE)
-    
+
 for FILE in glob.glob('tests/*/multi_*/*'):
     os.remove(FILE)
 
 for FILE in glob.glob('tests/*/*_new.*'):
     os.remove(FILE)
+
+for FILE in glob.glob('*in'):
+    os.remove(FILE)
+
+
+

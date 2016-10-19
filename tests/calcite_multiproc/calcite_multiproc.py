@@ -4,8 +4,6 @@
 # Sept. 15, 2014
 # --------------------------------------------------
 
-import sys
-import os
 import multiprocessing
 from pdata import *
 

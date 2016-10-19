@@ -1407,7 +1407,7 @@ class pcharacteristic_curves(Frozen):
     :type power: float
     :param default: sets up dummy saturation and permeability functions for
      saturated single phase flow
-    :type default: No value, just a flag. Input 1 to turn flag on
+    :type default: Bool
     :param liquid_permeability_function_type: Options include: 'MAULEM',
      'BURDINE'.
     :type liquid_permeability_function_type: str
@@ -1436,7 +1436,7 @@ class pcharacteristic_curves(Frozen):
                  sf_m=0.5, sf_lambda=None,
                  sf_liquid_residual_saturation=0.1,
                  sf_gas_residual_saturation=None, max_capillary_pressure=1e8,
-                 smooth='', power=None, default=None,
+                 smooth='', power=None, default=False,
                  liquid_permeability_function_type='mualem_vg_liq',
                  lpf_m=0.5, lpf_lambda=None,
                  lpf_liquid_residual_saturation=0.1,
@@ -2683,7 +2683,8 @@ class pdata(object):
                                 'source_sink', 'initial_condition',
                                 'transport_condition', 'constraint',
                                 'uniform_velocity',
-                                'nonuniform_velocity']:
+                                'nonuniform_velocity',
+                                'characteristic_curves']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -3240,7 +3241,6 @@ class pdata(object):
             outfile.write('    / ' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
-            outfile.write('      GLOBAL_IMPLICIT ' + '\n')
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
@@ -4500,7 +4500,7 @@ class pdata(object):
             elif key == 'power':
                 characteristic_curves.power = floatD(self.splitter(line))
             elif key == 'default':
-                characteristic_curves.default = floatD(self.splitter(line))
+                characteristic_curves.default = True
             elif key == 'liquid_permeability_function_type':
                 characteristic_curves.liquid_permeability_function_type = \
                     self.splitter(line)
@@ -4591,97 +4591,99 @@ class pdata(object):
             # Write out characteristic curve properties that exist
             if char.name:
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
-            if char.saturation_function_type:
-                if char.saturation_function_type in \
-                        characteristic_curves_saturation_function_types_allowed:
-                    outfile.write('  SATURATION_FUNCTION ' +
-                                  char.saturation_function_type.upper() + '\n')
-                else:
-                    print '       valid  char.saturation_function_types', \
-                        characteristic_curves_saturation_function_types_allowed, '\n'
-                    raise PyFLOTRAN_ERROR(
-                        'char.saturation_function_type: \'' +
-                        char.saturation_function_type + '\' is invalid.')
-                if char.sf_alpha:
-                    outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
-                if char.sf_m:
-                    outfile.write('   M ' + strD(char.sf_m) + '\n')
-                if char.sf_lambda:
-                    outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
-                if char.sf_liquid_residual_saturation or \
-                                char.sf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.sf_liquid_residual_saturation) +
-                                  '\n')
-                if char.sf_gas_residual_saturation or \
-                                char.sf_gas_residual_saturation == 0:
-                    outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                  strD(char.sf_gas_residual_saturation) + '\n')
-                if char.max_capillary_pressure:
-                    outfile.write('   MAX_CAPILLARY_PRESSURE ' +
-                                  strD(char.max_capillary_pressure) + '\n')
-                if char.smooth:
-                    # This just prints the SMOOTH flag
-                    outfile.write('   SMOOTH ' + '\n')
-                outfile.write('  / ' + '\n')
-
-            if char.power:
-                outfile.write('  POWER ' + strD(char.power) + '\n')
             if char.default:
                 # This just prints the DEFAULT flag
                 outfile.write('  DEFAULT ' + '\n')
-            if char.liquid_permeability_function_type:
-                if char.liquid_permeability_function_type in \
-                        characteristic_curves_liquid_permeability_function_types_allowed:
-                    outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.liquid_permeability_function_type.upper() +
-                                  '\n')
-                # outfile.write('   PHASE LIQUID' + '\n')
-                else:
-                    print '       valid  char.liquid_permeability_function_types', \
-                        characteristic_curves_liquid_permeability_function_types_allowed, '\n'
-                    raise PyFLOTRAN_ERROR('char.liquid_permeability_function_type: \'' +
-                                          char.liquid_permeability_function_type + '\' is invalid.')
-                if char.lpf_m:
-                    outfile.write('   M ' + strD(char.lpf_m) + '\n')
-                if char.lpf_lambda:
-                    outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
-                if char.lpf_liquid_residual_saturation or \
-                                char.lpf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.lpf_liquid_residual_saturation) +
-                                  '\n')
-                outfile.write('  / ' + '\n')
+            else:
+                if char.saturation_function_type:
+                    if char.saturation_function_type in \
+                            characteristic_curves_saturation_function_types_allowed:
+                        outfile.write('  SATURATION_FUNCTION ' +
+                                      char.saturation_function_type.upper() + '\n')
+                    else:
+                        print '       valid  char.saturation_function_types', \
+                            characteristic_curves_saturation_function_types_allowed, '\n'
+                        raise PyFLOTRAN_ERROR(
+                            'char.saturation_function_type: \'' +
+                            char.saturation_function_type + '\' is invalid.')
+                    if char.sf_alpha:
+                        outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
+                    if char.sf_m:
+                        outfile.write('   M ' + strD(char.sf_m) + '\n')
+                    if char.sf_lambda:
+                        outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
+                    if char.sf_liquid_residual_saturation or \
+                                    char.sf_liquid_residual_saturation == 0:
+                        outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
+                                      strD(char.sf_liquid_residual_saturation) +
+                                      '\n')
+                    if char.sf_gas_residual_saturation or \
+                                    char.sf_gas_residual_saturation == 0:
+                        outfile.write('   GAS_RESIDUAL_SATURATION ' +
+                                      strD(char.sf_gas_residual_saturation) + '\n')
+                    if char.max_capillary_pressure:
+                        outfile.write('   MAX_CAPILLARY_PRESSURE ' +
+                                      strD(char.max_capillary_pressure) + '\n')
+                    if char.smooth:
+                        # This just prints the SMOOTH flag
+                        outfile.write('   SMOOTH ' + '\n')
+                    outfile.write('  / ' + '\n')
 
-            if char.gas_permeability_function_type:
-                if char.gas_permeability_function_type in \
-                        characteristic_curves_gas_permeability_function_types_allowed:
-                    outfile.write('  PERMEABILITY_FUNCTION ' +
-                                  char.gas_permeability_function_type.upper() + '\n')
-                    outfile.write('   PHASE GAS' + '\n')
-                else:
+                if char.power:
+                    outfile.write('  POWER ' + strD(char.power) + '\n')
 
-                    print '       valid  char.gas_permeability_function_types', \
-                        characteristic_curves_gas_permeability_function_types_allowed, '\n'
-                    raise PyFLOTRAN_ERROR(
-                        'char.gas_permeability_function_type: \'' +
-                        char.gas_permeability_function_type +
-                        '\' is invalid.')
-                if char.gpf_m:
-                    outfile.write('   M ' + strD(char.gpf_m) + '\n')
-                if char.gpf_lambda:
-                    outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
-                if char.gpf_liquid_residual_saturation or \
-                                char.gpf_liquid_residual_saturation == 0:
-                    outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_liquid_residual_saturation) +
-                                  '\n')
-                if char.gpf_gas_residual_saturation or \
-                                char.gpf_gas_residual_saturation == 0:
-                    outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                  strD(char.gpf_gas_residual_saturation) +
-                                  '\n')
-                outfile.write('  / ' + '\n')
+                if char.liquid_permeability_function_type:
+                    if char.liquid_permeability_function_type in \
+                            characteristic_curves_liquid_permeability_function_types_allowed:
+                        outfile.write('  PERMEABILITY_FUNCTION ' +
+                                      char.liquid_permeability_function_type.upper() +
+                                      '\n')
+                    # outfile.write('   PHASE LIQUID' + '\n')
+                    else:
+                        print '       valid  char.liquid_permeability_function_types', \
+                            characteristic_curves_liquid_permeability_function_types_allowed, '\n'
+                        raise PyFLOTRAN_ERROR('char.liquid_permeability_function_type: \'' +
+                                              char.liquid_permeability_function_type + '\' is invalid.')
+                    if char.lpf_m:
+                        outfile.write('   M ' + strD(char.lpf_m) + '\n')
+                    if char.lpf_lambda:
+                        outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
+                    if char.lpf_liquid_residual_saturation or \
+                                    char.lpf_liquid_residual_saturation == 0:
+                        outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
+                                      strD(char.lpf_liquid_residual_saturation) +
+                                      '\n')
+                    outfile.write('  / ' + '\n')
+
+                if char.gas_permeability_function_type:
+                    if char.gas_permeability_function_type in \
+                            characteristic_curves_gas_permeability_function_types_allowed:
+                        outfile.write('  PERMEABILITY_FUNCTION ' +
+                                      char.gas_permeability_function_type.upper() + '\n')
+                        outfile.write('   PHASE GAS' + '\n')
+                    else:
+
+                        print '       valid  char.gas_permeability_function_types', \
+                            characteristic_curves_gas_permeability_function_types_allowed, '\n'
+                        raise PyFLOTRAN_ERROR(
+                            'char.gas_permeability_function_type: \'' +
+                            char.gas_permeability_function_type +
+                            '\' is invalid.')
+                    if char.gpf_m:
+                        outfile.write('   M ' + strD(char.gpf_m) + '\n')
+                    if char.gpf_lambda:
+                        outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
+                    if char.gpf_liquid_residual_saturation or \
+                                    char.gpf_liquid_residual_saturation == 0:
+                        outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
+                                      strD(char.gpf_liquid_residual_saturation) +
+                                      '\n')
+                    if char.gpf_gas_residual_saturation or \
+                                    char.gpf_gas_residual_saturation == 0:
+                        outfile.write('   GAS_RESIDUAL_SATURATION ' +
+                                      strD(char.gpf_gas_residual_saturation) +
+                                      '\n')
+                    outfile.write('  / ' + '\n')
 
             outfile.write('END\n\n')
 
@@ -5286,8 +5288,12 @@ class pdata(object):
                             for flow_val in a_flow.valuelist:
                                 outfile.write(' ' + strD(flow_val))
                         if a_flow.unit:
-                            outfile.write(
-                                ' ' + a_flow.unit.upper())  # pyflotran gives an error with lower case for celcius (c) unit.
+                            if a_flow.unit == 'c' or a_flow.unit == 'C':
+                                outfile.write(
+                                    ' ' + a_flow.unit.upper())
+                            else:
+                                outfile.write(
+                                    ' ' + a_flow.unit.lower())
                         outfile.write('\n')
                     elif a_flow.list:
                         outfile.write(

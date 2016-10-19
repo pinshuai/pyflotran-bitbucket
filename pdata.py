@@ -58,7 +58,7 @@ except KeyError:
 
 rc('text', usetex=True)
 plt.rcParams['font.family'] = ['sans-serif']
-plt.rcParams['font.sans-serif'] = ['Lucida Grande']
+plt.rcParams['font.sans-serif'] = ['Gill Sans']
 
 dflt = pdflt()
 

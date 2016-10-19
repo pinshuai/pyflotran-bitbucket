@@ -2801,7 +2801,7 @@ class pdata(object):
         if self.fluidlist:
             self._write_fluid(outfile)
         else:
-            raise PyFLOTRAN_ERROR(
+            PyFLOTRAN_WARNING(
                 'fluidlist is required, it is currently reading as empty!')
 
         if self.saturationlist:
@@ -2809,12 +2809,13 @@ class pdata(object):
         elif self.charlist:
             self._write_characteristic_curves(outfile)
         else:
-            self.add(pcharacteristic_curves())
-            self._write_characteristic_curves(outfile)
-            PyFLOTRAN_WARNING(
-                'characteristic_curves list or saturation list ' +
-                'is required, it is currently reading as empty! ' +
-                ' Using default characteristic_curves settings')
+            if self.simulation.subsurface_flow:
+                self.add(pcharacteristic_curves())
+                self._write_characteristic_curves(outfile)
+                PyFLOTRAN_WARNING(
+                    'characteristic_curves list or saturation list ' +
+                    'is required, it is currently reading as empty! ' +
+                    ' Using default characteristic_curves settings')
 
         if self.regionlist:
             self._write_region(outfile)
@@ -3658,7 +3659,7 @@ class pdata(object):
                 outfile.write('MATERIAL_PROPERTY ' + prop.name + '\n')
             if prop.id:
                 outfile.write('  ID ' + str(prop.id) + '\n')
-            if prop.characteristic_curves:
+            if prop.characteristic_curves and self.simulation.subsurface_flow:
                 outfile.write('  CHARACTERISTIC_CURVES ' +
                               prop.characteristic_curves + '\n')
             if prop.porosity:
@@ -3701,7 +3702,7 @@ class pdata(object):
                 outfile.write('  TRANSVERSE_DISPERSIVITY_V ' +
                               strD(prop.transverse_dispersivity_v) + '\n')
 
-            if prop.permeability:
+            if prop.permeability and self.simulation.subsurface_flow:
                 outfile.write('  PERMEABILITY\n')
                 if type(prop.permeability) is str:
                     outfile.write('    DATASET ' + prop.permeability + '\n')
@@ -6200,12 +6201,14 @@ class pdata(object):
                                 mineral.surface_area = tstring[4]
                             else:
                                 mineral.surface_area = floatD(tstring[3])
+                                mineral.surface_area_units = tstring[4]
                         else:
                             mineral.volume_fraction = floatD(tstring[1])
                             if tstring[2].lower() == 'dataset':
                                 mineral.surface_area = tstring[3]
                             else:
                                 mineral.surface_area = floatD(tstring[2])
+                                mineral.surface_area_units = tstring[3]
 
                     except IndexError:
                         # No assigning is done if a value doesn't exist while
@@ -6353,10 +6356,11 @@ class pdata(object):
                         outfile.write('  ' + 'DATASET ' + mineral.surface_area)
                     else:
                         outfile.write('  ' + strD(mineral.surface_area).ljust(5))
-                    if type(mineral.surface_area_units) is str:
-                        outfile.write('  ' + mineral.surface_area_units.ljust(5))
-                    else:
-                        raise PyFLOTRAN_ERROR('mineral surface area units have to be string!')
+                    if mineral.surface_area_units:
+                        if type(mineral.surface_area_units) is str:
+                            outfile.write('  ' + mineral.surface_area_units.ljust(5))
+                        else:
+                            raise PyFLOTRAN_ERROR('mineral surface area units have to be string!')
                     outfile.write('\n')
                 outfile.write('  /\n')  # END for concentrations
             outfile.write('END\n\n')  # END for constraint

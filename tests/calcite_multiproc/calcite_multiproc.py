@@ -57,8 +57,8 @@ def simulation(i, rate):
     # set chemistry
     # --------------------------------------------------------------
     chemistry = pchemistry()
-    chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
-    chemistry.sec_species_list = ['OH-', 'CO3--',
+    chemistry.primary_species_list = ['H+', 'HCO3-', 'Ca++']
+    chemistry.secondary_species_list = ['OH-', 'CO3--',
                                   'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
     chemistry.gas_species_list = ['CO2(g)']
     chemistry.minerals_list = ['Calcite']
@@ -125,8 +125,8 @@ def simulation(i, rate):
     # set fluid properties
     # --------------------------------------------------------------
     fluid = pfluid()
-    fluid.diffusion_coefficient = 1.0000000e-09
-    dat.fluid = fluid
+    fluid.diffusion_coefficient = 1.e-09
+    dat.add(fluid)
     # --------------------------------------------------------------
 
     # set regions

@@ -45,7 +45,7 @@ dat.uniform_velocity.value_list = [14.4e0, 0.e0, 0.e0, 'm/yr']
 # set chemistry
 # --------------------------------------------------------------
 c = pchemistry()
-c.pspecies_list = ['A(aq)']
+c.primary_species_list = ['A(aq)']
 c.molal = True
 c.output_list = ['All', 'Free_ion']
 dat.chemistry = c
@@ -88,7 +88,8 @@ dat.add(newton_solver)
 # --------------------------------------------------------------
 f = pfluid()
 f.diffusion_coefficient = 1.e-9
-dat.fluid = f
+dat.add(f)
+
 # --------------------------------------------------------------
 
 # set material properties aka prop_list

@@ -52,6 +52,7 @@ GRID
     100.0 1.0 1.0 
   /
   NXYZ 100 1 1 
+  ORIGIN 0.0 0.0 0.0 
 END
 
 TIME
@@ -83,37 +84,37 @@ REGION all
   COORDINATES
     0.0 0.0 0.0 
     100.0 1.0 1.0 
-  END
+  /
 END
 
 REGION west
-  FACE west
+  FACE WEST
   COORDINATES
     0.0 0.0 0.0 
     0.0 1.0 1.0 
-  END
+  /
 END
 
 REGION east
-  FACE east
+  FACE EAST
   COORDINATES
     100.0 0.0 0.0 
     100.0 1.0 1.0 
-  END
+  /
 END
 
 TRANSPORT_CONDITION background_conc
   TYPE zero_gradient
   CONSTRAINT_LIST
     0.0  initial_constraint
-  END
+  /
 END
 
 TRANSPORT_CONDITION inlet_conc
   TYPE dirichlet_zero_gradient
   CONSTRAINT_LIST
     0.0  inlet_constraint
-  END
+  /
 END
 
 INITIAL_CONDITION initial
@@ -138,20 +139,20 @@ END
 
 CONSTRAINT initial_constraint
   CONCENTRATIONS
-    H+  1.000d-08  F
-    HCO3-  0.001  G  CO2(g)
-    Ca++  0.0005  M  Calcite
+    H+          1.000d-08   F  
+    HCO3-       0.001       G    CO2(g)
+    Ca++        0.0005      M    Calcite
   /
   MINERALS
-    Calcite  1.000d-05  1.0
+    Calcite          1.000d-05  1.0  
   /
 END
 
 CONSTRAINT inlet_constraint
   CONCENTRATIONS
-    H+  5.0  P
-    HCO3-  0.001  T
-    Ca++  1.000d-06  Z
+    H+          5.0         P  
+    HCO3-       0.001       T  
+    Ca++        1.000d-06   Z  
   /
 END
 

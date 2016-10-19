@@ -35,7 +35,7 @@ CHEMISTRY
       RATE_CONSTANT 1.000d-06 mol/m^2-sec 
     /
   /
-DATABASE /Users/satkarra/src/pflotran-dev/database/hanford.da
+  DATABASE /Users/satkarra/src/pflotran-dev/database/hanford.dat
   LOG_FORMULATION
   ACTIVITY_COEFFICIENTS TIMESTEP
   OUTPUT
@@ -79,41 +79,54 @@ FLUID_PROPERTY
   DIFFUSION_COEFFICIENT 1.000d-09
 END
 
+CHARACTERISTIC_CURVES default
+  SATURATION_FUNCTION VAN_GENUCHTEN
+   ALPHA 0.0001
+   M 0.5
+   LIQUID_RESIDUAL_SATURATION 0.1
+   MAX_CAPILLARY_PRESSURE 100000000.0
+  / 
+  PERMEABILITY_FUNCTION MUALEM_VG_LIQ
+   M 0.5
+   LIQUID_RESIDUAL_SATURATION 0.1
+  / 
+END
+
 REGION all
   COORDINATES
     0.0 0.0 0.0 
     100.0 1.0 1.0 
-  END
+  /
 END
 
 REGION west
-  FACE west
+  FACE WEST
   COORDINATES
     0.0 0.0 0.0 
     0.0 1.0 1.0 
-  END
+  /
 END
 
 REGION east
-  FACE east
+  FACE EAST
   COORDINATES
     100.0 0.0 0.0 
     100.0 1.0 1.0 
-  END
+  /
 END
 
 TRANSPORT_CONDITION background_conc
   TYPE zero_gradient
   CONSTRAINT_LIST
     0.0  initial_constraint
-  END
+  /
 END
 
 TRANSPORT_CONDITION inlet_conc
   TYPE dirichlet_zero_gradient
   CONSTRAINT_LIST
     0.0  inlet_constraint
-  END
+  /
 END
 
 INITIAL_CONDITION initial
@@ -138,20 +151,20 @@ END
 
 CONSTRAINT initial_constraint
   CONCENTRATIONS
-    H+  1.000d-08  F
-    HCO3-  0.001  G  CO2(g)
-    Ca++  0.0005  M  Calcite
+    H+          1.000d-08   F  
+    HCO3-       0.001       G    CO2(g)
+    Ca++        0.0005      M    Calcite
   /
   MINERALS
-    Calcite  1.000d-05  1.0
+    Calcite          1.000d-05  1.0  
   /
 END
 
 CONSTRAINT inlet_constraint
   CONCENTRATIONS
-    H+  5.0  P
-    HCO3-  0.001  T
-    Ca++  1.000d-06  Z
+    H+          5.0         P  
+    HCO3-       0.001       T  
+    Ca++        1.000d-06   Z  
   /
 END
 

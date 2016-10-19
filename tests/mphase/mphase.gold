@@ -24,8 +24,8 @@ GRID
     0.0 0.0 0.0 
     321.0 1.0 51.0 
   /
-  ORIGIN 0.0 0.0 0.0 
   NXYZ 107 1 51 
+  ORIGIN 0.0 0.0 0.0 
 END
 
 TIMESTEPPER flow
@@ -106,47 +106,47 @@ REGION all
   COORDINATES
     0.0 0.0 0.0 
     321.0 1.0 51.0 
-  END
+  /
 END
 
 REGION top
-  FACE top
+  FACE TOP
   COORDINATES
     0.0 0.0 51.0 
     321.0 1.0 51.0 
-  END
+  /
 END
 
 REGION west
-  FACE west
+  FACE WEST
   COORDINATES
     0.0 0.0 0.0 
     0.0 1.0 51.0 
-  END
+  /
 END
 
 REGION east
-  FACE east
+  FACE EAST
   COORDINATES
     321.0 0.0 0.0 
     321.0 1.0 51.0 
-  END
+  /
 END
 
 REGION well
   COORDINATES
     160.0 1.0 20.0 
     160.0 1.0 20.0 
-  END
+  /
 END
 
-FLOW_CONDITION  initial
+FLOW_CONDITION initial
   TYPE
-    PRESSURE  hydrostatic
-    TEMPERATURE  zero_gradient
-    CONCENTRATION  zero_gradient
-    ENTHALPY  dirichlet
-  END
+    PRESSURE hydrostatic
+    TEMPERATURE zero_gradient
+    CONCENTRATION zero_gradient
+    ENTHALPY dirichlet
+  /
   IPHASE 1
     PRESSURE 20000000.0 20000000.0
     TEMPERATURE 50.0
@@ -154,13 +154,13 @@ FLOW_CONDITION  initial
     ENTHALPY 0.0 0.0
 END
 
-FLOW_CONDITION  top
+FLOW_CONDITION top
   TYPE
-    PRESSURE  dirichlet
-    TEMPERATURE  zero_gradient
-    CONCENTRATION  zero_gradient
-    ENTHALPY  dirichlet
-  END
+    PRESSURE dirichlet
+    TEMPERATURE zero_gradient
+    CONCENTRATION zero_gradient
+    ENTHALPY dirichlet
+  /
   IPHASE 1
     PRESSURE 30000000.0 20000000.0
     TEMPERATURE 60.0
@@ -168,15 +168,15 @@ FLOW_CONDITION  top
     ENTHALPY 0.0 0.0
 END
 
-FLOW_CONDITION  source
+FLOW_CONDITION source
   SYNC_TIMESTEP_WITH_UPDATE
   TYPE
-    RATE  mass_rate
-    PRESSURE  dirichlet
-    TEMPERATURE  dirichlet
-    CONCENTRATION  dirichlet
-    ENTHALPY  dirichlet
-  END
+    RATE mass_rate
+    PRESSURE dirichlet
+    TEMPERATURE dirichlet
+    CONCENTRATION dirichlet
+    ENTHALPY dirichlet
+  /
     RATE LIST
       TIME_UNITS y
       DATA_UNITS kg/s

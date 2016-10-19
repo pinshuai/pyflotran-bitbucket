@@ -53,11 +53,6 @@ MATERIAL_PROPERTY soil1
   SPECIFIC_HEAT 1000.0
   THERMAL_CONDUCTIVITY_WET 0.5
   SATURATION_FUNCTION default
-  PERMEABILITY
-    PERM_X 1.000d-15
-    PERM_Y 1.000d-15
-    PERM_Z 1.000d-15
-  /
 END
 
 NEWTON_SOLVER transport
@@ -93,30 +88,30 @@ REGION all
   COORDINATES
     0.0 0.0 0.0 
     0.04 1.0 1.0 
-  END
+  /
 END
 
 REGION west
-  FACE west
+  FACE WEST
   COORDINATES
     0.0 0.0 0.0 
     0.0 1.0 1.0 
-  END
+  /
 END
 
 REGION east
-  FACE east
+  FACE EAST
   COORDINATES
     0.04 0.0 0.0 
     0.04 1.0 1.0 
-  END
+  /
 END
 
 REGION obs
   COORDINATES
     0.04 0.0 0.0 
     0.04 1.0 1.0 
-  END
+  /
 END
 
 OBSERVATION
@@ -127,21 +122,21 @@ TRANSPORT_CONDITION initial
   TYPE dirichlet
   CONSTRAINT_LIST
     0.0  initial
-  END
+  /
 END
 
 TRANSPORT_CONDITION west
   TYPE dirichlet
   CONSTRAINT_LIST
     0.0  west
-  END
+  /
 END
 
 TRANSPORT_CONDITION east
   TYPE zero_gradient
   CONSTRAINT_LIST
     0.0  east
-  END
+  /
 END
 
 INITIAL_CONDITION initial
@@ -169,19 +164,19 @@ END
 
 CONSTRAINT initial
   CONCENTRATIONS
-    A(aq)  0.1  T
+    A(aq)       0.1         T  
   /
 END
 
 CONSTRAINT west
   CONCENTRATIONS
-    A(aq)  1.000d-08  T
+    A(aq)       1.000d-08   T  
   /
 END
 
 CONSTRAINT east
   CONCENTRATIONS
-    A(aq)  0.01  T
+    A(aq)       0.01        T  
   /
 END
 

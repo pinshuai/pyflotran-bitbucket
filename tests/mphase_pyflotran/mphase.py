@@ -121,7 +121,8 @@ dat.output = output
 # --------------------------------------------------------------
 fluid = pfluid()
 fluid.diffusion_coefficient = 1.e-9
-dat.fluid = fluid
+dat.add(fluid)
+
 # --------------------------------------------------------------
 
 # set saturation functions

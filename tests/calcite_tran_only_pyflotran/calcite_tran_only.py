@@ -35,6 +35,7 @@ dat = pdata('', work_dir=pyflotran_dir + test_dir)
 simulation = psimulation()
 simulation.simulation_type = 'subsurface'
 simulation.subsurface_transport = 'transport'
+simulation.subsurface_flow = ''
 dat.simulation = simulation
 
 # set uniform_velocity
@@ -45,8 +46,8 @@ dat.uniform_velocity.value_list = [1.e0, 0.e0, 0.e0, 'm/yr']
 # set chemistry
 # --------------------------------------------------------------
 chemistry = pchemistry()
-chemistry.pspecies_list = ['H+', 'HCO3-', 'Ca++']
-chemistry.sec_species_list = ['OH-', 'CO3--',
+chemistry.primary_species_list = ['H+', 'HCO3-', 'Ca++']
+chemistry.secondary_species_list = ['OH-', 'CO3--',
                               'CO2(aq)', 'CaCO3(aq)', 'CaHCO3+', 'CaOH+']
 chemistry.gas_species_list = ['CO2(g)']
 chemistry.minerals_list = ['Calcite']
@@ -95,7 +96,7 @@ dat.add(material_propery)
 # --------------------------------------------------------------
 linear_solver = plsolver()
 linear_solver.name = 'TRANSPORT'
-linear_solver.solver = 'DirECT'
+linear_solver.solver = 'DIRECT'
 dat.add(linear_solver)
 # --------------------------------------------------------------
 
@@ -111,7 +112,7 @@ dat.output = output
 # --------------------------------------------------------------
 fluid = pfluid()
 fluid.diffusion_coefficient = 1.0000000e-09
-dat.fluid = fluid
+dat.add(fluid)
 # --------------------------------------------------------------
 
 # set regions

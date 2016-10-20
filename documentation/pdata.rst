@@ -36,6 +36,10 @@ Uniform Velocity
 ----------------
 .. autoclass:: pdata.puniform_velocity
 
+Nonuniform Velocity
+-------------------
+.. autoclass:: pdata.pnonuniform_velocity
+
 Timestepper
 -----------
 .. autoclass:: pdata.ptimestepper
@@ -136,6 +140,11 @@ Dataset
 -------
 .. autoclass:: pdata.pdataset
 
+QK3
+---
+.. autoclass:: pdata.pquake
+
+
 Methods
 ^^^^^^^
 .. automethod:: pdata.pdata.read
@@ -143,12 +152,16 @@ Methods
 .. automethod:: pdata.pdata.run
 .. automethod:: pdata.pdata.add
 .. automethod:: pdata.pdata.delete
+.. automethod:: pdata.pdata.paraview
+.. automethod:: pdata.pdata.apply_traction
+.. automethod:: pdata.pdata.generate_geomech_grid
 
 Line plots using Matplotlib
-+++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To plot time histories of variables at various observation points, the following function can be used: 
 
 .. automethod:: pdata.pdata.plot_observation
+
 To compare spatial profiles (1D) of the multiple realizations at one instant of time or for the same realization at different instants of time, one can use the following function:
 
 .. automethod:: pdata.pdata.plot_data_from_tec

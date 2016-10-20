@@ -3,7 +3,7 @@
 Unsupported PFLOTRAN keywords
 =============================
 
-As of Feb 18, 2015
+As of Oct. 18, 2016
 
 PFLOTRAN keywords not currently supported by PyFLOTRAN:
 
@@ -12,8 +12,6 @@ PFLOTRAN keywords not currently supported by PyFLOTRAN:
 * COMPUTE_STATISTICS
 
 * DEBUG
-
-* NONUNIFORM_VELOCITY
 
 * PROC
 
@@ -53,7 +51,4 @@ Keywords that are supported, but not 100%, listing attributes for keywords that 
 
 * FLUID
 	- DIFFUSION_ACTIVATION_ENERGY
-
-* OBSERVATION
-	- Only REGION works
 

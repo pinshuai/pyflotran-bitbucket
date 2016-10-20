@@ -45,7 +45,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 __author__ = "Satish Karra, Cory Kitay"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 __maintainer__ = "Satish Karra"
 __email__ = "satkarra@lanl.gov"
 
@@ -391,11 +391,11 @@ class ptime(Frozen):
     :type tf: [float, str]
     :param dti: delta (change) time initial a.k.a. initial timestep size.
      1st variable is time value. 2nd variable
-    specifies time unit. e.g., [0.25e0, 'y']
+     specifies time unit. e.g., [0.25e0, 'y']
     :type dti: [float, str]
     :param dtf: delta (change) time final a.k.a. maximum timestep size.
      1st variable is time value. 2nd variable
-    specifies time unit. e.g., [50.e0, 'y']
+     specifies time unit. e.g., [50.e0, 'y']
     :type dtf: [float, str]
     :param dtf_list: delta (change) time starting at a given time instant.
      Input is a list that can have multiple lists
@@ -1217,7 +1217,7 @@ class poutput(Frozen):
     """
     Class for dumping simulation output.
     Acceptable time units (units of measurements) are: 's', 'min', 'h',
-     'd', 'w', 'mo', 'y'.
+    'd', 'w', 'mo', 'y'.
 
     :param time_list: List of time values. 1st variable specifies time unit
      to be used. Remaining variable(s) are floats
@@ -1600,8 +1600,8 @@ class pflow_variable(Frozen):
 
     :param name: Indicates name of the flow variable. Options include:
      ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE', 'CONCENTRATION',
-      'SATURATION', 'ENTHALPY'].
-    :type name: str
+     'SATURATION', 'ENTHALPY'].
+     :type name: str
     :param type: Indicates type that is associated with name under keyword
      TYPE. Options for PRESSURE include: 'dirichlet', 'hydrostatic',
      'zero_gradient', 'conductance', 'seepage'. Options for RATE include:
@@ -1629,8 +1629,8 @@ class pflow_variable(Frozen):
      pflow_variable_list objects. Sub-class of pflow_variable. The add function
      currently does not support
      adding pflow_variable_list to pflow_variable objects. Appending to can
-     be done manually.
-    e.g., variable.list.append(var_list) if var_list=pflow_variable_list.
+     be done manually. E.g., variable.list.append(var_list) if
+     var_list=pflow_variable_list.
     :type list: [pflow_variable_list]
     """
 
@@ -1950,12 +1950,11 @@ class ptransport(Frozen):
     :param name: Transport condition name.
     :type name: str
     :param type: Options include: 'dirichlet', 'dirichlet_zero_gradient',
-     'equilibrium', 'neumann', 'mole', 'mole_rate',
-    'zero_gradient'.
+     'equilibrium', 'neumann', 'mole', 'mole_rate', 'zero_gradient'.
     :type type: str
-    :param constraint_list_value: List of constraint values. The position of
-     each value in the list correlates with the position of each type in
-     constraint_list_type.
+    :param constraint_list_value: List of constraint values.
+     The position of each value in the list correlates with the
+     position of each type in constraint_list_type.
     :type constraint_list_value: [float]
     :param constraint_list_type: List of constraint types. The position
      of each value in the list correlates with
@@ -2053,7 +2052,8 @@ class pconstraint_mineral(Frozen):
     :param surface_area: Surface area. [m^-1]
     :type surface_area: float
     :param surface_area_units: Surface area units. [m2/m3 or cm2/cm3]
-    :type str
+    :type surface_area_units: str
+
     """
 
     def __init__(self, name='', volume_fraction=None, surface_area=None,
@@ -2066,14 +2066,17 @@ class pconstraint_mineral(Frozen):
 
 
 class pquake(Frozen):
-    """Class for specifying pflotran-qk3 related information
-       :param mapping_file: Name of the mapping file
-       :type name: str
-       :param time_scaling: Time scaling factor
-       :type time_scaling: float
-       :param pressure_scaling: Pressure scaling factor
-       :type pressure_scaling: float
-       """
+    """
+    Class for specifying pflotran-qk3 related information
+
+    :param mapping_file: Name of the mapping file
+    :type name: str
+    :param time_scaling: Time scaling factor
+    :type time_scaling: float
+    :param pressure_scaling: Pressure scaling factor
+    :type pressure_scaling: float
+
+    """
 
     def __init__(self, mapping_file='mapping.dat', time_scaling=1.0,
                  pressure_scaling=1.0):
@@ -2084,12 +2087,15 @@ class pquake(Frozen):
 
 
 class pgeomech_subsurface_coupling(Frozen):
-    """Class for specifying geomechanics-flow coupling
-       :param mapping_file: Name of the mapping file
-       :type name: str
-       :param coupling_type: time of coupling -- one way / two way
-       :type coupling_type: str
-       """
+    """
+    Class for specifying geomechanics-flow coupling
+
+    :param mapping_file: Name of the mapping file
+    :type name: str
+    :param coupling_type: time of coupling -- one way / two way
+    :type coupling_type: str
+
+    """
 
     def __init__(self, mapping_file='flow_geomech_mapping.dat',
                  coupling_type='two_way_coupled'):
@@ -2141,6 +2147,7 @@ class pgeomech_grid(Frozen):
     :type gravity: [float]*3
     :param filename: Specify name of file containing geomech grid information.
     :type filename: str
+
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.

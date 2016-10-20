@@ -2679,6 +2679,10 @@ class pdata(object):
                 card = p_line.split()[0].lower()  # make card lower case
                 if card == 'overwrite_restart_flow_params':
                     self.overwrite_restart_flow_params = True
+                if card == 'overwrite_restart_transport':
+                    self.overwrite_restart_transport = True
+                if card == 'isothermal':
+                    self.isothermal = True
                 if card == 'skip':
                     keep_reading_1 = True
                     while keep_reading_1:
@@ -3162,41 +3166,92 @@ class pdata(object):
 
     def _read_simulation(self, infile, line):
         simulation = psimulation()
-        keep_reading = True
+        keep_reading0 = True
         key_bank = []
-        while keep_reading:  # Read through all cards
+        while keep_reading0:  # Read through all cards
             line = infile.readline()  # get next line
-            key = line.strip().split()[0].lower()  # take first key word
-            if key == 'simulation_type':
+            key0 = line.strip().split()[0].lower()  # take first key word
+            #print key0
+            if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
-            elif key == 'subsurface_flow':
-                simulation.subsurface_flow = self.splitter(line)
-                keep_reading_1 = True
-                while keep_reading_1:
+            elif key0 == 'process_models':
+                keep_reading = True
+                while keep_reading:
                     line = infile.readline()
-                    key1 = line.strip().split()[0].lower()
-                    if key1 == 'mode':
-                        simulation.mode = self.splitter(line).lower()
-                    elif key1 in ['/', 'end']:
-                        keep_reading_1 = False
-                    else:
-                        raise PyFLOTRAN_ERROR('mode is missing!')
-                key_bank.append(key)
-            elif key == 'subsurface_transport':
-                simulation.subsurface_transport = self.splitter(line)
-                keep_reading_2 = True
-                while keep_reading_2:
-                    line1 = infile.readline()
-                    key1 = line1.strip().split()[0].lower()
-                    if key1 == 'global_implicit':
-                        simulation.flowtran_coupling = key1
-                    elif key1 in ['/', 'end']:
-                        keep_reading_2 = False
-                # else:
-                # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
-                key_bank.append(key)
-            elif key in ['/', 'end']:
-                keep_reading = False
+                    key = line.strip().split()[0].lower()
+                    if key == 'subsurface_flow':
+                        simulation.subsurface_flow = self.splitter(line)
+                        keep_reading_1 = True
+                        while keep_reading_1:
+                            line = infile.readline()
+                            key1 = line.strip().split()[0].lower()
+                            if key1 == 'mode':
+                                simulation.mode = self.splitter(line).lower()
+                            elif key1 == 'options':
+                                keep_reading_2 = True
+                                while keep_reading_2:
+                                    line = infile.readline()
+                                    key2 = line.strip().split()[0].lower()
+                                    if key2 == 'isothermal':
+                                        simulation.isothermal = True
+                                    elif key2 == 'max_pressure_change':
+                                        simulation.max_pressure_change =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'max_concentration_change':
+                                        simulation.max_concentration_change =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'max_temperature_change':
+                                        simulation.max_temperature_change =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'max_saturation_change':
+                                        simulation.max_saturation_change =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'max_cfl':
+                                        simulation.max_cfl =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'numerical_derivatives':
+                                        simulation.numerical_derivatives =\
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'pressure_dampening_factor':
+                                        simulation.pressure_dampening_factor =\
+                                            floatD(self.splitter(line))
+                                    elif key2 in ['/', 'end']:
+                                        keep_reading_2 = False
+                            elif key1 in ['/', 'end']:
+                                keep_reading_1 = False
+                        key_bank.append(key)
+                    elif key == 'subsurface_transport':
+                        simulation.subsurface_transport = self.splitter(line)
+                        keep_reading_2 = True
+                        while keep_reading_2:
+                            line1 = infile.readline()
+                            key1 = line1.strip().split()[0].lower()
+                            if key1 == 'global_implicit':
+                                simulation.flowtran_coupling = key1
+                            elif key1 in ['/', 'end']:
+                                keep_reading_2 = False
+                        # else:
+                        # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
+                        key_bank.append(key)
+                    if key in ['/', 'end']:
+                        keep_reading = False
+            elif key0 == 'restart':
+                extract = line.strip().split()
+                len_extract = len(extract)
+                print extract, line
+
+                if len_extract < 2:
+                    PyFLOTRAN_ERROR('At least restart filename needs to be'
+                                    ' specified')
+                else:
+                    simulation.restart.file_name = extract[1]
+
+                if len_extract > 2:
+                    simulation.restart.time_value = extract[2]
+                if len_extract > 3:
+                    simulation.restart.time_unit = extract[3]
+            elif key0 in ['/', 'end']:
+                keep_reading0 = False
         if not ('subsurface_flow' in key_bank) and \
                 ('subsurface_transport' in key_bank):
             simulation.subsurface_flow = ''
@@ -3228,10 +3283,13 @@ class pdata(object):
                         simulation.max_concentration_change or \
                         simulation.max_pressure_change \
                         or simulation.max_saturation_change or \
-                        simulation.max_temperature_change:
+                        simulation.max_temperature_change or \
+                        simulation.max_cfl or \
+                        simulation.pressure_dampening_factor or \
+                        simulation.numerical_derivatives:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
-                        outfile.write('          ISOTHERMAL\n')
+                        outfile.write('        ISOTHERMAL\n')
                     if simulation.max_pressure_change:
                         outfile.write('        MAX_PRESSURE_CHANGE ' +
                                       strD(simulation.max_pressure_change) +
@@ -3244,7 +3302,7 @@ class pdata(object):
                         outfile.write('        MAX_CONCENTRATION_CHANGE ' +
                                       strD(simulation.max_concentration_change)
                                       + '\n')
-                    if simulation.max_concentration_change:
+                    if simulation.max_temperature_change:
                         outfile.write('        MAX_TEMPERATURE_CHANGE ' +
                                       strD(simulation.max_temperature_change)
                                       + '\n')

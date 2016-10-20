@@ -111,8 +111,9 @@ saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
                                      'PRUESS_1']
 lower_list = [sat.lower() for sat in saturation_function_types_allowed]
 
-saturation_function_types_allowed = list(set(saturation_function_types_allowed +
-                                             lower_list))
+saturation_function_types_allowed = \
+    list(set(saturation_function_types_allowed +
+             lower_list))
 
 permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
                                        'NMT_EXP', 'PRUESS_1']
@@ -133,7 +134,8 @@ lower_list = [sat.lower() for sat in
               characteristic_curves_gas_permeability_function_types_allowed]
 
 characteristic_curves_gas_permeability_function_types_allowed = list(set(
-    characteristic_curves_gas_permeability_function_types_allowed + lower_list))
+    characteristic_curves_gas_permeability_function_types_allowed +
+    lower_list))
 
 characteristic_curves_liquid_permeability_function_types_allowed = [
     'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ']
@@ -142,7 +144,8 @@ lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
 
 characteristic_curves_liquid_permeability_function_types_allowed = list(set(
-    characteristic_curves_liquid_permeability_function_types_allowed + lower_list))
+    characteristic_curves_liquid_permeability_function_types_allowed +
+    lower_list))
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
@@ -150,7 +153,8 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
 # flow_conditions - allowed strings
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
-                                     'ENTHALPY', 'LIQUID_PRESSURE', 'GAS_PRESSURE',
+                                     'ENTHALPY', 'LIQUID_PRESSURE',
+                                     'GAS_PRESSURE',
                                      'LIQUID_FLUX', 'GAS_FLUX', 'MOLE_FRACTION',
                                      'GAS_SATURATION']
 geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
@@ -1042,15 +1046,19 @@ class psimulation(Frozen):
     :type mode: bool
     :param max_saturation_change: Set maximum saturation change in timestepping
     :type mode: float
-    :param max_temperature_change: Set maximum temperature change in timestepping
+    :param max_temperature_change: Set maximum temperature change in
+     timestepping
     :type mode: float
-    :param max_pressure_change: Set maximum pressure change in timestepping
+    :param max_pressure_change: Set maximum pressure change in
+     timestepping
     :type mode: float
-    :param max_concentration_change: Set maximum concentration change in timestepping
+    :param max_concentration_change: Set maximum concentration
+     change in timestepping
     :type mode: float
     :param max_cfl: Set maximum CFL number
     :type mode: float
-    :param numerical_derivatives: Turn this on if you want numerical derivatives in Jacobian
+    :param numerical_derivatives: Turn this on if you want
+     numerical derivatives in Jacobian
     :type mode: bool
     :param pressure_dampening_factor: Specify the dampening factor value
     :type mode: float
@@ -1059,9 +1067,11 @@ class psimulation(Frozen):
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
                  subsurface_transport='', mode='richards',
                  flowtran_coupling='', geomechanics_subsurface='geomech',
-                 isothermal='', max_pressure_change='', max_saturation_change='',
+                 isothermal='', max_pressure_change='',
+                 max_saturation_change='',
                  max_temperature_change='', max_concentration_change='',
-                 max_cfl='', numerical_derivatives='', pressure_dampening_factor='',
+                 max_cfl='', numerical_derivatives='',
+                 pressure_dampening_factor='',
                  restart=prestart()):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
@@ -1128,10 +1138,9 @@ class ptimestepper(Frozen):
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, ts_mode='flow', ts_acceleration=None,
                  num_steps_after_cut=None, max_steps=None,
-                 max_ts_cuts=None, 
+                 max_ts_cuts=None,
                  initialize_to_steady_state=False,
                  run_as_steady_state=False):
-
         self.ts_mode = ts_mode
         self.ts_acceleration = ts_acceleration
         self.num_steps_after_cut = num_steps_after_cut
@@ -1140,6 +1149,7 @@ class ptimestepper(Frozen):
         self.initialize_to_steady_state = initialize_to_steady_state
         self.run_as_steady_state = run_as_steady_state
         self._freeze()
+
 
 class plsolver(Frozen):
     """
@@ -2046,7 +2056,8 @@ class pconstraint_mineral(Frozen):
     :type str
     """
 
-    def __init__(self, name='', volume_fraction=None, surface_area=None, surface_area_units=None):
+    def __init__(self, name='', volume_fraction=None, surface_area=None,
+                 surface_area_units=None):
         self.name = name
         self.volume_fraction = volume_fraction
         self.surface_area = surface_area
@@ -2630,7 +2641,7 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint],
-        ))
+                           ))
         # associate each card name with
         # a read function, defined further below
 
@@ -3206,32 +3217,41 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode.upper() + '\n')
-                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change \
-                        or simulation.max_saturation_change or simulation.max_temperature_change:
+                if simulation.isothermal or \
+                        simulation.max_concentration_change or \
+                        simulation.max_pressure_change \
+                        or simulation.max_saturation_change or \
+                        simulation.max_temperature_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
                         outfile.write('          ISOTHERMAL\n')
                     if simulation.max_pressure_change:
                         outfile.write('        MAX_PRESSURE_CHANGE ' +
-                                      strD(simulation.max_pressure_change) + '\n')
+                                      strD(simulation.max_pressure_change) +
+                                      '\n')
                     if simulation.max_saturation_change:
                         outfile.write('        MAX_SATURATION_CHANGE ' +
-                                      strD(simulation.max_saturation_change) + '\n')
+                                      strD(simulation.max_saturation_change) +
+                                      '\n')
                     if simulation.max_concentration_change:
                         outfile.write('        MAX_CONCENTRATION_CHANGE ' +
-                                      strD(simulation.max_concentration_change) + '\n')
+                                      strD(simulation.max_concentration_change)
+                                      + '\n')
                     if simulation.max_concentration_change:
                         outfile.write('        MAX_TEMPERATURE_CHANGE ' +
-                                      strD(simulation.max_temperature_change) + '\n')
+                                      strD(simulation.max_temperature_change)
+                                      + '\n')
                     if simulation.max_cfl:
                         outfile.write('        MAX_CFL ' +
                                       strD(simulation.max_cfl) + '\n')
                     if simulation.pressure_dampening_factor:
                         outfile.write('        PRESSURE_DAMPENING_FACTOR ' +
-                                      strD(simulation.pressure_dampening_factor) + '\n')
+                                      strD(simulation.pressure_dampening_factor)
+                                      + '\n')
                     if simulation.numerical_derivatives:
                         outfile.write('        NUMERICAL_DERIVATIVES ' +
-                                      strD(simulation.numerical_derivatives) + '\n')
+                                      strD(simulation.numerical_derivatives) +
+                                      '\n')
                     outfile.write('      /\n')
             else:
                 print '       valid simulation.mode:', mode_names_allowed, '\n'
@@ -3252,23 +3272,29 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode + '\n')
-                if simulation.isothermal or simulation.max_concentration_change or simulation.max_pressure_change \
+                if simulation.isothermal or \
+                        simulation.max_concentration_change or \
+                        simulation.max_pressure_change \
                         or simulation.max_saturation_change:
                     outfile.write('      OPTIONS\n')
                     if simulation.isothermal:
                         outfile.write('        ISOTHERMAL\n')
                     if simulation.max_pressure_change:
                         outfile.write('        MAX_PRESSURE_CHANGE ' +
-                                      strD(simulation.max_pressure_change) + '\n')
+                                      strD(simulation.max_pressure_change) +
+                                      '\n')
                     if simulation.max_saturation_change:
                         outfile.write('        MAX_SATURATION_CHANGE ' +
-                                      strD(simulation.max_saturation_change) + '\n')
+                                      strD(simulation.max_saturation_change) +
+                                      '\n')
                     if simulation.max_concentration_change:
                         outfile.write('        MAX_CONCENTRATION_CHANGE ' +
-                                      strD(simulation.max_concentration_change) + '\n')
+                                      strD(simulation.max_concentration_change)
+                                      + '\n')
                     if simulation.max_concentration_change:
                         outfile.write('        MAX_TEMPERATURE_CHANGE ' +
-                                      strD(simulation.max_temperature_change) + '\n')
+                                      strD(simulation.max_temperature_change) +
+                                      '\n')
                     outfile.write('      /\n')
             else:
                 print('simulation.mode: \'' +
@@ -3290,7 +3316,6 @@ class pdata(object):
         if simulation.checkpoint.frequency:
             self._write_checkpoint(outfile)
         outfile.write('END' + '\n\n')
-
 
     def _write_subsurface_simulation_begin(self, outfile):
         if self.simulation.subsurface_flow or \
@@ -3513,7 +3538,7 @@ class pdata(object):
 
         new_timestep = ptimestepper(np_ts_mode, np_ts_acceleration,
                                     np_num_steps_after_cut, np_max_steps,
-                                    np_max_ts_cuts, 
+                                    np_max_ts_cuts,
                                     np_initialize_to_steady_state,
                                     np_run_as_steady_state)
 
@@ -4599,7 +4624,8 @@ class pdata(object):
                     if char.saturation_function_type in \
                             characteristic_curves_saturation_function_types_allowed:
                         outfile.write('  SATURATION_FUNCTION ' +
-                                      char.saturation_function_type.upper() + '\n')
+                                      char.saturation_function_type.upper() +
+                                      '\n')
                     else:
                         print '       valid  char.saturation_function_types', \
                             characteristic_curves_saturation_function_types_allowed, '\n'
@@ -4607,11 +4633,13 @@ class pdata(object):
                             'char.saturation_function_type: \'' +
                             char.saturation_function_type + '\' is invalid.')
                     if char.sf_alpha:
-                        outfile.write('   ALPHA ' + strD(char.sf_alpha) + '\n')
+                        outfile.write('   ALPHA ' + strD(char.sf_alpha) +
+                                      '\n')
                     if char.sf_m:
                         outfile.write('   M ' + strD(char.sf_m) + '\n')
                     if char.sf_lambda:
-                        outfile.write('   LAMBDA ' + strD(char.sf_lambda) + '\n')
+                        outfile.write('   LAMBDA ' + strD(char.sf_lambda) +
+                                      '\n')
                     if char.sf_liquid_residual_saturation or \
                                     char.sf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
@@ -4620,10 +4648,12 @@ class pdata(object):
                     if char.sf_gas_residual_saturation or \
                                     char.sf_gas_residual_saturation == 0:
                         outfile.write('   GAS_RESIDUAL_SATURATION ' +
-                                      strD(char.sf_gas_residual_saturation) + '\n')
+                                      strD(char.sf_gas_residual_saturation) +
+                                      '\n')
                     if char.max_capillary_pressure:
                         outfile.write('   MAX_CAPILLARY_PRESSURE ' +
-                                      strD(char.max_capillary_pressure) + '\n')
+                                      strD(char.max_capillary_pressure) +
+                                      '\n')
                     if char.smooth:
                         # This just prints the SMOOTH flag
                         outfile.write('   SMOOTH ' + '\n')
@@ -4642,16 +4672,19 @@ class pdata(object):
                     else:
                         print '       valid  char.liquid_permeability_function_types', \
                             characteristic_curves_liquid_permeability_function_types_allowed, '\n'
-                        raise PyFLOTRAN_ERROR('char.liquid_permeability_function_type: \'' +
-                                              char.liquid_permeability_function_type + '\' is invalid.')
+                        raise PyFLOTRAN_ERROR(
+                            'char.liquid_permeability_function_type: \'' +
+                            char.liquid_permeability_function_type + '\' is invalid.')
                     if char.lpf_m:
                         outfile.write('   M ' + strD(char.lpf_m) + '\n')
                     if char.lpf_lambda:
-                        outfile.write('   LAMBDA ' + strD(char.lpf_lambda) + '\n')
+                        outfile.write(
+                            '   LAMBDA ' + strD(char.lpf_lambda) + '\n')
                     if char.lpf_liquid_residual_saturation or \
                                     char.lpf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                      strD(char.lpf_liquid_residual_saturation) +
+                                      strD(
+                                          char.lpf_liquid_residual_saturation) +
                                       '\n')
                     outfile.write('  / ' + '\n')
 
@@ -4672,11 +4705,13 @@ class pdata(object):
                     if char.gpf_m:
                         outfile.write('   M ' + strD(char.gpf_m) + '\n')
                     if char.gpf_lambda:
-                        outfile.write('   LAMBDA ' + strD(char.gpf_lambda) + '\n')
+                        outfile.write(
+                            '   LAMBDA ' + strD(char.gpf_lambda) + '\n')
                     if char.gpf_liquid_residual_saturation or \
                                     char.gpf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
-                                      strD(char.gpf_liquid_residual_saturation) +
+                                      strD(
+                                          char.gpf_liquid_residual_saturation) +
                                       '\n')
                     if char.gpf_gas_residual_saturation or \
                                     char.gpf_gas_residual_saturation == 0:
@@ -4735,7 +4770,9 @@ class pdata(object):
             if region.name in self.region.keys():
                 if not overwrite:
                     warning = 'WARNING: A region with name \'' + \
-                              str(region.name) + '\' already exists. Region will' + \
+                              str(
+                                  region.name) + '\' already exists.' \
+                                                 ' Region will' + \
                               'not be defined, use overwrite = ' + \
                               'True in add() to overwrite the old region.'
                     print warning,
@@ -4808,7 +4845,9 @@ class pdata(object):
                 if not overwrite:
                     warning = 'WARNING: A observation with region \'' + \
                               str(observation.region) + '\' already ' \
-                                                        'exists. Observation will not be defined,' + \
+                                                        'exists.' \
+                                                        ' Observation will' \
+                                                        ' not be defined,' + \
                               ' use overwrite = True in add() to overwrite' + \
                               'the old observation.'
                     print warning,
@@ -4863,7 +4902,8 @@ class pdata(object):
                 # can be read before loop terminates.
 
             elif key == 'rate' or key == 'pressure' or \
-                            key == 'temperature' or key == 'concentration' or key == \
+                            key == 'temperature' or key == 'concentration' or\
+                            key == \
                     'enthalpy' or key == 'flux':
                 if end_count == 0:
                     '''
@@ -5363,7 +5403,7 @@ class pdata(object):
                     return
                 else:
                     self.delete(self.initial_condition[
-                        initial_condition.region])
+                                    initial_condition.region])
 
         if initial_condition not in self.initial_condition_list:
             self.initial_condition_list.append(initial_condition)
@@ -5446,7 +5486,7 @@ class pdata(object):
                     return
                 else:
                     self.delete(self.boundary_condition[
-                        boundary_condition.region])
+                                    boundary_condition.region])
 
         if boundary_condition not in self.boundary_condition_list:
             self.boundary_condition_list.append(boundary_condition)
@@ -5520,7 +5560,8 @@ class pdata(object):
             if source_sink.region in self.source_sink.keys():
                 if not overwrite:
                     warning = 'WARNING: A source_sink with region \'' + \
-                              str(source_sink.region) + '\' already exists. ' + \
+                              str(source_sink.region) +\
+                              '\' already exists. ' + \
                               'source_sink will not be defined,' + \
                               ' use overwrite = True ' + \
                               'in add() to overwrite the old source_sink.'
@@ -6001,9 +6042,12 @@ class pdata(object):
                             outfile.write(rate + ' ')
                     outfile.write('\n')
                     if mk.prefactor_species_list and mk.prefactor_alpha_list:
-                        for item in zip(mk.prefactor_species_list, mk.prefactor_alpha_list):
-                            outfile.write('        PREFACTOR_SPECIES ' + item[0] + '\n')
-                            outfile.write('          ALPHA ' + strD(item[1]) + '\n')
+                        for item in zip(mk.prefactor_species_list,
+                                        mk.prefactor_alpha_list):
+                            outfile.write(
+                                '        PREFACTOR_SPECIES ' + item[0] + '\n')
+                            outfile.write(
+                                '          ALPHA ' + strD(item[1]) + '\n')
                             outfile.write('        /\n')
                     outfile.write('      /\n')
                 outfile.write('    /\n')  # marks end for mineral name
@@ -6254,7 +6298,8 @@ class pdata(object):
 
     # Adds a constraint_concentration object
     def _add_constraint_concentration(self,
-                                      constraint_concentration=pconstraint_concentration(),
+                                      constraint_concentration=
+                                      pconstraint_concentration(),
                                       index='',
                                       overwrite=False):
 
@@ -6269,7 +6314,8 @@ class pdata(object):
                     # Occurs if index/string is not found in constraint object
                     print 'WARNING: a constraint object with ' + \
                           'constraint.name', index, 'was not found. ' + \
-                                                    ' Current found entries are:', \
+                                                    ' Current found' \
+                                                    ' entries are:', \
                         self.constraint.keys(), \
                         'pconstraint_concentration was not added.\n'
                     return
@@ -6301,7 +6347,8 @@ class pdata(object):
                     build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
-                    self.delete(self.constraint_concentration(constraint)[constraint_concentration.pspecies],
+                    self.delete(self.constraint_concentration(constraint)[
+                                    constraint_concentration.pspecies],
                                 constraint)
 
         # Add constraint_concentration to constraint (as a sub-class)
@@ -6311,7 +6358,8 @@ class pdata(object):
             constraint.concentration_list.append(constraint_concentration)
 
     def _delete_constraint_concentration(self,
-                                         constraint_concentration=pconstraint_concentration(),
+                                         constraint_concentration=
+                                         pconstraint_concentration(),
                                          constraint=pconstraint()):
         constraint.concentration_list.remove(constraint_concentration)
 
@@ -6357,16 +6405,20 @@ class pdata(object):
                         outfile.write('  ' + 'DATASET ' +
                                       mineral.volume_fraction)
                     else:
-                        outfile.write('  ' + strD(mineral.volume_fraction).ljust(5))
+                        outfile.write(
+                            '  ' + strD(mineral.volume_fraction).ljust(5))
                     if type(mineral.surface_area) is str:
                         outfile.write('  ' + 'DATASET ' + mineral.surface_area)
                     else:
-                        outfile.write('  ' + strD(mineral.surface_area).ljust(5))
+                        outfile.write(
+                            '  ' + strD(mineral.surface_area).ljust(5))
                     if mineral.surface_area_units:
                         if type(mineral.surface_area_units) is str:
-                            outfile.write('  ' + mineral.surface_area_units.ljust(5))
+                            outfile.write(
+                                '  ' + mineral.surface_area_units.ljust(5))
                         else:
-                            raise PyFLOTRAN_ERROR('mineral surface area units have to be string!')
+                            raise PyFLOTRAN_ERROR(
+                                'mineral surface area units have to be string!')
                     outfile.write('\n')
                 outfile.write('  /\n')  # END for concentrations
             outfile.write('END\n\n')  # END for constraint
@@ -7054,7 +7106,7 @@ class pdata(object):
         if failure:
             print 'Unable to move *.vset, *.mesh files to subdirectory'
             sys.exit(1)
-        #        print('--> Finished with moving files to dat directory')
+        # print('--> Finished with moving files to dat directory')
 
         all_nodes = set(all_nodes) - set(east)
         all_nodes = all_nodes - set(west)

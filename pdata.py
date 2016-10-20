@@ -3238,8 +3238,6 @@ class pdata(object):
             elif key0 == 'restart':
                 extract = line.strip().split()
                 len_extract = len(extract)
-                print extract, line
-
                 if len_extract < 2:
                     PyFLOTRAN_ERROR('At least restart filename needs to be'
                                     ' specified')
@@ -4377,7 +4375,6 @@ class pdata(object):
 
     def _read_fluid(self, infile):
         p = pfluid()
-        np_diffusion_coefficient = p.diffusion_coefficient
 
         keep_reading = True
 
@@ -4386,15 +4383,16 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first
 
             if key == 'diffusion_coefficient':
-                np_diffusion_coefficient = floatD(
+                p.diffusion_coefficient = floatD(
                     self.splitter(line))  # Read last entry
+            if key == 'phase':
+                p.phase = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
         # Create new employ fluid properties object and assign read in values
         # to it
-        new_fluid = pfluid(np_diffusion_coefficient)
-        self.add(new_fluid)
+        self.add(p)
 
     def _add_fluid(self, fluid=pfluid(), overwrite=False):
         # check if fluid already exists
@@ -5888,6 +5886,7 @@ class pdata(object):
                 key = line.strip().split()[0].lower()  # take first key word
             except IndexError:
                 continue  # Read the next line if line is empty.
+            print key
             if key == 'primary_species':
                 while True:
                     line = infile.readline()  # get next line
@@ -5912,6 +5911,18 @@ class pdata(object):
                     if line.strip() in ['/', 'end']:
                         break
                     chem.gas_species_list.append(line.strip())
+            elif key == 'passive_gas_species':
+                while True:
+                    line = infile.readline()  # get next line
+                    if line.strip() in ['/', 'end']:
+                        break
+                    chem.passive_gas_species_list.append(line.strip())
+            elif key == 'active_gas_species':
+                while True:
+                    line = infile.readline()  # get next line
+                    if line.strip() in ['/', 'end']:
+                        break
+                    chem.active_gas_species_list.append(line.strip())
             elif key == 'minerals':
                 while True:
                     line = infile.readline()  # get next line
@@ -5921,6 +5932,7 @@ class pdata(object):
             elif key == 'mineral_kinetics':
                 while True:
                     line = infile.readline()  # get next line
+                    print line
                     if line.strip() in ['/', 'end']:
                         break
 

@@ -24,8 +24,6 @@ except KeyError:
     sys.exit(1)
 sys.path.append(pyflotran_dir)
 
-test_dir = '/examples/flow_scaling'
-
 ###############################################################
 
 plt.rcParams.update({'axes.labelsize': 'large'})
@@ -40,7 +38,7 @@ def run_sim(nx, ny, nz, num_procs):
 
     # initialize without reading in test data
     # --------------------------------------------------------------
-    dat = pdata('', work_dir = pyflotran_dir + test_dir)
+    dat = pdata('')
     # --------------------------------------------------------------
     # set simulation
     # --------------------------------------------------------------

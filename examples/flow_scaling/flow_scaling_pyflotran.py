@@ -325,12 +325,13 @@ if __name__ == "__main__":
         for proc in procs:
             print '--> Running on', str(proc), 'processors'
             time = run_sim(nx, ny, nz, proc)
+            print '--> Cpu time [s] on', str(proc), 'processors is', time
             time_list.append(time)
             f.write((str(proc)).ljust(10) + (str(time)).ljust(8) + '\n')
 
     print '--> Completed writing to file. See strong_scaling.txt'
     xtick_labels = [str(proc) for proc in procs]
-    ideal_times = [proc*time_list[0] for proc in procs]
+    ideal_times = [time_list[0]/proc for proc in procs]
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(procs, time_list, linewidth=2, ls='-', marker='^', label='PFLOTRAN')

@@ -500,34 +500,71 @@ class pgrid(Frozen):
         self.gravity = gravity
         self.filename = filename
         self._nodelist = []
+        self._celllist = []
+        self._connectivity = []
         self._parent = None
         self._path = ppath(parent=self)
         self._freeze()
         self._parent = None
+        self.read_grid()
 
     @property
     def xmin(self):
-        return self.lower_bounds[0]
+        if self.type == 'structured':
+            return self.lower_bounds[0]
+        elif self.type == 'unstructured_explicit':
+            return min([cell[0] for cell in self._celllist])
+        else:
+            print("property xmin not implemented for"
+                  " unstructured_implicit type!")
 
     @property
     def ymin(self):
-        return self.lower_bounds[1]
+        if self.type == 'structured':
+            return self.lower_bounds[1]
+        elif self.type == 'unstructured_explicit':
+            return min([cell[1] for cell in self._celllist])
+        else:
+          print("property ymin not implemented for"
+                  " unstructured_implicit type!")
 
     @property
     def zmin(self):
-        return self.lower_bounds[2]
+        if self.type == 'structured':
+            return self.lower_bounds[2]
+        elif self.type == 'unstructured_explicit':
+            return min([cell[2] for cell in self._celllist])
+        else:
+            print("property zmin not implemented for"
+                  " unstructured_implicit type!")
 
     @property
     def xmax(self):
-        return self.upper_bounds[0]
-
+        if self.type == 'structured':
+            return self.upper_bounds[0]
+        elif self.type == 'unstructured_explicit':
+            return max([cell[0] for cell in self._celllist])
+        else:
+            print("property xmax not implemented for"
+                  " unstructured_implicit type!")
     @property
     def ymax(self):
-        return self.upper_bounds[1]
-
+        if self.type == 'structured':
+            return self.upper_bounds[1]
+        elif self.type == 'unstructured_explicit':
+            return max([cell[1] for cell in self._celllist])
+        else:
+            print("property ymax not implemented for"
+                  " unstructured_implicit type!")
     @property
     def zmax(self):
-        return self.upper_bounds[2]
+        if self.type == 'structured':
+            return self.upper_bounds[2]
+        elif self.type == 'unstructured_explicit':
+            return max([cell[2] for cell in self._celllist])
+        else:
+            print("property zmax not implemented for"
+                  " unstructured_implicit type!")
 
     @property
     def nodelist(self):
@@ -552,6 +589,15 @@ class pgrid(Frozen):
         self._nodelist = value
 
     @property
+    def connectivity(self):
+        if self.type == 'unstructured_explicit':
+            return self._connectivity
+        else:
+            print("property connectivity only implemented fo"
+                  " unstructured_explicit type!")
+            return
+
+    @property
     def celllist(self):
         if self.type == 'structured':
             nx = self.nxyz[0]
@@ -570,10 +616,52 @@ class pgrid(Frozen):
 
             cells = list(it.product(x_cell, y_cell, z_cell))
             cells = [list(cell) for cell in cells]
+            self._celllist = cells
+        elif self.type == 'unstructured_explicit':
+            return self._celllist
+            # do nothing
         else:
-            print("pgrid celllist not implemented for unstructured yet!")
+            print("pgrid celllist not implemented for"
+                  " unstructured_implicit type yet!")
             cells = []
-        return cells
+            self._celllist = cells
+        return self._celllist
+
+    def read_grid(self):
+        if self.type == 'structured':
+            return
+        elif self.type == 'unstructured_explicit':
+            filename = self.filename
+            cells = []
+            conn = []
+            with open(filename, 'r') as f:
+                line = f.readline()
+                num_cells = int(line.split()[1])
+                for i in range(num_cells):
+                    line = f.readline()
+                    x_cell = float(line.split()[1])
+                    y_cell = float(line.split()[2])
+                    z_cell = float(line.split()[3])
+                    cells.append([x_cell, y_cell, z_cell])
+                self._celllist = cells
+                self.nxyz = num_cells
+                line = f.readline()
+                num_conn = int(line.split()[1])
+                for i in range(num_conn):
+                    line = f.readline()
+                    id_up = int(line.split()[0])
+                    id_dn = int(line.split()[1])
+                    x_conn = float(line.split()[2])
+                    y_conn = float(line.split()[3])
+                    z_conn = float(line.split()[4])
+                    area_conn = float(line.split()[5])
+                    conn.append([id_up, id_dn, x_conn, y_conn, z_conn,
+                                 area_conn])
+                self._connectivity = conn
+        else:
+            print("read_grid not implemented for unstructured_implicit type!")
+            return
+
 
     def plot(self, filename='', angle=[45, 45], color='k', connections=False,
              equal_axes=True, xlabel='x [m]', ylabel='y [m]', zlabel='z [m]',

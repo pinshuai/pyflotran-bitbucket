@@ -2368,7 +2368,8 @@ class pdata(object):
         self.datasetlist = []
         self.chemistry = None
         self.grid = pgrid()
-        self.timestepper = None
+        self.timestepper_flow = None
+        self.timestepper_transport = None
         self.proplist = []
         self.time = ptime()
         self.lsolverlist = []
@@ -2879,7 +2880,7 @@ class pdata(object):
             raise PyFLOTRAN_ERROR(
                 'grid is required, it is currently reading as empty!')
 
-        if self.timestepper:
+        if self.timestepper_flow or self.timestepper_transport:
             self._write_timestepper(outfile)
         # else: print 'info: timestepper not detected\n'
 
@@ -3660,64 +3661,89 @@ class pdata(object):
         outfile.write('END\n\n')
 
     def _read_timestepper(self, infile, line):
-        p = ptimestepper()
-        np_ts_mode = p.ts_mode
-        np_ts_acceleration = p.ts_acceleration
-        np_num_steps_after_cut = p.num_steps_after_cut
-        np_max_steps = p.max_steps
-        np_max_ts_cuts = p.max_ts_cuts
-        np_initialize_to_steady_state = p.initialize_to_steady_state
-        np_run_as_steady_state = p.run_as_steady_state
         keep_reading = True
+        timestepper = ptimestepper()
+        if line.strip().split()[0].lower() == 'timestepper':
+            timestepper.ts_mode = line.strip().split()[-1].lower()
 
         while keep_reading:  # read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
-            if key == 'ts_mode':
-                np_ts_mode = str(self.splitter(line))
             if key == 'ts_acceleration':
-                np_ts_acceleration = int(self.splitter(line))
+                timestepper.ts_acceleration = int(self.splitter(line))
             elif key == 'num_steps_after_cut':
-                np_num_steps_after_cut = int(self.splitter(line))
+                timestepper.num_steps_after_cut = int(self.splitter(line))
             elif key == 'max_steps':
-                np_max_steps = int(self.splitter(line))
+                timestepper.max_steps = int(self.splitter(line))
             elif key == 'max_ts_cuts':
-                np_max_ts_cuts = int(self.splitter(line))
+                timestepper.max_ts_cuts = int(self.splitter(line))
             elif key == 'initialize_to_steady_state':
-                np_initialize_to_steady_state = True
+                timestepper.initialize_to_steady_state = True
             elif key == 'run_as_steady_state':
-                np_run_as_steady_state = True
+                timestepper.run_as_steady_state = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
-        new_timestep = ptimestepper(np_ts_mode, np_ts_acceleration,
-                                    np_num_steps_after_cut, np_max_steps,
-                                    np_max_ts_cuts,
-                                    np_initialize_to_steady_state,
-                                    np_run_as_steady_state)
+        if timestepper.ts_mode == 'flow':
+            self.timestepper_flow = timestepper
+        elif timestepper.ts_mode == 'transport':
+            self.timestepper_transport = timestepper
+        else:
+            PyFLOTRAN_WARNING('Unknown timestepping mode!')
 
-        self.timestepper = new_timestep
 
     def _write_timestepper(self, outfile):
         self._header(outfile, headers['timestepper'])
-        outfile.write('TIMESTEPPER ' + self.timestepper.ts_mode + '\n')
-        if self.timestepper.ts_acceleration:
-            outfile.write('  ' + 'TS_ACCELERATION ' +
-                          str(self.timestepper.ts_acceleration) + '\n')
-        if self.timestepper.num_steps_after_cut:
-            outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
-                          str(self.timestepper.num_steps_after_cut) + '\n')
-        if self.timestepper.max_ts_cuts:
-            outfile.write('  ' + 'MAX_TS_CUTS ' +
-                          str(self.timestepper.max_ts_cuts) + '\n')
-        if self.timestepper.max_steps:
-            outfile.write('  ' + 'MAX_STEPS ' +
-                          str(self.timestepper.max_steps) + '\n')
-        if self.timestepper.initialize_to_steady_state:
-            outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
-        if self.timestepper.run_as_steady_state:
-            outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
-        outfile.write('END\n\n')
+
+        if self.timestepper_flow:
+            outfile.write('TIMESTEPPER ' +
+                          self.timestepper_flow.ts_mode.upper() + '\n')
+            if self.timestepper_flow.ts_acceleration:
+                outfile.write('  ' + 'TS_ACCELERATION ' +
+                              str(self.timestepper_flow.ts_acceleration) +
+                              '\n')
+            if self.timestepper_flow.num_steps_after_cut:
+                outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
+                              str(self.timestepper_flow.num_steps_after_cut) +
+                              '\n')
+            if self.timestepper_flow.max_ts_cuts:
+                outfile.write('  ' + 'MAX_TS_CUTS ' +
+                              str(self.timestepper_flow.max_ts_cuts) + '\n')
+            if self.timestepper_flow.max_steps:
+                outfile.write('  ' + 'MAX_STEPS ' +
+                              str(self.timestepper_flow.max_steps) + '\n')
+            if self.timestepper_flow.initialize_to_steady_state:
+                outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
+            if self.timestepper_flow.run_as_steady_state:
+                outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
+            outfile.write('END\n\n')
+
+        if self.timestepper_transport:
+            outfile.write('TIMESTEPPER ' +
+                          self.timestepper_transport.ts_mode.upper() + '\n')
+            if self.timestepper_transport.ts_acceleration:
+                outfile.write('  ' + 'TS_ACCELERATION ' +
+                              str(self.timestepper_transport.ts_acceleration) +
+                              '\n')
+            if self.timestepper_transport.num_steps_after_cut:
+                outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
+                              str(self.timestepper_transport.
+                                  num_steps_after_cut) + '\n')
+            if self.timestepper_transport.max_ts_cuts:
+                outfile.write('  ' + 'MAX_TS_CUTS ' +
+                              str(self.timestepper_transport.max_ts_cuts) +
+                              '\n')
+            if self.timestepper_transport.max_steps:
+                outfile.write('  ' + 'MAX_STEPS ' +
+                              str(self.timestepper_transport.max_steps) +
+                              '\n')
+            if self.timestepper_transport.initialize_to_steady_state:
+                outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' +
+                              '\n')
+            if self.timestepper_transport.run_as_steady_state:
+                outfile.write('  ' + 'RUN_AS_STEADY_STATE ' +
+                              '\n')
+            outfile.write('END\n\n')
 
     def _read_prop(self, infile, line):
         np_name = self.splitter(line)  # property name

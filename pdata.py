@@ -1526,6 +1526,8 @@ class pcharacteristic_curves(Frozen):
     :type gpf_liquid_residual_saturation: float
     :param gf_gas_residual_saturation: Residual saturation for gas phase
     :type gf_gas_residual_saturation: float
+    :param phase: gas or liquid phase
+    :type phase: str
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
@@ -1540,7 +1542,7 @@ class pcharacteristic_curves(Frozen):
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
-                 gpf_gas_residual_saturation=None):
+                 gpf_gas_residual_saturation=None,phase=None):
         self.name = name
         self.saturation_function_type = saturation_function_type
         self.sf_alpha = sf_alpha
@@ -1562,6 +1564,7 @@ class pcharacteristic_curves(Frozen):
         self.gpf_lambda = gpf_lambda
         self.gpf_liquid_residual_saturation = gpf_liquid_residual_saturation
         self.gpf_gas_residual_saturation = gpf_gas_residual_saturation
+        self.phase = phase
         self._freeze()
 
 
@@ -4650,6 +4653,7 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first  key word
+            word = line.strip().split()[-1].lower()
             if key == 'saturation_function':
                 characteristic_curves.saturation_function_type = self.splitter(
                     line)
@@ -4658,29 +4662,80 @@ class pdata(object):
                     line = infile.readline()
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'alpha':
-                        characteristic_curves.sf_alpha = floatD(self.splitter(line))
+                        characteristic_curves.sf_alpha = \
+                            floatD(self.splitter(line))
                     elif key1 == 'm':
-                        characteristic_curves.sf_m = floatD(self.splitter(line))
+                        characteristic_curves.sf_m = \
+                            floatD(self.splitter(line))
                     elif key1 == 'lambda':
-                        characteristic_curves.sf_lambda = floatD(self.splitter(line))
+                        characteristic_curves.sf_lambda = \
+                            floatD(self.splitter(line))
                     elif key1 == 'liquid_residual_saturation':
-                        characteristic_curves.sf_liquid_residual_saturation = floatD(
-                            self.splitter(line))
+                        characteristic_curves.sf_liquid_residual_saturation =\
+                            floatD(self.splitter(line))
                     elif key1 == 'gas_residual_saturation':
-                        characteristic_curves.sf_gas_residual_saturation = floatD(
-                            self.splitter(line))
+                        characteristic_curves.sf_gas_residual_saturation = \
+                            floatD(self.splitter(line))
                     elif key1 == 'max_capillary_pressure':
-                        characteristic_curves.max_capillary_pressure = floatD(
-                            self.splitter(line))
+                        characteristic_curves.max_capillary_pressure = \
+                            floatD(self.splitter(line))
                     elif key1 == 'smooth':
-                        characteristic_curves.smooth = floatD(self.splitter(line))
+                        characteristic_curves.smooth = \
+                            floatD(self.splitter(line))
                     elif key1 == 'power':
-                        characteristic_curves.power = floatD(self.splitter(line))
+                        characteristic_curves.power = \
+                            floatD(self.splitter(line))
+                    elif key1 in ['/', 'end']:
+                        keep_reading1 = False
+            elif key == 'permeability_function' and 'gas' in word:
+                characteristic_curves.gas_permeability_function_type = word
+                keep_reading1 = True
+                while keep_reading1:
+                    line = infile.readline()
+                    key1 = line.strip().split()[0].lower()
+                    if key1 == 'phase':
+                        characteristic_curves.phase = \
+                            self.splitter(line).lower()
+                    elif key1 == 'm':
+                        characteristic_curves.gpf_m = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'liquid_residual_saturation':
+                        characteristic_curves.gpf_liquid_residual_saturation = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'gas_residual_saturation':
+                        characteristic_curves.gpf_gas_residual_saturation = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'lambda':
+                        characteristic_curves.gpf_lambda = \
+                            floatD(self.splitter(line))
+                    elif key1 in ['/', 'end']:
+                        keep_reading1 = False
+            elif key == 'permeability_function' and 'gas' not in word:
+                characteristic_curves.liquid_permeability_function_type = word
+                keep_reading1 = True
+                while keep_reading1:
+                    line = infile.readline()
+                    key1 = line.strip().split()[0].lower()
+                    if key1 == 'phase':
+                        characteristic_curves.phase = \
+                            self.splitter(line).lower()
+                    elif key1 == 'm':
+                        characteristic_curves.lpf_m = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'liquid_residual_saturation':
+                        characteristic_curves.lpf_liquid_residual_saturation = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'gas_residual_saturation':
+                        characteristic_curves.lpf_gas_residual_saturation = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'lambda':
+                        characteristic_curves.lpf_lambda = \
+                            floatD(self.splitter(line))
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
             elif key in ['/', 'end']:
                 keep_reading = False
-      #  self.add(new_cc)
+        self.add(characteristic_curves)
 
     # Adds a char object.
     def _add_characteristic_curves(self, char=pcharacteristic_curves(),
@@ -4766,7 +4821,8 @@ class pdata(object):
                         outfile.write('  PERMEABILITY_FUNCTION ' +
                                       char.liquid_permeability_function_type.upper() +
                                       '\n')
-                    # outfile.write('   PHASE LIQUID' + '\n')
+                    if char.phase:
+                        outfile.write('   PHASE LIQUID' + '\n')
                     else:
                         print '       valid  char.liquid_permeability_function_types', \
                             characteristic_curves_liquid_permeability_function_types_allowed, '\n'
@@ -4791,6 +4847,7 @@ class pdata(object):
                             characteristic_curves_gas_permeability_function_types_allowed:
                         outfile.write('  PERMEABILITY_FUNCTION ' +
                                       char.gas_permeability_function_type.upper() + '\n')
+                    if char.phase:
                         outfile.write('   PHASE GAS' + '\n')
                     else:
 

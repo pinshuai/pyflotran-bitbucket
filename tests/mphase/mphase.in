@@ -58,7 +58,7 @@ END
 !
 
 !=========================== timestepper ======================================
-TIMESTEPPER
+TIMESTEPPER FLOW
 TS_ACCELERATION 8
 /
 

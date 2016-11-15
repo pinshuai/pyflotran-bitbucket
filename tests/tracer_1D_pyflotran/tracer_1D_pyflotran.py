@@ -64,10 +64,11 @@ dat.grid = g
 # set time stepping
 # --------------------------------------------------------------
 ts = ptimestepper()
+ts.ts_mode = 'transport'
 ts.ts_acceleration = 25
 ts.max_ts_cuts = 10
 ts.max_steps = 10000
-dat.timestepper = ts
+dat.timestepper_transport = ts
 # --------------------------------------------------------------
 
 # set newton solvers

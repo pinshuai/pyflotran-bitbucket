@@ -2768,6 +2768,8 @@ class pdata(object):
                     keep_reading = False
                 if len(p_line.strip()) == 0:
                     continue
+                if p_line.strip().split()[0] in ['#', '!']:
+                    continue
                 card = p_line.split()[0].lower()  # make card lower case
                 if card == 'overwrite_restart_flow_params':
                     self.overwrite_restart_flow_params = True
@@ -5709,6 +5711,7 @@ class pdata(object):
     def _read_source_sink(self, infile, line):
         p = psource_sink()
         np_flow = p.flow
+        np_transport = p.transport
         np_region = p.region
 
         if len(line.split()) > 1:
@@ -5725,13 +5728,16 @@ class pdata(object):
 
             if key == 'flow_condition':
                 np_flow = self.splitter(line)  # take last word
+            elif key == 'transport_condition':
+                np_transport = self.splitter(line)  # take last word
             elif key == 'region':
                 np_region = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
         # Create an empty source sink and assign the values read in
-        new_source_sink = psource_sink(np_flow, np_region, np_name)
+        new_source_sink = psource_sink(flow=np_flow, transport=np_transport,
+                                       region=np_region, name=np_name)
         self.add(new_source_sink)
 
     # Adds a source_sink object.

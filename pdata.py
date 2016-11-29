@@ -4799,7 +4799,6 @@ class pdata(object):
             # Write out characteristic curve properties that exist
             if char.name:
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
-            print char.default
             if char.default:
                 # This just prints the DEFAULT flag
                 outfile.write('  DEFAULT ' + '\n')
@@ -4846,7 +4845,6 @@ class pdata(object):
                 if char.power:
                     outfile.write('  POWER ' + strD(char.power) + '\n')
 
-                print char.liquid_permeability_function_type
                 if char.liquid_permeability_function_type:
                     if char.liquid_permeability_function_type in \
                             characteristic_curves_liquid_permeability_function_types_allowed:

@@ -4682,6 +4682,8 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first  key word
             word = line.strip().split()[-1].lower()
+            if key == 'default':
+                characteristic_curves.default = True
             if key == 'saturation_function':
                 characteristic_curves.saturation_function_type = self.splitter(
                     line)
@@ -4797,6 +4799,7 @@ class pdata(object):
             # Write out characteristic curve properties that exist
             if char.name:
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
+            print char.default
             if char.default:
                 # This just prints the DEFAULT flag
                 outfile.write('  DEFAULT ' + '\n')
@@ -4843,20 +4846,22 @@ class pdata(object):
                 if char.power:
                     outfile.write('  POWER ' + strD(char.power) + '\n')
 
+                print char.liquid_permeability_function_type
                 if char.liquid_permeability_function_type:
                     if char.liquid_permeability_function_type in \
                             characteristic_curves_liquid_permeability_function_types_allowed:
                         outfile.write('  PERMEABILITY_FUNCTION ' +
                                       char.liquid_permeability_function_type.upper() +
                                       '\n')
-                    if char.phase:
-                        outfile.write('   PHASE LIQUID' + '\n')
                     else:
                         print '       valid  char.liquid_permeability_function_types', \
                             characteristic_curves_liquid_permeability_function_types_allowed, '\n'
                         raise PyFLOTRAN_ERROR(
                             'char.liquid_permeability_function_type: \'' +
                             char.liquid_permeability_function_type + '\' is invalid.')
+                    if char.phase:
+                        outfile.write('   PHASE LIQUID' + '\n')
+
                     if char.lpf_m:
                         outfile.write('   M ' + strD(char.lpf_m) + '\n')
                     if char.lpf_lambda:

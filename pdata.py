@@ -1535,7 +1535,7 @@ class pcharacteristic_curves(Frozen):
                  saturation_function_type='van_genuchten', sf_alpha=1e-4,
                  sf_m=0.5, sf_lambda=None,
                  sf_liquid_residual_saturation=0.1,
-                 sf_gas_residual_saturation=None, max_capillary_pressure=1e8,
+                 sf_gas_residual_saturation=None, max_capillary_pressure=None,
                  smooth='', power=None, default=False,
                  liquid_permeability_function_type='mualem_vg_liq',
                  lpf_m=0.5, lpf_lambda=None,

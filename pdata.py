@@ -7151,27 +7151,55 @@ class pdata(object):
         x_verts = self.grid.nxyz[0] + 2
         y_verts = self.grid.nxyz[1] + 2
         z_verts = self.grid.nxyz[2] + 2
-        x_max = self.grid.xmax
-        y_max = self.grid.ymax
-        z_max = self.grid.zmax
-        x_min = self.grid.xmin
-        y_min = self.grid.ymin
-        z_min = self.grid.zmin
+        xmax = self.grid.xmax
+        ymax = self.grid.ymax
+        zmax = self.grid.zmax
+        xmin = self.grid.xmin
+        ymin = self.grid.ymin
+        zmin = self.grid.zmin
         Total_verts = x_verts * y_verts * z_verts
         N_cells = (x_verts - 1) * (y_verts - 1) * (z_verts - 1)
-        delta_x = (x_max - x_min) / (x_verts - 1)
-        delta_y = (y_max - y_min) / (y_verts - 1)
-        delta_z = (z_max - z_min) / (z_verts - 1)
+        delta_x = (xmax - xmin) / (x_verts - 2)
+        delta_y = (ymax - ymin) / (y_verts - 2)
+        delta_z = (zmax - zmin) / (z_verts - 2)
 
+        x = np.zeros(x_verts)
+        y = np.zeros(y_verts)
+        z = np.zeros(z_verts)
+
+
+        x[0] = xmin
+        x[1] = xmin + delta_x/2.0
+        x[x_verts-1] = xmax
+        x[x_verts-2] = xmax - delta_x/2.0
+        if x_verts > 4:
+           for i in range(2, x_verts-2):
+               x[i] = x[i-1] + delta_x
+
+        y[0] = ymin
+        y[1] = ymin + delta_y/2.0
+        y[y_verts-1] = ymax
+        y[y_verts-2] = ymax - delta_y/2.0
+        if y_verts > 4:
+           for i in range(2, y_verts-2):
+               y[i] = y[i-1] + delta_y
+
+        z[0] = zmin
+        z[1] = zmin + delta_z/2.0
+        z[z_verts-1] = zmax
+        z[z_verts-2] = zmax - delta_z/2.0
+        if z_verts > 4:
+           for i in range(2, z_verts-2):
+               z[i] = z[i-1] + delta_z
+
+        xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
         Coord = np.zeros((Total_verts, 3), 'float')
-        for i in range(1, x_verts + 1):
-            for j in range(1, y_verts + 1):
-                for k in range(1, z_verts + 1):
-                    id = i + (j - 1) * x_verts + (k - 1) * \
-                                                 x_verts * y_verts - 1
-                    Coord[id, 0] = (i - 1) * delta_x
-                    Coord[id, 1] = (j - 1) * delta_y
-                    Coord[id, 2] = (k - 1) * delta_z
+        count = 0
+        for k in range(z_verts):
+            for j in range(y_verts):
+                for i in range(x_verts):
+                    Coord[count] = [xv[i][j][k], yv[i][j][k], zv[i][j][k]]
+                    count = count + 1
 
         # Storing vertices in each element
         # Assuming all elements are hexes

@@ -7338,34 +7338,16 @@ class pdata(object):
             sys.exit(1)
         # print('--> Finished with moving files to dat directory')
 
-        all_nodes = set(all_nodes) - set(east)
-        all_nodes = all_nodes - set(west)
-        all_nodes = all_nodes - set(north)
-        all_nodes = all_nodes - set(south)
-        all_nodes = all_nodes - set(top)
-        all_nodes = all_nodes - set(bottom)
-
-        internal_nodes = list(all_nodes)  # convert set to a list
-        # sort them in ascending manner
-        internal_nodes = sorted(internal_nodes, key=int)
-
-        #        print('--> Done with identifying internal nodes in geomech mesh')
-        #        print('--> Writing the mapping')
-
-        # The mapping is as follows:
-        #  flow mesh     geomech mesh
-        # ============================
-        #  cell_id1      vertex_id1
-        #  cell_id2      vertex_id2
-        #  cell_id3      vertex_id3
-        #     .              .
-        #     .              .
-        #     .              .
-        #  cell_idN      vertex_idsN
-
+        count = 0
         fid = open('flow_geomech_mapping.dat', 'w')
-        for i in range(len(internal_nodes)):
-            fid.write('%i %i\n' % (i + 1, int(internal_nodes[i])))
+        epsilon = 1.e-8
+        for coord in Coord:
+            i = int((coord[0] - xmin - epsilon) / delta_x)
+            j = int((coord[1] - ymin - epsilon) / delta_y)
+            k = int((coord[2] - zmin - epsilon) / delta_z)
+            id = i + j * self.grid.nxyz[0] + k  * self.grid.nxyz[0] * self.grid.nxyz[1]
+            fid.write('%i %i\n' % (int(id + 1), count + 1))
+            count = count + 1
 
         fid.close()
 

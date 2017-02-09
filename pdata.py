@@ -1852,7 +1852,7 @@ class pstrata(Frozen):
     :type material: str
     """
 
-    def __init__(self, region='all', material='default', pm=''):
+    def __init__(self, region='', material='', pm=''):
         self.region = region
         self.material = material
         self.pm = pm

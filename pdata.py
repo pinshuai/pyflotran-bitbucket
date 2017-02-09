@@ -5842,7 +5842,7 @@ class pdata(object):
                 # raise PyFLOTRAN_ERROR('strata.region is required')
                 if strata.material:
                     outfile.write('  MATERIAL ' +
-                                  strata.material.lower() + '\n')
+                                  strata.material  + '\n')
                 else:
                     raise PyFLOTRAN_ERROR('strata.material is required')
                 outfile.write('END\n\n')

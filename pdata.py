@@ -2337,11 +2337,15 @@ class pgeomech_regression(Frozen):
     :type vertices_per_process: int
     """
 
-    def __init__(self, vertices=None, vertices_per_process=''):
+    def __init__(self, vertices=None, vertices_per_process='',
+                 variables=['displacement_z', 'strain_zz', 'stress_zz']):
         if vertices is None:
             vertices = []
+        if variables is None:
+            variables = []
         self.vertices = vertices
         self.vertices_per_process = vertices_per_process
+        self.variables = variables
         self._freeze()
 
 
@@ -6852,6 +6856,11 @@ class pdata(object):
         if regression.vertices_per_process:
             outfile.write('  VERTICES_PER_PROCESS' + ' ' +
                           str(regression.vertices_per_process) + '\n')
+        if regression.variables:
+            outfile.write('  VARIABLES' + '\n')
+            for variable in regression.variables:
+                outfile.write('    ' + str(variable.upper()) + '\n')
+            outfile.write('  /' + '\n')
         outfile.write('END' + '\n\n')
 
     # Adds a prop object.
@@ -6860,7 +6869,7 @@ class pdata(object):
         if isinstance(prop, pgeomech_material):
             if prop.id in self.geomech_prop.keys():
                 if not overwrite:
-                    warning = 'A geoemchanics material property with id ' + \
+                    warning = 'A geomechanics material property with id ' + \
                               str(prop.id) + ' already exists. Prop ' + \
                               'will not be defined, use overwrite ' + \
                               '= True in add() to overwrite the old prop.'

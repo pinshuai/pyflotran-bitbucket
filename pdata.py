@@ -435,6 +435,13 @@ class pgrid(Frozen):
     :param type: Grid type. Valid entries include: 'structured',
      'unstructured'.
     :type type: str
+    :param symmetry_type: Grid symmetry type. Valid entries include: 
+     'cartesian' and 'cylindrical'.  Blank entries are equivalent 
+     to cartesian.  Only used for structured grids.  When 'cylindrical'
+     is used in conjunction with the lower_bounds and upper_bounds keywords, 
+     the first entry is for radius, the third is for z, and the second is
+     a non-used dummy value.
+    :type type: str
     :param lower_bounds: Lower/Minimum 3D boundaries coordinates in
      order of x_min, y_min, z_min. Input is a list of 3
      floats. e.g., [0.e0, 0.e0, 0.e0].
@@ -448,7 +455,7 @@ class pgrid(Frozen):
     :type origin: [float]*3
     :param nxyz: Number of grid cells in x,y,z directions. Only works with
      type='structured'. Input is a list of 3
-     floats. e.g., [107, 1, 51].
+     floats. e.g., [107, 1, 51].  Default is [10,10,10]
     :type nxyz: [float]*3
     :param dx: Specifies grid spacing of structured cartesian grid in the
      x-direction. e.g., [0.1, 0.2, 0.3, 0.4, 1, 1,
@@ -469,17 +476,21 @@ class pgrid(Frozen):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, type='structured', lower_bounds=None, upper_bounds=None,
+    def __init__(self, type='structured', symmetry_type='cartesian',
+                 lower_bounds=None, upper_bounds=None,
                  origin=None, nxyz=None, dx=None, dy=None, dz=None,
                  gravity=None, filename=''):
-        if lower_bounds is None:
-            lower_bounds = [0.0, 0.0, 0.0]
-        if upper_bounds is None:
-            upper_bounds = [1.0, 1.0, 1.0]
+        if dx is None:
+            if lower_bounds is None:
+                lower_bounds = [0.0, 0.0, 0.0]
+            if upper_bounds is None:
+                upper_bounds = [1.0, 1.0, 1.0]
+            if nxyz is None:
+                nxyz = [10, 10, 10]
+        else:
+            nxyz = [len(dx),len(dy),len(dz)]
         if origin is None:
             origin = []
-        if nxyz is None:
-            nxyz = [10, 10, 10]
         if dx is None:
             dx = []
         if dy is None:
@@ -490,6 +501,7 @@ class pgrid(Frozen):
             gravity = []
 
         self.type = type
+        self.symmetry_type = symmetry_type
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
         self.origin = origin
@@ -3619,38 +3631,89 @@ class pdata(object):
             print '       valid grid.types:', grid_types_allowed
             raise PyFLOTRAN_ERROR(
                 'grid.type: \'' + grid.type + '\' is invalid!')
-        if grid.type == 'structured':
-            outfile.write('  TYPE ' + grid.type + '\n')
-            if grid.lower_bounds:
-                outfile.write('  BOUNDS\n')
-                outfile.write('    ')
-                for i in range(3):
-                    outfile.write(strD(grid.lower_bounds[i]) + ' ')
-                outfile.write('\n    ')
-                for i in range(3):
-                    outfile.write(strD(grid.upper_bounds[i]) + ' ')
-                outfile.write('\n  /\n')  # / marks end of writing out bounds
+        if grid.type == 'structured': 
+            outfile.write('  TYPE ' + grid.type) 
+            if grid.symmetry_type not in grid_symmetry_types_allowed: #DANNY - adding symmetry_type (e.g. cartesian, cylindrical, or spherical)
+                print '    valid grid.symmetry_types:', grid_symmetry_types_allowed
+                raise PyFLOTRAN_ERROR(
+                    'grid.symmetry_type: \'' + grid.symmetry_type + '\' is invalid')
+            elif grid.symmetry_type == 'cartesian' or grid.symmetry_type == '':
+                outfile.write('\n')
+            elif grid.symmetry_type == 'cylindrical':
+                outfile.write(' ' + grid.symmetry_type + '\n')
+            elif grid.symmetry_type == 'spherical':
+                outfile.write(' ' + grid.symmetry_type + '\n')
+            if grid.lower_bounds: #BOUNDS keyword
+                if grid.symmetry_type == 'cartesian' or grid.symmetry_type == '': #cartesian grid
+                    outfile.write('  BOUNDS\n')
+                    outfile.write('    ')
+                    for i in range(3):
+                        outfile.write(strD(grid.lower_bounds[i]) + ' ')
+                    outfile.write('\n    ')
+                    for i in range(3):
+                        outfile.write(strD(grid.upper_bounds[i]) + ' ')
+                    outfile.write('\n  /\n')  # / marks end of writing out bounds
+                elif grid.symmetry_type == 'cylindrical': #BOUNDS and cartesian
+                    outfile.write('  BOUNDS\n')
+                    outfile.write('    ')
+                    outfile.write(strD(grid.lower_bounds[0]) + ' ')  #low x
+                    outfile.write(strD(grid.lower_bounds[2]) + ' ')  #low z
+                    outfile.write(strD(9999) + ' ')  #dummy for final value
+                    outfile.write('\n    ')
+                    outfile.write(strD(grid.upper_bounds[0]) + ' ')  #low x
+                    outfile.write(strD(grid.upper_bounds[2]) + ' ')  #low z
+                    outfile.write(strD(9999) + ' ')  #dummy for final value
+                    outfile.write('\n  /\n')  # / marks end of writing out bounds
+                elif grid.symmetry_type == 'spherical':
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + grid.symmetry_type + 
+                        '\' not currently supported')
             else:  # DXYZ is only written if no bounds are provided
                 outfile.write('  DXYZ\n')
-                for j in range(len(grid.dx)):
-                    outfile.write('    ' + strD(grid.dx[j]))
-                    if j % 5 == 4:
-                        outfile.write('   ' + '\\' + '\n')
-                outfile.write('\n')
-                for j in range(len(grid.dy)):
-                    outfile.write('    ' + strD(grid.dy[j]))
-                    if j % 5 == 4:
-                        outfile.write('   ' + '\\' + '\n')
-                outfile.write('\n')
-                for j in range(len(grid.dz)):
-                    outfile.write('    ' + strD(grid.dz[j]))
-                    if j % 5 == 4:
-                        outfile.write('   ' + '\\' + '\n')
-                outfile.write('\n')
-                outfile.write('  END\n')
+                if grid.symmetry_type == 'cartesian' or grid.symmetry_type == '': #cartesian, DXYZ grid
+                    for j in range(len(grid.dx)):
+                        outfile.write('    ' + strD(grid.dx[j]))
+                        if j % 5 == 4:
+                            outfile.write('   ' + '\\' + '\n')
+                    outfile.write('\n')
+                    for j in range(len(grid.dy)):
+                        outfile.write('    ' + strD(grid.dy[j]))
+                        if j % 5 == 4:
+                            outfile.write('   ' + '\\' + '\n')
+                    outfile.write('\n')
+                    for j in range(len(grid.dz)):
+                        outfile.write('    ' + strD(grid.dz[j]))
+                        if j % 5 == 4:
+                            outfile.write('   ' + '\\' + '\n')
+                    outfile.write('\n')
+                    outfile.write('  END\n')
+                elif grid.symmetry_type == 'cylindrical': #cylindrical, DXYZ grid
+                    for j in range(len(grid.dx)): #for x or r
+                        outfile.write('    ' + strD(grid.dx[j]))
+                        if j % 5 == 4:
+                            outfile.write('   ' + '\\' + '\n')
+                    outfile.write('\n')
+                    if len(grid.dy) == 1:  #for y coordinate (only 1 value allowed)
+                        outfile.write('    ' + strD(grid.dy[0]))
+                        outfile.write('\n')
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'grid.dy must be length 1 for cylindrical grid.symmetry_type')
+                    for j in range(len(grid.dz)):  #for z coordinate
+                        outfile.write('    ' + strD(grid.dz[j]))
+                        if j % 5 == 4:
+                            outfile.write('   ' + '\\' + '\n')
+                    outfile.write('\n')
+                    outfile.write('  END\n')
+                elif grid.symmetry_type == 'spherical':
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + grid.symmetry_type + '\' not supported')
             outfile.write('  NXYZ' + ' ')
-            for i in range(3):
-                outfile.write(strI(grid.nxyz[i]) + ' ')
+            if grid.lower_bounds: #write NXYZ for BOUNDS
+                for i in range(3):
+                    outfile.write(strI(grid.nxyz[i]) + ' ')
+            else:  #write NXYZ based on length of dx, dy, dz (DXYZ)
+                outfile.write(strI(len(grid.dx)) + ' ')
+                outfile.write(strI(len(grid.dy)) + ' ')
+                outfile.write(strI(len(grid.dz)) + ' ')
             outfile.write('\n')
         else:
             outfile.write('  TYPE ' + grid.type + ' ' + grid.filename + '\n')

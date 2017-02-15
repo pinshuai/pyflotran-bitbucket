@@ -317,7 +317,8 @@ class pmaterial(Frozen):
                  permeability_min_scale_factor='',
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
-                 secondary_continuum='', anisotropic=False):
+                 secondary_continuum='', anisotropic=False,
+                 soil_compressibility_function='',soil_reference_pressure=None,soil_compressibility=None):
         if permeability is None:
             permeability = []
 
@@ -340,6 +341,9 @@ class pmaterial(Frozen):
         self.transverse_dispersivity_v = transverse_dispersivity_v
         self.secondary_continuum = secondary_continuum
         self.anisotropic = anisotropic
+        self.soil_compressibility_function = soil_compressibility_function
+        self.soil_reference_pressure = soil_reference_pressure
+        self.soil_compressibility = soil_compressibility
         self._freeze()
 
 
@@ -4024,8 +4028,19 @@ class pdata(object):
                     outfile.write('    ANISOTROPIC\n')
                 outfile.write('  /\n')
 
+            if prop.soil_compressibility_function:
+                outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' + prop.soil_compressibility_function +'\n')
+
+            if prop.soil_compressibility: #this is alpha
+                outfile.write('  SOIL_COMPRESSIBILITY ' + strD(prop.soil_compressibility) +'\n')    
+
+            if prop.soil_reference_pressure: #this is alpha
+                outfile.write('  SOIL_REFERENCE_PRESSURE ' + strD(prop.soil_reference_pressure) +'\n')    
+
             if prop.secondary_continuum:
                 self._write_sec(prop.secondary_continuum, outfile)
+
+
 
             outfile.write('END\n\n')
 

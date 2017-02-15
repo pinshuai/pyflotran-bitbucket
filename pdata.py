@@ -232,6 +232,21 @@ class puniform_velocity(Frozen):
         self.value_list = value_list
         self._freeze()
 
+class preference_stress_state(Frozen):
+    """
+    Class for specifiying uniform reference stress state used in 
+    conjunction with BANDIS_UNCOUPLED keyword.
+
+    :param value_list: List of stress components [xx,yy,zz,]
+    e.g., [14.4e0, 0.e0, 0.e0, 'm/yr']
+    :type value_list: [float,float,float,float,float,float]
+    """
+
+    def __init__(self, value_list=None):
+        if value_list is None:
+            value_list = []
+        self.value_list = value_list
+        self._freeze()
 
 class pnonuniform_velocity(Frozen):
     """
@@ -2374,6 +2389,7 @@ class pdata(object):
         else:
             self.co2_database = ''
         self.uniform_velocity = puniform_velocity()
+        self.reference_stress_state = preference_stress_state()
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
         self.overwrite_restart_transport = False
@@ -2863,6 +2879,9 @@ class pdata(object):
         if self.uniform_velocity.value_list:
             self._write_uniform_velocity(outfile)
 
+        if self.reference_stress_state.value_list:
+            self._write_reference_stress_state(outfile)
+
         if self.nonuniform_velocity.filename:
             self._write_nonuniform_velocity(outfile)
 
@@ -3258,6 +3277,17 @@ class pdata(object):
         outfile.write('UNIFORM_VELOCITY ')
         for v in self.uniform_velocity.value_list:  # value in value_list
             outfile.write(strD(v) + ' ')
+        outfile.write('\n\n')
+
+    def _write_reference_stress_state(self, outfile):
+        # self._header(outfile, headers['reference_stress_state']) #do we need reference_stress_state header?
+        outfile.write('REFERENCE_STRESS_STATE ')
+        i = 0
+        for v in self.reference_stress_state.value_list:  # value in value_list
+            outfile.write(strD(v) + ' ')
+            i = i+1
+        if i != 6:
+            PyFLOTRAN_ERROR('reference_stress_state must have 6 components')
         outfile.write('\n\n')
 
     def _read_nonuniform_velocity(self, infile, line):

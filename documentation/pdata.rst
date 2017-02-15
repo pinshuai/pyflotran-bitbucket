@@ -144,6 +144,11 @@ QK3
 ---
 .. autoclass:: pdata.pquake
 
+Reference Stress State
+----------------
+.. autoclass:: pdata.preference_stress_state
+
+
 
 Methods
 ^^^^^^^

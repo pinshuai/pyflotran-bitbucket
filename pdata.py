@@ -88,7 +88,7 @@ grid_types_allowed = ['structured', 'unstructured_explicit',
                       'unstructured_implicit']
 
 # cartesian is default in pflotran
-grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical']
+grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical', '']
 
 # output - allowed strings
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',

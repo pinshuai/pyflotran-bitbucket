@@ -186,6 +186,10 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'equilibrium', 'neumann', 'mole',
                                      'mole_rate', 'zero_gradient']
 
+# eos - allowed strings
+eos_fluidnames_allowed = ['WATER','GAS']
+eos_density_words_allowed = ['CONSTANT','EXPONENTIAL']
+
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'checkpoint', 'restart',
          'dataset', 'chemistry', 'grid', 'timestepper', 'material_property',
@@ -232,21 +236,6 @@ class puniform_velocity(Frozen):
         self.value_list = value_list
         self._freeze()
 
-class preference_stress_state(Frozen):
-    """
-    Class for specifiying uniform reference stress state used in 
-    conjunction with BANDIS_UNCOUPLED keyword.
-
-    :param value_list: List of stress components [xx yy zz xy xz yz]
-     e.g., [-25.E+06 -25.E+06 -25.E+06 -0.E+06 -0.E+06 -0.E+06]
-    :type value_list: [float,float,float,float,float,float]
-    """
-
-    def __init__(self, value_list=None):
-        if value_list is None:
-            value_list = []
-        self.value_list = value_list
-        self._freeze()
 
 class pnonuniform_velocity(Frozen):
     """
@@ -2380,6 +2369,66 @@ class pgeomech_regression(Frozen):
         self._freeze()
 
 
+class preference_stress_state(Frozen):
+    """
+    Class for specifiying uniform reference stress state used in 
+    conjunction with BANDIS_UNCOUPLED keyword.
+
+    :param value_list: List of stress components [xx yy zz xy xz yz]
+     e.g., [-25.E+06 -25.E+06 -25.E+06 -0.E+06 -0.E+06 -0.E+06]
+    :type value_list: [float,float,float,float,float,float]
+    """
+
+    def __init__(self, value_list=None):
+        if value_list is None:
+            value_list = []
+        self.value_list = value_list
+        self._freeze()
+
+
+class peos(Frozen):
+    """
+    Class for specifiying uniform reference stress state used in 
+    conjunction with BANDIS_UNCOUPLED keyword.
+
+    :param value_list: List of stress components [xx yy zz xy xz yz]
+     e.g., [-25.E+06 -25.E+06 -25.E+06 -0.E+06 -0.E+06 -0.E+06]
+    :type value_list: [float,float,float,float,float,float]
+    """
+
+    def __init__(self, fluidname=None, fluid_density=None):
+        if fluidname is None:
+            fluidname = []
+        if fluid_density is None:
+            fluid_density = []
+        self.fluidname = fluidname
+        self.fluid_density = fluid_density
+        self._freeze()
+
+            # if self.eos.fluid_enthalpy:
+            # if self.eos.fluid_viscosity:
+
+# class peos(Frozen):
+#     """
+#     Class for specifiying Equation of State.
+
+#     :param fluid: Specifies 'water' or 'gas'.
+#     :type fluid: string
+#     :param density: Specifies density keyword and following float(s)
+#     :type density: ['string',float, (float), (float)]
+#     """
+
+#     def __init__(self, fluid=None, density=None):
+#         import pudb; pudb.set_trace()
+#         if fluid is None:
+#             fluid = []
+#         if density is None:
+#             density = []
+#         self.fluid = fluid
+#         self.density = density
+#         self._freeze()
+
+
 class pdata(object):
     """
     Class for pflotran data file. Use 'from pdata import*' to
@@ -2393,7 +2442,6 @@ class pdata(object):
         else:
             self.co2_database = ''
         self.uniform_velocity = puniform_velocity()
-        self.reference_stress_state = preference_stress_state()
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
         self.overwrite_restart_transport = False
@@ -2433,6 +2481,8 @@ class pdata(object):
         self.geomech_time = pgeomech_time()
         self.geomech_output = pgeomech_output()
         self.geomech_regression = pgeomech_regression()
+        self.reference_stress_state = preference_stress_state()
+        self.eos = peos()
 
         # run object
         self._path = ppath(parent=self)
@@ -2886,6 +2936,9 @@ class pdata(object):
         if self.reference_stress_state.value_list:
             self._write_reference_stress_state(outfile)
 
+        if self.eos.fluidname:
+            self._write_eos(outfile)
+
         if self.nonuniform_velocity.filename:
             self._write_nonuniform_velocity(outfile)
 
@@ -3293,6 +3346,46 @@ class pdata(object):
         if i != 6:
             PyFLOTRAN_ERROR('reference_stress_state must have 6 components')
         outfile.write('\n\n')
+
+    def _write_eos(self, outfile):
+        # import pudb; pudb.set_trace()
+        # self._header(outfile, headers['reference_stress_state']) #do we need reference_stress_state header?
+        if self.eos.fluidname.upper() in eos_fluidnames_allowed:
+            outfile.write('EOS ' + self.eos.fluidname.upper() + '\n')
+            if self.eos.fluid_density:
+                if self.eos.fluid_density[0].upper() == 'CONSTANT' and \
+                len(self.eos.fluid_density) == 2:
+                    outfile.write('  DENSITY ' + 
+                        self.eos.fluid_density[0].upper() + ' ' 
+                        + strD(self.eos.fluid_density[1]) + '\n')
+                elif self.eos.fluid_density[0].upper() == 'EXPONENTIAL' and \
+                len(self.eos.fluid_density) == 4:
+                    outfile.write('  DENSITY '
+                        + self.eos.fluid_density[0].upper() + ' ' 
+                        + strD(self.eos.fluid_density[1]) + ' '
+                        + strD(self.eos.fluid_density[2]) + ' '
+                        + strD(self.eos.fluid_density[3]) + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('eos.fluid_density: \'' + 
+                        strD(self.eos.fluid_density) + 
+                        '\' has incorrect keyword or incorrect length')
+                outfile.write('END\n\n')
+            if self.eos.fluid_enthalpy:
+            if self.eos.fluid_viscosity:
+        else:
+            raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname + 
+                '\' is invalid')
+
+
+# if simulation.simulation_type.lower() in simulation_types_allowed:
+#             outfile.write('  SIMULATION_TYPE ' +
+#                           simulation.simulation_type.upper() + '\n')
+#         else:
+#             print '       valid simulation.simulation_type:', \
+#                 simulation_types_allowed, '\n'
+#             raise PyFLOTRAN_ERROR(
+#                 'simulation.simulation_type: \'' +
+#                 simulation.simulation_type + '\' is invalid!')
 
     def _read_nonuniform_velocity(self, infile, line):
         filename = ''

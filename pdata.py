@@ -2373,7 +2373,7 @@ class preference_stress_state(Frozen):
     Class for specifiying uniform reference stress state used in 
     conjunction with BANDIS_UNCOUPLED keyword.
 
-    :param value_list: List of stress components [xx yy zz xy xz yz]
+    :param value_list: List of stress components [xx yy zz xy yz zx]
      e.g., [-25.E+06 -25.E+06 -25.E+06 -0.E+06 -0.E+06 -0.E+06]
     :type value_list: [float,float,float,float,float,float]
     """

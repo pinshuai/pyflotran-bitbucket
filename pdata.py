@@ -2387,8 +2387,7 @@ class preference_stress_state(Frozen):
 
 class peos(Frozen):
     """
-    Class for specifiying uniform reference stress state used in 
-    conjunction with BANDIS_UNCOUPLED keyword.
+    Class for specifiying equation of state (EOS).
 
     :param fluidname: Selects the type of fluid (either water or gas).
     :type fluidname: string
@@ -3328,19 +3327,17 @@ class pdata(object):
         outfile.write('\n\n')
 
     def _write_reference_stress_state(self, outfile):
-        # self._header(outfile, headers['reference_stress_state']) #do we need reference_stress_state header?
         outfile.write('REFERENCE_STRESS_STATE ')
         i = 0
         for v in self.reference_stress_state.value_list:  # value in value_list
             outfile.write(strD(v) + ' ')
             i = i+1
         if i != 6:
-            PyFLOTRAN_ERROR('reference_stress_state must have 6 components')
+            raise PyFLOTRAN_ERROR('reference_stress_state' + 
+                                  ' must have 6 components')
         outfile.write('\n\n')
 
     def _write_eos(self, outfile):
-        # import pudb; pudb.set_trace()
-        # self._header(outfile, headers['reference_stress_state']) #do we need reference_stress_state header?
         if self.eos.fluidname.upper() in eos_fluidnames_allowed:
             outfile.write('EOS ' + self.eos.fluidname.upper() + '\n')
             if self.eos.fluid_density:
@@ -3389,17 +3386,6 @@ class pdata(object):
         else:
             raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname + 
                 '\' is invalid')
-
-
-# if simulation.simulation_type.lower() in simulation_types_allowed:
-#             outfile.write('  SIMULATION_TYPE ' +
-#                           simulation.simulation_type.upper() + '\n')
-#         else:
-#             print '       valid simulation.simulation_type:', \
-#                 simulation_types_allowed, '\n'
-#             raise PyFLOTRAN_ERROR(
-#                 'simulation.simulation_type: \'' +
-#                 simulation.simulation_type + '\' is invalid!')
 
     def _read_nonuniform_velocity(self, infile, line):
         filename = ''
@@ -3774,18 +3760,20 @@ class pdata(object):
                 'grid.type: \'' + grid.type + '\' is invalid!')
         if grid.type == 'structured': 
             outfile.write('  TYPE ' + grid.type) 
-            if grid.symmetry_type not in grid_symmetry_types_allowed: #DANNY - adding symmetry_type (e.g. cartesian, cylindrical, or spherical)
-                print '    valid grid.symmetry_types:', grid_symmetry_types_allowed
-                raise PyFLOTRAN_ERROR(
-                    'grid.symmetry_type: \'' + grid.symmetry_type + '\' is invalid')
+            if grid.symmetry_type not in grid_symmetry_types_allowed:
+                print '    valid grid.symmetry_types:', \
+                           grid_symmetry_types_allowed
+                raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' 
+                                       + grid.symmetry_type + '\' is invalid')
             elif grid.symmetry_type == 'cartesian' or grid.symmetry_type == '':
                 outfile.write('\n')
             elif grid.symmetry_type == 'cylindrical':
                 outfile.write(' ' + grid.symmetry_type + '\n')
             elif grid.symmetry_type == 'spherical':
                 outfile.write(' ' + grid.symmetry_type + '\n')
-            if grid.lower_bounds: #BOUNDS keyword
-                if grid.symmetry_type == 'cartesian' or grid.symmetry_type == '': #cartesian grid
+            if grid.lower_bounds: 
+                if grid.symmetry_type == 'cartesian' or \
+                grid.symmetry_type == '':
                     outfile.write('  BOUNDS\n')
                     outfile.write('    ')
                     for i in range(3):
@@ -3793,8 +3781,8 @@ class pdata(object):
                     outfile.write('\n    ')
                     for i in range(3):
                         outfile.write(strD(grid.upper_bounds[i]) + ' ')
-                    outfile.write('\n  /\n')  # / marks end of writing out bounds
-                elif grid.symmetry_type == 'cylindrical': #BOUNDS and cartesian
+                    outfile.write('\n  /\n')  
+                elif grid.symmetry_type == 'cylindrical':
                     outfile.write('  BOUNDS\n')
                     outfile.write('    ')
                     outfile.write(strD(grid.lower_bounds[0]) + ' ')  #low x
@@ -3803,14 +3791,16 @@ class pdata(object):
                     outfile.write('\n    ')
                     outfile.write(strD(grid.upper_bounds[0]) + ' ')  #low x
                     outfile.write(strD(grid.upper_bounds[2]) + ' ')  #low z
-                    outfile.write(strD(9999) + ' ')  #dummy for final value
-                    outfile.write('\n  /\n')  # / marks end of writing out bounds
+                    outfile.write(strD(9999) + ' ')  #dummy value not used in PFLOTRAN
+                    outfile.write('\n  /\n')  # / is end of writing out bounds
                 elif grid.symmetry_type == 'spherical':
-                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + grid.symmetry_type + 
-                        '\' not currently supported')
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + 
+                                          grid.symmetry_type + 
+                                          '\' not currently supported')
             else:  # DXYZ is only written if no bounds are provided
                 outfile.write('  DXYZ\n')
-                if grid.symmetry_type == 'cartesian' or grid.symmetry_type == '': #cartesian, DXYZ grid
+                if grid.symmetry_type == 'cartesian' or \
+                grid.symmetry_type == '': #cartesian, DXYZ grid
                     for j in range(len(grid.dx)):
                         outfile.write('    ' + strD(grid.dx[j]))
                         if j % 5 == 4:
@@ -3837,8 +3827,8 @@ class pdata(object):
                         outfile.write('    ' + strD(grid.dy[0]))
                         outfile.write('\n')
                     else:
-                        raise PyFLOTRAN_ERROR(
-                            'grid.dy must be length 1 for cylindrical grid.symmetry_type')
+                        raise PyFLOTRAN_ERROR('grid.dy must be length 1 for '+ 
+                                               'cylindrical grid.symmetry_type')
                     for j in range(len(grid.dz)):  #for z coordinate
                         outfile.write('    ' + strD(grid.dz[j]))
                         if j % 5 == 4:
@@ -3846,7 +3836,9 @@ class pdata(object):
                     outfile.write('\n')
                     outfile.write('  END\n')
                 elif grid.symmetry_type == 'spherical':
-                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + grid.symmetry_type + '\' not supported')
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + 
+                                          grid.symmetry_type + 
+                                          '\' not supported')
             outfile.write('  NXYZ' + ' ')
             if grid.lower_bounds: #write NXYZ for BOUNDS
                 for i in range(3):

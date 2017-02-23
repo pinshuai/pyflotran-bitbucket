@@ -188,7 +188,6 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
 
 # eos - allowed strings
 eos_fluidnames_allowed = ['WATER','GAS']
-eos_density_words_allowed = ['CONSTANT','EXPONENTIAL']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'checkpoint', 'restart',
@@ -2391,43 +2390,35 @@ class peos(Frozen):
     Class for specifiying uniform reference stress state used in 
     conjunction with BANDIS_UNCOUPLED keyword.
 
-    :param value_list: List of stress components [xx yy zz xy xz yz]
-     e.g., [-25.E+06 -25.E+06 -25.E+06 -0.E+06 -0.E+06 -0.E+06]
-    :type value_list: [float,float,float,float,float,float]
+    :param fluidname: Selects the type of fluid (either water or gas).
+    :type fluidname: string
+    :param fluid_density: Specifies option for fluid density including 
+     "default", "constant", and "exponential" options with optional trailing 
+     floats.  (e.g. to specify constant density of 1000 use ['constant',1000]) 
+    :type fluid_density: list
+    :param fluid_viscosity: Specifies option for fluid viscosity. 
+     "Constant" is currently supported. 
+    :type fluid_viscosity: list
+    :param fluid_enthalpy: Specifies option for fluid viscosity. 
+     "Constant" is currently supported. 
+    :type fluid_enthalpy: list
     """
 
-    def __init__(self, fluidname=None, fluid_density=None):
+    def __init__(self, fluidname=None, fluid_density=['DEFAULT'], 
+                 fluid_viscosity=None, fluid_enthalpy=None):
         if fluidname is None:
             fluidname = []
         if fluid_density is None:
             fluid_density = []
+        if fluid_viscosity is None:
+            fluid_viscosity = []
+        if fluid_enthalpy is None:
+            fluid_enthalpy = []
         self.fluidname = fluidname
         self.fluid_density = fluid_density
+        self.fluid_viscosity = fluid_viscosity
+        self.fluid_enthalpy = fluid_enthalpy
         self._freeze()
-
-            # if self.eos.fluid_enthalpy:
-            # if self.eos.fluid_viscosity:
-
-# class peos(Frozen):
-#     """
-#     Class for specifiying Equation of State.
-
-#     :param fluid: Specifies 'water' or 'gas'.
-#     :type fluid: string
-#     :param density: Specifies density keyword and following float(s)
-#     :type density: ['string',float, (float), (float)]
-#     """
-
-#     def __init__(self, fluid=None, density=None):
-#         import pudb; pudb.set_trace()
-#         if fluid is None:
-#             fluid = []
-#         if density is None:
-#             density = []
-#         self.fluid = fluid
-#         self.density = density
-#         self._freeze()
-
 
 class pdata(object):
     """
@@ -3365,13 +3356,36 @@ class pdata(object):
                         + strD(self.eos.fluid_density[1]) + ' '
                         + strD(self.eos.fluid_density[2]) + ' '
                         + strD(self.eos.fluid_density[3]) + '\n')
+                elif self.eos.fluid_density[0].upper() == 'DEFAULT':
+                    outfile.write('  DENSITY DEFAULT\n')
                 else:
                     raise PyFLOTRAN_ERROR('eos.fluid_density: \'' + 
                         strD(self.eos.fluid_density) + 
                         '\' has incorrect keyword or incorrect length')
-                outfile.write('END\n\n')
-            if self.eos.fluid_enthalpy:
+            
             if self.eos.fluid_viscosity:
+                if self.eos.fluid_viscosity[0].upper() == 'CONSTANT' and \
+                len(self.eos.fluid_viscosity) == 2:
+                    outfile.write('  VISCOSITY ' + 
+                        self.eos.fluid_viscosity[0].upper() + ' ' 
+                        + strD(self.eos.fluid_viscosity[1]) + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' + 
+                        strD(self.eos.fluid_viscosity) + 
+                        '\' has incorrect keyword or incorrect length')
+            
+            if self.eos.fluid_enthalpy:
+                if self.eos.fluid_enthalpy[0].upper() == 'CONSTANT' and \
+                len(self.eos.fluid_enthalpy) == 2:
+                    outfile.write('  ENTHALPY ' + 
+                        self.eos.fluid_enthalpy[0].upper() + ' ' 
+                        + strD(self.eos.fluid_enthalpy[1]) + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' + 
+                        strD(self.eos.fluid_enthalpy) + 
+                        '\' has incorrect keyword or incorrect length')
+            
+            outfile.write('END\n\n')
         else:
             raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname + 
                 '\' is invalid')

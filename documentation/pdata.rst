@@ -148,6 +148,11 @@ Reference Stress State
 ----------------
 .. autoclass:: pdata.preference_stress_state
 
+Equation of State
+----------------
+.. autoclass:: pdata.peos
+
+
 
 
 Methods

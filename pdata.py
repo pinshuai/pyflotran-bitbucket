@@ -1128,8 +1128,8 @@ class prestart(Frozen):
     """
     Class for restarting a simulation.
 
-    :param file_name: Specify file path and name for restart.chk file.
-    :type file_name: str
+    :param filename: Specify file path and name for restart.chk file.
+    :type filename: str
     :param time_value: Specify time value.
     :type time_value: float
     """
@@ -1185,7 +1185,7 @@ class psimulation(Frozen):
                  max_temperature_change='', max_concentration_change='',
                  max_cfl='', numerical_derivatives='',
                  pressure_dampening_factor='',
-                 restart=prestart()):
+                 restart=prestart(), checkpoint=pcheckpoint()):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -1201,7 +1201,7 @@ class psimulation(Frozen):
         self.numerical_derivatives = numerical_derivatives
         self.pressure_dampening_factor = pressure_dampening_factor
         self.restart = restart
-        self.checkpoint = pcheckpoint()
+        self.checkpoint = checkpoint
         self._freeze()
 
 
@@ -3617,10 +3617,11 @@ class pdata(object):
                           simulation.subsurface_transport + '\n')
             outfile.write('    / ' + '\n')
             outfile.write('  / ' + '\n')
+        if simulation.checkpoint:
+            self._write_checkpoint(outfile)
         if simulation.restart.file_name:
             self._write_restart(outfile)
-        if simulation.checkpoint.frequency:
-            self._write_checkpoint(outfile)
+ 
         outfile.write('END' + '\n\n')
 
     def _write_subsurface_simulation_begin(self, outfile):
@@ -6075,7 +6076,8 @@ class pdata(object):
     def _write_checkpoint(self, outfile):
         self._header(outfile, headers['checkpoint'])
         checkpoint = self.simulation.checkpoint
-        if checkpoint.time_list or checkpoint.periodic_time_list
+        print checkpoint
+        if checkpoint.time_list or checkpoint.periodic_time_list \
             or checkpoint.periodic_timestep:
             outfile.write('  CHECKPOINT\n')
             if checkpoint.time_list:
@@ -6084,14 +6086,21 @@ class pdata(object):
                 outfile.write(' ')
                 for i in range(len(checkpoint.time_list)-1):
                     outfile.write(str(checkpoint.time_list[i]).lower() + ' ')
-            elif checkpoint.periodic_time_list:
+                outfile.write('\n')
+            if checkpoint.periodic_time_list:
                 outfile.write('    PERIODIC TIME ')
                 outfile.write(str(checkpoint.periodic_time_list[0]) + ' ')
                 if len(checkpoint.periodic_time_list) > 1:
                     outfile.write(str(checkpoint.periodic_time_list[1]))
-            elif checkpoint.periodic_timestep:
+                outfile.write('\n')
+            if checkpoint.periodic_timestep:
                 outfile.write('    PERIODIC TIMESTEP ')
                 outfile.write(str(checkpoint.periodic_timestep))
+                outfile.write('\n')
+            if checkpoint.format:
+                outfile.write('    FORMAT ') 
+                outfile.write(str(checkpoint.format).upper())
+                outfile.write('\n')
             outfile.write('  /\n')
 
     def _read_restart(self, infile, line):
@@ -6115,30 +6124,18 @@ class pdata(object):
         outfile.write('  RESTART ' + str(restart.file_name) + ' ')
 
         # Write time value
-        try:
-            # error-checking
-            restart.time_value = floatD(restart.time_value)
+        if restart.time_value:
+            try:
+                # error-checking
+                restart.time_value = floatD(restart.time_value)
 
-            # writing
-            outfile.write(strD(restart.time_value) + ' ')
-        except:
-            # writing
-            outfile.write(strD(restart.time_value) + ' ')
+                # writing
+                outfile.write(strD(restart.time_value) + ' ')
+            except:
+                # writing
+                outfile.write(strD(restart.time_value) + ' ')
 
-            raise PyFLOTRAN_ERROR('restart.time_value is not float.')
-
-        # Write time unit of measurement
-        if restart.time_unit:
-            restart.time_unit = str(restart.time_unit).lower()
-            if restart.time_unit in time_units_allowed:
-                outfile.write(restart.time_unit)
-            else:
-                outfile.write(restart.time_unit)
-
-                raise PyFLOTRAN_ERROR('restart.time_unit \'',
-                                      restart.time_unit,
-                                      '\' is invalid. Valid times units are:',
-                                      time_units_allowed, '\n')
+                raise PyFLOTRAN_ERROR('restart.time_value is not float.')
 
         outfile.write('\n')
 

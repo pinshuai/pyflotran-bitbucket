@@ -83,6 +83,9 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis', 'general']
 
+# checkpoint - allowed formats
+checkpoint_formats_allowed = ['hdf5', 'binary']
+
 # grid - allowed strings
 grid_types_allowed = ['structured', 'unstructured_explicit',
                       'unstructured_implicit']
@@ -1098,18 +1101,26 @@ class pcheckpoint(Frozen):
     """
     Class for specifying checkpoint options.
 
-    :param frequency: Checkpoint dump frequency.
-    :type frequency: int
-    :param overwrite: Intended to be used for the PFLOTRAN keyword
-     OVERWRITE_RESTART_FLOW_PARAMS.
-    :type overwrite: bool - True or False
+    :param time_list: List of times followed by units. e.g., [1,10,100,'y']
+    :type frequency: list
+    :param periodic_time: checkpoint at every n times. Give value and unit as a list. e.g., [1,'y']
+    :type periodic_time: list
+    :param periodic_timestep: checkpoint at every n timesteps
+    :type periodic_timestep: int
+    :param format: specify 'binary' or 'hdf5'.
+    :type format: str
     """
 
-    def __init__(self, frequency=None, overwrite=False):
-        self.frequency = frequency  # int
-        # Intended for OVERWRITE_RESTART_FLOW_PARAMS, incomplete, uncertain how
-        # to write it.
-        self.overwrite = overwrite
+    def __init__(self, time_list=[], periodic_time_list=[], periodic_timestep=None,
+                 format=''):
+        if time_list is None:
+            time_list = []
+        if periodic_time_list is None:
+            periodic_time_list =[]
+        self.time_list = time_list
+        self.periodic_time_list = periodic_time_list
+        self.periodic_timestep = periodic_timestep
+        self.format = format
         self._freeze()
 
 
@@ -1121,16 +1132,11 @@ class prestart(Frozen):
     :type file_name: str
     :param time_value: Specify time value.
     :type time_value: float
-    :param time_unit: Specify unit of measurement to use for time.
-     Options include: 's', 'sec','m', 'min', 'h', 'hr',
-     'd', 'day', 'w', 'week', 'mo', 'month', 'y'.
-    :type time_unit: str
     """
 
-    def __init__(self, file_name='', time_value=None, time_unit=''):
+    def __init__(self, file_name='', time_value=None):
         self.file_name = file_name  # restart.chk file name
         self.time_value = time_value  # float
-        self.time_unit = time_unit  # unit of measurement to use for time - str
         self._freeze()
 
 
@@ -6069,24 +6075,24 @@ class pdata(object):
     def _write_checkpoint(self, outfile):
         self._header(outfile, headers['checkpoint'])
         checkpoint = self.simulation.checkpoint
-
-        try:
-            # error-checking to make sure checkpoint.frequency is int (integer)
-            checkpoint.frequency = int(checkpoint.frequency)
-
-            # write results
-            outfile.write('  CHECKPOINT ')
-            outfile.write(str(checkpoint.frequency))
-            outfile.write('\n')
-        except ValueError:
-            # write results
-            outfile.write('  CHECKPOINT ')
-            outfile.write(str(checkpoint.frequency))
-            outfile.write('\n')
-
-            raise PyFLOTRAN_ERROR('checkpoint.frequency is not int (integer).')
-
-        outfile.write('\n')
+        if checkpoint.time_list or checkpoint.periodic_time_list
+            or checkpoint.periodic_timestep:
+            outfile.write('  CHECKPOINT\n')
+            if checkpoint.time_list:
+                outfile.write('    TIMES ')
+                outfile.write(checkpoint.time_list[-1].lower())
+                outfile.write(' ')
+                for i in range(len(checkpoint.time_list)-1):
+                    outfile.write(str(checkpoint.time_list[i]).lower() + ' ')
+            elif checkpoint.periodic_time_list:
+                outfile.write('    PERIODIC TIME ')
+                outfile.write(str(checkpoint.periodic_time_list[0]) + ' ')
+                if len(checkpoint.periodic_time_list) > 1:
+                    outfile.write(str(checkpoint.periodic_time_list[1]))
+            elif checkpoint.periodic_timestep:
+                outfile.write('    PERIODIC TIMESTEP ')
+                outfile.write(str(checkpoint.periodic_timestep))
+            outfile.write('  /\n')
 
     def _read_restart(self, infile, line):
         restart = prestart()

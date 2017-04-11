@@ -2718,7 +2718,6 @@ class pdata(object):
             if found:
                 print 'Plotting variable [' + var + '] in [' + \
                       direction + '] direction'
-            # import pudb;pudb.set_trace()
             fig.savefig(plot_filename + '_' + var + '.pdf')
 
         return 0

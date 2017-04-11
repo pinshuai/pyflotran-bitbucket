@@ -106,7 +106,8 @@ output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
                             'capillary_pressure', 'thermodynamic_state',
                             'temperature', 'residual', 'porosity',
                             'mineral_porosity', 'permeability',
-                            'mineral_porosity']
+                            'permeability_x','permeability_y',
+                            'permeability_z','mineral_porosity']
 
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
@@ -149,6 +150,8 @@ lower_list = [sat.lower() for sat in
 characteristic_curves_liquid_permeability_function_types_allowed = list(set(
     characteristic_curves_liquid_permeability_function_types_allowed +
     lower_list))
+
+allowed_compressibility_functions = ['linear_model','bandis','turner']
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
@@ -295,6 +298,27 @@ class pmaterial(Frozen):
     :type transverse_dispersivity_v: float
     :param anisotropic: Turn this on if permeability is anisotropic
     :type anisotropic: Bool
+    :param soil_compressibility_function: Selects the 
+     compressibility function if geomechanics is not use (e.g. LEIJNSE)
+    :type soil_compressibility_function: String
+    :param soil_compressibility: Compressibility of soil matrix (Pa^-1)
+    :type soil_compressibility: Float
+    :param compressibility_function: Inserts the GEOMECHANICS_SUBSURFACE_PROPS
+     keyword and points to a compressibility function (e.g. 'LINEAR_MODEL', 
+     'BANDIS', 'TURNER') 
+    :type compressibility_function: String
+    :param bandis_A: Used with GEOMECHANICS_SUBSURFACE_PROPS
+     keyword and BANDIS model. 
+    :type bandis_A: float
+    :param bandis_B: Used with GEOMECHANICS_SUBSURFACE_PROPS
+     keyword and BANDIS model. 
+    :type bandis_B: float
+    :param maximum_aperture: Used with GEOMECHANICS_SUBSURFACE_PROPS
+     keyword and BANDIS model. 
+    :type maximum_aperture: float
+    :param normal_vector: Defines fracture normal vector for 
+     GEOMECHANICS_SUBSURFACE_PROPS keyword and BANDIS model. 
+    :type normal_vector: [float, float, float]
 
 
     """
@@ -309,7 +333,11 @@ class pmaterial(Frozen):
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
                  secondary_continuum='', anisotropic=False,
-                 soil_compressibility_function='',soil_reference_pressure=None,soil_compressibility=None):
+                 soil_compressibility_function='',soil_reference_pressure=None,
+                 soil_compressibility=None,compressibility_function='',
+                 bandis_A=None,bandis_B=None,maximum_aperture=None,
+                 normal_vector=None):
+        
         if permeability is None:
             permeability = []
 
@@ -335,6 +363,20 @@ class pmaterial(Frozen):
         self.soil_compressibility_function = soil_compressibility_function
         self.soil_reference_pressure = soil_reference_pressure
         self.soil_compressibility = soil_compressibility
+        self.compressibility_function = compressibility_function
+        if bandis_A is None:
+            bandis_A = []
+        if bandis_B is None:
+            bandis_B = []
+        if maximum_aperture is None:
+            maximum_aperture = []
+        if normal_vector is None:
+            normal_vector = []
+
+        self.bandis_A = bandis_A
+        self.bandis_B = bandis_B
+        self.maximum_aperture = maximum_aperture
+        self.normal_vector = normal_vector
         self._freeze()
 
 
@@ -2676,6 +2718,7 @@ class pdata(object):
             if found:
                 print 'Plotting variable [' + var + '] in [' + \
                       direction + '] direction'
+            # import pudb;pudb.set_trace()
             fig.savefig(plot_filename + '_' + var + '.pdf')
 
         return 0
@@ -4146,8 +4189,29 @@ class pdata(object):
             if prop.secondary_continuum:
                 self._write_sec(prop.secondary_continuum, outfile)
 
-
-
+            if prop.compressibility_function:
+                # if lsolver.name.lower() in solver_names_allowed:
+                if prop.compressibility_function.lower() in allowed_compressibility_functions:
+                    outfile.write('  GEOMECHANICS_SUBSURFACE_PROPS\n')
+                    outfile.write('    COMPRESSIBILITY_FUNCTION ' + 
+                                   prop.compressibility_function +'\n')
+                    #check for Bandis parameters
+                    if prop.bandis_A:
+                        outfile.write('    BANDIS_A ' + 
+                                           strD(prop.bandis_A) + '\n')
+                    if prop.bandis_B:
+                        outfile.write('    BANDIS_B ' + 
+                                           strD(prop.bandis_B) + '\n')
+                    if prop.maximum_aperture:
+                        outfile.write('    MAXIMUM_APERTURE ' + 
+                                           strD(prop.maximum_aperture) + '\n')
+                    if prop.normal_vector:
+                        outfile.write('    NORMAL_VECTOR ' + 
+                                       strD(prop.normal_vector[0]) + ' ' +
+                                       strD(prop.normal_vector[1]) + ' ' +
+                                       strD(prop.normal_vector[2]) + '\n')
+                    outfile.write('  /\n')
+                    
             outfile.write('END\n\n')
 
     def _write_sec(self, sec, outfile):

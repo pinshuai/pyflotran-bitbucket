@@ -6139,7 +6139,6 @@ class pdata(object):
     def _write_checkpoint(self, outfile):
         self._header(outfile, headers['checkpoint'])
         checkpoint = self.simulation.checkpoint
-        print checkpoint
         if checkpoint.time_list or checkpoint.periodic_time_list \
             or checkpoint.periodic_timestep:
             outfile.write('  CHECKPOINT\n')

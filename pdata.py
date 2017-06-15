@@ -2670,7 +2670,6 @@ class pdata(object):
         if y_label_list is None:
             y_label_list = []
 
-        import pdb;pdb.set_trace()
         for var, y_label in zip(variable_list, y_label_list):
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)

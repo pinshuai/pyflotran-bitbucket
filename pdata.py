@@ -736,7 +736,7 @@ class pgrid(Frozen):
 
         :param filename: Name of saved zone file.
         :type filename: str
-        :param angle:   View angle of zone. First number is tilt angle
+        :param angle: 	View angle of zone. First number is tilt angle
          in degrees, second number is azimuth. Alternatively, if angle
          is 'x', 'y', 'z', view is aligned along the corresponding axis.
         :type angle: [fl64,fl64], str
@@ -4353,7 +4353,7 @@ class pdata(object):
                     'time.dti (initial timestep size) input is invalid. ' +
                     'Format should be a list: [number, string]')
 
-        # write MAXIMUM_TIMESTEP_SIZE statement dtf
+        # write MAXIMUM_TIMESTEP_SIZE statement	dtf
         if time.dtf:
             try:
                 outfile.write('  MAXIMUM_TIMESTEP_SIZE ' + strD(time.dtf[0]))
@@ -7683,6 +7683,7 @@ class pdata(object):
                 np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
         pressure = 4.*dP/np.pi*inf_series
         return pressure
+
 
 
 

@@ -145,11 +145,11 @@ QK3
 .. autoclass:: pdata.pquake
 
 Reference Stress State
-----------------
+----------------------
 .. autoclass:: pdata.preference_stress_state
 
 Equation of State
-----------------
+-----------------
 .. autoclass:: pdata.peos
 
 
@@ -165,6 +165,8 @@ Methods
 .. automethod:: pdata.pdata.paraview
 .. automethod:: pdata.pdata.apply_traction
 .. automethod:: pdata.pdata.generate_geomech_grid
+.. automethod:: pdata.pdata.terzaghi
+.. automethod:: pdata.pdata.terzaghi_flip
 
 Line plots using Matplotlib
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

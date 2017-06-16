@@ -736,7 +736,7 @@ class pgrid(Frozen):
 
         :param filename: Name of saved zone file.
         :type filename: str
-        :param angle:   View angle of zone. First number is tilt angle
+        :param angle: 	View angle of zone. First number is tilt angle
          in degrees, second number is azimuth. Alternatively, if angle
          is 'x', 'y', 'z', view is aligned along the corresponding axis.
         :type angle: [fl64,fl64], str
@@ -4353,7 +4353,7 @@ class pdata(object):
                     'time.dti (initial timestep size) input is invalid. ' +
                     'Format should be a list: [number, string]')
 
-        # write MAXIMUM_TIMESTEP_SIZE statement dtf
+        # write MAXIMUM_TIMESTEP_SIZE statement	dtf
         if time.dtf:
             try:
                 outfile.write('  MAXIMUM_TIMESTEP_SIZE ' + strD(time.dtf[0]))
@@ -7631,59 +7631,5 @@ class pdata(object):
             count = count + 1
 
         fid.close()
-
-
-    def terzaghi(self,x,t,dP,c,L):
-        """
-        Will do a terzaghi calculation with porous plate at x = 0
-
-        :param x: distance along the column.
-        :type x: float
-        :param t: time since loading.
-        :type name: float
-        :param dP: Additional pressure that was induced by loading at t=0+
-        :type dP: float
-        :param c: Hydraulic diffusivity
-        :type c: float
-        :param L: Full length of the column
-        :type L: float
-        """
-
-
-
-        import numpy as np
-        inf_series = 0;
-        for m in range(0,1000):
-            inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \
-                np.sin((2.*m+1)*np.pi*x/2/L) + inf_series
-        pressure = 4.*dP/np.pi*inf_series
-        return pressure
-
-    def terzaghi_flip(self,x,t,dP,c,L):
-        """
-        Will do a terzaghi calculation, with porous plate at x = L.
-
-        :param x: distance along the column.
-        :type x: float
-        :param t: time since loading.
-        :type name: float
-        :param dP: Additional pressure that was induced by loading at t=0+
-        :type dP: float
-        :param c: Hydraulic diffusivity
-        :type c: float
-        :param L: Full length of the column
-        :type L: float
-        """
-        from matplotlib import pyplot as plt
-        import numpy as np
-        
-        inf_series = 0;
-        for m in range(0,1000):
-            inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \
-                np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
-        pressure = 4.*dP/np.pi*inf_series
-        return pressure
-
-
 
 # print('--> Done writing geomechanics mesh files!')

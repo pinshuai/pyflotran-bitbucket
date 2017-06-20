@@ -2440,8 +2440,9 @@ class peos(Frozen):
     :param fluidname: Selects the type of fluid (either water or gas).
     :type fluidname: string
     :param fluid_density: Specifies option for fluid density including 
-     "default", "constant", and "exponential" options with optional trailing 
-     floats.  (e.g. to specify constant density of 1000 use ['constant',1000]) 
+     "default", "constant", "linear" and "exponential" options with optional 
+     trailing floats.  (e.g. to specify constant density of 1000 use 
+     ['constant',1000]). 
     :type fluid_density: list
     :param fluid_viscosity: Specifies option for fluid viscosity. 
      "Constant" is currently supported. 
@@ -3395,6 +3396,13 @@ class pdata(object):
                         self.eos.fluid_density[0].upper() + ' ' 
                         + strD(self.eos.fluid_density[1]) + '\n')
                 elif self.eos.fluid_density[0].upper() == 'EXPONENTIAL' and \
+                len(self.eos.fluid_density) == 4:
+                    outfile.write('  DENSITY '
+                        + self.eos.fluid_density[0].upper() + ' ' 
+                        + strD(self.eos.fluid_density[1]) + ' '
+                        + strD(self.eos.fluid_density[2]) + ' '
+                        + strD(self.eos.fluid_density[3]) + '\n')
+                elif self.eos.fluid_density[0].upper() == 'LINEAR' and \
                 len(self.eos.fluid_density) == 4:
                     outfile.write('  DENSITY '
                         + self.eos.fluid_density[0].upper() + ' ' 

@@ -115,8 +115,6 @@ saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
                                      'PRUESS_1']
 lower_list = [sat.lower() for sat in saturation_function_types_allowed]
 
-import pdb; pdb.set_trace()
-
 saturation_function_types_allowed = \
     list(set(saturation_function_types_allowed +
              lower_list))

@@ -2669,7 +2669,7 @@ class pdata(object):
         if legend_list is None:
             legend_list = []
         if y_label_list is None:
-            y_label_list = []
+            y_label_list = ['default y label']
 
         for var, y_label in zip(variable_list, y_label_list):
             fig = plt.figure()

@@ -152,6 +152,8 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
     lower_list))
 
 allowed_compressibility_functions = ['linear_model','bandis','turner']
+allowed_soil_compressibility_functions = ['CONSTANT','LEIJNSE','DEFAULT',
+                                          'BRAGFLO','WIPP','QUADRATIC']
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
@@ -4185,7 +4187,13 @@ class pdata(object):
                 outfile.write('  /\n')
 
             if prop.soil_compressibility_function:
-                outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' + prop.soil_compressibility_function +'\n')
+                if prop.soil_compressibility_function.upper() in allowed_soil_compressibility_functions:
+                    outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' + prop.soil_compressibility_function +'\n')
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'PyFLOTRAN ERROR: soil_compressibility_function ' +
+                        prop.soil_compressibility_function + ' is invalid!'  +
+                        ' Try one of ' + str(allowed_soil_compressibility_functions))
 
             if prop.soil_compressibility: #this is alpha
                 outfile.write('  SOIL_COMPRESSIBILITY ' + strD(prop.soil_compressibility) +'\n')    

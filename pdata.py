@@ -3862,24 +3862,24 @@ class pdata(object):
                 grid.symmetry_type == '': #cartesian, DXYZ grid
                     for j in range(len(grid.dx)):
                         outfile.write('    ' + strD(grid.dx[j]))
-                        if j % 5 == 4:
+                        if j % 5 == 4 and j < len(grid.dx)-1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     for j in range(len(grid.dy)):
                         outfile.write('    ' + strD(grid.dy[j]))
-                        if j % 5 == 4:
+                        if j % 5 == 4 and j < len(grid.dy)-1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     for j in range(len(grid.dz)):
                         outfile.write('    ' + strD(grid.dz[j]))
-                        if j % 5 == 4:
+                        if j % 5 == 4 and j < len(grid.dz)-1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     outfile.write('  END\n')
                 elif grid.symmetry_type == 'cylindrical': #cylindrical, DXYZ grid
                     for j in range(len(grid.dx)): #for x or r
                         outfile.write('    ' + strD(grid.dx[j]))
-                        if j % 5 == 4:
+                        if j % 5 == 4 and j < len(grid.dx) -1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     if len(grid.dy) == 1:  #for y coordinate (only 1 value allowed)
@@ -3890,7 +3890,7 @@ class pdata(object):
                                                'cylindrical grid.symmetry_type')
                     for j in range(len(grid.dz)):  #for z coordinate
                         outfile.write('    ' + strD(grid.dz[j]))
-                        if j % 5 == 4:
+                        if j % 5 == 4 and j < len(grid.dz)-1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     outfile.write('  END\n')
@@ -7699,8 +7699,5 @@ class pdata(object):
                 np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
         pressure = 4.*dP/np.pi*inf_series
         return pressure
-
-
-
 
 # print('--> Done writing geomechanics mesh files!')

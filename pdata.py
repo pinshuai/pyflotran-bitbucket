@@ -1348,6 +1348,8 @@ class pnsolver(Frozen):
     :type dtol: float
     :param itol: Tolerance compared to infinity norm.
     :type itol: float
+    :param itol_update: Tolerance for updates based on infinity norm 
+    :type itol_update: float
     :param max_it: Cuts time step if the number of iterations exceed
      this value.
     :type max_it: int
@@ -1358,7 +1360,7 @@ class pnsolver(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='', atol=None, rtol=None, stol=None, dtol=None,
-                 itol=None, max_it=None, max_f=None):
+                 itol=None, max_it=None, max_f=None, itol_update=None):
         self.name = name  # Indicates Flow or Tran for Transport
         self.atol = atol
         self.rtol = rtol
@@ -1367,6 +1369,7 @@ class pnsolver(Frozen):
         self.itol = itol
         self.max_it = max_it
         self.max_f = max_f
+        self.itol_update = itol_update
         self._freeze()
 
 
@@ -4515,6 +4518,8 @@ class pdata(object):
                 nsolver.dtol = floatD(self.splitter(line))
             if key == 'itol':
                 nsolver.itol = floatD(self.splitter(line))
+            if key == 'itol_update':
+                nsolver.itol_update = floatD(self.splitter(line))
             if key == 'maxit':
                 nsolver.max_it = int(self.splitter(line))
             if key == 'maxf':
@@ -4566,6 +4571,8 @@ class pdata(object):
                 outfile.write('  DTOL ' + strD(nsolver.dtol) + '\n')
             if nsolver.itol:
                 outfile.write('  ITOL ' + strD(nsolver.itol) + '\n')
+            if nsolver.itol_update:
+                outfile.write('  ITOL_UPDATE ' + strD(nsolver.itol_update) + '\n')
             if nsolver.max_it:
                 outfile.write('  MAXIT ' + str(nsolver.max_it) + '\n')
             if nsolver.max_f:
@@ -7699,5 +7706,24 @@ class pdata(object):
                 np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
         pressure = 4.*dP/np.pi*inf_series
         return pressure
+
+    # def terzaghi_flip(self,x,t,P0,c,L):
+    #     """
+    #     Will do a terzaghi calculation where x is length, t is time, P0 is
+    #     the pressure that is induced by loading at time 0+, c is the hydraulic
+    #     diffusivity, and L is the length of the column.
+
+    #     Now P = 0 at z = L instead of at z = 0.
+
+    #     """
+    #     from matplotlib import pyplot as plt
+    #     import numpy as np
+        
+    #     inf_series = 0;
+    #     for m in range(0,1000):
+    #         inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \
+    #             np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
+    #     pressure = 4.*P0/np.pi*inf_series
+    #     return pressure
 
 # print('--> Done writing geomechanics mesh files!')

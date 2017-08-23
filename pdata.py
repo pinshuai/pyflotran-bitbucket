@@ -2551,7 +2551,7 @@ class pdata(object):
 
     def run(self, input='', input_prefix='', num_procs=1,
             exe=pdflt().pflotran_path, silent=False, num_realizations=1,
-            num_groups=1):
+            num_groups=1, commandline_options=''):
         """
         Run a pflotran simulation for a given input file with specified
         number of processors.
@@ -2571,6 +2571,8 @@ class pdata(object):
         :type num_groups: int
         :param silent: Hide screen output
         :type silent: bool
+	:param commandline_options: PFLOTRAN AND PETSc commandline options
+	:type commandline_options: str
         """
 
         # set up and check path to executable
@@ -2627,6 +2629,7 @@ class pdata(object):
 
         if num_procs == 1:
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
+            arg = arg + ' ' + commandline_options
             run_popen(arg)
         else:
             if num_realizations > 1:
@@ -2640,18 +2643,22 @@ class pdata(object):
                 arg = 'mpirun -np ' + \
                       str(num_procs) + ' ' + exe_path.full_path + \
                       ' -pflotranin ' + self._path.filename
+            
+            arg = arg + ' ' + commandline_options
             run_popen(arg)
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + \
                       self._path.filename
-                run_popen(arg)
+            
             else:
                 arg = 'mpirun -np ' + str(num_procs) + ' ' + \
                       exe_path.full_path + ' -input_prefix ' + \
                       self._path.filename
-                run_popen(arg)
+
+            arg = arg + ' ' + commandline_options
+            run_popen(arg)
 
         # After executing simulation, go back to the parent directory
         if self.work_dir:

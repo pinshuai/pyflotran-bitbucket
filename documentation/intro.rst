@@ -85,9 +85,11 @@ classes and their methods are documented, and example usage provided. Examples c
 
 Contributors
 ------------
-
-Greg Lackey, CU Boulder -- Added the dataset and simulation related keywords.
-
+- Satish Karra, LANL
+- Greg Lackey, CU Boulder 
+- Daniel Birdsell, CU Boulder
+- Cory Kitay, PSU
+- Md Islam, CCNY
 
 Acknowledgements
 ----------------

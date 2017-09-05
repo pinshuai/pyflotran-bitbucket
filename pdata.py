@@ -2571,8 +2571,8 @@ class pdata(object):
         :type num_groups: int
         :param silent: Hide screen output
         :type silent: bool
-	:param commandline_options: PFLOTRAN AND PETSc commandline options
-	:type commandline_options: str
+        :param commandline_options: PFLOTRAN AND PETSc commandline options
+        :type commandline_options: str
         """
 
         # set up and check path to executable

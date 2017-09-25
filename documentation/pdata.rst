@@ -167,6 +167,7 @@ Methods
 .. automethod:: pdata.pdata.generate_geomech_grid
 .. automethod:: pdata.pdata.terzaghi
 .. automethod:: pdata.pdata.terzaghi_flip
+.. automethod:: pdata.pgrid.dump_vtk
 
 Line plots using Matplotlib
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

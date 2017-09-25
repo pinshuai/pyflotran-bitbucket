@@ -1141,6 +1141,12 @@ class pgrid(Frozen):
             self._nodelist = nodes
 
     def dump_vtk(self, filename='mesh.vtk'):
+    """
+    Dumps vtk format of the mesh, currently only for structured grid
+
+    :param filename: Name of the vtk file to be dumped. 
+    :type filename: str
+    """
         try:
             import pyvtk
         except ImportError:

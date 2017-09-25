@@ -1140,6 +1140,15 @@ class pgrid(Frozen):
             nodes.append(nd)
             self._nodelist = nodes
 
+    def dump_vtk(self, filename='mesh.vtk'):
+        try:
+            import pyvtk
+        except ImportError:
+            print('\nThere was no pyvtk module installed')
+        pp = self.nodelist
+        vtk = pyvtk.VtkData(pyvtk.StructuredGrid([self.nxyz[0]+1,self.nxyz[1]+1,self.nxyz[2]+1],pp))
+        vtk.tofile(filename)
+
 
 class pcheckpoint(Frozen):
     """

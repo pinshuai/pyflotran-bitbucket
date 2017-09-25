@@ -644,8 +644,8 @@ class pgrid(Frozen):
                 y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
                 z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
 
-                nodes = list(it.product(x_vert, y_vert, z_vert))
-                self._nodelist = [list(node) for node in nodes]
+                nodes = [(i,j,k) for k in z_vert for j in y_vert for i in x_vert]
+                self._nodelist = nodes
             else:
                 print("pgrid nodelist not implemented for unstructured yet!")
         return self._nodelist

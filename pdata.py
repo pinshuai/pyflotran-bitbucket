@@ -644,8 +644,8 @@ class pgrid(Frozen):
                 y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
                 z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
 
-                nodes = list(it.product(x_vert, y_vert, z_vert))
-                self._nodelist = [list(node) for node in nodes]
+                nodes = [(i,j,k) for k in z_vert for j in y_vert for i in x_vert]
+                self._nodelist = nodes
             else:
                 print("pgrid nodelist not implemented for unstructured yet!")
         return self._nodelist
@@ -1139,6 +1139,21 @@ class pgrid(Frozen):
             nd[1] = new_pos[1] + center[1]
             nodes.append(nd)
             self._nodelist = nodes
+
+    def dump_vtk(self, filename='mesh.vtk',format='ascii'):
+        """
+        Dumps vtk format of the mesh, currently only for structured grid
+
+        :param filename: Name of the vtk file to be dumped. 
+        :type filename: str
+        """
+        try:
+            import pyvtk
+        except ImportError:
+            print('\nThere was no pyvtk module installed')
+        pp = self.nodelist
+        vtk = pyvtk.VtkData(pyvtk.StructuredGrid([self.nxyz[0]+1,self.nxyz[1]+1,self.nxyz[2]+1],pp))
+        vtk.tofile(filename,format)
 
 
 class pcheckpoint(Frozen):
@@ -2551,7 +2566,7 @@ class pdata(object):
 
     def run(self, input='', input_prefix='', num_procs=1,
             exe=pdflt().pflotran_path, silent=False, num_realizations=1,
-            num_groups=1):
+            num_groups=1, commandline_options=''):
         """
         Run a pflotran simulation for a given input file with specified
         number of processors.
@@ -2571,6 +2586,8 @@ class pdata(object):
         :type num_groups: int
         :param silent: Hide screen output
         :type silent: bool
+        :param commandline_options: PFLOTRAN and PETSc commandline options
+        :type commandline_options: str
         """
 
         # set up and check path to executable
@@ -2627,6 +2644,7 @@ class pdata(object):
 
         if num_procs == 1:
             arg = exe_path.full_path + ' -pflotranin ' + self._path.filename
+            arg = arg + ' ' + commandline_options
             run_popen(arg)
         else:
             if num_realizations > 1:
@@ -2640,18 +2658,22 @@ class pdata(object):
                 arg = 'mpirun -np ' + \
                       str(num_procs) + ' ' + exe_path.full_path + \
                       ' -pflotranin ' + self._path.filename
+            
+            arg = arg + ' ' + commandline_options
             run_popen(arg)
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + \
                       self._path.filename
-                run_popen(arg)
+            
             else:
                 arg = 'mpirun -np ' + str(num_procs) + ' ' + \
                       exe_path.full_path + ' -input_prefix ' + \
                       self._path.filename
-                run_popen(arg)
+
+            arg = arg + ' ' + commandline_options
+            run_popen(arg)
 
         # After executing simulation, go back to the parent directory
         if self.work_dir:

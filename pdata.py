@@ -7357,9 +7357,9 @@ class pdata(object):
         x_min = self.grid.xmin
         y_min = self.grid.ymin
         z_min = self.grid.zmin
-        delta_x = (x_max - x_min) / (x_verts - 1)
-        delta_y = (y_max - y_min) / (y_verts - 1)
-        delta_z = (z_max - z_min) / (z_verts - 1)
+        delta_x = (x_max - x_min) / (x_verts - 2)
+        delta_y = (y_max - y_min) / (y_verts - 2)
+        delta_z = (z_max - z_min) / (z_verts - 2)
 
         if face == 'top':
             # Top corner
@@ -7410,15 +7410,15 @@ class pdata(object):
             fid.close()
 
             # top corner force
-            area = delta_x * delta_y / 4
+            area = delta_x * delta_y / 16
             top_corner_force = traction * area
 
             # top boundary force
-            area = delta_x * delta_y / 2
+            area = delta_x * delta_y / 8
             top_boundary_force = traction * area
 
             # top internal force
-            area = delta_x * delta_y
+            area = delta_x * delta_y / 4
             top_internal_force = traction * area
 
             self.add(pflow(name='top_corner_force', pm='geomech'))
@@ -7450,6 +7450,169 @@ class pdata(object):
             self.add(pboundary_condition(name='top_internal_force',
                                          region='top_internal',
                                          geomech='top_internal_force'))
+
+    def apply_horizontal_critical_stress(self, rho_eff=2000.0, vertical_to_horizontal_ratio=0.7, face='east', total_depth=2500):
+        x_verts = self.grid.nxyz[0] + 2
+        y_verts = self.grid.nxyz[1] + 2
+        z_verts = self.grid.nxyz[2] + 2
+        xmax = self.grid.xmax
+        ymax = self.grid.ymax
+        zmax = self.grid.zmax
+        xmin = self.grid.xmin
+        ymin = self.grid.ymin
+        zmin = self.grid.zmin
+        Total_verts = x_verts * y_verts * z_verts
+        N_cells = (x_verts - 1) * (y_verts - 1) * (z_verts - 1)
+        delta_x = (xmax - xmin) / (x_verts - 2)
+        delta_y = (ymax - ymin) / (y_verts - 2)
+        delta_z = (zmax - zmin) / (z_verts - 2)
+
+        x = np.zeros(x_verts)
+        y = np.zeros(y_verts)
+        z = np.zeros(z_verts)
+        x[0] = xmin
+        x[1] = xmin + delta_x/2.0
+        x[x_verts-1] = xmax
+        x[x_verts-2] = xmax - delta_x/2.0
+        if x_verts > 4:
+           for i in range(2, x_verts-2):
+               x[i] = x[i-1] + delta_x
+
+        y[0] = ymin
+        y[1] = ymin + delta_y/2.0
+        y[y_verts-1] = ymax
+        y[y_verts-2] = ymax - delta_y/2.0
+        if y_verts > 4:
+           for i in range(2, y_verts-2):
+               y[i] = y[i-1] + delta_y
+
+        z[0] = zmin
+        z[1] = zmin + delta_z/2.0
+        z[z_verts-1] = zmax
+        z[z_verts-2] = zmax - delta_z/2.0
+        if z_verts > 4:
+           for i in range(2, z_verts-2):
+               z[i] = z[i-1] + delta_z
+
+        xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
+        Coord = np.zeros((Total_verts, 3), 'float')
+        count = 0
+        for k in range(z_verts):
+            for j in range(y_verts):
+                for i in range(x_verts):
+                    Coord[count] = [xv[i][j][k], yv[i][j][k], zv[i][j][k]]
+                    count = count + 1
+
+        if face == 'east':
+            g = 9.81
+            # east corner
+            east_corner = []
+            east_corner.append(x_verts * y_verts * (z_verts - 1) + x_verts)
+            east_corner.append(x_verts * y_verts * z_verts)
+            east_corner.append(x_verts)
+            east_corner.append(x_verts * y_verts)
+            fid = open(self.geomech_grid.dirname + '/east_corner.vset', 'w')
+            for i in east_corner:
+                fid.write('%i\n' % i)
+            fid.close()
+
+            # east boundary
+            east_boundary = []
+            for k in range(1, z_verts + 1):
+                east_boundary.append(x_verts + (k - 1) * x_verts * y_verts)
+
+            for k in range(1, z_verts + 1):
+                east_boundary.append(x_verts + (y_verts - 1) * x_verts + (k - 1) * x_verts * y_verts)
+
+            for j in range(1, y_verts + 1):
+                east_boundary.append(x_verts + (j - 1) * x_verts)
+
+            for j in range(1, y_verts + 1):
+                east_boundary.append(x_verts + (j - 1) * x_verts + (z_verts-1)*x_verts*y_verts)
+
+
+            east_boundary = list(set(east_boundary))
+            
+            # remove duplicates and corners
+            east_boundary = list(set(east_boundary) - set(east_corner))
+            fid = open(self.geomech_grid.dirname + '/east_boundary.vset', 'w')
+            for i in east_boundary:
+                fid.write('%i\n' % i)
+            fid.close()
+
+            # east internal
+            east_internal = []
+            for k in range(1, z_verts):
+                for j in range(1, y_verts):
+                    east_internal.append(x_verts + (j - 1) * x_verts + (k - 1) * x_verts * y_verts)
+
+            east_internal = list(set(east_internal) -
+                                set(east_boundary) - set(east_corner))
+            fid = open(self.geomech_grid.dirname + '/east_internal.vset', 'w')
+            for i in east_internal:
+                fid.write('%i\n' % i)
+            fid.close()
+
+
+            # east corner force
+            for node in east_corner:
+                area = delta_y * delta_z / 16
+                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                force = -traction * area
+                file = self.geomech_grid.dirname + '/' + 'east_corner_' + str(node)
+                fid = open(file, 'w')
+                fid.write('%i\n' % node)
+                fid.close()
+                self.add(pflow(name='east_corner_force_' + str(node), pm='geomech'))
+                self.add(pflow_variable(name='force_x', type='dirichlet',
+                                    valuelist=[force]),
+                        index='east_corner_force_' + str(node))
+                self.add(pregion(name='east_corner_'+str(node),
+                                 filename=file, pm='geomech'))
+                self.add(pboundary_condition(name='east_corner_force_'+str(node),
+                                         region='east_corner_'+str(node),
+                                         geomech='east_corner_force_'+str(node)))
+            # east boundary force
+            for node in east_boundary:
+                area = delta_y * delta_z / 8
+                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                force = -traction * area
+                file = self.geomech_grid.dirname + '/' + 'east_boundary_' + str(node)
+                fid = open(file, 'w')
+                fid.write('%i\n' % node)
+                fid.close()
+                self.add(pflow(name='east_boundary_force_' + str(node), pm='geomech'))
+                self.add(pflow_variable(name='force_x', type='dirichlet',
+                                    valuelist=[force]),
+                        index='east_boundary_force_' + str(node))
+                self.add(pregion(name='east_boundary_'+str(node),
+                                 filename=file, pm='geomech'))
+                self.add(pboundary_condition(name='east_boundary_force_'+str(node),
+                                         region='east_boundary_'+str(node),
+                                         geomech='east_boundary_force_'+str(node)))
+
+            # east internal force
+            for node in east_internal:
+                area = delta_y * delta_z / 4
+                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                force = -traction * area
+                file = self.geomech_grid.dirname + '/' + 'east_internal_' + str(node)
+                fid = open(file, 'w')
+                fid.write('%i\n' % node)
+                fid.close()
+                self.add(pflow(name='east_internal_force_' + str(node), pm='geomech'))
+                self.add(pflow_variable(name='force_x', type='dirichlet',
+                                    valuelist=[force]),
+                        index='east_internal_force_' + str(node))
+                self.add(pregion(name='east_internal_'+str(node),
+                                 filename=file, pm='geomech'))
+                self.add(pboundary_condition(name='east_internal_force_'+str(node),
+                                         region='east_internal_'+str(node),
+                                         geomech='east_internal_force_'+str(node)))
+
+
+
+
 
     def generate_geomech_grid(self):
         x_verts = self.grid.nxyz[0] + 2

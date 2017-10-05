@@ -7652,6 +7652,11 @@ class pdata(object):
 
         # Create a subdirectory
         d = self.geomech_grid.dirname
+        if self.work_dir:
+            wd = self.work_dir + os.sep
+        else:
+            wd = os.getcwd() + os.sep
+        d = wd + d
         if os.path.isdir(d):  # check if d exists
             shutil.rmtree(d)  # remove old directory
         os.mkdir(d)  # create new directory
@@ -7665,7 +7670,11 @@ class pdata(object):
         # print('--> Finished with moving files to dat directory')
 
         count = 0
-        fid = open('flow_geomech_mapping.dat', 'w')
+        if self.work_dir:
+            wd = self.work_dir + os.sep
+        else:
+            wd = os.getcwd() + os.sep
+        fid = open(wd+'flow_geomech_mapping.dat', 'w')
         epsilon = 1.e-8
         for coord in Coord:
             i = int((coord[0] - xmin - epsilon) / delta_x)

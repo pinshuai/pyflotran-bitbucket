@@ -7382,7 +7382,10 @@ class pdata(object):
         delta_x = (x_max - x_min) / (x_verts - 2)
         delta_y = (y_max - y_min) / (y_verts - 2)
         delta_z = (z_max - z_min) / (z_verts - 2)
-
+        if self.work_dir:
+            wd = self.work_dir + os.sep
+        else:
+            wd = os.getcwd() + os.sep
         if face == 'top':
             # Top corner
             top_corner = []
@@ -7391,7 +7394,7 @@ class pdata(object):
             top_corner.append(x_verts * y_verts *
                               (z_verts - 1) + x_verts)
             top_corner.append(x_verts * y_verts * z_verts - x_verts + 1)
-            fid = open(self.geomech_grid.dirname + '/top_corner.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/top_corner.vset', 'w')
             for i in top_corner:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7414,7 +7417,7 @@ class pdata(object):
                                     x_verts)
             # remove duplicates and corners
             top_boundary = list(set(top_boundary) - set(top_corner))
-            fid = open(self.geomech_grid.dirname + '/top_boundary.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/top_boundary.vset', 'w')
             for i in top_boundary:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7426,7 +7429,7 @@ class pdata(object):
                 top_internal.append(i)
             top_internal = list(set(top_internal) -
                                 set(top_boundary) - set(top_corner))
-            fid = open(self.geomech_grid.dirname + '/top_internal.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/top_internal.vset', 'w')
             for i in top_internal:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7524,7 +7527,10 @@ class pdata(object):
                 for i in range(x_verts):
                     Coord[count] = [xv[i][j][k], yv[i][j][k], zv[i][j][k]]
                     count = count + 1
-
+        if self.work_dir:
+            wd = self.work_dir + os.sep
+        else:
+            wd = os.getcwd() + os.sep
         if face == 'east':
             g = 9.81
             # east corner
@@ -7533,7 +7539,7 @@ class pdata(object):
             east_corner.append(x_verts * y_verts * z_verts)
             east_corner.append(x_verts)
             east_corner.append(x_verts * y_verts)
-            fid = open(self.geomech_grid.dirname + '/east_corner.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/east_corner.vset', 'w')
             for i in east_corner:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7557,7 +7563,7 @@ class pdata(object):
             
             # remove duplicates and corners
             east_boundary = list(set(east_boundary) - set(east_corner))
-            fid = open(self.geomech_grid.dirname + '/east_boundary.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/east_boundary.vset', 'w')
             for i in east_boundary:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7570,7 +7576,7 @@ class pdata(object):
 
             east_internal = list(set(east_internal) -
                                 set(east_boundary) - set(east_corner))
-            fid = open(self.geomech_grid.dirname + '/east_internal.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname + '/east_internal.vset', 'w')
             for i in east_internal:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7582,7 +7588,7 @@ class pdata(object):
                 traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
                 force = -traction * area
                 file = self.geomech_grid.dirname + '/' + 'east_corner_' + str(node)
-                fid = open(file, 'w')
+                fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
                 self.add(pflow(name='east_corner_force_' + str(node), pm='geomech'))
@@ -7600,7 +7606,7 @@ class pdata(object):
                 traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
                 force = -traction * area
                 file = self.geomech_grid.dirname + '/' + 'east_boundary_' + str(node)
-                fid = open(file, 'w')
+                fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
                 self.add(pflow(name='east_boundary_force_' + str(node), pm='geomech'))
@@ -7619,7 +7625,7 @@ class pdata(object):
                 traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
                 force = -traction * area
                 file = self.geomech_grid.dirname + '/' + 'east_internal_' + str(node)
-                fid = open(file, 'w')
+                fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
                 self.add(pflow(name='east_internal_force_' + str(node), pm='geomech'))

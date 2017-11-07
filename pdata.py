@@ -2347,9 +2347,10 @@ class pgeomech_grid(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, dirname='geomech_dat',
-                 gravity=[0.0, 0.0, -9.81]):
+                 gravity=[0.0, 0.0, -9.81], grid_filename='usg.mesh'):
         self.gravity = gravity
         self.dirname = dirname
+        self.grid_filename = grid_filename
         self._freeze()
 
 
@@ -6996,18 +6997,21 @@ class pdata(object):
                           strD(self.hydroquake.pressure_scaling) + '\n')
         outfile.write('END_HYDROQUAKE')
 
+    def _write_geomechanics_grid(self, outfile):
+        outfile.write('GEOMECHANICS_GRID\n')
+        outfile.write('  TYPE unstructured ' + self.geomech_grid.dirname +
+                      '/' + self.geomech_grid.grid_filename+'\n')
+        outfile.write('  GRAVITY ')
+        for item in self.geomech_grid.gravity:
+            outfile.write(strD(item) + ' ')
+        outfile.write('\n')
+        outfile.write('END\n\n')
+
     def _write_geomechanics(self, outfile):
         self._header(outfile, headers['geomechanics'])
         outfile.write('GEOMECHANICS\n\n')
         if self.geomech_grid.dirname:
-            outfile.write('GEOMECHANICS_GRID\n')
-            outfile.write('  TYPE unstructured ' + self.geomech_grid.dirname +
-                          '/usg.mesh\n')
-            outfile.write('  GRAVITY ')
-            for item in self.geomech_grid.gravity:
-                outfile.write(strD(item) + ' ')
-            outfile.write('\n')
-            outfile.write('END\n\n')
+            self._write_geomechanics_grid(outfile)
         self._write_geomech_subsurface_coupling(outfile)
         self._write_geomech_regression(outfile)
         self._write_geomech_time(outfile)

@@ -106,8 +106,8 @@ output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
                             'capillary_pressure', 'thermodynamic_state',
                             'temperature', 'residual', 'porosity',
                             'mineral_porosity', 'permeability',
-                            'permeability_x','permeability_y',
-                            'permeability_z','mineral_porosity']
+                            'permeability_x', 'permeability_y',
+                            'permeability_z', 'mineral_porosity']
 
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
@@ -151,9 +151,9 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
     characteristic_curves_liquid_permeability_function_types_allowed +
     lower_list))
 
-allowed_compressibility_functions = ['linear_model','bandis','turner']
-allowed_soil_compressibility_functions = ['CONSTANT','LEIJNSE','DEFAULT',
-                                          'BRAGFLO','WIPP','QUADRATIC']
+allowed_compressibility_functions = ['linear_model', 'bandis', 'turner']
+allowed_soil_compressibility_functions = ['CONSTANT', 'LEIJNSE', 'DEFAULT',
+                                          'BRAGFLO', 'WIPP', 'QUADRATIC']
 # material_property, region, initial_condition, boundary_condition,
 # source_sink, stratigraphy_couplers - manual does not appear to document
 # all valid entries
@@ -163,7 +163,8 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
                                      'ENTHALPY', 'LIQUID_PRESSURE',
                                      'GAS_PRESSURE',
-                                     'LIQUID_FLUX', 'GAS_FLUX', 'MOLE_FRACTION',
+                                     'LIQUID_FLUX', 'GAS_FLUX',
+                                     'MOLE_FRACTION',
                                      'GAS_SATURATION']
 geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
                                   'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
@@ -195,10 +196,10 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'mole_rate', 'zero_gradient']
 
 # eos - allowed strings
-eos_fluidnames_allowed = ['WATER','GAS']
+eos_fluidnames_allowed = ['WATER', 'GAS']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
-         'simulation', 'regression', 'checkpoint', 'restart',
+         'simulation', 'regression', 'restart',
          'dataset', 'chemistry', 'grid', 'timestepper', 'material_property',
          'time', 'linear_solver', 'newton_solver',
          'output', 'fluid_property', 'saturation_function',
@@ -209,7 +210,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'secondary_continuum', 'geomechanics']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
-           'simulation', 'regression', 'checkpoint',
+           'simulation', 'regression',
            'restart', 'dataset', 'chemistry', 'grid', 'time stepping',
            'material properties', 'time', 'linear solver',
            'newton solver', 'output', 'fluid properties',
@@ -219,6 +220,17 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
            'secondary continuum', 'geomechanics']
+
+read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
+              'simulation', 'regression', 'checkpoint', 'restart',
+              'dataset', 'chemistry', 'grid', 'timestepper',
+              'material_property',
+              'time', 'linear_solver', 'newton_solver',
+              'output', 'fluid_property', 'saturation_function',
+              'characteristic_curves', 'region', 'observation',
+              'flow_condition', 'transport_condition', 'initial_condition',
+              'boundary_condition', 'source_sink', 'strata',
+              'constraint']
 
 headers = dict(zip(cards, headers))
 
@@ -335,11 +347,11 @@ class pmaterial(Frozen):
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
                  secondary_continuum='', anisotropic=False,
-                 soil_compressibility_function='',soil_reference_pressure=None,
-                 soil_compressibility=None,compressibility_function='',
-                 bandis_A=None,bandis_B=None,maximum_aperture=None,
+                 soil_compressibility_function='', soil_reference_pressure=None,
+                 soil_compressibility=None, compressibility_function='',
+                 bandis_A=None, bandis_B=None, maximum_aperture=None,
                  normal_vector=None):
-        
+
         if permeability is None:
             permeability = []
 
@@ -542,7 +554,7 @@ class pgrid(Frozen):
             if nxyz is None:
                 nxyz = [10, 10, 10]
         else:
-            nxyz = [len(dx),len(dy),len(dz)]
+            nxyz = [len(dx), len(dy), len(dz)]
         if origin is None:
             origin = []
         if dx is None:
@@ -591,7 +603,7 @@ class pgrid(Frozen):
         elif self.type == 'unstructured_explicit':
             return min([cell[1] for cell in self._celllist])
         else:
-          print("property ymin not implemented for"
+            print("property ymin not implemented for"
                   " unstructured_implicit type!")
 
     @property
@@ -613,6 +625,7 @@ class pgrid(Frozen):
         else:
             print("property xmax not implemented for"
                   " unstructured_implicit type!")
+
     @property
     def ymax(self):
         if self.type == 'structured':
@@ -622,6 +635,7 @@ class pgrid(Frozen):
         else:
             print("property ymax not implemented for"
                   " unstructured_implicit type!")
+
     @property
     def zmax(self):
         if self.type == 'structured':
@@ -644,7 +658,8 @@ class pgrid(Frozen):
                 y_vert = np.linspace(self.ymin, self.ymax, num=ny + 1)
                 z_vert = np.linspace(self.zmin, self.zmax, num=nz + 1)
 
-                nodes = [(i,j,k) for k in z_vert for j in y_vert for i in x_vert]
+                nodes = [(i, j, k)
+                         for k in z_vert for j in y_vert for i in x_vert]
                 self._nodelist = nodes
             else:
                 print("pgrid nodelist not implemented for unstructured yet!")
@@ -728,7 +743,6 @@ class pgrid(Frozen):
             print("read_grid not implemented for unstructured_implicit type!")
             return
 
-
     def plot(self, filename='', angle=[45, 45], color='k', connections=False,
              equal_axes=True, xlabel='x [m]', ylabel='y [m]', zlabel='z [m]',
              title='', font_size='small',
@@ -738,7 +752,7 @@ class pgrid(Frozen):
 
         :param filename: Name of saved zone file.
         :type filename: str
-        :param angle: 	View angle of zone. First number is tilt angle
+        :param angle:   View angle of zone. First number is tilt angle
          in degrees, second number is azimuth. Alternatively, if angle
          is 'x', 'y', 'z', view is aligned along the corresponding axis.
         :type angle: [fl64,fl64], str
@@ -1140,7 +1154,7 @@ class pgrid(Frozen):
             nodes.append(nd)
             self._nodelist = nodes
 
-    def dump_vtk(self, filename='mesh.vtk',format='ascii'):
+    def dump_vtk(self, filename='mesh.vtk', format='ascii'):
         """
         Dumps vtk format of the mesh, currently only for structured grid
 
@@ -1152,8 +1166,9 @@ class pgrid(Frozen):
         except ImportError:
             print('\nThere was no pyvtk module installed')
         pp = self.nodelist
-        vtk = pyvtk.VtkData(pyvtk.StructuredGrid([self.nxyz[0]+1,self.nxyz[1]+1,self.nxyz[2]+1],pp))
-        vtk.tofile(filename,format)
+        vtk = pyvtk.VtkData(pyvtk.StructuredGrid(
+            [self.nxyz[0] + 1, self.nxyz[1] + 1, self.nxyz[2] + 1], pp))
+        vtk.tofile(filename, format)
 
 
 class pcheckpoint(Frozen):
@@ -1162,7 +1177,8 @@ class pcheckpoint(Frozen):
 
     :param time_list: List of times followed by units. e.g., [1,10,100,'y']
     :type frequency: list
-    :param periodic_time: checkpoint at every n times. Give value and unit as a list. e.g., [1,'y']
+    :param periodic_time: checkpoint at every n times. 
+     Give value and unit as a list. e.g., [1,'y']
     :type periodic_time: list
     :param periodic_timestep: checkpoint at every n timesteps
     :type periodic_timestep: int
@@ -1175,7 +1191,7 @@ class pcheckpoint(Frozen):
         if time_list is None:
             time_list = []
         if periodic_time_list is None:
-            periodic_time_list =[]
+            periodic_time_list = []
         self.time_list = time_list
         self.periodic_time_list = periodic_time_list
         self.periodic_timestep = periodic_timestep
@@ -1629,7 +1645,7 @@ class pcharacteristic_curves(Frozen):
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
-                 gpf_gas_residual_saturation=None,phase=None):
+                 gpf_gas_residual_saturation=None, phase=None):
         self.name = name
         self.saturation_function_type = saturation_function_type
         self.sf_alpha = sf_alpha
@@ -2069,7 +2085,8 @@ class pchemistry(Frozen):
         # Secondary_species (E.g. 'OH-' - string
         self.secondary_species_list = secondary_species_list
         self.gas_species_list = gas_species_list  # E.g. 'CO2(g)'
-        self.passive_gas_species_list = passive_gas_species_list  # E.g. 'CO2(g)'
+        # E.g. 'CO2(g)'
+        self.passive_gas_species_list = passive_gas_species_list
         self.active_gas_species_list = active_gas_species_list  # E.g. 'CO2(g)'
         self.minerals_list = minerals_list  # E.g. 'Calcite'
         # has pchemistry_m_kinetic assigned to it
@@ -2472,7 +2489,7 @@ class peos(Frozen):
     :type fluid_enthalpy: list
     """
 
-    def __init__(self, fluidname=None, fluid_density=['DEFAULT'], 
+    def __init__(self, fluidname=None, fluid_density=['DEFAULT'],
                  fluid_viscosity=None, fluid_enthalpy=None):
         if fluidname is None:
             fluidname = []
@@ -2487,6 +2504,7 @@ class peos(Frozen):
         self.fluid_viscosity = fluid_viscosity
         self.fluid_enthalpy = fluid_enthalpy
         self._freeze()
+
 
 class pdata(object):
     """
@@ -2658,15 +2676,15 @@ class pdata(object):
                 arg = 'mpirun -np ' + \
                       str(num_procs) + ' ' + exe_path.full_path + \
                       ' -pflotranin ' + self._path.filename
-            
+
             arg = arg + ' ' + commandline_options
             run_popen(arg)
 
         if input_prefix:
             if num_procs == 1:
                 arg = exe_path.full_path + ' -input_prefix ' + \
-                      self._path.filename
-            
+                    self._path.filename
+
             else:
                 arg = 'mpirun -np ' + str(num_procs) + ' ' + \
                       exe_path.full_path + ' -input_prefix ' + \
@@ -2863,7 +2881,7 @@ class pdata(object):
         if not os.path.isfile(filename):
             raise IOError(filename + ' not found...')
         self.filename = filename  # assign filename attribute
-        read_fn = dict(zip(cards,
+        read_fn = dict(zip(read_cards,
                            [self._read_co2_database,
                             self._read_uniform_velocity,
                             self._read_nonuniform_velocity,
@@ -2893,6 +2911,7 @@ class pdata(object):
                             self._read_strata,
                             self._read_constraint],
                            ))
+
         # associate each card name with
         # a read function, defined further below
 
@@ -2941,7 +2960,7 @@ class pdata(object):
                         if card1 == 'noskip':
                             keep_reading_1 = False
 
-                if card in cards:  # check if a valid card name
+                if card in read_cards:  # check if a valid card name
                     if card in ['co2_database', 'checkpoint', 'restart',
                                 'dataset', 'material_property', 'simulation',
                                 'regression', 'grid', 'timestepper',
@@ -3407,9 +3426,9 @@ class pdata(object):
         i = 0
         for v in self.reference_stress_state.value_list:  # value in value_list
             outfile.write(strD(v) + ' ')
-            i = i+1
+            i = i + 1
         if i != 6:
-            raise PyFLOTRAN_ERROR('reference_stress_state' + 
+            raise PyFLOTRAN_ERROR('reference_stress_state' +
                                   ' must have 6 components')
         outfile.write('\n\n')
 
@@ -3418,57 +3437,57 @@ class pdata(object):
             outfile.write('EOS ' + self.eos.fluidname.upper() + '\n')
             if self.eos.fluid_density:
                 if self.eos.fluid_density[0].upper() == 'CONSTANT' and \
-                len(self.eos.fluid_density) == 2:
-                    outfile.write('  DENSITY ' + 
-                        self.eos.fluid_density[0].upper() + ' ' 
-                        + strD(self.eos.fluid_density[1]) + '\n')
+                        len(self.eos.fluid_density) == 2:
+                    outfile.write('  DENSITY ' +
+                                  self.eos.fluid_density[0].upper() + ' '
+                                  + strD(self.eos.fluid_density[1]) + '\n')
                 elif self.eos.fluid_density[0].upper() == 'EXPONENTIAL' and \
-                len(self.eos.fluid_density) == 4:
+                        len(self.eos.fluid_density) == 4:
                     outfile.write('  DENSITY '
-                        + self.eos.fluid_density[0].upper() + ' ' 
-                        + strD(self.eos.fluid_density[1]) + ' '
-                        + strD(self.eos.fluid_density[2]) + ' '
-                        + strD(self.eos.fluid_density[3]) + '\n')
+                                  + self.eos.fluid_density[0].upper() + ' '
+                                  + strD(self.eos.fluid_density[1]) + ' '
+                                  + strD(self.eos.fluid_density[2]) + ' '
+                                  + strD(self.eos.fluid_density[3]) + '\n')
                 elif self.eos.fluid_density[0].upper() == 'LINEAR' and \
-                len(self.eos.fluid_density) == 4:
+                        len(self.eos.fluid_density) == 4:
                     outfile.write('  DENSITY '
-                        + self.eos.fluid_density[0].upper() + ' ' 
-                        + strD(self.eos.fluid_density[1]) + ' '
-                        + strD(self.eos.fluid_density[2]) + ' '
-                        + strD(self.eos.fluid_density[3]) + '\n')
+                                  + self.eos.fluid_density[0].upper() + ' '
+                                  + strD(self.eos.fluid_density[1]) + ' '
+                                  + strD(self.eos.fluid_density[2]) + ' '
+                                  + strD(self.eos.fluid_density[3]) + '\n')
                 elif self.eos.fluid_density[0].upper() == 'DEFAULT':
                     outfile.write('  DENSITY DEFAULT\n')
                 else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_density: \'' + 
-                        strD(self.eos.fluid_density) + 
-                        '\' has incorrect keyword or incorrect length')
-            
+                    raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
+                                          strD(self.eos.fluid_density) +
+                                          '\' has incorrect keyword or incorrect length')
+
             if self.eos.fluid_viscosity:
                 if self.eos.fluid_viscosity[0].upper() == 'CONSTANT' and \
-                len(self.eos.fluid_viscosity) == 2:
-                    outfile.write('  VISCOSITY ' + 
-                        self.eos.fluid_viscosity[0].upper() + ' ' 
-                        + strD(self.eos.fluid_viscosity[1]) + '\n')
+                        len(self.eos.fluid_viscosity) == 2:
+                    outfile.write('  VISCOSITY ' +
+                                  self.eos.fluid_viscosity[0].upper() + ' '
+                                  + strD(self.eos.fluid_viscosity[1]) + '\n')
                 else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' + 
-                        strD(self.eos.fluid_viscosity) + 
-                        '\' has incorrect keyword or incorrect length')
-            
+                    raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' +
+                                          strD(self.eos.fluid_viscosity) +
+                                          '\' has incorrect keyword or incorrect length')
+
             if self.eos.fluid_enthalpy:
                 if self.eos.fluid_enthalpy[0].upper() == 'CONSTANT' and \
-                len(self.eos.fluid_enthalpy) == 2:
-                    outfile.write('  ENTHALPY ' + 
-                        self.eos.fluid_enthalpy[0].upper() + ' ' 
-                        + strD(self.eos.fluid_enthalpy[1]) + '\n')
+                        len(self.eos.fluid_enthalpy) == 2:
+                    outfile.write('  ENTHALPY ' +
+                                  self.eos.fluid_enthalpy[0].upper() + ' '
+                                  + strD(self.eos.fluid_enthalpy[1]) + '\n')
                 else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' + 
-                        strD(self.eos.fluid_enthalpy) + 
-                        '\' has incorrect keyword or incorrect length')
-            
+                    raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' +
+                                          strD(self.eos.fluid_enthalpy) +
+                                          '\' has incorrect keyword or incorrect length')
+
             outfile.write('END\n\n')
         else:
-            raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname + 
-                '\' is invalid')
+            raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname +
+                                  '\' is invalid')
 
     def _read_nonuniform_velocity(self, infile, line):
         filename = ''
@@ -3491,7 +3510,7 @@ class pdata(object):
         while keep_reading0:  # Read through all cards
             line = infile.readline()  # get next line
             key0 = line.strip().split()[0].lower()  # take first key word
-            #print key0
+            # print key0
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
             elif key0 == 'process_models':
@@ -3553,6 +3572,9 @@ class pdata(object):
                         # else:
                         # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
                         key_bank.append(key)
+                    elif key == 'geomechanics_subsurface':
+                        simulation.geomechanics_subsurface = self.splitter(
+                            line)
                     if key in ['/', 'end']:
                         keep_reading = False
             elif key0 == 'restart':
@@ -3698,7 +3720,7 @@ class pdata(object):
             self._write_checkpoint(outfile)
         if simulation.restart.file_name:
             self._write_restart(outfile)
- 
+
         outfile.write('END' + '\n\n')
 
     def _write_subsurface_simulation_begin(self, outfile):
@@ -3842,22 +3864,22 @@ class pdata(object):
             print '       valid grid.types:', grid_types_allowed
             raise PyFLOTRAN_ERROR(
                 'grid.type: \'' + grid.type + '\' is invalid!')
-        if grid.type == 'structured': 
-            outfile.write('  TYPE ' + grid.type) 
+        if grid.type == 'structured':
+            outfile.write('  TYPE ' + grid.type)
             if grid.symmetry_type not in grid_symmetry_types_allowed:
                 print '    valid grid.symmetry_types:', \
-                           grid_symmetry_types_allowed
-                raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' 
-                                       + grid.symmetry_type + '\' is invalid')
+                    grid_symmetry_types_allowed
+                raise PyFLOTRAN_ERROR('grid.symmetry_type: \''
+                                      + grid.symmetry_type + '\' is invalid')
             elif grid.symmetry_type == 'cartesian' or grid.symmetry_type == '':
                 outfile.write('\n')
             elif grid.symmetry_type == 'cylindrical':
                 outfile.write(' ' + grid.symmetry_type + '\n')
             elif grid.symmetry_type == 'spherical':
                 outfile.write(' ' + grid.symmetry_type + '\n')
-            if grid.lower_bounds: 
+            if grid.lower_bounds:
                 if grid.symmetry_type == 'cartesian' or \
-                grid.symmetry_type == '':
+                        grid.symmetry_type == '':
                     outfile.write('  BOUNDS\n')
                     outfile.write('    ')
                     for i in range(3):
@@ -3865,69 +3887,70 @@ class pdata(object):
                     outfile.write('\n    ')
                     for i in range(3):
                         outfile.write(strD(grid.upper_bounds[i]) + ' ')
-                    outfile.write('\n  /\n')  
+                    outfile.write('\n  /\n')
                 elif grid.symmetry_type == 'cylindrical':
                     outfile.write('  BOUNDS\n')
                     outfile.write('    ')
-                    outfile.write(strD(grid.lower_bounds[0]) + ' ')  #low x
-                    outfile.write(strD(grid.lower_bounds[2]) + ' ')  #low z
-                    outfile.write(strD(9999) + ' ')  #dummy for final value
+                    outfile.write(strD(grid.lower_bounds[0]) + ' ')  # low x
+                    outfile.write(strD(grid.lower_bounds[2]) + ' ')  # low z
+                    outfile.write(strD(9999) + ' ')  # dummy for final value
                     outfile.write('\n    ')
-                    outfile.write(strD(grid.upper_bounds[0]) + ' ')  #low x
-                    outfile.write(strD(grid.upper_bounds[2]) + ' ')  #low z
-                    outfile.write(strD(9999) + ' ')  #dummy value not used in PFLOTRAN
+                    outfile.write(strD(grid.upper_bounds[0]) + ' ')  # low x
+                    outfile.write(strD(grid.upper_bounds[2]) + ' ')  # low z
+                    # dummy value not used in PFLOTRAN
+                    outfile.write(strD(9999) + ' ')
                     outfile.write('\n  /\n')  # / is end of writing out bounds
                 elif grid.symmetry_type == 'spherical':
-                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + 
-                                          grid.symmetry_type + 
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
+                                          grid.symmetry_type +
                                           '\' not currently supported')
             else:  # DXYZ is only written if no bounds are provided
                 outfile.write('  DXYZ\n')
                 if grid.symmetry_type == 'cartesian' or \
-                grid.symmetry_type == '': #cartesian, DXYZ grid
+                        grid.symmetry_type == '':  # cartesian, DXYZ grid
                     for j in range(len(grid.dx)):
                         outfile.write('    ' + strD(grid.dx[j]))
-                        if j % 5 == 4 and j < len(grid.dx)-1:
+                        if j % 5 == 4 and j < len(grid.dx) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     for j in range(len(grid.dy)):
                         outfile.write('    ' + strD(grid.dy[j]))
-                        if j % 5 == 4 and j < len(grid.dy)-1:
+                        if j % 5 == 4 and j < len(grid.dy) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     for j in range(len(grid.dz)):
                         outfile.write('    ' + strD(grid.dz[j]))
-                        if j % 5 == 4 and j < len(grid.dz)-1:
+                        if j % 5 == 4 and j < len(grid.dz) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     outfile.write('  END\n')
-                elif grid.symmetry_type == 'cylindrical': #cylindrical, DXYZ grid
-                    for j in range(len(grid.dx)): #for x or r
+                elif grid.symmetry_type == 'cylindrical':  # cylindrical, DXYZ grid
+                    for j in range(len(grid.dx)):  # for x or r
                         outfile.write('    ' + strD(grid.dx[j]))
-                        if j % 5 == 4 and j < len(grid.dx) -1:
+                        if j % 5 == 4 and j < len(grid.dx) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
-                    if len(grid.dy) == 1:  #for y coordinate (only 1 value allowed)
+                    if len(grid.dy) == 1:  # for y coordinate (only 1 value allowed)
                         outfile.write('    ' + strD(grid.dy[0]))
                         outfile.write('\n')
                     else:
-                        raise PyFLOTRAN_ERROR('grid.dy must be length 1 for '+ 
-                                               'cylindrical grid.symmetry_type')
-                    for j in range(len(grid.dz)):  #for z coordinate
+                        raise PyFLOTRAN_ERROR('grid.dy must be length 1 for ' +
+                                              'cylindrical grid.symmetry_type')
+                    for j in range(len(grid.dz)):  # for z coordinate
                         outfile.write('    ' + strD(grid.dz[j]))
-                        if j % 5 == 4 and j < len(grid.dz)-1:
+                        if j % 5 == 4 and j < len(grid.dz) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     outfile.write('  END\n')
                 elif grid.symmetry_type == 'spherical':
-                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' + 
-                                          grid.symmetry_type + 
+                    raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
+                                          grid.symmetry_type +
                                           '\' not supported')
             outfile.write('  NXYZ' + ' ')
-            if grid.lower_bounds: #write NXYZ for BOUNDS
+            if grid.lower_bounds:  # write NXYZ for BOUNDS
                 for i in range(3):
                     outfile.write(strI(grid.nxyz[i]) + ' ')
-            else:  #write NXYZ based on length of dx, dy, dz (DXYZ)
+            else:  # write NXYZ based on length of dx, dy, dz (DXYZ)
                 outfile.write(strI(len(grid.dx)) + ' ')
                 outfile.write(strI(len(grid.dy)) + ' ')
                 outfile.write(strI(len(grid.dz)) + ' ')
@@ -3976,7 +3999,6 @@ class pdata(object):
             self.timestepper_transport = timestepper
         else:
             PyFLOTRAN_WARNING('Unknown timestepping mode!')
-
 
     def _write_timestepper(self, outfile):
         self._header(outfile, headers['timestepper'])
@@ -4213,18 +4235,21 @@ class pdata(object):
 
             if prop.soil_compressibility_function:
                 if prop.soil_compressibility_function.upper() in allowed_soil_compressibility_functions:
-                    outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' + prop.soil_compressibility_function +'\n')
+                    outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' +
+                                  prop.soil_compressibility_function + '\n')
                 else:
                     raise PyFLOTRAN_ERROR(
                         'PyFLOTRAN ERROR: soil_compressibility_function ' +
-                        prop.soil_compressibility_function + ' is invalid!'  +
+                        prop.soil_compressibility_function + ' is invalid!' +
                         ' Try one of ' + str(allowed_soil_compressibility_functions))
 
-            if prop.soil_compressibility: #this is alpha
-                outfile.write('  SOIL_COMPRESSIBILITY ' + strD(prop.soil_compressibility) +'\n')    
+            if prop.soil_compressibility:  # this is alpha
+                outfile.write('  SOIL_COMPRESSIBILITY ' +
+                              strD(prop.soil_compressibility) + '\n')
 
-            if prop.soil_reference_pressure: #this is alpha
-                outfile.write('  SOIL_REFERENCE_PRESSURE ' + strD(prop.soil_reference_pressure) +'\n')    
+            if prop.soil_reference_pressure:  # this is alpha
+                outfile.write('  SOIL_REFERENCE_PRESSURE ' +
+                              strD(prop.soil_reference_pressure) + '\n')
 
             if prop.secondary_continuum:
                 self._write_sec(prop.secondary_continuum, outfile)
@@ -4233,25 +4258,25 @@ class pdata(object):
                 # if lsolver.name.lower() in solver_names_allowed:
                 if prop.compressibility_function.lower() in allowed_compressibility_functions:
                     outfile.write('  GEOMECHANICS_SUBSURFACE_PROPS\n')
-                    outfile.write('    COMPRESSIBILITY_FUNCTION ' + 
-                                   prop.compressibility_function +'\n')
-                    #check for Bandis parameters
+                    outfile.write('    COMPRESSIBILITY_FUNCTION ' +
+                                  prop.compressibility_function + '\n')
+                    # check for Bandis parameters
                     if prop.bandis_A:
-                        outfile.write('    BANDIS_A ' + 
-                                           strD(prop.bandis_A) + '\n')
+                        outfile.write('    BANDIS_A ' +
+                                      strD(prop.bandis_A) + '\n')
                     if prop.bandis_B:
-                        outfile.write('    BANDIS_B ' + 
-                                           strD(prop.bandis_B) + '\n')
+                        outfile.write('    BANDIS_B ' +
+                                      strD(prop.bandis_B) + '\n')
                     if prop.maximum_aperture:
-                        outfile.write('    MAXIMUM_APERTURE ' + 
-                                           strD(prop.maximum_aperture) + '\n')
+                        outfile.write('    MAXIMUM_APERTURE ' +
+                                      strD(prop.maximum_aperture) + '\n')
                     if prop.normal_vector:
-                        outfile.write('    NORMAL_VECTOR ' + 
-                                       strD(prop.normal_vector[0]) + ' ' +
-                                       strD(prop.normal_vector[1]) + ' ' +
-                                       strD(prop.normal_vector[2]) + '\n')
+                        outfile.write('    NORMAL_VECTOR ' +
+                                      strD(prop.normal_vector[0]) + ' ' +
+                                      strD(prop.normal_vector[1]) + ' ' +
+                                      strD(prop.normal_vector[2]) + '\n')
                     outfile.write('  /\n')
-                    
+
             outfile.write('END\n\n')
 
     def _write_sec(self, sec, outfile):
@@ -4394,7 +4419,7 @@ class pdata(object):
                     'time.dti (initial timestep size) input is invalid. ' +
                     'Format should be a list: [number, string]')
 
-        # write MAXIMUM_TIMESTEP_SIZE statement	dtf
+        # write MAXIMUM_TIMESTEP_SIZE statement dtf
         if time.dtf:
             try:
                 outfile.write('  MAXIMUM_TIMESTEP_SIZE ' + strD(time.dtf[0]))
@@ -4594,7 +4619,8 @@ class pdata(object):
             if nsolver.itol:
                 outfile.write('  ITOL ' + strD(nsolver.itol) + '\n')
             if nsolver.itol_update:
-                outfile.write('  ITOL_UPDATE ' + strD(nsolver.itol_update) + '\n')
+                outfile.write('  ITOL_UPDATE ' +
+                              strD(nsolver.itol_update) + '\n')
             if nsolver.max_it:
                 outfile.write('  MAXIT ' + str(nsolver.max_it) + '\n')
             if nsolver.max_f:
@@ -4977,11 +5003,11 @@ class pdata(object):
                 outfile.write('  RESIDUAL_SATURATION ' +
                               strD(sat.residual_saturation) + '\n')
             if sat.residual_saturation_liquid or \
-                            sat.residual_saturation_liquid == 0:
+                    sat.residual_saturation_liquid == 0:
                 outfile.write('  RESIDUAL_SATURATION LIQUID_PHASE ' +
                               strD(sat.residual_saturation_liquid) + '\n')
             if sat.residual_saturation_gas or \
-                            sat.residual_saturation_gas == 0:
+                    sat.residual_saturation_gas == 0:
                 outfile.write('  RESIDUAL_SATURATION GAS_PHASE ' +
                               strD(sat.residual_saturation_gas) + '\n')
             if sat.a_lambda:
@@ -5150,12 +5176,12 @@ class pdata(object):
                         outfile.write('   LAMBDA ' + strD(char.sf_lambda) +
                                       '\n')
                     if char.sf_liquid_residual_saturation or \
-                                    char.sf_liquid_residual_saturation == 0:
+                            char.sf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                       strD(char.sf_liquid_residual_saturation) +
                                       '\n')
                     if char.sf_gas_residual_saturation or \
-                                    char.sf_gas_residual_saturation == 0:
+                            char.sf_gas_residual_saturation == 0:
                         outfile.write('   GAS_RESIDUAL_SATURATION ' +
                                       strD(char.sf_gas_residual_saturation) +
                                       '\n')
@@ -5192,7 +5218,7 @@ class pdata(object):
                         outfile.write(
                             '   LAMBDA ' + strD(char.lpf_lambda) + '\n')
                     if char.lpf_liquid_residual_saturation or \
-                                    char.lpf_liquid_residual_saturation == 0:
+                            char.lpf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                       strD(
                                           char.lpf_liquid_residual_saturation) +
@@ -5220,13 +5246,13 @@ class pdata(object):
                         outfile.write(
                             '   LAMBDA ' + strD(char.gpf_lambda) + '\n')
                     if char.gpf_liquid_residual_saturation or \
-                                    char.gpf_liquid_residual_saturation == 0:
+                            char.gpf_liquid_residual_saturation == 0:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                       strD(
                                           char.gpf_liquid_residual_saturation) +
                                       '\n')
                     if char.gpf_gas_residual_saturation or \
-                                    char.gpf_gas_residual_saturation == 0:
+                            char.gpf_gas_residual_saturation == 0:
                         outfile.write('   GAS_RESIDUAL_SATURATION ' +
                                       strD(char.gpf_gas_residual_saturation) +
                                       '\n')
@@ -5414,8 +5440,8 @@ class pdata(object):
                 # can be read before loop terminates.
 
             elif key == 'rate' or key == 'pressure' or \
-                            key == 'temperature' or key == 'concentration' or\
-                            key == \
+                key == 'temperature' or key == 'concentration' or\
+                key == \
                     'enthalpy' or key == 'flux':
                 if end_count == 0:
                     '''
@@ -5478,7 +5504,7 @@ class pdata(object):
                                         if len(tstring2) > 2:
                                             tvarlist. \
                                                 data_unit_value_list.append(
-                                                floatD(tstring2[2]))
+                                                    floatD(tstring2[2]))
                                         var.list.append(tvarlist)
                             if line.split()[0] in ['/', 'end']:
                                 keep_reading_list = False
@@ -5582,19 +5608,19 @@ class pdata(object):
                 if not overwrite:
                     warning = 'WARNING: A flow_variable with name \'' + str(
                         flow_variable.name) + \
-                              '\' already exists in flow with name \'' + \
-                              str(flow.name) + \
-                              '\'. Flow_variable will not be defined, ' + \
-                              'use overwrite = True in add() to ' + \
-                              'overwrite the old flow_variable. ' + \
-                              'Use flow=\'name\' if you want to specify the ' + \
-                              'flow object to add flow_variable to.'
+                        '\' already exists in flow with name \'' + \
+                        str(flow.name) + \
+                        '\'. Flow_variable will not be defined, ' + \
+                        'use overwrite = True in add() to ' + \
+                        'overwrite the old flow_variable. ' + \
+                        'Use flow=\'name\' if you want to specify the ' + \
+                        'flow object to add flow_variable to.'
                     print warning,
                     build_warnings.append(warning)
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.flow_variable(flow)[
-                                    flow_variable.name], flow)
+                        flow_variable.name], flow)
 
         # Add flow_variable to flow (as a sub-class) if flow_variable does
         # not exist in specified flow object
@@ -5803,7 +5829,7 @@ class pdata(object):
                         outfile.write('      ' + flow.gradient[0].upper() +
                                       ' ' + str(flow.gradient[1]) + ' ' + str(
                             flow.gradient[2]) + ' ' +
-                                      str(flow.gradient[3]) + '\n')
+                            str(flow.gradient[3]) + '\n')
                         outfile.write('    /\n')
                 # Following code is paired w/ this statement.
                 outfile.write('  TYPE\n')
@@ -5915,7 +5941,7 @@ class pdata(object):
                     return
                 else:
                     self.delete(self.initial_condition[
-                                    initial_condition.region])
+                        initial_condition.region])
 
         if initial_condition not in self.initial_condition_list:
             self.initial_condition_list.append(initial_condition)
@@ -5998,7 +6024,7 @@ class pdata(object):
                     return
                 else:
                     self.delete(self.boundary_condition[
-                                    boundary_condition.region])
+                        boundary_condition.region])
 
         if boundary_condition not in self.boundary_condition_list:
             self.boundary_condition_list.append(boundary_condition)
@@ -6168,7 +6194,7 @@ class pdata(object):
                 # raise PyFLOTRAN_ERROR('strata.region is required')
                 if strata.material:
                     outfile.write('  MATERIAL ' +
-                                  strata.material  + '\n')
+                                  strata.material + '\n')
                 else:
                     raise PyFLOTRAN_ERROR('strata.material is required')
                 outfile.write('END\n\n')
@@ -6182,16 +6208,15 @@ class pdata(object):
         self.checkpoint = checkpoint
 
     def _write_checkpoint(self, outfile):
-        self._header(outfile, headers['checkpoint'])
         checkpoint = self.simulation.checkpoint
         if checkpoint.time_list or checkpoint.periodic_time_list \
-            or checkpoint.periodic_timestep:
+                or checkpoint.periodic_timestep:
             outfile.write('  CHECKPOINT\n')
             if checkpoint.time_list:
                 outfile.write('    TIMES ')
                 outfile.write(checkpoint.time_list[-1].lower())
                 outfile.write(' ')
-                for i in range(len(checkpoint.time_list)-1):
+                for i in range(len(checkpoint.time_list) - 1):
                     outfile.write(str(checkpoint.time_list[i]).lower() + ' ')
                 outfile.write('\n')
             if checkpoint.periodic_time_list:
@@ -6205,7 +6230,7 @@ class pdata(object):
                 outfile.write(str(checkpoint.periodic_timestep))
                 outfile.write('\n')
             if checkpoint.format:
-                outfile.write('    FORMAT ') 
+                outfile.write('    FORMAT ')
                 outfile.write(str(checkpoint.format).upper())
                 outfile.write('\n')
             outfile.write('  /\n')
@@ -6821,8 +6846,7 @@ class pdata(object):
 
     # Adds a constraint_concentration object
     def _add_constraint_concentration(self,
-                                      constraint_concentration=
-                                      pconstraint_concentration(),
+                                      constraint_concentration=pconstraint_concentration(),
                                       index='',
                                       overwrite=False):
 
@@ -6871,8 +6895,8 @@ class pdata(object):
                     return
                 else:  # Executes if overwrite = True
                     self.delete(self.constraint_concentration(constraint)[
-                                    constraint_concentration.pspecies],
-                                constraint)
+                        constraint_concentration.pspecies],
+                        constraint)
 
         # Add constraint_concentration to constraint (as a sub-class)
         # if constraint_concentration does not exist in
@@ -6881,8 +6905,7 @@ class pdata(object):
             constraint.concentration_list.append(constraint_concentration)
 
     def _delete_constraint_concentration(self,
-                                         constraint_concentration=
-                                         pconstraint_concentration(),
+                                         constraint_concentration=pconstraint_concentration(),
                                          constraint=pconstraint()):
         constraint.concentration_list.remove(constraint_concentration)
 
@@ -6957,6 +6980,7 @@ class pdata(object):
         for i in range(pad):
             ws += '='
         ws += '\n'
+        outfile.write(ws)
 
     def _write_hydroquake(self, outfile):
         self._header(outfile, headers['hydroquake'])
@@ -7394,7 +7418,8 @@ class pdata(object):
             top_corner.append(x_verts * y_verts *
                               (z_verts - 1) + x_verts)
             top_corner.append(x_verts * y_verts * z_verts - x_verts + 1)
-            fid = open(wd + self.geomech_grid.dirname + '/top_corner.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/top_corner.vset', 'w')
             for i in top_corner:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7417,7 +7442,8 @@ class pdata(object):
                                     x_verts)
             # remove duplicates and corners
             top_boundary = list(set(top_boundary) - set(top_corner))
-            fid = open(wd + self.geomech_grid.dirname + '/top_boundary.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/top_boundary.vset', 'w')
             for i in top_boundary:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7429,7 +7455,8 @@ class pdata(object):
                 top_internal.append(i)
             top_internal = list(set(top_internal) -
                                 set(top_boundary) - set(top_corner))
-            fid = open(wd + self.geomech_grid.dirname + '/top_internal.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/top_internal.vset', 'w')
             for i in top_internal:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7464,7 +7491,7 @@ class pdata(object):
             for file in files:
                 self.add(pregion(name=file[:-5],
                                  filename=self.geomech_grid.dirname +
-                                          '/' + file, pm='geomech'))
+                                 '/' + file, pm='geomech'))
 
             self.add(pboundary_condition(name='top_corner_force',
                                          region='top_corner',
@@ -7496,28 +7523,28 @@ class pdata(object):
         y = np.zeros(y_verts)
         z = np.zeros(z_verts)
         x[0] = xmin
-        x[1] = xmin + delta_x/2.0
-        x[x_verts-1] = xmax
-        x[x_verts-2] = xmax - delta_x/2.0
+        x[1] = xmin + delta_x / 2.0
+        x[x_verts - 1] = xmax
+        x[x_verts - 2] = xmax - delta_x / 2.0
         if x_verts > 4:
-           for i in range(2, x_verts-2):
-               x[i] = x[i-1] + delta_x
+            for i in range(2, x_verts - 2):
+                x[i] = x[i - 1] + delta_x
 
         y[0] = ymin
-        y[1] = ymin + delta_y/2.0
-        y[y_verts-1] = ymax
-        y[y_verts-2] = ymax - delta_y/2.0
+        y[1] = ymin + delta_y / 2.0
+        y[y_verts - 1] = ymax
+        y[y_verts - 2] = ymax - delta_y / 2.0
         if y_verts > 4:
-           for i in range(2, y_verts-2):
-               y[i] = y[i-1] + delta_y
+            for i in range(2, y_verts - 2):
+                y[i] = y[i - 1] + delta_y
 
         z[0] = zmin
-        z[1] = zmin + delta_z/2.0
-        z[z_verts-1] = zmax
-        z[z_verts-2] = zmax - delta_z/2.0
+        z[1] = zmin + delta_z / 2.0
+        z[z_verts - 1] = zmax
+        z[z_verts - 2] = zmax - delta_z / 2.0
         if z_verts > 4:
-           for i in range(2, z_verts-2):
-               z[i] = z[i-1] + delta_z
+            for i in range(2, z_verts - 2):
+                z[i] = z[i - 1] + delta_z
 
         xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
         Coord = np.zeros((Total_verts, 3), 'float')
@@ -7539,7 +7566,8 @@ class pdata(object):
             east_corner.append(x_verts * y_verts * z_verts)
             east_corner.append(x_verts)
             east_corner.append(x_verts * y_verts)
-            fid = open(wd + self.geomech_grid.dirname + '/east_corner.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/east_corner.vset', 'w')
             for i in east_corner:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7550,20 +7578,22 @@ class pdata(object):
                 east_boundary.append(x_verts + (k - 1) * x_verts * y_verts)
 
             for k in range(1, z_verts + 1):
-                east_boundary.append(x_verts + (y_verts - 1) * x_verts + (k - 1) * x_verts * y_verts)
+                east_boundary.append(x_verts + (y_verts - 1)
+                                     * x_verts + (k - 1) * x_verts * y_verts)
 
             for j in range(1, y_verts + 1):
                 east_boundary.append(x_verts + (j - 1) * x_verts)
 
             for j in range(1, y_verts + 1):
-                east_boundary.append(x_verts + (j - 1) * x_verts + (z_verts-1)*x_verts*y_verts)
-
+                east_boundary.append(
+                    x_verts + (j - 1) * x_verts + (z_verts - 1) * x_verts * y_verts)
 
             east_boundary = list(set(east_boundary))
-            
+
             # remove duplicates and corners
             east_boundary = list(set(east_boundary) - set(east_corner))
-            fid = open(wd + self.geomech_grid.dirname + '/east_boundary.vset', 'w')
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/east_boundary.vset', 'w')
             for i in east_boundary:
                 fid.write('%i\n' % i)
             fid.close()
@@ -7572,75 +7602,83 @@ class pdata(object):
             east_internal = []
             for k in range(1, z_verts):
                 for j in range(1, y_verts):
-                    east_internal.append(x_verts + (j - 1) * x_verts + (k - 1) * x_verts * y_verts)
+                    east_internal.append(
+                        x_verts + (j - 1) * x_verts + (k - 1) * x_verts * y_verts)
 
             east_internal = list(set(east_internal) -
-                                set(east_boundary) - set(east_corner))
-            fid = open(wd + self.geomech_grid.dirname + '/east_internal.vset', 'w')
+                                 set(east_boundary) - set(east_corner))
+            fid = open(wd + self.geomech_grid.dirname +
+                       '/east_internal.vset', 'w')
             for i in east_internal:
                 fid.write('%i\n' % i)
             fid.close()
 
-
             # east corner force
             for node in east_corner:
                 area = delta_y * delta_z / 16
-                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                traction = rho_eff * g * vertical_to_horizontal_ratio * \
+                    (total_depth - Coord[node - 1][2])
                 force = -traction * area
-                file = self.geomech_grid.dirname + '/' + 'east_corner_' + str(node)
+                file = self.geomech_grid.dirname + \
+                    '/' + 'east_corner_' + str(node)
                 fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
-                self.add(pflow(name='east_corner_force_' + str(node), pm='geomech'))
+                self.add(pflow(name='east_corner_force_' +
+                               str(node), pm='geomech'))
                 self.add(pflow_variable(name='force_x', type='dirichlet',
-                                    valuelist=[force]),
-                        index='east_corner_force_' + str(node))
-                self.add(pregion(name='east_corner_'+str(node),
+                                        valuelist=[force]),
+                         index='east_corner_force_' + str(node))
+                self.add(pregion(name='east_corner_' + str(node),
                                  filename=file, pm='geomech'))
-                self.add(pboundary_condition(name='east_corner_force_'+str(node),
-                                         region='east_corner_'+str(node),
-                                         geomech='east_corner_force_'+str(node)))
+                self.add(pboundary_condition(name='east_corner_force_' + str(node),
+                                             region='east_corner_' + str(node),
+                                             geomech='east_corner_force_' + str(node)))
             # east boundary force
             for node in east_boundary:
                 area = delta_y * delta_z / 8
-                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                traction = rho_eff * g * vertical_to_horizontal_ratio * \
+                    (total_depth - Coord[node - 1][2])
                 force = -traction * area
-                file = self.geomech_grid.dirname + '/' + 'east_boundary_' + str(node)
+                file = self.geomech_grid.dirname + \
+                    '/' + 'east_boundary_' + str(node)
                 fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
-                self.add(pflow(name='east_boundary_force_' + str(node), pm='geomech'))
+                self.add(pflow(name='east_boundary_force_' +
+                               str(node), pm='geomech'))
                 self.add(pflow_variable(name='force_x', type='dirichlet',
-                                    valuelist=[force]),
-                        index='east_boundary_force_' + str(node))
-                self.add(pregion(name='east_boundary_'+str(node),
+                                        valuelist=[force]),
+                         index='east_boundary_force_' + str(node))
+                self.add(pregion(name='east_boundary_' + str(node),
                                  filename=file, pm='geomech'))
-                self.add(pboundary_condition(name='east_boundary_force_'+str(node),
-                                         region='east_boundary_'+str(node),
-                                         geomech='east_boundary_force_'+str(node)))
+                self.add(pboundary_condition(name='east_boundary_force_' + str(node),
+                                             region='east_boundary_' +
+                                             str(node),
+                                             geomech='east_boundary_force_' + str(node)))
 
             # east internal force
             for node in east_internal:
                 area = delta_y * delta_z / 4
-                traction = rho_eff*g*vertical_to_horizontal_ratio*(total_depth-Coord[node-1][2])
+                traction = rho_eff * g * vertical_to_horizontal_ratio * \
+                    (total_depth - Coord[node - 1][2])
                 force = -traction * area
-                file = self.geomech_grid.dirname + '/' + 'east_internal_' + str(node)
+                file = self.geomech_grid.dirname + \
+                    '/' + 'east_internal_' + str(node)
                 fid = open(wd + file, 'w')
                 fid.write('%i\n' % node)
                 fid.close()
-                self.add(pflow(name='east_internal_force_' + str(node), pm='geomech'))
+                self.add(pflow(name='east_internal_force_' +
+                               str(node), pm='geomech'))
                 self.add(pflow_variable(name='force_x', type='dirichlet',
-                                    valuelist=[force]),
-                        index='east_internal_force_' + str(node))
-                self.add(pregion(name='east_internal_'+str(node),
+                                        valuelist=[force]),
+                         index='east_internal_force_' + str(node))
+                self.add(pregion(name='east_internal_' + str(node),
                                  filename=file, pm='geomech'))
-                self.add(pboundary_condition(name='east_internal_force_'+str(node),
-                                         region='east_internal_'+str(node),
-                                         geomech='east_internal_force_'+str(node)))
-
-
-
-
+                self.add(pboundary_condition(name='east_internal_force_' + str(node),
+                                             region='east_internal_' +
+                                             str(node),
+                                             geomech='east_internal_force_' + str(node)))
 
     def generate_geomech_grid(self):
         x_verts = self.grid.nxyz[0] + 2
@@ -7662,30 +7700,29 @@ class pdata(object):
         y = np.zeros(y_verts)
         z = np.zeros(z_verts)
 
-
         x[0] = xmin
-        x[1] = xmin + delta_x/2.0
-        x[x_verts-1] = xmax
-        x[x_verts-2] = xmax - delta_x/2.0
+        x[1] = xmin + delta_x / 2.0
+        x[x_verts - 1] = xmax
+        x[x_verts - 2] = xmax - delta_x / 2.0
         if x_verts > 4:
-           for i in range(2, x_verts-2):
-               x[i] = x[i-1] + delta_x
+            for i in range(2, x_verts - 2):
+                x[i] = x[i - 1] + delta_x
 
         y[0] = ymin
-        y[1] = ymin + delta_y/2.0
-        y[y_verts-1] = ymax
-        y[y_verts-2] = ymax - delta_y/2.0
+        y[1] = ymin + delta_y / 2.0
+        y[y_verts - 1] = ymax
+        y[y_verts - 2] = ymax - delta_y / 2.0
         if y_verts > 4:
-           for i in range(2, y_verts-2):
-               y[i] = y[i-1] + delta_y
+            for i in range(2, y_verts - 2):
+                y[i] = y[i - 1] + delta_y
 
         z[0] = zmin
-        z[1] = zmin + delta_z/2.0
-        z[z_verts-1] = zmax
-        z[z_verts-2] = zmax - delta_z/2.0
+        z[1] = zmin + delta_z / 2.0
+        z[z_verts - 1] = zmax
+        z[z_verts - 2] = zmax - delta_z / 2.0
         if z_verts > 4:
-           for i in range(2, z_verts-2):
-               z[i] = z[i-1] + delta_z
+            for i in range(2, z_verts - 2):
+                z[i] = z[i - 1] + delta_z
 
         xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
         Coord = np.zeros((Total_verts, 3), 'float')
@@ -7843,20 +7880,20 @@ class pdata(object):
             wd = self.work_dir + os.sep
         else:
             wd = os.getcwd() + os.sep
-        fid = open(wd+'flow_geomech_mapping.dat', 'w')
+        fid = open(wd + 'flow_geomech_mapping.dat', 'w')
         epsilon = 1.e-8
         for coord in Coord:
             i = int((coord[0] - xmin - epsilon) / delta_x)
             j = int((coord[1] - ymin - epsilon) / delta_y)
             k = int((coord[2] - zmin - epsilon) / delta_z)
-            id = i + j * self.grid.nxyz[0] + k  * self.grid.nxyz[0] * self.grid.nxyz[1]
+            id = i + j * self.grid.nxyz[0] + k * \
+                self.grid.nxyz[0] * self.grid.nxyz[1]
             fid.write('%i %i\n' % (int(id + 1), count + 1))
             count = count + 1
 
         fid.close()
 
-
-    def terzaghi(self,x,t,dP,c,L):
+    def terzaghi(self, x, t, dP, c, L):
         """
         Will do a terzaghi calculation with porous plate at x = 0
 
@@ -7872,17 +7909,15 @@ class pdata(object):
         :type L: float
         """
 
-
-
         import numpy as np
-        inf_series = 0;
-        for m in range(0,1000):
-            inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \
-                np.sin((2.*m+1)*np.pi*x/2/L) + inf_series
-        pressure = 4.*dP/np.pi*inf_series
+        inf_series = 0
+        for m in range(0, 1000):
+            inf_series = (1 / (2. * m + 1)) * np.exp(-(2. * m + 1)**2 * np.pi * np.pi * c * t / 4 / L / L) * \
+                np.sin((2. * m + 1) * np.pi * x / 2 / L) + inf_series
+        pressure = 4. * dP / np.pi * inf_series
         return pressure
 
-    def terzaghi_flip(self,x,t,dP,c,L):
+    def terzaghi_flip(self, x, t, dP, c, L):
         """
         Will do a terzaghi calculation, with porous plate at x = L.
 
@@ -7899,12 +7934,12 @@ class pdata(object):
         """
         from matplotlib import pyplot as plt
         import numpy as np
-        
-        inf_series = 0;
-        for m in range(0,1000):
-            inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \
-                np.sin((2*m+1)*np.pi*(L-x)/2/L) + inf_series
-        pressure = 4.*dP/np.pi*inf_series
+
+        inf_series = 0
+        for m in range(0, 1000):
+            inf_series = (1 / (2. * m + 1)) * np.exp(-(2. * m + 1)**2 * np.pi * np.pi * c * t / 4 / L / L) * \
+                np.sin((2 * m + 1) * np.pi * (L - x) / 2 / L) + inf_series
+        pressure = 4. * dP / np.pi * inf_series
         return pressure
 
     # def terzaghi_flip(self,x,t,P0,c,L):
@@ -7918,7 +7953,7 @@ class pdata(object):
     #     """
     #     from matplotlib import pyplot as plt
     #     import numpy as np
-        
+
     #     inf_series = 0;
     #     for m in range(0,1000):
     #         inf_series = (1/(2.*m+1))*np.exp(-(2.*m+1)**2*np.pi*np.pi*c*t/4/L/L) * \

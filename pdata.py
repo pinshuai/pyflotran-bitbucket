@@ -210,7 +210,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'constraint', 'hydroquake', 'multiple_continuum',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
-         'geomechanics_time']
+         'geomechanics_time', 'geomechanics_region']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -222,9 +222,9 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'initial condition', 'boundary conditions',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
-           'secondary continuum', 'geomechanics', 'geomechanics_regression',
-           'geomechanics_grid', 'geomechanics_subsurface_coupling',
-           'geomechanics_time']
+           'secondary continuum', 'geomechanics', 'geomechanics regression',
+           'geomechanics grid', 'geomechanics subsurface coupling',
+           'geomechanics time', 'geomechanics region']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -236,7 +236,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'flow_condition', 'transport_condition', 'initial_condition',
               'boundary_condition', 'source_sink', 'strata',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
-              'geomechanics_subsurface_coupling', 'geomechanics_time']
+              'geomechanics_subsurface_coupling', 'geomechanics_time',
+              'geomechanics_region']
 
 headers = dict(zip(cards, headers))
 
@@ -2547,7 +2548,6 @@ class pdata(object):
         self.saturationlist = []
         self.regionlist = []  # There are multiple regions
         self.charlist = []
-        self.regionlist = []  # There are multiple regions
         self.observation_list = []
         self.flowlist = []
         self.transportlist = []
@@ -2920,7 +2920,8 @@ class pdata(object):
                             self._read_geomechanics_regression,
                             self._read_geomechanics_grid,
                             self._read_geomechanics_subsurface_coupling,
-                            self._read_geomechanics_time],
+                            self._read_geomechanics_time,
+                            self._read_region],
                            ))
 
         # associate each card name with
@@ -2986,7 +2987,8 @@ class pdata(object):
                                 'geomechanics_regression',
                                 'geomechanics_grid',
                                 'geomechanics_subsurface_coupling',
-                                'geomechanics_time']:
+                                'geomechanics_time',
+                                'geomechanics_region']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -5280,7 +5282,8 @@ class pdata(object):
         region = pregion()
         region.coordinates_lower = [None] * 3
         region.coordinates_upper = [None] * 3
-
+        if line.strip().split()[0].lower() == 'geomechanics_region':
+            region.pm = 'geomechanics'
         region.name = self.splitter(line).lower()
 
         keep_reading = True
@@ -5311,6 +5314,8 @@ class pdata(object):
                 point.coordinate[1] = floatD(line1[1])
                 point.coordinate[2] = floatD(line1[2])
                 region.point_list.append(point)
+            elif key == 'file':
+                region.filename = line.strip().split()[1]
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -7057,20 +7062,20 @@ class pdata(object):
         outfile.write('GEOMECHANICS\n\n')
         if self.geomech_grid.grid_filename:
             self._write_geomechanics_grid(outfile)
-        self._write_geomech_subsurface_coupling(outfile)
-        self._write_geomech_regression(outfile)
-        self._write_geomech_time(outfile)
+        self._write_geomechanics_subsurface_coupling(outfile)
+        self._write_geomechanics_regression(outfile)
+        self._write_geomechanics_time(outfile)
         self._write_geomechanics_region(outfile)
         self._write_geomechanics_condition(outfile)
-        self._write_geomech_boundary_condition(outfile)
-        self._write_geomech_strata(outfile)
-        self._write_geomech_output(outfile)
+        self._write_geomechanics_boundary_condition(outfile)
+        self._write_geomechanics_strata(outfile)
+        self._write_geomechanics_output(outfile)
         if self.geomech_proplist:
-            self._write_geomech_prop(outfile)
+            self._write_geomechanics_prop(outfile)
         outfile.write('END_GEOMECHANICS')
 
     def _write_geomechanics_region(self, outfile):
-        self._header(outfile, headers['region'])
+        self._header(outfile, headers['geomechanics_region'])
 
         # Write out all valid region object entries with Region as Key word
         for region in self.regionlist:
@@ -7136,7 +7141,7 @@ class pdata(object):
                         outfile.write('\n')
                 outfile.write('END\n\n')
 
-    def _write_geomech_boundary_condition(self, outfile):
+    def _write_geomechanics_boundary_condition(self, outfile):
         # self._header(outfile, headers['boundary_condition'])
 
         # Write all boundary conditions to file
@@ -7163,7 +7168,7 @@ class pdata(object):
                 'At least one geomechanics boundary_condition with valid ' +
                 'attributes is required')
 
-    def _write_geomech_strata(self, outfile):
+    def _write_geomechanics_strata(self, outfile):
         self._header(outfile, headers['strata'])
         # strata = self.strata
 
@@ -7198,7 +7203,7 @@ class pdata(object):
                 keep_reading = False
         self.geomech_subsurface_coupling = coupling
 
-    def _write_geomech_subsurface_coupling(self, outfile):
+    def _write_geomechanics_subsurface_coupling(self, outfile):
         self._header(outfile, headers['geomechanics_subsurface_coupling'])
         if self.geomech_subsurface_coupling.coupling_type not in \
                 geomech_subsurface_coupling_types_allowed:
@@ -7235,7 +7240,7 @@ class pdata(object):
                 keep_reading = False
         self.geomech_time = time
 
-    def _write_geomech_time(self, outfile):
+    def _write_geomechanics_time(self, outfile):
         outfile.write('GEOMECHANICS_TIME\n  ')
         outfile.write('COUPLING_TIMESTEP_SIZE ' +
                       strD(self.geomech_time.coupling_timestep[0]) +
@@ -7243,7 +7248,7 @@ class pdata(object):
         outfile.write('\n')
         outfile.write('END\n\n')
 
-    def _write_geomech_output(self, outfile):
+    def _write_geomechanics_output(self, outfile):
         self._header(outfile, headers['output'])
         output = self.geomech_output
 
@@ -7310,7 +7315,7 @@ class pdata(object):
                 keep_reading = False
         self.geomech_regression = regression
 
-    def _write_geomech_regression(self, outfile):
+    def _write_geomechanics_regression(self, outfile):
         self._header(outfile, headers['regression'])
         regression = self.geomech_regression
         outfile.write('GEOMECHANICS_REGRESSION' + '\n')
@@ -7351,7 +7356,7 @@ class pdata(object):
     def _delete_geomech_prop(self, prop=pgeomech_material()):
         self.geomech_proplist.remove(prop)
 
-    def _write_geomech_prop(self, outfile):
+    def _write_geomechanics_prop(self, outfile):
         self._header(outfile, headers['material_property'])
         for prop in self.geomech_proplist:
             if prop.name:

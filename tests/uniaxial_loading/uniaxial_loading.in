@@ -152,4 +152,44 @@ GEOMECHANICS_TIME
   COUPLING_TIMESTEP_SIZE 0.2 s
 END
 
+GEOMECHANICS_REGION all_geomech
+  FILE geomech_dat/all.vset
+END
+
+GEOMECHANICS_REGION north_geomech
+  FILE geomech_dat/north.vset
+END
+
+GEOMECHANICS_REGION south_geomech
+  FILE geomech_dat/south.vset
+END
+
+GEOMECHANICS_REGION east_geomech
+  FILE geomech_dat/east.vset
+END
+
+GEOMECHANICS_REGION west_geomech
+  FILE geomech_dat/west.vset
+END
+
+GEOMECHANICS_REGION top_geomech
+  FILE geomech_dat/top.vset
+END
+
+GEOMECHANICS_REGION bottom_geomech
+  FILE geomech_dat/bottom.vset
+END
+
+GEOMECHANICS_REGION top_boundary
+  FILE geomech_dat/top_boundary.vset
+END
+
+GEOMECHANICS_REGION top_corner
+  FILE geomech_dat/top_corner.vset
+END
+
+GEOMECHANICS_REGION top_internal
+  FILE geomech_dat/top_internal.vset
+END
+
 END_GEOMECHANICS

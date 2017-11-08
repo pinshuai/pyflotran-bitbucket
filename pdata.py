@@ -207,7 +207,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'flow_condition', 'transport_condition', 'initial_condition',
          'boundary_condition', 'source_sink', 'strata',
          'constraint', 'hydroquake', 'multiple_continuum',
-         'secondary_continuum', 'geomechanics', 'geomechanics_regression']
+         'secondary_continuum', 'geomechanics', 'geomechanics_regression',
+         'geomechanics_grid']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -219,7 +220,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'initial condition', 'boundary conditions',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
-           'secondary continuum', 'geomechanics', 'geomechanics_regression']
+           'secondary continuum', 'geomechanics', 'geomechanics_regression',
+           'geomechanics_grid']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -230,7 +232,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'characteristic_curves', 'region', 'observation',
               'flow_condition', 'transport_condition', 'initial_condition',
               'boundary_condition', 'source_sink', 'strata',
-              'constraint','geomechanics_regression']
+              'constraint', 'geomechanics_regression', 'geomechanics_grid']
 
 headers = dict(zip(cards, headers))
 
@@ -2911,7 +2913,8 @@ class pdata(object):
                             self._read_source_sink,
                             self._read_strata,
                             self._read_constraint,
-                            self._read_geomechanics_regression],
+                            self._read_geomechanics_regression,
+                            self._read_geomechanics_grid],
                            ))
 
         # associate each card name with
@@ -2974,7 +2977,8 @@ class pdata(object):
                                 'uniform_velocity',
                                 'nonuniform_velocity',
                                 'characteristic_curves',
-                                'geomechanics_regression']:
+                                'geomechanics_regression',
+                                'geomechanics_grid']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6999,10 +7003,42 @@ class pdata(object):
                           strD(self.hydroquake.pressure_scaling) + '\n')
         outfile.write('END_HYDROQUAKE')
 
+    def _read_geomechanics_grid(self, infile, line):
+        grid = pgeomech_grid()  # assign defaults before reading in values
+
+        keep_reading = True
+        while keep_reading:
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key in ['#']:
+                pass
+            elif key == 'type':
+                if line.strip().split()[1].lower() != 'unstructured':
+                    raise PyFLOTRAN_ERROR(
+                        'Geomechanics grid can only be unstructured!')
+                else:
+                    grid.dirname = ''
+                    grid.grid_filename = line.strip().split()[-1]
+                    print grid.dirname, grid.grid_filename
+            elif key == 'gravity':
+                grid.gravity = []
+                grid.gravity.append(floatD(line.split()[1]))
+                grid.gravity.append(floatD(line.split()[2]))
+                grid.gravity.append(floatD(line.split()[3]))
+
+            elif key in ['/', 'end']:
+                keep_reading = False
+        self.geomech_grid = grid
+
     def _write_geomechanics_grid(self, outfile):
+        self._header(outfile, headers['geomechanics_grid'])
         outfile.write('GEOMECHANICS_GRID\n')
-        outfile.write('  TYPE unstructured ' + self.geomech_grid.dirname +
-                      '/' + self.geomech_grid.grid_filename+'\n')
+        if self.geomech_grid.dirname:
+            outfile.write('  TYPE unstructured ' + self.geomech_grid.dirname +
+                          '/' + self.geomech_grid.grid_filename + '\n')
+        else:
+            outfile.write('  TYPE unstructured ' +
+                          self.geomech_grid.grid_filename + '\n')
         outfile.write('  GRAVITY ')
         for item in self.geomech_grid.gravity:
             outfile.write(strD(item) + ' ')
@@ -7012,7 +7048,7 @@ class pdata(object):
     def _write_geomechanics(self, outfile):
         self._header(outfile, headers['geomechanics'])
         outfile.write('GEOMECHANICS\n\n')
-        if self.geomech_grid.dirname:
+        if self.geomech_grid.grid_filename:
             self._write_geomechanics_grid(outfile)
         self._write_geomech_subsurface_coupling(outfile)
         self._write_geomech_regression(outfile)

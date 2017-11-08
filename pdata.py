@@ -211,7 +211,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
-         'geomechanics_boundary_condition']
+         'geomechanics_boundary_condition', 'geomechanics_strata']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -226,7 +226,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'secondary continuum', 'geomechanics', 'geomechanics regression',
            'geomechanics grid', 'geomechanics subsurface coupling',
            'geomechanics time', 'geomechanics region', 
-           'geomechanics condition', 'geomechanics boundary condition']
+           'geomechanics condition', 'geomechanics boundary condition',
+           'geomechanics strata']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -240,7 +241,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
               'geomechanics_region', 'geomechanics_condition', 
-              'geomechanics_boundary_condition']
+              'geomechanics_boundary_condition', 'geomechanics_strata']
 
 headers = dict(zip(cards, headers))
 
@@ -2926,7 +2927,8 @@ class pdata(object):
                             self._read_geomechanics_time,
                             self._read_region,
                             self._read_flow,
-                            self._read_boundary_condition],
+                            self._read_boundary_condition,
+                            self._read_strata],
                            ))
 
         # associate each card name with
@@ -2995,7 +2997,9 @@ class pdata(object):
                                 'geomechanics_time',
                                 'geomechanics_region',
                                 'geomechanics_condition',
-                                'geomechanics_boundary_condition']:
+                                'geomechanics_boundary_condition',
+                                'geomechanics_strata',
+                                'strata']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6175,17 +6179,19 @@ class pdata(object):
     def _delete_strata(self, strata=pstrata()):
         self.strata_list.remove(strata)
 
-    def _read_strata(self, infile):
+    def _read_strata(self, infile, line):
         strata = pstrata()
         keep_reading = True
+        if line.strip().split()[0].lower() == 'geomechanics_strata':
+            strata.pm = 'geomechanics'
 
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first key word
 
-            if key == 'region':
+            if 'region' in key:
                 strata.region = self.splitter(line)  # take last word
-            elif key == 'material':
+            elif 'material' in key:
                 strata.material = self.splitter(line)  # take last word
             elif key in ['/', 'end']:
                 keep_reading = False
@@ -7178,8 +7184,7 @@ class pdata(object):
 
 
     def _write_geomechanics_strata(self, outfile):
-        self._header(outfile, headers['strata'])
-        # strata = self.strata
+        self._header(outfile, headers['geomechanics_strata'])
 
         # Write out strata condition variables
         for strata in self.strata_list:

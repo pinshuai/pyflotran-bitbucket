@@ -210,7 +210,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'constraint', 'hydroquake', 'multiple_continuum',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
-         'geomechanics_time', 'geomechanics_region']
+         'geomechanics_time', 'geomechanics_region', 'geomechanics_condition']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -224,7 +224,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'hydroquake', 'multiple continuum',
            'secondary continuum', 'geomechanics', 'geomechanics regression',
            'geomechanics grid', 'geomechanics subsurface coupling',
-           'geomechanics time', 'geomechanics region']
+           'geomechanics time', 'geomechanics region', 
+           'geomechanics condition']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -237,7 +238,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'boundary_condition', 'source_sink', 'strata',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
-              'geomechanics_region']
+              'geomechanics_region', 'geomechanics_condition']
 
 headers = dict(zip(cards, headers))
 
@@ -2921,7 +2922,8 @@ class pdata(object):
                             self._read_geomechanics_grid,
                             self._read_geomechanics_subsurface_coupling,
                             self._read_geomechanics_time,
-                            self._read_region],
+                            self._read_region,
+                            self._read_flow],
                            ))
 
         # associate each card name with
@@ -2988,7 +2990,8 @@ class pdata(object):
                                 'geomechanics_grid',
                                 'geomechanics_subsurface_coupling',
                                 'geomechanics_time',
-                                'geomechanics_region']:
+                                'geomechanics_region',
+                                'geomechanics_condition']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -5443,7 +5446,8 @@ class pdata(object):
         flow.datum_type = ''
         # Flow Condition name passed in.
         flow.name = self.splitter(line).lower()
-
+        if line.strip().split()[0].lower() == 'geomechanics_condition':
+            flow.pm = 'geomechanics'
         keep_reading = True
         is_valid = False
         # Used so that entries outside flow conditions are ignored
@@ -5460,9 +5464,11 @@ class pdata(object):
                 # can be read before loop terminates.
 
             elif key == 'rate' or key == 'pressure' or \
-                key == 'temperature' or key == 'concentration' or\
-                key == \
-                    'enthalpy' or key == 'flux':
+                key == 'temperature' or key == 'concentration' or \
+                key == 'enthalpy' or key == 'flux' or \
+                key == 'displacement_x' or key == 'displacement_y' or \
+                key == 'displacement_z' or key == 'force_x' or \
+                key == 'force_y' or key == 'force_z':
                 if end_count == 0:
                     '''
                     Appending and instantiation of new flow_variables
@@ -7091,7 +7097,7 @@ class pdata(object):
                 outfile.write('END\n\n')
 
     def _write_geomechanics_condition(self, outfile):
-
+        self._header(outfile, headers['geomechanics_condition'])
         def check_condition_type(condition_name, condition_type):
             if condition_name.upper()[:-2] == 'DISPLACEMENT':
                 if condition_type.lower() in pressure_types_allowed:

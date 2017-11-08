@@ -192,4 +192,60 @@ GEOMECHANICS_REGION top_internal
   FILE geomech_dat/top_internal.vset
 END
 
+GEOMECHANICS_CONDITION west_geomech
+  TYPE
+    DISPLACEMENT_X dirichlet
+  END
+    DISPLACEMENT_X 0.0
+END
+
+GEOMECHANICS_CONDITION east_geomech
+  TYPE
+    DISPLACEMENT_X dirichlet
+  END
+    DISPLACEMENT_X 0.0
+END
+
+GEOMECHANICS_CONDITION north_geomech
+  TYPE
+    DISPLACEMENT_Y dirichlet
+  END
+    DISPLACEMENT_Y 0.0
+END
+
+GEOMECHANICS_CONDITION bottom_geomech
+  TYPE
+    DISPLACEMENT_Z dirichlet
+  END
+    DISPLACEMENT_Z 0.0
+END
+
+GEOMECHANICS_CONDITION south_geomech
+  TYPE
+    DISPLACEMENT_Y dirichlet
+  END
+    DISPLACEMENT_Y 0.0
+END
+
+GEOMECHANICS_CONDITION top_corner_force
+  TYPE
+    FORCE_Z dirichlet
+  END
+    FORCE_Z -0.0625
+END
+
+GEOMECHANICS_CONDITION top_boundary_force
+  TYPE
+    FORCE_Z dirichlet
+  END
+    FORCE_Z -0.125
+END
+
+GEOMECHANICS_CONDITION top_internal_force
+  TYPE
+    FORCE_Z dirichlet
+  END
+    FORCE_Z -0.25
+END
+
 END_GEOMECHANICS

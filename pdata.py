@@ -207,7 +207,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'flow_condition', 'transport_condition', 'initial_condition',
          'boundary_condition', 'source_sink', 'strata',
          'constraint', 'hydroquake', 'multiple_continuum',
-         'secondary_continuum', 'geomechanics']
+         'secondary_continuum', 'geomechanics', 'geomechanics_regression']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -219,7 +219,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'initial condition', 'boundary conditions',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
-           'secondary continuum', 'geomechanics']
+           'secondary continuum', 'geomechanics', 'geomechanics_regression']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -230,7 +230,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'characteristic_curves', 'region', 'observation',
               'flow_condition', 'transport_condition', 'initial_condition',
               'boundary_condition', 'source_sink', 'strata',
-              'constraint']
+              'constraint','geomechanics_regression']
 
 headers = dict(zip(cards, headers))
 
@@ -2910,7 +2910,8 @@ class pdata(object):
                             self._read_boundary_condition,
                             self._read_source_sink,
                             self._read_strata,
-                            self._read_constraint],
+                            self._read_constraint,
+                            self._read_geomechanics_regression],
                            ))
 
         # associate each card name with
@@ -2972,7 +2973,8 @@ class pdata(object):
                                 'transport_condition', 'constraint',
                                 'uniform_velocity',
                                 'nonuniform_velocity',
-                                'characteristic_curves']:
+                                'characteristic_curves',
+                                'geomechanics_regression']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -3166,7 +3168,7 @@ class pdata(object):
         if self.simulation.simulation_type == 'hydroquake':
             self._write_hydroquake(outfile)
 
-        if self.simulation.simulation_type == 'geomechanics_subsurface':
+        if self.simulation.simulation_type.lower() == 'geomechanics_subsurface':
             self._write_geomechanics(outfile)
 
         outfile.close()
@@ -7188,6 +7190,41 @@ class pdata(object):
                     'output.format: \'' + out_format + '\' is invalid.')
 
         outfile.write('END\n\n')
+
+
+    def _read_geomechanics_regression(self, infile, line):
+        regression = pgeomech_regression()
+        keep_reading = True
+        while keep_reading:  # Read through all cards
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first key word
+
+            if key == 'vertices':
+                keep_reading_2 = True
+                vertex_list = []
+                while keep_reading_2:
+                    for i in range(100000):
+                        line1 = infile.readline()
+                        if line1.strip().split()[0].lower() in ['/', 'end']:
+                            keep_reading_2 = False
+                            break
+                        vertex_list.append(int(line1))
+                regression.vertices = vertex_list
+            elif key == 'variables':
+                keep_reading_2 = True
+                variable_list = []
+                while keep_reading_2:
+                    for i in range(100):
+                        line1 = infile.readline()
+                        if line1.strip().split()[0].lower() in ['/', 'end']:
+                            keep_reading_2 = False
+                            break
+                        variable_list.append(self.splitter(line1))
+                regression.variables = variable_list
+            elif key in ['/', 'end']:
+                keep_reading = False
+        self.geomech_regression = regression
+
 
     def _write_geomech_regression(self, outfile):
         self._header(outfile, headers['regression'])

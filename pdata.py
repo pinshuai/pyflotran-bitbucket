@@ -209,7 +209,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'boundary_condition', 'source_sink', 'strata',
          'constraint', 'hydroquake', 'multiple_continuum',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
-         'geomechanics_grid', 'geomechanics_subsurface_coupling']
+         'geomechanics_grid', 'geomechanics_subsurface_coupling',
+         'geomechanics_time']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -222,7 +223,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
            'secondary continuum', 'geomechanics', 'geomechanics_regression',
-           'geomechanics_grid', 'geomechanics_subsurface_coupling']
+           'geomechanics_grid', 'geomechanics_subsurface_coupling',
+           'geomechanics_time']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -234,7 +236,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'flow_condition', 'transport_condition', 'initial_condition',
               'boundary_condition', 'source_sink', 'strata',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
-              'geomechanics_subsurface_coupling']
+              'geomechanics_subsurface_coupling', 'geomechanics_time']
 
 headers = dict(zip(cards, headers))
 
@@ -2917,7 +2919,8 @@ class pdata(object):
                             self._read_constraint,
                             self._read_geomechanics_regression,
                             self._read_geomechanics_grid,
-                            self._read_geomechanics_subsurface_coupling],
+                            self._read_geomechanics_subsurface_coupling,
+                            self._read_geomechanics_time],
                            ))
 
         # associate each card name with
@@ -2982,7 +2985,8 @@ class pdata(object):
                                 'characteristic_curves',
                                 'geomechanics_regression',
                                 'geomechanics_grid',
-                                'geomechanics_subsurface_coupling']:
+                                'geomechanics_subsurface_coupling',
+                                'geomechanics_time']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -7197,7 +7201,7 @@ class pdata(object):
     def _write_geomech_subsurface_coupling(self, outfile):
         self._header(outfile, headers['geomechanics_subsurface_coupling'])
         if self.geomech_subsurface_coupling.coupling_type not in \
-            geomech_subsurface_coupling_types_allowed:
+                geomech_subsurface_coupling_types_allowed:
             raise PyFLOTRAN_ERROR(
                 'Incorrect GEOMECHANICS_SUBSURFACE_COUPLING type!')
         outfile.write('GEOMECHANICS_SUBSURFACE_COUPLING ' +
@@ -7207,6 +7211,29 @@ class pdata(object):
                       self.geomech_subsurface_coupling.mapping_file)
         outfile.write('\n')
         outfile.write('END\n\n')
+
+    def _read_geomechanics_time(self, infile, line):
+        time = pgeomech_time()
+        keep_reading = True
+        while keep_reading:
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key in ['#']:
+                pass
+            elif key == 'coupling_timestep_size':
+                time.coupling_timestep = []
+                time.coupling_timestep.append(line.strip().split()[1])
+                if len(line.strip().split()) > 2:
+                    if line.strip().split()[2] in time_units_allowed:
+                        time.coupling_timestep.append(
+                            line.strip().split()[2])
+                    else:
+                        raise PyFLOTRAN_ERROR(
+                            'Unknown units used for ' +
+                            'geomechanics_coupling_timestep_size!')
+            elif key in ['/', 'end']:
+                keep_reading = False
+        self.geomech_time = time
 
     def _write_geomech_time(self, outfile):
         outfile.write('GEOMECHANICS_TIME\n  ')
@@ -7603,7 +7630,8 @@ class pdata(object):
                                          region='top_internal',
                                          geomech='top_internal_force'))
 
-    def apply_horizontal_critical_stress(self, rho_eff=2000.0, vertical_to_horizontal_ratio=0.7, face='east', total_depth=2500):
+    def apply_horizontal_critical_stress(self, rho_eff=2000.0,
+                                         vertical_to_horizontal_ratio=0.7, face='east', total_depth=2500):
         x_verts = self.grid.nxyz[0] + 2
         y_verts = self.grid.nxyz[1] + 2
         z_verts = self.grid.nxyz[2] + 2

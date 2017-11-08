@@ -7191,7 +7191,6 @@ class pdata(object):
 
         outfile.write('END\n\n')
 
-
     def _read_geomechanics_regression(self, infile, line):
         regression = pgeomech_regression()
         keep_reading = True
@@ -7224,7 +7223,6 @@ class pdata(object):
             elif key in ['/', 'end']:
                 keep_reading = False
         self.geomech_regression = regression
-
 
     def _write_geomech_regression(self, outfile):
         self._header(outfile, headers['regression'])
@@ -7352,6 +7350,7 @@ class pdata(object):
         return dict([flow.name.lower(), flow] for flow in self.flowlist if
                     flow.name.lower)
 
+    @property
     def flow_variable(self, flow=pflow()):
         return dict([flow_variable.name.lower(), flow_variable] for
                     flow_variable in flow.varlist
@@ -7397,6 +7396,7 @@ class pdata(object):
             [constraint.name.lower(), constraint] for
             constraint in self.constraint_list if constraint.name.lower())
 
+    @property
     def constraint_concentration(self, constraint=pconstraint()):
         return dict([constraint_concentration.pspecies,
                      constraint_concentration] for constraint_concentration in

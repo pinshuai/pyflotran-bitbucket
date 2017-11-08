@@ -210,7 +210,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'constraint', 'hydroquake', 'multiple_continuum',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
-         'geomechanics_time', 'geomechanics_region', 'geomechanics_condition']
+         'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
+         'geomechanics_boundary_condition']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -225,7 +226,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'secondary continuum', 'geomechanics', 'geomechanics regression',
            'geomechanics grid', 'geomechanics subsurface coupling',
            'geomechanics time', 'geomechanics region', 
-           'geomechanics condition']
+           'geomechanics condition', 'geomechanics boundary condition']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -238,7 +239,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'boundary_condition', 'source_sink', 'strata',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
-              'geomechanics_region', 'geomechanics_condition']
+              'geomechanics_region', 'geomechanics_condition', 
+              'geomechanics_boundary_condition']
 
 headers = dict(zip(cards, headers))
 
@@ -2923,7 +2925,8 @@ class pdata(object):
                             self._read_geomechanics_subsurface_coupling,
                             self._read_geomechanics_time,
                             self._read_region,
-                            self._read_flow],
+                            self._read_flow,
+                            self._read_boundary_condition],
                            ))
 
         # associate each card name with
@@ -2991,7 +2994,8 @@ class pdata(object):
                                 'geomechanics_subsurface_coupling',
                                 'geomechanics_time',
                                 'geomechanics_region',
-                                'geomechanics_condition']:
+                                'geomechanics_condition',
+                                'geomechanics_boundary_condition']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6007,10 +6011,11 @@ class pdata(object):
             np_name = self.splitter(line).lower()
         else:
             np_name = None
-        p = pboundary_condition('')
+        p = pboundary_condition()
         np_flow = p.flow
         np_transport = p.transport
         np_region = p.region
+        np_geomech = p.geomech
 
         keep_reading = True
 
@@ -6022,14 +6027,16 @@ class pdata(object):
                 np_flow = self.splitter(line)  # take last word
             elif key == 'transport_condition':
                 np_transport = self.splitter(line)
-            elif key == 'region':
+            elif 'region' in key:
                 np_region = self.splitter(line)
+            elif key == 'geomechanics_condition':
+                np_geomech = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
         # Create an empty boundary condition and assign the values read in
         new_boundary_condition = pboundary_condition(
-            np_name, np_flow, np_transport, np_region)
+            np_name, np_flow, np_transport, np_region, np_geomech)
         self.add(new_boundary_condition)
 
     def _add_boundary_condition(self, boundary_condition=pboundary_condition(),
@@ -7148,31 +7155,27 @@ class pdata(object):
                 outfile.write('END\n\n')
 
     def _write_geomechanics_boundary_condition(self, outfile):
-        # self._header(outfile, headers['boundary_condition'])
+        self._header(outfile, headers['geomechanics_boundary_condition'])
 
         # Write all boundary conditions to file
-        try:
-            for b in self.boundary_condition_list:  # b = boundary_condition
-                if b.geomech:
-                    if b.name:
-                        outfile.write('GEOMECHANICS_BOUNDARY_CONDITION ' +
-                                      b.name.lower() + '\n')
-                    else:
-                        raise PyFLOTRAN_ERROR(
-                            'Give a name for geomechanics boundary condition!')
-                    outfile.write('  GEOMECHANICS_CONDITION ' +
-                                  b.geomech.lower() + '\n')
-                    if b.region:
-                        outfile.write('  GEOMECHANICS_REGION ' +
-                                      b.region.lower() + '\n')
-                    else:
-                        raise PyFLOTRAN_ERROR(
-                            'boundary_condition.region is required')
-                    outfile.write('END\n\n')
-        except:
-            raise PyFLOTRAN_ERROR(
-                'At least one geomechanics boundary_condition with valid ' +
-                'attributes is required')
+        for b in self.boundary_condition_list:  # b = boundary_condition
+            if b.geomech:
+                if b.name:
+                    outfile.write('GEOMECHANICS_BOUNDARY_CONDITION ' +
+                                  b.name.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'Give a name for geomechanics boundary condition!')
+                outfile.write('  GEOMECHANICS_CONDITION ' +
+                              b.geomech.lower() + '\n')
+                if b.region:
+                    outfile.write('  GEOMECHANICS_REGION ' +
+                                  b.region.lower() + '\n')
+                else:
+                    raise PyFLOTRAN_ERROR(
+                        'boundary_condition.region is required')
+                outfile.write('END\n\n')
+
 
     def _write_geomechanics_strata(self, outfile):
         self._header(outfile, headers['strata'])

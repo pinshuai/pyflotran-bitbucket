@@ -194,7 +194,8 @@ enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'equilibrium', 'neumann', 'mole',
                                      'mole_rate', 'zero_gradient']
-
+geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
+                                             'one_way_coupled']
 # eos - allowed strings
 eos_fluidnames_allowed = ['WATER', 'GAS']
 
@@ -208,7 +209,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'boundary_condition', 'source_sink', 'strata',
          'constraint', 'hydroquake', 'multiple_continuum',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
-         'geomechanics_grid']
+         'geomechanics_grid', 'geomechanics_subsurface_coupling']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -221,7 +222,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'source sink', 'stratigraphy couplers', 'constraints',
            'hydroquake', 'multiple continuum',
            'secondary continuum', 'geomechanics', 'geomechanics_regression',
-           'geomechanics_grid']
+           'geomechanics_grid', 'geomechanics_subsurface_coupling']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -232,7 +233,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'characteristic_curves', 'region', 'observation',
               'flow_condition', 'transport_condition', 'initial_condition',
               'boundary_condition', 'source_sink', 'strata',
-              'constraint', 'geomechanics_regression', 'geomechanics_grid']
+              'constraint', 'geomechanics_regression', 'geomechanics_grid',
+              'geomechanics_subsurface_coupling']
 
 headers = dict(zip(cards, headers))
 
@@ -2914,7 +2916,8 @@ class pdata(object):
                             self._read_strata,
                             self._read_constraint,
                             self._read_geomechanics_regression,
-                            self._read_geomechanics_grid],
+                            self._read_geomechanics_grid,
+                            self._read_geomechanics_subsurface_coupling],
                            ))
 
         # associate each card name with
@@ -2978,7 +2981,8 @@ class pdata(object):
                                 'nonuniform_velocity',
                                 'characteristic_curves',
                                 'geomechanics_regression',
-                                'geomechanics_grid']:
+                                'geomechanics_grid',
+                                'geomechanics_subsurface_coupling']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -7019,7 +7023,6 @@ class pdata(object):
                 else:
                     grid.dirname = ''
                     grid.grid_filename = line.strip().split()[-1]
-                    print grid.dirname, grid.grid_filename
             elif key == 'gravity':
                 grid.gravity = []
                 grid.gravity.append(floatD(line.split()[1]))
@@ -7176,7 +7179,27 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('strata.material is required')
                 outfile.write('END\n\n')
 
+    def _read_geomechanics_subsurface_coupling(self, infile, line):
+        coupling = pgeomech_subsurface_coupling()
+        coupling.coupling_type = line.strip().split()[-1].lower()
+        keep_reading = True
+        while keep_reading:
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key in ['#']:
+                pass
+            elif key == 'mapping_file':
+                coupling.mapping_file = line.strip().split()[-1]
+            elif key in ['/', 'end']:
+                keep_reading = False
+        self.geomech_subsurface_coupling = coupling
+
     def _write_geomech_subsurface_coupling(self, outfile):
+        self._header(outfile, headers['geomechanics_subsurface_coupling'])
+        if self.geomech_subsurface_coupling.coupling_type not in \
+            geomech_subsurface_coupling_types_allowed:
+            raise PyFLOTRAN_ERROR(
+                'Incorrect GEOMECHANICS_SUBSURFACE_COUPLING type!')
         outfile.write('GEOMECHANICS_SUBSURFACE_COUPLING ' +
                       self.geomech_subsurface_coupling.coupling_type.upper())
         outfile.write('\n  ')

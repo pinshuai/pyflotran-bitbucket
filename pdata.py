@@ -45,7 +45,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 __author__ = "Satish Karra, Cory Kitay"
-__version__ = "1.1.0"
+__version__ = "1.0.0"
 __maintainer__ = "Satish Karra"
 __email__ = "satkarra@lanl.gov"
 
@@ -211,7 +211,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'secondary_continuum', 'geomechanics', 'geomechanics_regression',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
-         'geomechanics_boundary_condition', 'geomechanics_strata']
+         'geomechanics_boundary_condition', 'geomechanics_strata',
+         'geomechanics_time']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -227,7 +228,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics grid', 'geomechanics subsurface coupling',
            'geomechanics time', 'geomechanics region', 
            'geomechanics condition', 'geomechanics boundary condition',
-           'geomechanics strata']
+           'geomechanics strata', 'geomechanics time']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -7255,6 +7256,7 @@ class pdata(object):
         self.geomech_time = time
 
     def _write_geomechanics_time(self, outfile):
+        self._header(outfile, headers['geomechanics_time'])
         outfile.write('GEOMECHANICS_TIME\n  ')
         outfile.write('COUPLING_TIMESTEP_SIZE ' +
                       strD(self.geomech_time.coupling_timestep[0]) +

@@ -212,7 +212,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
          'geomechanics_boundary_condition', 'geomechanics_strata',
-         'geomechanics_time']
+         'geomechanics_time', 'geomechanics_material_property']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -228,7 +228,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics grid', 'geomechanics subsurface coupling',
            'geomechanics time', 'geomechanics region', 
            'geomechanics condition', 'geomechanics boundary condition',
-           'geomechanics strata', 'geomechanics time']
+           'geomechanics strata', 'geomechanics time',
+           'geomechanics material property']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -242,7 +243,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
               'geomechanics_region', 'geomechanics_condition', 
-              'geomechanics_boundary_condition', 'geomechanics_strata']
+              'geomechanics_boundary_condition', 'geomechanics_strata',
+              'geomechanics_material_property']
 
 headers = dict(zip(cards, headers))
 
@@ -2929,7 +2931,8 @@ class pdata(object):
                             self._read_region,
                             self._read_flow,
                             self._read_boundary_condition,
-                            self._read_strata],
+                            self._read_strata,
+                            self._read_geomechanics_prop],
                            ))
 
         # associate each card name with
@@ -3000,7 +3003,7 @@ class pdata(object):
                                 'geomechanics_condition',
                                 'geomechanics_boundary_condition',
                                 'geomechanics_strata',
-                                'strata']:
+                                'strata', 'geomechanics_material_property']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -7372,8 +7375,40 @@ class pdata(object):
     def _delete_geomech_prop(self, prop=pgeomech_material()):
         self.geomech_proplist.remove(prop)
 
+
+    def _read_geomechanics_prop(self, infile, line):
+        np_name = self.splitter(line)  # property name
+        np_id = None
+        p = pgeomech_material(id=np_id)
+        keep_reading = True
+        while keep_reading:  # read through all cards
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key == 'id':
+                np_id = int(self.splitter(line))
+            elif key == 'rock_density':
+                np_rock_density = self.splitter(line)
+            elif key == 'youngs_modulus':
+                np_youngs_modulus = self.splitter(line)
+            elif key == 'poissons_ratio':
+                np_poissons_ratio = self.splitter(line)
+            elif key == 'biot_coefficient':
+                np_biot_coeff = self.splitter(line)
+            elif key == 'thermal_expansion_coefficient':
+                np_thermal_coeff = self.splitter(line)
+            elif key in ['/', 'end']:
+                keep_reading = False
+
+        # create an empty material property
+        new_prop = pgeomech_material(id=np_id, name=np_name, 
+            density=np_rock_density, youngs_modulus=np_youngs_modulus, 
+            poissons_ratio=np_poissons_ratio, biot_coefficient=np_biot_coeff, 
+            thermal_expansion_coefficient=np_thermal_coeff)
+
+        self.add(new_prop)
+
     def _write_geomechanics_prop(self, outfile):
-        self._header(outfile, headers['material_property'])
+        self._header(outfile, headers['geomechanics_material_property'])
         for prop in self.geomech_proplist:
             if prop.name:
                 outfile.write('GEOMECHANICS_MATERIAL_PROPERTY ' +

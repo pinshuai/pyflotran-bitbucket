@@ -152,13 +152,10 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
     lower_list))
 
 allowed_compressibility_functions = ['linear_model', 'bandis', 'turner']
+
 allowed_soil_compressibility_functions = ['CONSTANT', 'LEIJNSE', 'DEFAULT',
                                           'BRAGFLO', 'WIPP', 'QUADRATIC']
-# material_property, region, initial_condition, boundary_condition,
-# source_sink, stratigraphy_couplers - manual does not appear to document
-# all valid entries
 
-# flow_conditions - allowed strings
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
                                      'ENTHALPY', 'LIQUID_PRESSURE',
@@ -166,37 +163,52 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'LIQUID_FLUX', 'GAS_FLUX',
                                      'MOLE_FRACTION',
                                      'GAS_SATURATION']
+
 geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
                                   'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
                                   'FORCE_Z']
+
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
+
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
+
 well_types_allowed = ['well']
+
 flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic',
                       'conductance', 'zero_gradient',
                       'production_well', 'seepage', 'volumetric',
                       'volumetric_rate', 'equilibrium']
+
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient',
                              'neumann']
+
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+
 saturation_types_allowed = ['dirichlet']
+
 mole_fraction_types_allowed = ['dirichlet']
+
 liquid_pressure_types_allowed = ['dirichlet']
+
 gas_pressure_types_allowed = ['dirichlet']
+
 liquid_flux_types_allowed = ['neumann']
+
 gas_flux_types_allowed = ['neumann']
+
 gas_saturation_types_allowed = ['dirichlet']
+
 enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 
-# transport_condition - allowed strings
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'equilibrium', 'neumann', 'mole',
                                      'mole_rate', 'zero_gradient']
+
 geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
                                              'one_way_coupled']
-# eos - allowed strings
+
 eos_fluidnames_allowed = ['WATER', 'GAS']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
@@ -7162,7 +7174,6 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR(
                         'boundary_condition.region is required')
                 outfile.write('END\n\n')
-
 
     def _write_geomechanics_strata(self, outfile):
         self._header(outfile, headers['geomechanics_strata'])

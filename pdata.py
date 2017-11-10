@@ -212,7 +212,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_grid', 'geomechanics_subsurface_coupling',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
          'geomechanics_boundary_condition', 'geomechanics_strata',
-         'geomechanics_time', 'geomechanics_material_property']
+         'geomechanics_time', 'geomechanics_material_property',
+         'geomechanics_output']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -229,7 +230,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics time', 'geomechanics region', 
            'geomechanics condition', 'geomechanics boundary condition',
            'geomechanics strata', 'geomechanics time',
-           'geomechanics material property']
+           'geomechanics material property', 'geomechanics output']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression', 'checkpoint', 'restart',
@@ -244,7 +245,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
               'geomechanics_region', 'geomechanics_condition', 
               'geomechanics_boundary_condition', 'geomechanics_strata',
-              'geomechanics_material_property']
+              'geomechanics_material_property', 'geomechanics_output']
 
 headers = dict(zip(cards, headers))
 
@@ -2384,7 +2385,7 @@ class pgeomech_time(Frozen):
 
 class pgeomech_output(Frozen):
     """
-    Class for dumping simulation output.
+    Class for dumping geomechanics output.
     Acceptable time units (units of measurements) are: 's', 'min', 'h',
      'd', 'w', 'mo', 'y'.
 
@@ -2395,21 +2396,6 @@ class pgeomech_output(Frozen):
      in observation
      and mass balance output files. Default: False
     :type print_column_ids: bool - True or False
-    :param screen_output: Turn the screen output on/off.
-    :type screen_periodic: bool
-    :param screen_periodic: Print to screen every <integer> time steps.
-    :type screen_periodic: int
-    :param periodic_time: 1st variable is value, 2nd variable is time unit.
-    :type periodic_time: [float, str]
-    :param periodic_timestep: 1st variable is value, 2nd variable is time unit.
-    :type periodic_timestep: [float, str]
-    :param periodic_observation_time: Output the results at observation points
-     and mass balance output at specified output time.
-     1st variable is value, 2nd variable is time unit.
-    :type periodic_observation_time: [float, str]
-    :param periodic_observation_timestep: Outputs the results at observation
-     points and mass balance output at specified time steps.
-    :type periodic_observation_timestep: int
     :param format_list: Specify the file format for time snapshot of the
      simulation in time file type. Input is a list of strings.
      Multiple formats can be specified.
@@ -2419,17 +2405,6 @@ class pgeomech_output(Frozen):
      'HDF5 MULTIPLE_FILES' -- produces a separate HDF5 file
      at each output time, 'VTK' - VTK format.
     :type format_list: [str]
-    :param velocities: Turn velocity output on/off.
-    :type velocities: bool - True or False
-    :param velocity_at_center: Turn velocity output on/off.
-    :type velocity_at_center: bool - True or False
-    :param velocity_at_face: Turn velocity output at face on/off.
-    :type velocity_at_face: bool - True or False
-    :param mass_balance: Flag to indicate whether to output the mass
-     balance of the system.
-    :type mass_balance: bool - True or False
-    :param variables_list: List of variables to be printed in the output file
-    :type variables_list: [str]
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
@@ -2932,7 +2907,8 @@ class pdata(object):
                             self._read_flow,
                             self._read_boundary_condition,
                             self._read_strata,
-                            self._read_geomechanics_prop],
+                            self._read_geomechanics_prop,
+                            self._read_geomechanics_output],
                            ))
 
         # associate each card name with
@@ -3003,7 +2979,8 @@ class pdata(object):
                                 'geomechanics_condition',
                                 'geomechanics_boundary_condition',
                                 'geomechanics_strata',
-                                'strata', 'geomechanics_material_property']:
+                                'strata', 'geomechanics_material_property',
+                                'geomechanics_output']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -7267,8 +7244,29 @@ class pdata(object):
         outfile.write('\n')
         outfile.write('END\n\n')
 
+    def _read_geomechanics_output(self, infile, line):
+        output = pgeomech_output()
+        keep_reading = True
+        while keep_reading:
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key in ['#']:
+                pass
+            elif key == 'times':
+                output.time_list = []
+                output.time_list = line.strip().split()[1:]
+            elif key == 'print_column_ids':
+                output.print_column_ids = True
+            elif key == 'format':
+                tstring = (line.strip().split()[1:])
+                tstring = ' '.join(tstring).lower()
+                output.format_list.append(tstring)  # assign
+            elif key in ['/', 'end']:
+                keep_reading = False
+        self.geomech_output = output
+
     def _write_geomechanics_output(self, outfile):
-        self._header(outfile, headers['output'])
+        self._header(outfile, headers['geomechanics_output'])
         output = self.geomech_output
 
         outfile.write('GEOMECHANICS_OUTPUT\n')

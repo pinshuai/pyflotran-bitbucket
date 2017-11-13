@@ -239,7 +239,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'hydroquake', 'multiple continuum',
            'secondary continuum', 'geomechanics', 'geomechanics regression',
            'geomechanics grid', 'geomechanics subsurface coupling',
-           'geomechanics time', 'geomechanics region', 
+           'geomechanics time', 'geomechanics region',
            'geomechanics condition', 'geomechanics boundary condition',
            'geomechanics strata', 'geomechanics time',
            'geomechanics material property', 'geomechanics output']
@@ -255,7 +255,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'boundary_condition', 'source_sink', 'strata',
               'constraint', 'geomechanics_regression', 'geomechanics_grid',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
-              'geomechanics_region', 'geomechanics_condition', 
+              'geomechanics_region', 'geomechanics_condition',
               'geomechanics_boundary_condition', 'geomechanics_strata',
               'geomechanics_material_property', 'geomechanics_output']
 
@@ -5465,11 +5465,11 @@ class pdata(object):
                 # can be read before loop terminates.
 
             elif key == 'rate' or key == 'pressure' or \
-                key == 'temperature' or key == 'concentration' or \
-                key == 'enthalpy' or key == 'flux' or \
-                key == 'displacement_x' or key == 'displacement_y' or \
-                key == 'displacement_z' or key == 'force_x' or \
-                key == 'force_y' or key == 'force_z':
+                    key == 'temperature' or key == 'concentration' or \
+                    key == 'enthalpy' or key == 'flux' or \
+                    key == 'displacement_x' or key == 'displacement_y' or \
+                    key == 'displacement_z' or key == 'force_x' or \
+                    key == 'force_y' or key == 'force_z':
                 if end_count == 0:
                     '''
                     Appending and instantiation of new flow_variables
@@ -7104,6 +7104,7 @@ class pdata(object):
 
     def _write_geomechanics_condition(self, outfile):
         self._header(outfile, headers['geomechanics_condition'])
+
         def check_condition_type(condition_name, condition_type):
             if condition_name.upper()[:-2] == 'DISPLACEMENT':
                 if condition_type.lower() in pressure_types_allowed:
@@ -7384,7 +7385,6 @@ class pdata(object):
     def _delete_geomech_prop(self, prop=pgeomech_material()):
         self.geomech_proplist.remove(prop)
 
-
     def _read_geomechanics_prop(self, infile, line):
         np_name = self.splitter(line)  # property name
         np_id = None
@@ -7409,10 +7409,10 @@ class pdata(object):
                 keep_reading = False
 
         # create an empty material property
-        new_prop = pgeomech_material(id=np_id, name=np_name, 
-            density=np_rock_density, youngs_modulus=np_youngs_modulus, 
-            poissons_ratio=np_poissons_ratio, biot_coefficient=np_biot_coeff, 
-            thermal_expansion_coefficient=np_thermal_coeff)
+        new_prop = pgeomech_material(id=np_id, name=np_name,
+                                     density=np_rock_density, youngs_modulus=np_youngs_modulus,
+                                     poissons_ratio=np_poissons_ratio, biot_coefficient=np_biot_coeff,
+                                     thermal_expansion_coefficient=np_thermal_coeff)
 
         self.add(new_prop)
 
@@ -7501,7 +7501,6 @@ class pdata(object):
         return dict([flow.name.lower(), flow] for flow in self.flowlist if
                     flow.name.lower)
 
-    @property
     def flow_variable(self, flow=pflow()):
         return dict([flow_variable.name.lower(), flow_variable] for
                     flow_variable in flow.varlist
@@ -7547,7 +7546,6 @@ class pdata(object):
             [constraint.name.lower(), constraint] for
             constraint in self.constraint_list if constraint.name.lower())
 
-    @property
     def constraint_concentration(self, constraint=pconstraint()):
         return dict([constraint_concentration.pspecies,
                      constraint_concentration] for constraint_concentration in
@@ -7598,105 +7596,92 @@ class pdata(object):
         delta_x = (x_max - x_min) / (x_verts - 2)
         delta_y = (y_max - y_min) / (y_verts - 2)
         delta_z = (z_max - z_min) / (z_verts - 2)
+        Total_verts = x_verts * y_verts * z_verts
         if self.work_dir:
             wd = self.work_dir + os.sep
         else:
             wd = os.getcwd() + os.sep
         if face == 'top':
             # Top corner
-            top_corner = []
-            top_corner.append(x_verts * y_verts * (z_verts - 1) + 1)
-            top_corner.append(x_verts * y_verts * z_verts)
-            top_corner.append(x_verts * y_verts *
-                              (z_verts - 1) + x_verts)
-            top_corner.append(x_verts * y_verts * z_verts - x_verts + 1)
-            fid = open(wd + self.geomech_grid.dirname +
-                       '/top_corner.vset', 'w')
-            for i in top_corner:
-                fid.write('%i\n' % i)
-            fid.close()
+            x = np.zeros(x_verts)
+            y = np.zeros(y_verts)
+            z = np.zeros(z_verts)
+            x[0] = x_min
+            x[1] = x_min + delta_x / 2.0
+            x[x_verts - 1] = x_max
+            x[x_verts - 2] = x_max - delta_x / 2.0
+            if x_verts > 4:
+                for i in range(2, x_verts - 2):
+                    x[i] = x[i - 1] + delta_x
 
-            # Top boundary
-            top_boundary = []
-            top_boundary.extend([i for i in
-                                 range(x_verts * y_verts * (z_verts - 1) + 1,
-                                       x_verts * y_verts *
-                                       (z_verts - 1) + x_verts + 1)])
-            top_boundary.extend([i for i in range(
-                x_verts * y_verts * z_verts - x_verts + 1,
-                x_verts * y_verts * z_verts + 1)])
-            for j in range(1, y_verts + 1):
-                top_boundary.append(x_verts * y_verts *
-                                    (z_verts - 1) + 1 + (j - 1) * x_verts)
-            for j in range(1, y_verts + 1):
-                top_boundary.append(x_verts * y_verts *
-                                    (z_verts - 1) + x_verts + (j - 1) *
-                                    x_verts)
-            # remove duplicates and corners
-            top_boundary = list(set(top_boundary) - set(top_corner))
-            fid = open(wd + self.geomech_grid.dirname +
-                       '/top_boundary.vset', 'w')
-            for i in top_boundary:
-                fid.write('%i\n' % i)
-            fid.close()
+            y[0] = y_min
+            y[1] = y_min + delta_y / 2.0
+            y[y_verts - 1] = y_max
+            y[y_verts - 2] = y_max - delta_y / 2.0
+            if y_verts > 4:
+                for i in range(2, y_verts - 2):
+                    y[i] = y[i - 1] + delta_y
 
-            # Top internal
-            top_internal = []
-            for i in range(x_verts * y_verts * (z_verts - 1) + 1,
-                           x_verts * y_verts * z_verts + 1):
-                top_internal.append(i)
-            top_internal = list(set(top_internal) -
-                                set(top_boundary) - set(top_corner))
-            fid = open(wd + self.geomech_grid.dirname +
-                       '/top_internal.vset', 'w')
-            for i in top_internal:
-                fid.write('%i\n' % i)
-            fid.close()
+            z[0] = z_min
+            z[1] = z_min + delta_z / 2.0
+            z[z_verts - 1] = z_max
+            z[z_verts - 2] = z_max - delta_z / 2.0
+            if z_verts > 4:
+                for i in range(2, z_verts - 2):
+                    z[i] = z[i - 1] + delta_z
 
-            # top corner force
-            area = delta_x * delta_y / 16
-            top_corner_force = traction * area
+            xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
+            Coord = np.zeros((Total_verts, 3), 'float')
+            count = 0
+            for k in range(z_verts):
+                for j in range(y_verts):
+                    for i in range(x_verts):
+                        Coord[count] = [xv[i][j][k], yv[i][j][k], zv[i][j][k]]
+                        count = count + 1
 
-            # top boundary force
-            area = delta_x * delta_y / 8
-            top_boundary_force = traction * area
+            count = 1
+            files = []
+            for j in range(y_verts):
+                for i in range(x_verts):
+                    if i > 0:
+                        if i < x_verts - 1:
+                            x_side = (xv[i + 1][j][k] - xv[i - 1][j][k]) / 2.0
+                        else:
+                            x_side = (xv[i][j][k] - xv[i - 1][j][k]) / 2.0
+                    else:
+                        x_side = (xv[i + 1][j][k] - xv[i][j][k]) / 2.0
+                    if j > 0:
+                        if j < y_verts - 1:
+                            y_side = (yv[i][j + 1][k] - yv[i][j - 1][k]) / 2.0
+                        else:
+                            y_side = (yv[i][j][k] - yv[i][j - 1][k]) / 2.0
+                    else:
+                        y_side = (yv[i][j + 1][k] - yv[i][j][k]) / 2.0
 
-            # top internal force
-            area = delta_x * delta_y / 4
-            top_internal_force = traction * area
+                    area = x_side * y_side
+                    node_id = x_verts * y_verts * (z_verts - 1) + count
+                    fid = open(wd + self.geomech_grid.dirname +
+                               '/' + str(node_id) + '.vset', 'w')
+                    fid.write('%i\n' % (node_id))
+                    fid.close()
+                    self.add(pflow(name=str(node_id) + '_force', pm='geomech'))
+                    self.add(pflow_variable(name='force_z', type='dirichlet',
+                                            valuelist=[area * traction]),
+                             index=str(node_id) + '_force')
+                    count = count + 1
+                    files.append(str(node_id) + '.vset')
 
-            self.add(pflow(name='top_corner_force', pm='geomech'))
-            self.add(pflow_variable(name='force_z', type='dirichlet',
-                                    valuelist=[top_corner_force]),
-                     index='top_corner_force')
-            self.add(pflow(name='top_boundary_force', pm='geomech'))
-            self.add(pflow_variable(name='force_z', type='dirichlet',
-                                    valuelist=[top_boundary_force]),
-                     index='top_boundary_force')
-            self.add(pflow(name='top_internal_force', pm='geomech'))
-            self.add(pflow_variable(name='force_z', type='dirichlet',
-                                    valuelist=[top_internal_force]),
-                     index='top_internal_force')
-
-            files = ['top_boundary.vset',
-                     'top_corner.vset', 'top_internal.vset']
             for file in files:
                 self.add(pregion(name=file[:-5],
                                  filename=self.geomech_grid.dirname +
                                  '/' + file, pm='geomech'))
-
-            self.add(pboundary_condition(name='top_corner_force',
-                                         region='top_corner',
-                                         geomech='top_corner_force'))
-            self.add(pboundary_condition(name='top_boundary_force',
-                                         region='top_boundary',
-                                         geomech='top_boundary_force'))
-            self.add(pboundary_condition(name='top_internal_force',
-                                         region='top_internal',
-                                         geomech='top_internal_force'))
+                self.add(pboundary_condition(name=file[:-5] + '_force',
+                                             region=file[:-5],
+                                             geomech=file[:-5] + '_force'))
 
     def apply_horizontal_critical_stress(self, rho_eff=2000.0,
-                                         vertical_to_horizontal_ratio=0.7, face='east', total_depth=2500):
+                                         vertical_to_horizontal_ratio=0.7,
+                                         face='east', total_depth=2500):
         x_verts = self.grid.nxyz[0] + 2
         y_verts = self.grid.nxyz[1] + 2
         z_verts = self.grid.nxyz[2] + 2
@@ -7919,6 +7904,7 @@ class pdata(object):
 
         xv, yv, zv = np.meshgrid(x, y, z, indexing='ij')
         Coord = np.zeros((Total_verts, 3), 'float')
+        Area = np.zeros((x_verts, y_verts), 'float')
         count = 0
         for k in range(z_verts):
             for j in range(y_verts):

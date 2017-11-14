@@ -23,11 +23,21 @@ def read(file):
         dat = pdata(file)
     except:
         print('Error in reading ' + file)
-        pass
+        
+
+def read_with_error(file):
+    dat = pdata(file)
 
 
+def read_and_write_with_error(file):
+    dat = pdata(file)
+    new_file = file.replace('/', ' ').split()[-1]
+    dat.write(new_file)
+
+success_files = []
+read_fail_files = []
+write_fail_files = []
 def read_and_write(file):
-    success_files = []
     try:
         dat = pdata(file)
         print ('Successfully read file: ' + file)
@@ -38,17 +48,29 @@ def read_and_write(file):
             success_files.append(file)
         except:
             print ('  Error in writing: ' + file)
+            write_fail_files.append(file)
     except:
         print('Error in reading: ' + file)
-        pass
-    return success_files
+        read_fail_files.append(file)
+
 
 
 files = run_popen('find ' + pflotran_dir +
-                  '/regression_tests/ -type f -name "*.in"')
+                  '/regression_tests/default/ -type f -name "*.in"')
+
+
 
 for file in files:
     if file != '':
         # print file
-        success_files = read_and_write(file)
+        read_and_write(file)
+        
+print 'Successful files:'
+print success_files
+print 'Read fail files:'
+print read_fail_files
+print 'Write fail files:'
+print write_fail_files
 
+#read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
+read_and_write_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow_and_tracer_run_as_ss.in')

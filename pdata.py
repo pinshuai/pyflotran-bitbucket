@@ -172,7 +172,10 @@ pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage']
 
-rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate']
+rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate',
+                      'scaled_mass_rate']
+
+scaling_options_allowed = ['perm', 'volume', 'neighbor_perm']
 
 well_types_allowed = ['well']
 
@@ -1721,7 +1724,7 @@ class pregion(Frozen):
     """
 
     def __init__(self, name='', coordinates_lower=None, coordinates_upper=None,
-                 face=None, filename='', point_list=[], pm=''):
+                 face=None, filename='', point_list=[], pm='', block=[]):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:
@@ -1733,6 +1736,7 @@ class pregion(Frozen):
         self.point_list = []
         self.filename = filename
         self.pm = pm
+        self.block = block
         self._freeze()
 
 
@@ -3865,14 +3869,18 @@ class pdata(object):
                 if bounds_key:
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
                 keep_reading_2 = True
-                count = 0
                 while keep_reading_2:
                     line = infile.readline()
-                    if line.strip().split()[0].lower() in ['/', 'end']:
-                        keep_reading_2 = False
+                    grid.dx = [floatD(val) for val in line.strip().split()]
+                    line = infile.readline()
+                    grid.dy = [floatD(val) for val in line.strip().split()]
+                    line = infile.readline()
+                    grid.dz = [floatD(val) for val in line.strip().split()]
+                    line = infile.readline()
+                    if line.strip().split()[0].lower() not in ['/', 'end']:
+                        raise PyFLOTRAN_ERROR('dx dy dz -- all three are not specified!')
                     else:
-                        grid.dxyz[count] = floatD(line.strip().split()[0])
-                        count += 1
+                        keep_reading_2 = False
             elif key in ['/', 'end']:
                 keep_reading = False
         self.grid = grid
@@ -5320,6 +5328,8 @@ class pdata(object):
                 region.point_list.append(point)
             elif key == 'file':
                 region.filename = line.strip().split()[1]
+            elif key == 'block':
+                region.block = line.strip().split()[1:]
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -5359,6 +5369,11 @@ class pdata(object):
                 outfile.write(region.name.lower() + '\n')
                 if region.filename:
                     outfile.write('  FILE ' + region.filename + '\n')
+                elif region.block:
+                    outfile.write('  BLOCK ')
+                    for val in region.block:
+                        outfile.write(str(int(val)))
+                    outfile.write('\n')
                 else:
                     if region.face:
                         outfile.write('  FACE ' + region.face.upper() + '\n')
@@ -5373,6 +5388,7 @@ class pdata(object):
                     else:
                         outfile.write('  COORDINATES\n')
                         outfile.write('    ')
+                        print region.coordinates_lower
                         for i in range(3):
                             outfile.write(strD(region.coordinates_lower[i]) +
                                           ' ')
@@ -5688,6 +5704,7 @@ class pdata(object):
                         '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'RATE':
+                print condition_type
                 if condition_type.lower() in rate_types_allowed:
                     outfile.write(condition_type.lower())
                 else:

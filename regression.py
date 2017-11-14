@@ -90,7 +90,7 @@ print write_fail_files
 
 # read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
 
-file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/anisothermal/th/th_1d.in'
+file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/batch/AB_microbial_linear_scaling.in'
 read_and_write_with_error(file)
 #file_new = file.replace('/', ' ').split()[-1]
 #compare_regression_tests(file, file_new)

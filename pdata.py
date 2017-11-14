@@ -4356,12 +4356,10 @@ class pdata(object):
             if key == 'final_time':
                 tstring = line.split()[1:]  # temp list of strings,
                 # do not include 1st sub-string
-                if len(tstring) == 2:
-                    # Do this if there is a time unit to read
-                    time.tf.append(floatD(tstring[0]))
-                    time.tf.append(tstring[-1])
-                else:  # No time unit being read in
-                    time.tf.append(floatD(tstring[0]))
+                # Do this if there is a time unit to read
+                time.tf.append(floatD(tstring[0]))
+                if len(tstring) > 0:
+                    time.tf.append(tstring[1])
             elif key == 'initial_timestep_size':
                 tstring = line.split()[1:]
                 if len(tstring) == 2:

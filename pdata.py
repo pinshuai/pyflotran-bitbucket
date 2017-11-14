@@ -3171,12 +3171,6 @@ class pdata(object):
         if self.source_sink_list:
             self._write_source_sink(outfile)
 
-        if not (self.boundary_condition_list or self.source_sink_list):
-            raise PyFLOTRAN_ERROR('source_sink_list or' +
-                                  'boundary_condition_list is required, ' +
-                                  'it is currently reading' +
-                                  'as empty!')
-
         if self.strata_list:
             self._write_strata(outfile)
         else:

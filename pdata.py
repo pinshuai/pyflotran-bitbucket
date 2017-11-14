@@ -81,7 +81,7 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
                             'geomechanics_subsurface']
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
-                      'th freezing', 'immis', 'general']
+                      'th freezing', 'immis', 'general', 'th', 'thc']
 
 # checkpoint - allowed formats
 checkpoint_formats_allowed = ['hdf5', 'binary']
@@ -1424,7 +1424,8 @@ class pnsolver(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='', atol=None, rtol=None, stol=None, dtol=None,
-                 itol=None, max_it=None, max_f=None, itol_update=None):
+                 itol=None, max_it=None, max_f=None, itol_update=None,
+                 matrix_type=None, preconditioner_matrix_type=None):
         self.name = name  # Indicates Flow or Tran for Transport
         self.atol = atol
         self.rtol = rtol
@@ -1434,6 +1435,8 @@ class pnsolver(Frozen):
         self.max_it = max_it
         self.max_f = max_f
         self.itol_update = itol_update
+        self.matrix_type = matrix_type
+        self.preconditioner_matrix_type = preconditioner_matrix_type
         self._freeze()
 
 
@@ -4593,20 +4596,24 @@ class pdata(object):
 
             if key == 'atol':
                 nsolver.atol = floatD(self.splitter(line))
-            if key == 'rtol':
+            elif key == 'rtol':
                 nsolver.rtol = floatD(self.splitter(line))
-            if key == 'stol':
+            elif key == 'stol':
                 nsolver.stol = floatD(self.splitter(line))
-            if key == 'dtol':
+            elif key == 'dtol':
                 nsolver.dtol = floatD(self.splitter(line))
-            if key == 'itol':
+            elif key == 'itol':
                 nsolver.itol = floatD(self.splitter(line))
-            if key == 'itol_update':
+            elif key == 'itol_update':
                 nsolver.itol_update = floatD(self.splitter(line))
-            if key == 'maxit':
+            elif key == 'maxit':
                 nsolver.max_it = int(self.splitter(line))
-            if key == 'maxf':
+            elif key == 'maxf':
                 nsolver.max_f = int(self.splitter(line))
+            elif key == 'matrix_type':
+                nsolver.matrix_type = self.splitter(line)
+            elif key == 'preconditioner_matrix_type':
+                nsolver.preconditioner_matrix_type = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
         self.add(nsolver)  # Assign
@@ -4659,6 +4666,14 @@ class pdata(object):
                               strD(nsolver.itol_update) + '\n')
             if nsolver.max_it:
                 outfile.write('  MAXIT ' + str(nsolver.max_it) + '\n')
+            if nsolver.max_f:
+                outfile.write('  MAXF ' + str(nsolver.max_f) + '\n')
+            if nsolver.matrix_type:
+                outfile.write('  MATRIX_TYPE ' +
+                              nsolver.matrix_type.upper() + '\n')
+            if nsolver.preconditioner_matrix_type:
+                outfile.write('  PRECONDITIONER_MATRIX_TYPE ' +
+                              nsolver.preconditioner_matrix_type.upper() + '\n')
             if nsolver.max_f:
                 outfile.write('  MAXF ' + str(nsolver.max_f) + '\n')
             outfile.write('END\n\n')

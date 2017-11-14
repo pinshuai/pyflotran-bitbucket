@@ -6116,8 +6116,7 @@ class pdata(object):
                         outfile.write('BOUNDARY_CONDITION ' +
                                       b.name.lower() + '\n')
                     else:
-                        raise PyFLOTRAN_ERROR(
-                            'Give a name for boundary condition!')
+                        outfile.write('BOUNDARY_CONDITION ' + '\n')
                     if b.flow:
                         outfile.write('  FLOW_CONDITION ' +
                                       b.flow.lower() + '\n')

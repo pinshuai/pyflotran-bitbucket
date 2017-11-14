@@ -3427,7 +3427,7 @@ class pdata(object):
 
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
-        tstring = line.split()[1:]  # Convert to list, ignore 1st word
+        tstring = line.split()[1:3]  # Convert to list, ignore 1st word
 
         i = 0  # index/count
         while i < len(tstring):

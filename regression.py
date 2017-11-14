@@ -92,8 +92,8 @@ print write_fail_files
 
 file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow_and_tracer_run_as_ss.in'
 read_and_write_with_error(file)
-file_new = file.replace('/', ' ').split()[-1]
-compare_regression_tests(file, file_new)
+#file_new = file.replace('/', ' ').split()[-1]
+#compare_regression_tests(file, file_new)
 
 
 

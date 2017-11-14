@@ -248,7 +248,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics material property', 'geomechanics output']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
-              'simulation', 'regression', 'checkpoint', 'restart',
+              'simulation', 'regression',
               'dataset', 'chemistry', 'grid', 'timestepper',
               'material_property',
               'time', 'linear_solver', 'newton_solver',
@@ -1290,7 +1290,7 @@ class psimulation(Frozen):
                  max_temperature_change='', max_concentration_change='',
                  max_cfl='', numerical_derivatives='',
                  pressure_dampening_factor='',
-                 restart=prestart(), checkpoint=pcheckpoint()):
+                 restart='', checkpoint=''):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -2894,8 +2894,6 @@ class pdata(object):
                             self._read_nonuniform_velocity,
                             self._read_simulation,
                             self._read_regression,
-                            self._read_checkpoint,
-                            self._read_restart,
                             self._read_dataset,
                             self._read_chemistry,
                             self._read_grid,
@@ -2978,7 +2976,7 @@ class pdata(object):
                             keep_reading_1 = False
 
                 if card in read_cards:  # check if a valid card name
-                    if card in ['co2_database', 'checkpoint', 'restart',
+                    if card in ['co2_database',
                                 'dataset', 'material_property', 'simulation',
                                 'regression', 'grid', 'timestepper',
                                 'linear_solver', 'newton_solver',
@@ -3607,6 +3605,7 @@ class pdata(object):
             elif key0 == 'restart':
                 extract = line.strip().split()
                 len_extract = len(extract)
+                simulation.restart = prestart()
                 if len_extract < 2:
                     PyFLOTRAN_ERROR('At least restart filename needs to be'
                                     ' specified')
@@ -3737,7 +3736,7 @@ class pdata(object):
                 outfile.write('    GEOMECHANICS_SUBSURFACE ' +
                               simulation.geomechanics_subsurface + '\n')
             outfile.write('  / ' + '\n')
-        elif simulation.subsurface_transport:
+        elif simulation.subsurface_transport
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
@@ -3745,7 +3744,7 @@ class pdata(object):
             outfile.write('  / ' + '\n')
         if simulation.checkpoint:
             self._write_checkpoint(outfile)
-        if simulation.restart.file_name:
+        if simulation.restart:
             self._write_restart(outfile)
 
         outfile.write('END' + '\n\n')
@@ -6288,26 +6287,10 @@ class pdata(object):
                 outfile.write('\n')
             outfile.write('  /\n')
 
-    def _read_restart(self, infile, line):
-        restart = prestart()
-
-        tstring = line.split()[1:]  # 1st line for restart passed in
-
-        restart.file_name = tstring[0]
-        if len(tstring) > 1:
-            restart.time_value = floatD(tstring[1])
-        elif len(tstring) > 2:
-            restart.time_unit = tstring[2]
-
-        self.restart = restart
-
     def _write_restart(self, outfile):
-        self._header(outfile, headers['restart'])
         restart = self.simulation.restart
-
         # write file name
         outfile.write('  RESTART ' + str(restart.file_name) + ' ')
-
         # Write time value
         if restart.time_value:
             try:

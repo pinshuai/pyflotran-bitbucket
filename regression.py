@@ -73,7 +73,7 @@ def read_and_write(file):
 
 
 files = check_file('find ' + pflotran_dir +
-                  '/regression_tests/default/ -type f -name "*.in"')
+                  '/regression_tests/ -type f -name "*.in"')
 
 
 for file in files:
@@ -90,7 +90,7 @@ print write_fail_files
 
 # read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
 
-file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow_and_tracer_run_as_ss.in'
+file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//geomech/uniaxial_loading/uniaxial_loading.in'
 read_and_write_with_error(file)
 #file_new = file.replace('/', ' ').split()[-1]
 #compare_regression_tests(file, file_new)

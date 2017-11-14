@@ -580,11 +580,11 @@ class pgrid(Frozen):
                  gravity=None, filename=''):
         if dx is None:
             if lower_bounds is None:
-                lower_bounds = []
+                lower_bounds = ['', '', '']
             if upper_bounds is None:
-                upper_bounds = []
+                upper_bounds = ['', '', '']
             if nxyz is None:
-                nxyz = [10, 10, 10]
+                nxyz = ['', '', '']
         else:
             nxyz = [len(dx), len(dy), len(dz)]
         if origin is None:

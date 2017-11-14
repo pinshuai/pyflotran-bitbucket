@@ -1860,7 +1860,8 @@ class pflow_variable(Frozen):
     """
 
     def __init__(self, name='', type=None, valuelist=None, unit='',
-                 time_unit_type='', data_unit_type='', plist=None):
+                 time_unit_type='', data_unit_type='', plist=None,
+                 subtype=None):
         if valuelist is None:
             valuelist = []
         if plist is None:
@@ -1878,6 +1879,7 @@ class pflow_variable(Frozen):
         self.time_unit_type = time_unit_type  # e.g., 'y'
         self.data_unit_type = data_unit_type  # e.g., 'kg/s'
         self.list = plist  # Holds a plist of pflow_variable_lists objects
+        self.subtype = subtype  # This is for rate subtypes
         self._freeze()
 
 
@@ -3878,7 +3880,8 @@ class pdata(object):
                     grid.dz = [floatD(val) for val in line.strip().split()]
                     line = infile.readline()
                     if line.strip().split()[0].lower() not in ['/', 'end']:
-                        raise PyFLOTRAN_ERROR('dx dy dz -- all three are not specified!')
+                        raise PyFLOTRAN_ERROR(
+                            'dx dy dz -- all three are not specified!')
                     else:
                         keep_reading_2 = False
             elif key in ['/', 'end']:
@@ -5372,7 +5375,7 @@ class pdata(object):
                 elif region.block:
                     outfile.write('  BLOCK ')
                     for val in region.block:
-                        outfile.write(str(int(val)))
+                        outfile.write(str(int(val)) + ' ')
                     outfile.write('\n')
                 else:
                     if region.face:
@@ -5388,7 +5391,6 @@ class pdata(object):
                     else:
                         outfile.write('  COORDINATES\n')
                         outfile.write('    ')
-                        print region.coordinates_lower
                         for i in range(3):
                             outfile.write(strD(region.coordinates_lower[i]) +
                                           ' ')
@@ -5496,6 +5498,9 @@ class pdata(object):
                     var = pflow_variable()
                     var.name = key
                     var.type = line.strip().split()[-1].lower()
+                    if var.type in scaling_options_allowed:
+                        var.subtype = var.type
+                        var.type = line.strip().split()[-2].lower()
                     var.valuelist = []
                     var.list = []
 
@@ -5704,7 +5709,6 @@ class pdata(object):
                         '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'RATE':
-                print condition_type
                 if condition_type.lower() in rate_types_allowed:
                     outfile.write(condition_type.lower())
                 else:
@@ -5890,6 +5894,8 @@ class pdata(object):
 
                     # Checks a_flow.type and performs write or error reporting
                     check_condition_type(a_flow.name, a_flow.type)
+                    if a_flow.subtype:
+                        outfile.write(' ' + a_flow.subtype)
                     outfile.write('\n')
 
                 outfile.write('  /\n')
@@ -6001,8 +6007,6 @@ class pdata(object):
             for b in self.initial_condition_list:  # b = initial_condition
                 if b.name:
                     outfile.write('INITIAL_CONDITION ' + b.name.lower() + '\n')
-                else:
-                    raise PyFLOTRAN_ERROR('Give a name for initial condition!')
                 if b.flow:
                     outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
                 if b.transport:

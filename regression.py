@@ -9,7 +9,8 @@ except KeyError:
           'directory and be defined in system environment variables.')
     sys.exit(1)
 
-def run_popen(cmd):
+
+def check_file(cmd):
     process = subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
@@ -17,13 +18,20 @@ def run_popen(cmd):
     files = out.split('\n')
     return files
 
+def run_popen(cmd):
+    process = subprocess.Popen(
+        shlex.split(cmd), stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    return out, err
+
 
 def read(file):
     try:
         dat = pdata(file)
     except:
         print('Error in reading ' + file)
-        
+
 
 def read_with_error(file):
     dat = pdata(file)
@@ -34,9 +42,19 @@ def read_and_write_with_error(file):
     new_file = file.replace('/', ' ').split()[-1]
     dat.write(new_file)
 
+def compare_regression_tests(file1, file2):
+    run_popen(pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file1)
+    run_popen(pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file2)
+    reg_file1 = file1.strip('.in') + '.regression'
+    reg_file2 = file2.strip('.in') + '.regression'
+    out, err = run_popen('diff ' + reg_file1 + ' ' + reg_file2)
+    print out, err
+
 success_files = []
 read_fail_files = []
 write_fail_files = []
+
+
 def read_and_write(file):
     try:
         dat = pdata(file)
@@ -54,17 +72,15 @@ def read_and_write(file):
         read_fail_files.append(file)
 
 
-
-files = run_popen('find ' + pflotran_dir +
+files = check_file('find ' + pflotran_dir +
                   '/regression_tests/default/ -type f -name "*.in"')
-
 
 
 for file in files:
     if file != '':
         # print file
         read_and_write(file)
-        
+
 print 'Successful files:'
 print success_files
 print 'Read fail files:'
@@ -72,5 +88,12 @@ print read_fail_files
 print 'Write fail files:'
 print write_fail_files
 
-#read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
-read_and_write_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow_and_tracer_run_as_ss.in')
+# read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
+
+file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow_and_tracer_run_as_ss.in'
+read_and_write_with_error(file)
+file_new = file.replace('/', ' ').split()[-1]
+compare_regression_tests(file, file_new)
+
+
+

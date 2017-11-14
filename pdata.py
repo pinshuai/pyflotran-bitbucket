@@ -3736,7 +3736,7 @@ class pdata(object):
                 outfile.write('    GEOMECHANICS_SUBSURFACE ' +
                               simulation.geomechanics_subsurface + '\n')
             outfile.write('  / ' + '\n')
-        elif simulation.subsurface_transport
+        elif simulation.subsurface_transport:
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')

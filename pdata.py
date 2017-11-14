@@ -86,6 +86,8 @@ mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
 # checkpoint - allowed formats
 checkpoint_formats_allowed = ['hdf5', 'binary']
 
+gradient_types_allowed = ['pressure', 'temperature']
+
 # grid - allowed strings
 grid_types_allowed = ['structured', 'unstructured_explicit',
                       'unstructured_implicit']
@@ -578,9 +580,9 @@ class pgrid(Frozen):
                  gravity=None, filename=''):
         if dx is None:
             if lower_bounds is None:
-                lower_bounds = [0.0, 0.0, 0.0]
+                lower_bounds = []
             if upper_bounds is None:
-                upper_bounds = [1.0, 1.0, 1.0]
+                upper_bounds = []
             if nxyz is None:
                 nxyz = [10, 10, 10]
         else:
@@ -1384,10 +1386,11 @@ class plsolver(Frozen):
     :type solver: str
     """
 
-    def __init__(self, name='', solver='', preconditioner=''):
+    def __init__(self, name='', solver='', preconditioner='', ksp=''):
         self.name = name  # TRAN, TRANSPORT / FLOW
         self.solver = solver  # Solver Type
         self.preconditioner = preconditioner
+        self.ksp = ksp
         self._freeze()
 
 
@@ -1794,13 +1797,15 @@ class pflow(Frozen):
 
     def __init__(self, name='', units_list=None, iphase=None,
                  sync_timestep_with_update=False, datum=None,
-                 datum_type='', varlist=None, gradient=None, pm=''):
+                 datum_type='', varlist=None, gradient=None, pm='',
+                 gradient_type=''):
 
         if datum is None:
             datum = []
         if varlist is None:
             varlist = []
-
+        if gradient is None:
+            gradient = []
         self.name = name.lower()  # Include initial, top, source
         self.units_list = units_list  # Specify type of units
         # to display such as
@@ -1813,6 +1818,7 @@ class pflow(Frozen):
         self.varlist = varlist
         self.datum_type = datum_type
         self.gradient = gradient
+        self.gradient_type = gradient_type
         self.pm = pm
         self._freeze()
 
@@ -2192,7 +2198,7 @@ class ptransport(Frozen):
     """
 
     def __init__(self, name='', tran_type='', constraint_list_value=None,
-                 constraint_list_type=None):
+                 constraint_list_type=None, time_units=''):
         if constraint_list_value is None:
             constraint_list_value = []
         if constraint_list_type is None:
@@ -2201,6 +2207,7 @@ class ptransport(Frozen):
         self.type = tran_type  # e.g., dirichlet, zero_gradient
         self.constraint_list_value = constraint_list_value
         self.constraint_list_type = constraint_list_type
+        self.time_units = time_units
         self._freeze()
 
 
@@ -4526,8 +4533,10 @@ class pdata(object):
 
             if key == 'solver':
                 lsolver.solver = self.splitter(line)  # Assign last word
-            if key == 'preconditioner':
+            if key == 'pc_type':
                 lsolver.preconditioner = self.splitter(line)
+            if key == 'ksp_type':
+                lsolver.ksp = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -4569,8 +4578,10 @@ class pdata(object):
             if lsolver.solver:
                 outfile.write('  SOLVER ' + lsolver.solver.upper() + '\n')
             if lsolver.preconditioner:
-                outfile.write('  PRECONDITIONER ' +
+                outfile.write('  PC_TYPE ' +
                               lsolver.preconditioner.upper() + '\n')
+            if lsolver.ksp:
+                outfile.write('  KSP_TYPE ' + lsolver.ksp.upper() + '\n')
             outfile.write('END\n\n')
 
     def _read_nsolver(self, infile, line):
@@ -5587,7 +5598,19 @@ class pdata(object):
                     temp_list = [floatD(line.split()[1]), floatD(
                         line.split()[2]), floatD(line.split()[3])]
                     flow.datum = temp_list
-
+            elif key == 'gradient':
+                keep_reading1 = True
+                while keep_reading1:
+                    line = infile.readline()
+                    type = line.strip().split()[0].lower()
+                    if type in gradient_types_allowed:
+                        flow.gradient_type = type
+                        for val in line.strip().split()[1:]:
+                            flow.gradient.append(val)
+                    elif type in ['/', 'end']:
+                        keep_reading1 = False
+                    else:
+                        raise PyFLOTRAN_ERROR('Incorrect gradient type!')
             # Detect if there is carriage return after '/' or 'end' to end loop
             # Alternative method of count implemented by Satish
             elif key in ['/', 'end']:
@@ -5871,13 +5894,6 @@ class pdata(object):
                         outfile.write(strD(flow.datum[1]) + ' ')
                         outfile.write(strD(flow.datum[2]))
                     outfile.write('\n')
-                    if flow.gradient:
-                        outfile.write('    GRADIENT\n')
-                        outfile.write('      ' + flow.gradient[0].upper() +
-                                      ' ' + str(flow.gradient[1]) + ' ' + str(
-                            flow.gradient[2]) + ' ' +
-                            str(flow.gradient[3]) + '\n')
-                        outfile.write('    /\n')
                 # Following code is paired w/ this statement.
                 outfile.write('  TYPE\n')
                 # variable name and type from lists go here
@@ -5900,7 +5916,13 @@ class pdata(object):
                 outfile.write('  /\n')
                 if flow.iphase:
                     outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
-
+                if flow.gradient:
+                    outfile.write('  GRADIENT\n')
+                    outfile.write('    ' + flow.gradient_type.upper() +
+                                  ' ' + str(flow.gradient[0]) + ' ' + str(
+                        flow.gradient[1]) + ' ' +
+                        str(flow.gradient[2]) + '\n')
+                    outfile.write('  /\n')
                 # variable name and values from lists along with units go here
                 for a_flow in flow.varlist:
                     if a_flow.valuelist:
@@ -6666,6 +6688,7 @@ class pdata(object):
         np_type = p.type
         np_constraint_list_value = []
         np_constraint_list_type = []
+        np_time_units = ''
 
         keep_reading = True
 
@@ -6677,6 +6700,8 @@ class pdata(object):
                 if len(line.split()) == 2:
                     # Only Assign if 2 words are on the line
                     np_type = self.splitter(line)  # take last word
+            elif key == 'time_units':
+                np_time_units = self.splitter(line)
             elif key == 'constraint_list':
                 keep_reading_2 = True
                 line = infile.readline()
@@ -6707,7 +6732,7 @@ class pdata(object):
 
         # Create an empty transport condition and assign the values read in
         new_transport = ptransport(np_name, np_type, np_constraint_list_value,
-                                   np_constraint_list_type)
+                                   np_constraint_list_type, np_time_units)
         self.add(new_transport)
 
     # Adds a transport object.
@@ -6752,6 +6777,12 @@ class pdata(object):
                 raise PyFLOTRAN_ERROR(
                     'transport.type: \'' + t.type + '\' is invalid.')
             try:
+                if t.time_units:
+                    if t.time_units in time_units_allowed:
+                        outfile.write('  TIME_UNITS ' + t.time_units + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR('Incorrect transport condition' +
+                                              ' time units!\n')
                 outfile.write('  CONSTRAINT_LIST\n')
 
                 clv = t.constraint_list_value
@@ -6762,9 +6793,9 @@ class pdata(object):
                         outfile.write('    ' + strD(a_clv))
                     if clt[i] is not None:
                         if i == len(clv) - 1:
-                            outfile.write('  ' + str(clt[i]).lower())
+                            outfile.write(' ' + str(clt[i]).lower())
                         else:
-                            outfile.write('  ' + str(clt[i]).lower() + '\n')
+                            outfile.write(' ' + str(clt[i]).lower() + '\n')
                     else:
                         raise PyFLOTRAN_ERROR('transport[' +
                                               str(tl.index(t)) +

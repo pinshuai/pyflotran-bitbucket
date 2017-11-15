@@ -99,6 +99,8 @@ grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical', '']
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
                           'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
+velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr']
+
 output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
                             'liquid_density', 'liquid_mobility',
                             'liquid_energy', 'liquid_mole_fractions',
@@ -3430,8 +3432,7 @@ class pdata(object):
 
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
-        tstring = line.split()[1:4]  # Convert to list, ignore 1st word
-
+        tstring = line.split()[1:]  # Convert to list, ignore 1st word
         i = 0  # index/count
         while i < len(tstring):
             try:
@@ -3446,8 +3447,13 @@ class pdata(object):
     def _write_uniform_velocity(self, outfile):
         self._header(outfile, headers['uniform_velocity'])
         outfile.write('UNIFORM_VELOCITY ')
-        for v in self.uniform_velocity.value_list:  # value in value_list
-            outfile.write(strD(v) + ' ')
+        if len(self.uniform_velocity.value_list) > 3:
+            if self.uniform_velocity.value_list[3] in velocity_units_allowed:
+                for val in self.uniform_velocity.value_list[:4]:
+                    outfile.write(strD(val) + ' ')
+        else:
+            for val in self.uniform_velocity.value_list[:3]:
+                outfile.write(strD(val) + ' ')
         outfile.write('\n\n')
 
     def _write_reference_stress_state(self, outfile):

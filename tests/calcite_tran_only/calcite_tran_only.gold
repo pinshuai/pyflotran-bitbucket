@@ -1,3 +1,4 @@
+# ================================= simulation =================================
 SIMULATION
   SIMULATION_TYPE SUBSURFACE
   PROCESS_MODELS
@@ -8,8 +9,10 @@ END
 
 SUBSURFACE
 
+# ============================== uniform velocity ==============================
 UNIFORM_VELOCITY 1.0 0.0 0.0 m/yr 
 
+# ================================= chemistry =================================
 CHEMISTRY
   PRIMARY_SPECIES
     H+
@@ -35,7 +38,7 @@ CHEMISTRY
       RATE_CONSTANT 1.000d-06 mol/m^2-sec 
     /
   /
-  DATABASE /Users/satkarra/src/pflotran-dev/database/hanford.dat
+  DATABASE /Users/satkarra/src/pflotran-dev-git/database/hanford.dat
   LOG_FORMULATION
   ACTIVITY_COEFFICIENTS TIMESTEP
   OUTPUT
@@ -45,6 +48,7 @@ CHEMISTRY
   /
 END
 
+# ==================================== grid ====================================
 GRID
   TYPE structured
   BOUNDS
@@ -54,44 +58,37 @@ GRID
   NXYZ 100 1 1 
 END
 
+# ==================================== time ====================================
 TIME
   FINAL_TIME 25.0 y
   INITIAL_TIMESTEP_SIZE 1.0 h
   MAXIMUM_TIMESTEP_SIZE 0.25 y
 END
 
+# ============================ material properties ============================
 MATERIAL_PROPERTY soil1
   ID 1
   POROSITY 0.25
   TORTUOSITY 1.0
 END
 
+# =============================== linear solver ===============================
 LINEAR_SOLVER transport
   SOLVER DIRECT
 END
 
+# =================================== output ===================================
 OUTPUT
   TIMES  y 5.0 10.0 15.0 20.0
   FORMAT TECPLOT POINT
 END
 
+# ============================== fluid properties ==============================
 FLUID_PROPERTY
   DIFFUSION_COEFFICIENT 1.000d-09
 END
 
-CHARACTERISTIC_CURVES default
-  SATURATION_FUNCTION VAN_GENUCHTEN
-   ALPHA 0.0001
-   M 0.5
-   LIQUID_RESIDUAL_SATURATION 0.1
-   MAX_CAPILLARY_PRESSURE 100000000.0
-  / 
-  PERMEABILITY_FUNCTION MUALEM_VG_LIQ
-   M 0.5
-   LIQUID_RESIDUAL_SATURATION 0.1
-  / 
-END
-
+# ================================== regions ==================================
 REGION all
   COORDINATES
     0.0 0.0 0.0 
@@ -115,25 +112,28 @@ REGION east
   /
 END
 
+# ============================ transport conditions ============================
 TRANSPORT_CONDITION background_conc
   TYPE zero_gradient
   CONSTRAINT_LIST
-    0.0  initial_constraint
+    0.0 initial_constraint
   /
 END
 
 TRANSPORT_CONDITION inlet_conc
   TYPE dirichlet_zero_gradient
   CONSTRAINT_LIST
-    0.0  inlet_constraint
+    0.0 inlet_constraint
   /
 END
 
+# ============================= initial condition =============================
 INITIAL_CONDITION initial
   TRANSPORT_CONDITION background_conc
   REGION all
 END
 
+# ============================ boundary conditions ============================
 BOUNDARY_CONDITION outlet
   TRANSPORT_CONDITION background_conc
   REGION east
@@ -144,11 +144,13 @@ BOUNDARY_CONDITION inlet
   REGION west
 END
 
+# =========================== stratigraphy couplers ===========================
 STRATA
   REGION all
   MATERIAL soil1
 END
 
+# ================================ constraints ================================
 CONSTRAINT initial_constraint
   CONCENTRATIONS
     H+          1.000d-08   F  

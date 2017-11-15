@@ -6035,6 +6035,8 @@ class pdata(object):
             for b in self.initial_condition_list:  # b = initial_condition
                 if b.name:
                     outfile.write('INITIAL_CONDITION ' + b.name.lower() + '\n')
+                else:
+                    outfile.write('INITIAL_CONDITION\n')
                 if b.flow:
                     outfile.write('  FLOW_CONDITION ' + b.flow.lower() + '\n')
                 if b.transport:

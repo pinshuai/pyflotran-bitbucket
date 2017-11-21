@@ -162,15 +162,15 @@ allowed_soil_compressibility_functions = ['CONSTANT', 'LEIJNSE', 'DEFAULT',
 
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
-                                     'ENTHALPY', 'LIQUID_PRESSURE',
-                                     'GAS_PRESSURE',
-                                     'LIQUID_FLUX', 'GAS_FLUX',
-                                     'MOLE_FRACTION',
-                                     'GAS_SATURATION']
+                                     'ENTHALPY',
+                                     'LIQUID_PRESSURE', 'GAS_PRESSURE',
+                                     'LIQUID_SATURATION', 'GAS_SATURATION',
+                                     'MOLE_FRACTION', 'RELATIVE_HUMIDITY',
+                                     'LIQUID_FLUX', 'GAS_FLUX', 'ENERGY_FLUX']
 
-geomech_condition_type_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
-                                  'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
-                                  'FORCE_Z']
+geomech_condition_type_names_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
+                                        'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
+                                        'FORCE_Z']
 
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
@@ -197,7 +197,7 @@ saturation_types_allowed = ['dirichlet']
 
 mole_fraction_types_allowed = ['dirichlet']
 
-liquid_pressure_types_allowed = ['dirichlet']
+liquid_pressure_types_allowed = pressure_types_allowed
 
 gas_pressure_types_allowed = ['dirichlet']
 
@@ -384,7 +384,9 @@ class pmaterial(Frozen):
                  soil_compressibility_function='', soil_reference_pressure=None,
                  soil_compressibility=None, compressibility_function='',
                  bandis_A=None, bandis_B=None, maximum_aperture=None,
-                 normal_vector=None):
+                 normal_vector=None, density_unit='', cond_wet_unit='',
+                 cond_dry_unit='', specific_heat_unit='',
+                 heat_capacity='', heat_capacity_unit=''):
 
         if permeability is None:
             permeability = []
@@ -425,6 +427,12 @@ class pmaterial(Frozen):
         self.bandis_B = bandis_B
         self.maximum_aperture = maximum_aperture
         self.normal_vector = normal_vector
+        self.density_unit = density_unit
+        self.cond_wet_unit = cond_wet_unit
+        self.cond_dry_unit = cond_dry_unit
+        self.specific_heat_unit = specific_heat_unit
+        self.heat_capacity_unit = heat_capacity_unit
+        self.heat_capacity = heat_capacity
         self._freeze()
 
 
@@ -1760,11 +1768,13 @@ class pobservation(Frozen):
 
     def __init__(self, region=None, secondary_temperature=None,
                  secondary_concentration=None,
-                 secondary_mineral_volfrac=None):
+                 secondary_mineral_volfrac=None,
+                 velocity=None):
         self.region = region
         self.secondary_temperature = secondary_temperature
         self.secondary_concentration = secondary_concentration
         self.secondary_mineral_volfrac = secondary_mineral_volfrac
+        self.velocity = velocity
         self._freeze()
 
 
@@ -4104,6 +4114,7 @@ class pdata(object):
         np_tortuosity = p.tortuosity
         np_density = p.density
         np_specific_heat = p.specific_heat
+        np_heat_capacity = p.heat_capacity
         np_cond_dry = p.cond_dry
         np_cond_wet = p.cond_wet
         np_saturation = p.saturation
@@ -4115,6 +4126,11 @@ class pdata(object):
         np_transverse_dispersivity_h = p.transverse_dispersivity_h
         np_transverse_dispersivity_v = p.transverse_dispersivity_v
         keep_reading = True
+        np_specific_heat_unit = p.specific_heat_unit
+        np_heat_capacity_unit = p.heat_capacity_unit
+        np_density_unit = p.density_unit
+        np_cond_dry_unit = p.cond_dry_unit
+        np_cond_wet_unit = p.cond_wet_unit
 
         while keep_reading:  # read through all cards
             line = infile.readline()  # get next line
@@ -4131,13 +4147,25 @@ class pdata(object):
             elif key == 'tortuosity':
                 np_tortuosity = floatD(self.splitter(line))
             elif key == 'rock_density':
-                np_density = floatD(self.splitter(line))
+                if len(line.strip().split()[1:]) > 1:
+                    np_density_unit = line.strip().split()[2]
+                np_density = floatD(line.strip().split()[1])
             elif key == 'specific_heat':
-                np_specific_heat = floatD(self.splitter(line))
+                if len(line.strip().split()[1:]) > 1:
+                    np_specific_heat_unit = line.strip().split()[2]
+                np_specific_heat = floatD(line.strip().split()[1])
+            elif key == 'heat_capacity':
+                if len(line.strip().split()[1:]) > 1:
+                    np_heat_capacity_unit = line.strip().split()[2]
+                np_heat_capacity = floatD(line.strip().split()[1])
             elif key == 'thermal_conductivity_dry':
-                np_cond_dry = floatD(self.splitter(line))
+                if len(line.strip().split()[1:]) > 1:
+                    np_cond_dry_unit = line.strip().split()[2]
+                np_cond_dry = floatD(line.strip().split()[1])
             elif key == 'thermal_conductivity_wet':
-                np_cond_wet = floatD(self.splitter(line))
+                if len(line.strip().split()[1:]) > 1:
+                    np_cond_wet_unit = line.strip().split()[2]
+                np_cond_wet = floatD(line.strip().split()[1])
             elif key == 'saturation_function':
                 np_saturation = self.splitter(line)
             elif key == 'permeability_power':
@@ -4171,16 +4199,26 @@ class pdata(object):
                 keep_reading = False
 
         # create an empty material property
-        new_prop = pmaterial(np_id, np_name, np_characteristic_curves,
-                             np_porosity, np_tortuosity, np_density,
-                             np_specific_heat, np_cond_dry, np_cond_wet,
-                             np_saturation, np_permeability,
-                             np_permeability_power,
-                             np_permeability_critical_porosity,
-                             np_permeability_min_scale_factor,
-                             np_longitudinal_dispersivity,
-                             np_transverse_dispersivity_h,
-                             np_transverse_dispersivity_v)
+        new_prop = pmaterial(id=np_id, name=np_name,
+                             characteristic_curves=np_characteristic_curves,
+                             porosity=np_porosity, tortuosity=np_tortuosity,
+                             density=np_density,
+                             specific_heat=np_specific_heat,
+                             cond_dry=np_cond_dry,
+                             cond_wet=np_cond_wet, saturation=np_saturation,
+                             permeability=np_permeability,
+                             permeability_power=np_permeability_power,
+                             permeability_critical_porosity=np_permeability_critical_porosity,
+                             permeability_min_scale_factor=np_permeability_min_scale_factor,
+                             longitudinal_dispersivity=np_longitudinal_dispersivity,
+                             transverse_dispersivity_h=np_transverse_dispersivity_h,
+                             transverse_dispersivity_v=np_transverse_dispersivity_v,
+                             density_unit=np_density_unit,
+                             cond_wet_unit=np_cond_wet_unit,
+                             cond_dry_unit=np_cond_dry_unit,
+                             specific_heat_unit=np_specific_heat_unit,
+                             heat_capacity=np_heat_capacity,
+                             heat_capacity_unit=np_heat_capacity_unit)
 
         self.add(new_prop)
 
@@ -4224,16 +4262,34 @@ class pdata(object):
             if prop.tortuosity:
                 outfile.write('  TORTUOSITY ' + strD(prop.tortuosity) + '\n')
             if prop.density:
-                outfile.write('  ROCK_DENSITY ' + strD(prop.density) + '\n')
+                outfile.write('  ROCK_DENSITY ' + strD(prop.density))
+                if prop.density_unit:
+                    outfile.write(' ' + prop.density_unit)
+                outfile.write('\n')
             if prop.specific_heat:
                 outfile.write('  SPECIFIC_HEAT ' +
-                              strD(prop.specific_heat) + '\n')
+                              strD(prop.specific_heat))
+                if prop.specific_heat_unit:
+                    outfile.write(' ' + prop.specific_heat_unit)
+                outfile.write('\n')
+            if prop.specific_heat:
+                outfile.write('  HEAT_CAPACITY ' +
+                              strD(prop.heat_capacity))
+                if prop.heat_capacity_unit:
+                    outfile.write(' ' + prop.heat_capacity_unit)
+                outfile.write('\n')
             if prop.cond_dry:
                 outfile.write('  THERMAL_CONDUCTIVITY_DRY ' +
-                              strD(prop.cond_dry) + '\n')
+                              strD(prop.cond_dry))
+                if prop.cond_dry_unit:
+                    outfile.write(' ' + prop.cond_dry_unit)
+                outfile.write('\n')
             if prop.cond_wet:
                 outfile.write('  THERMAL_CONDUCTIVITY_WET ' +
-                              strD(prop.cond_wet) + '\n')
+                              strD(prop.cond_wet))
+                if prop.cond_wet_unit:
+                    outfile.write(' ' + prop.cond_wet_unit)
+                outfile.write('\n')
             if prop.saturation:
                 outfile.write('  SATURATION_FUNCTION ' +
                               prop.saturation + '\n')
@@ -5435,6 +5491,8 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'region':
                 observation.region = self.splitter(line)
+            elif key == 'velocity':
+                observation.velocity = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -5472,6 +5530,8 @@ class pdata(object):
             outfile.write('OBSERVATION\n')
             if observation.region:
                 outfile.write('  REGION ' + observation.region.lower() + '\n')
+            if observation.velocity:
+                outfile.write('  VELOCITY\n')
             if self.multiple_continuum:
                 if observation.secondary_temperature:
                     outfile.write('  SECONDARY_TEMPERATURE\n')
@@ -5496,7 +5556,6 @@ class pdata(object):
         end_count = 0
         total_end_count = 1
         while keep_reading:  # Read through all cards
-
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'type':
@@ -5505,12 +5564,7 @@ class pdata(object):
                 # This # indicates how many time a / or 'end'
                 # can be read before loop terminates.
 
-            elif key == 'rate' or key == 'pressure' or \
-                    key == 'temperature' or key == 'concentration' or \
-                    key == 'enthalpy' or key == 'flux' or \
-                    key == 'displacement_x' or key == 'displacement_y' or \
-                    key == 'displacement_z' or key == 'force_x' or \
-                    key == 'force_y' or key == 'force_z':
+            elif key in [item.lower() for item in list(set(flow_condition_type_names_allowed).union(geomech_condition_type_names_allowed))]:
                 if end_count == 0:
                     '''
                     Appending and instantiation of new flow_variables
@@ -7181,7 +7235,7 @@ class pdata(object):
                 outfile.write('  TYPE\n')
                 # variable name and type from lists go here
                 for a_flow in flow.varlist:
-                    if a_flow.name.upper() in geomech_condition_type_allowed:
+                    if a_flow.name.upper() in geomech_condition_type_names_allowed:
                         outfile.write('    ' + a_flow.name.upper() + ' ')
                     else:
                         raise PyFLOTRAN_ERROR(

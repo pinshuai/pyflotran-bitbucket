@@ -4272,7 +4272,7 @@ class pdata(object):
                 if prop.specific_heat_unit:
                     outfile.write(' ' + prop.specific_heat_unit)
                 outfile.write('\n')
-            if prop.specific_heat:
+            if prop.heat_capacity:
                 outfile.write('  HEAT_CAPACITY ' +
                               strD(prop.heat_capacity))
                 if prop.heat_capacity_unit:

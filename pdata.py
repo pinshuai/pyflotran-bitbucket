@@ -4734,8 +4734,6 @@ class pdata(object):
             if nsolver.preconditioner_matrix_type:
                 outfile.write('  PRECONDITIONER_MATRIX_TYPE ' +
                               nsolver.preconditioner_matrix_type.upper() + '\n')
-            if nsolver.max_f:
-                outfile.write('  MAXF ' + str(nsolver.max_f) + '\n')
             outfile.write('END\n\n')
 
     def _read_output(self, infile):

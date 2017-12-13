@@ -3742,7 +3742,7 @@ class pdata(object):
                         outfile.write('        MAX_CONCENTRATION_CHANGE ' +
                                       strD(simulation.max_concentration_change)
                                       + '\n')
-                    if simulation.max_concentration_change:
+                    if simulation.max_temperature_change:
                         outfile.write('        MAX_TEMPERATURE_CHANGE ' +
                                       strD(simulation.max_temperature_change) +
                                       '\n')

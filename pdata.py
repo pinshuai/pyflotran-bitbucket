@@ -146,7 +146,7 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
     lower_list))
 
 characteristic_curves_liquid_permeability_function_types_allowed = [
-    'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ']
+    'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -1229,7 +1229,7 @@ class pcheckpoint(Frozen):
     """
 
     def __init__(self, time_list=[], periodic_time_list=[], periodic_timestep=None,
-                 format=''):
+                 format=[]):
         if time_list is None:
             time_list = []
         if periodic_time_list is None:
@@ -1681,13 +1681,13 @@ class pcharacteristic_curves(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='default',
-                 saturation_function_type='van_genuchten', sf_alpha=1e-4,
-                 sf_m=0.5, sf_lambda=None,
-                 sf_liquid_residual_saturation=0.1,
+                 saturation_function_type='van_genuchten', sf_alpha=None,
+                 sf_m=None, sf_lambda=None,
+                 sf_liquid_residual_saturation=None,
                  sf_gas_residual_saturation=None, max_capillary_pressure=None,
                  smooth='', power=None, default=False,
                  liquid_permeability_function_type='mualem_vg_liq',
-                 lpf_m=0.5, lpf_lambda=None,
+                 lpf_m=None, lpf_lambda=None,
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
@@ -2976,7 +2976,7 @@ class pdata(object):
                     keep_reading = False
                 if len(p_line.strip()) == 0:
                     continue
-                if p_line.strip().split()[0] in ['#', '!']:
+                if list(p_line)[0] in ['#', '!']:
                     continue
                 card = p_line.split()[0].lower()  # make card lower case
                 if card == 'overwrite_restart_flow_params':
@@ -3636,6 +3636,24 @@ class pdata(object):
                     simulation.restart.time_value = extract[2]
                 if len_extract > 3:
                     simulation.restart.time_unit = extract[3]
+            elif key0 == 'checkpoint':
+              simulation.checkpoint = pcheckpoint()
+              keep_reading = True
+              while keep_reading:  # Read through all cards
+                  line = infile.readline()  # get next line
+                  key = line.strip().split()[0].lower()  # take first key word
+                  if 'times' in key:  
+                      for val in line.strip().split()[1:]:
+                          simulation.checkpoint.time_list.append(str(val))
+                  elif 'periodic time' in key:
+                      for val in line.strip().split()[1:]:
+                          simulation.checkpoint.periodic_time_list.append(str(val))  
+                  elif 'periodic timestep' in key:
+                      simulation.checkpoint.periodic_timestep = self.splitter(line)
+                  elif 'format' in key:
+                      simulation.checkpoint.format.append(self.splitter(line))
+                  elif key in ['/', 'end']:
+                      keep_reading = False
             elif key0 in ['/', 'end']:
                 keep_reading0 = False
         if not ('subsurface_flow' in key_bank) and \
@@ -3851,10 +3869,12 @@ class pdata(object):
         while keep_reading:
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
-            if key in ['#']:
-                pass
-            if key == 'type':
-                grid.type = self.splitter(line)
+            if list(key)[0] in ['#']:
+                continue
+            elif key == 'type':
+                grid.type = line.strip().split()[1].lower()
+                if grid.type in ['unstructured_explicit', 'unstructured_implicit']:
+                    grid.filename = self.splitter(line)
             elif key == 'bounds':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -3881,11 +3901,6 @@ class pdata(object):
                 grid.gravity.append(floatD(line.split()[1]))
                 grid.gravity.append(floatD(line.split()[2]))
                 grid.gravity.append(floatD(line.split()[3]))
-            elif key == 'filename':
-                if grid.type == 'structured':
-                    raise PyFLOTRAN_ERROR(
-                        'filename not need with structure grid!')
-                grid.filename = self.splitter(line)
             elif key == 'dxyz':
                 if bounds_key:
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
@@ -3998,9 +4013,10 @@ class pdata(object):
                                           grid.symmetry_type +
                                           '\' not supported')
             outfile.write('  NXYZ' + ' ')
-            if grid.lower_bounds:  # write NXYZ for BOUNDS
+            if grid.lower_bounds:  # write NXYZ for BOUNDS 
                 for i in range(3):
-                    outfile.write(strI(grid.nxyz[i]) + ' ')
+                    if grid.nxyz[i]:
+                        outfile.write(strI(grid.nxyz[i]) + ' ')
             else:  # write NXYZ based on length of dx, dy, dz (DXYZ)
                 outfile.write(strI(len(grid.dx)) + ' ')
                 outfile.write(strI(len(grid.dy)) + ' ')
@@ -4193,6 +4209,8 @@ class pdata(object):
                         np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'perm_z':
                         np_permeability.append(floatD(self.splitter(line)))
+                    elif key == 'dataset':
+                        np_permeability.append(self.splitter(line))
                     elif key in ['/', 'end']:
                         keep_reading_2 = False
             elif key in ['/', 'end']:
@@ -4314,8 +4332,8 @@ class pdata(object):
 
             if prop.permeability and self.simulation.subsurface_flow:
                 outfile.write('  PERMEABILITY\n')
-                if type(prop.permeability) is str:
-                    outfile.write('    DATASET ' + prop.permeability + '\n')
+                if type(prop.permeability[0]) is str:
+                    outfile.write('    DATASET ' + prop.permeability[0] + '\n')
                 elif len(prop.permeability) == 1:
                     outfile.write('    PERM_ISO ' +
                                   strD(prop.permeability[0]) + '\n')
@@ -5171,8 +5189,7 @@ class pdata(object):
                         characteristic_curves.max_capillary_pressure = \
                             floatD(self.splitter(line))
                     elif key1 == 'smooth':
-                        characteristic_curves.smooth = \
-                            floatD(self.splitter(line))
+                        characteristic_curves.smooth = True
                     elif key1 == 'power':
                         characteristic_curves.power = \
                             floatD(self.splitter(line))
@@ -6339,14 +6356,6 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('strata.material is required')
                 outfile.write('END\n\n')
 
-    def _read_checkpoint(self, infile, line):
-        checkpoint = pcheckpoint()
-
-        # checkpoint int passed in.
-        checkpoint.frequency = self.splitter(line).lower()
-
-        self.checkpoint = checkpoint
-
     def _write_checkpoint(self, outfile):
         checkpoint = self.simulation.checkpoint
         if checkpoint.time_list or checkpoint.periodic_time_list \
@@ -6370,9 +6379,10 @@ class pdata(object):
                 outfile.write(str(checkpoint.periodic_timestep))
                 outfile.write('\n')
             if checkpoint.format:
-                outfile.write('    FORMAT ')
-                outfile.write(str(checkpoint.format).upper())
-                outfile.write('\n')
+                for val in checkpoint.format:
+                    outfile.write('    FORMAT ')
+                    outfile.write(str(val).upper())
+                    outfile.write('\n')
             outfile.write('  /\n')
 
     def _write_restart(self, outfile):

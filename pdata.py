@@ -3643,7 +3643,6 @@ class pdata(object):
                 while keep_reading:  # Read through all cards
                     line = infile.readline()  # get next line
                     key = line.strip().split()[0].lower()  # take first key word
-                    print line
                     if 'times' in key:  
                         for val in line.strip().split()[1:]:
                             simulation.checkpoint.time_list.append(str(val))
@@ -3654,7 +3653,6 @@ class pdata(object):
                             for val in line.strip().split()[1:]:
                                 simulation.checkpoint.periodic_time_list.append(str(val))  
                     elif 'format' in key:
-                        print key
                         simulation.checkpoint.format.append(self.splitter(line))
                     elif key in ['/', 'end']:
                         keep_reading = False

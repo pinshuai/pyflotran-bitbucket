@@ -3637,23 +3637,27 @@ class pdata(object):
                 if len_extract > 3:
                     simulation.restart.time_unit = extract[3]
             elif key0 == 'checkpoint':
-              simulation.checkpoint = pcheckpoint()
-              keep_reading = True
-              while keep_reading:  # Read through all cards
-                  line = infile.readline()  # get next line
-                  key = line.strip().split()[0].lower()  # take first key word
-                  if 'times' in key:  
-                      for val in line.strip().split()[1:]:
-                          simulation.checkpoint.time_list.append(str(val))
-                  elif 'periodic time' in key:
-                      for val in line.strip().split()[1:]:
-                          simulation.checkpoint.periodic_time_list.append(str(val))  
-                  elif 'periodic timestep' in key:
-                      simulation.checkpoint.periodic_timestep = self.splitter(line)
-                  elif 'format' in key:
-                      simulation.checkpoint.format.append(self.splitter(line))
-                  elif key in ['/', 'end']:
-                      keep_reading = False
+                simulation.checkpoint = pcheckpoint(time_list=[],
+                    periodic_time_list=[], format=[])
+                keep_reading = True
+                while keep_reading:  # Read through all cards
+                    line = infile.readline()  # get next line
+                    key = line.strip().split()[0].lower()  # take first key word
+                    print line
+                    if 'times' in key:  
+                        for val in line.strip().split()[1:]:
+                            simulation.checkpoint.time_list.append(str(val))
+                    elif 'periodic' in key: 
+                        if 'timestep' in line.strip().split()[1].lower():
+                            simulation.checkpoint.periodic_timestep = self.splitter(line)
+                        else:
+                            for val in line.strip().split()[1:]:
+                                simulation.checkpoint.periodic_time_list.append(str(val))  
+                    elif 'format' in key:
+                        print key
+                        simulation.checkpoint.format.append(self.splitter(line))
+                    elif key in ['/', 'end']:
+                        keep_reading = False
             elif key0 in ['/', 'end']:
                 keep_reading0 = False
         if not ('subsurface_flow' in key_bank) and \

@@ -590,11 +590,11 @@ class pgrid(Frozen):
                  gravity=None, filename=''):
         if dx is None:
             if lower_bounds is None:
-                lower_bounds = ['', '', '']
+                lower_bounds = [None, None, None]
             if upper_bounds is None:
-                upper_bounds = ['', '', '']
+                upper_bounds = [None, None, None]
             if nxyz is None:
-                nxyz = ['', '', '']
+                nxyz = [None, None, None]
         else:
             nxyz = [len(dx), len(dy), len(dz)]
         if origin is None:
@@ -631,7 +631,10 @@ class pgrid(Frozen):
     @property
     def xmin(self):
         if self.type == 'structured':
-            return self.lower_bounds[0]
+            if self.lower_bounds[0] is not None:
+                return self.lower_bounds[0]
+            else:
+                raise PyFLOTRAN_ERROR('grid lower bounds not set')
         elif self.type == 'unstructured_explicit':
             return min([cell[0] for cell in self._celllist])
         else:
@@ -641,7 +644,10 @@ class pgrid(Frozen):
     @property
     def ymin(self):
         if self.type == 'structured':
-            return self.lower_bounds[1]
+            if self.lower_bounds[1] is not None:
+                return self.lower_bounds[1]
+            else:
+                raise PyFLOTRAN_ERROR('grid lower bounds not set')
         elif self.type == 'unstructured_explicit':
             return min([cell[1] for cell in self._celllist])
         else:
@@ -651,7 +657,10 @@ class pgrid(Frozen):
     @property
     def zmin(self):
         if self.type == 'structured':
-            return self.lower_bounds[2]
+            if self.lower_bounds[2] is not None:
+                return self.lower_bounds[2]
+            else:
+                raise PyFLOTRAN_ERROR('grid lower bounds not set')
         elif self.type == 'unstructured_explicit':
             return min([cell[2] for cell in self._celllist])
         else:
@@ -661,7 +670,10 @@ class pgrid(Frozen):
     @property
     def xmax(self):
         if self.type == 'structured':
-            return self.upper_bounds[0]
+            if self.upper_bounds[0] is not None:
+                return self.upper_bounds[0]
+            else:
+                raise PyFLOTRAN_ERROR('grid upper bounds not set')
         elif self.type == 'unstructured_explicit':
             return max([cell[0] for cell in self._celllist])
         else:
@@ -671,7 +683,10 @@ class pgrid(Frozen):
     @property
     def ymax(self):
         if self.type == 'structured':
-            return self.upper_bounds[1]
+            if self.upper_bounds[1] is not None:
+                return self.upper_bounds[1]
+            else:
+                raise PyFLOTRAN_ERROR('grid upper bounds not set')
         elif self.type == 'unstructured_explicit':
             return max([cell[1] for cell in self._celllist])
         else:
@@ -681,7 +696,10 @@ class pgrid(Frozen):
     @property
     def zmax(self):
         if self.type == 'structured':
-            return self.upper_bounds[2]
+            if self.upper_bounds[2] is not None:
+                return self.upper_bounds[2]
+            else:
+                raise PyFLOTRAN_ERROR('grid upper bounds not set')
         elif self.type == 'unstructured_explicit':
             return max([cell[2] for cell in self._celllist])
         else:
@@ -2117,7 +2135,7 @@ class pchemistry(Frozen):
                  activity_coefficients=None, molal=False,
                  output_list=None, update_permeability=False,
                  update_porosity=False, active_gas_species_list=None,
-                 passive_gas_species_list=None):
+                 passive_gas_species_list=None, truncate_concentration=None):
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2146,6 +2164,7 @@ class pchemistry(Frozen):
         # has pchemistry_m_kinetic assigned to it
         self.m_kinetics_list = m_kinetics_list
         self.log_formulation = log_formulation
+        self.truncate_concentration = truncate_concentration
         self.update_permeability = update_permeability
         self.update_porosity = update_porosity
         if pflotran_dir:
@@ -6582,6 +6601,8 @@ class pdata(object):
                 chem.update_permeability = True
             elif key == 'activity_coefficients':
                 chem.activity_coefficients = self.splitter(line)
+            elif key == 'truncate_concentration':
+                chem.truncate_concentration = self.splitter(line)
             elif key == 'molal':
                 chem.molal = True
             elif key == 'output':
@@ -6740,6 +6761,9 @@ class pdata(object):
             outfile.write('  DATABASE ' + c.database + '\n')
         if c.log_formulation:
             outfile.write('  LOG_FORMULATION\n')
+        if c.truncate_concentration:
+            outfile.write('  TRUNCATE_CONCENTRATION ' +
+                            c.truncate_concentration + '\n' )
         if c.update_permeability:
             outfile.write('  UPDATE_PERMEABILITY\n')
         if c.update_porosity:

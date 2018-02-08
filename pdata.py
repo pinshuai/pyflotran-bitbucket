@@ -2140,7 +2140,9 @@ class pchemistry(Frozen):
                  passive_gas_species_list=None, truncate_concentration=None,
                  use_full_geochemistry=False, max_dlnc=None,
                  max_residual_tolerance=None,
-                 max_relative_change_tolerance=None):
+                 max_relative_change_tolerance=None, activity_water=False,
+                 update_mineral_surface_area=False, no_bdot=False,
+                 no_checkpoint_act_coefs=False):
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2170,12 +2172,16 @@ class pchemistry(Frozen):
         self.m_kinetics_list = m_kinetics_list
         self.log_formulation = log_formulation
         self.truncate_concentration = truncate_concentration
+        self.activity_water = activity_water
         self.max_dlnc = max_dlnc
         self.max_relative_change_tolerance = max_relative_change_tolerance
         self.max_residual_tolerance = max_residual_tolerance
+        self.update_mineral_surface_area = update_mineral_surface_area
         self.use_full_geochemistry = use_full_geochemistry
         self.update_permeability = update_permeability
         self.update_porosity = update_porosity
+        self.no_bdot = no_bdot
+        self.no_checkpoint_act_coefs = no_checkpoint_act_coefs
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
         else:
@@ -6606,10 +6612,18 @@ class pdata(object):
                 chem.log_formulation = True
             elif key == 'use_full_geochemistry':
                 chem.use_full_geochemistry = True
+            elif key in ['activity_water', 'activity_h2o']:
+                chem.activity_water = True
             elif key == 'update_porosity':
                 chem.update_porosity = True
             elif key == 'update_permeability':
                 chem.update_permeability = True
+            elif key == 'update_mineral_surface_area':
+                chem.update_mineral_surface_area = True
+            elif key == 'no_bdot':
+                chem.no_bdot = True
+            elif key == 'no_checkpoint_act_coefs':
+                chem.no_checkpoint_act_coefs = True
             elif key == 'activity_coefficients':
                 chem.activity_coefficients = self.splitter(line)
             elif key == 'truncate_concentration':
@@ -6778,8 +6792,16 @@ class pdata(object):
             outfile.write('  DATABASE ' + c.database + '\n')
         if c.log_formulation:
             outfile.write('  LOG_FORMULATION\n')
+        if c.activity_water:
+            outfile.write('  ACTIVITY_WATER\n')
         if c.use_full_geochemistry:
             outfile.write('  USE_FULL_GEOCHEMISTRY\n')
+        if c.update_mineral_surface_area:
+            outfile.write('  UPDATE_MINERAL_SURFACE_AREA\n')
+        if c.no_bdot:
+            outfile.write('  NO_BDOT\n')
+        if c.no_checkpoint_act_coefs:
+            outfile.write('  NO_CHECPOINT_ACT_COEFS\n')
         if c.truncate_concentration:
             outfile.write('  TRUNCATE_CONCENTRATION ' +
                             c.truncate_concentration + '\n' )

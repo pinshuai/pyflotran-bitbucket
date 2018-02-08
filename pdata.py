@@ -216,7 +216,7 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
 geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
                                              'one_way_coupled']
 
-eos_fluidnames_allowed = ['WATER', 'GAS']
+eos_fluid_names_allowed = ['WATER', 'GAS']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'restart',
@@ -2538,8 +2538,8 @@ class peos(Frozen):
     """
     Class for specifiying equation of state (EOS).
 
-    :param fluidname: Selects the type of fluid (either water or gas).
-    :type fluidname: string
+    :param fluid_name: Selects the type of fluid (either water or gas).
+    :type fluid_name: string
     :param fluid_density: Specifies option for fluid density including 
      "default", "constant", "linear" and "exponential" options with optional 
      trailing floats.  (e.g. to specify constant density of 1000 use 
@@ -2553,20 +2553,20 @@ class peos(Frozen):
     :type fluid_enthalpy: list
     """
 
-    def __init__(self, fluidname=None, fluid_density=['DEFAULT'],
-                 fluid_viscosity=None, fluid_enthalpy=None):
-        if fluidname is None:
-            fluidname = []
+    def __init__(self, fluid_name=None, fluid_density=['DEFAULT'],
+                 fluid_viscosity=None, fluid_enthalpy=None, 
+                 fluid_henrys_constant=None):
         if fluid_density is None:
             fluid_density = []
         if fluid_viscosity is None:
             fluid_viscosity = []
         if fluid_enthalpy is None:
             fluid_enthalpy = []
-        self.fluidname = fluidname
+        self.fluid_name = fluid_name
         self.fluid_density = fluid_density
         self.fluid_viscosity = fluid_viscosity
         self.fluid_enthalpy = fluid_enthalpy
+        self.fluid_henrys_constant = fluid_henrys_constant
         self._freeze()
 
 
@@ -3102,7 +3102,7 @@ class pdata(object):
         if self.reference_stress_state.value_list:
             self._write_reference_stress_state(outfile)
 
-        if self.eos.fluidname:
+        if self.eos.fluid_name:
             self._write_eos(outfile)
 
         if self.nonuniform_velocity.filename:
@@ -3512,8 +3512,8 @@ class pdata(object):
         outfile.write('\n\n')
 
     def _write_eos(self, outfile):
-        if self.eos.fluidname.upper() in eos_fluidnames_allowed:
-            outfile.write('EOS ' + self.eos.fluidname.upper() + '\n')
+        if self.eos.fluid_name.upper() in eos_fluid_names_allowed:
+            outfile.write('EOS ' + self.eos.fluid_name.upper() + '\n')
             if self.eos.fluid_density:
                 if self.eos.fluid_density[0].upper() == 'CONSTANT' and \
                         len(self.eos.fluid_density) == 2:
@@ -3565,7 +3565,7 @@ class pdata(object):
 
             outfile.write('END\n\n')
         else:
-            raise PyFLOTRAN_ERROR('eos.fluidname: \'' + self.eos.fluidname +
+            raise PyFLOTRAN_ERROR('eos.fluid_name: \'' + self.eos.fluid_name +
                                   '\' is invalid')
 
     def _read_nonuniform_velocity(self, infile, line):

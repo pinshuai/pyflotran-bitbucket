@@ -2106,6 +2106,8 @@ class pchemistry(Frozen):
     :type m_kinetics_list: [pchemistry_m_kinetic]
     :param log_formulation:
     :type log_formulation: bool - True or False
+    :param use_full_geochemistry:
+    :type use_full_geochemistry: bool - True or False
     :param update_porosity:
     :type update_porosity: bool - True or False
     :param update_permeability:
@@ -2135,7 +2137,10 @@ class pchemistry(Frozen):
                  activity_coefficients=None, molal=False,
                  output_list=None, update_permeability=False,
                  update_porosity=False, active_gas_species_list=None,
-                 passive_gas_species_list=None, truncate_concentration=None):
+                 passive_gas_species_list=None, truncate_concentration=None,
+                 use_full_geochemistry=False, max_dlnc=None,
+                 max_residual_tolerance=None,
+                 max_relative_change_tolerance=None):
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2165,6 +2170,10 @@ class pchemistry(Frozen):
         self.m_kinetics_list = m_kinetics_list
         self.log_formulation = log_formulation
         self.truncate_concentration = truncate_concentration
+        self.max_dlnc = max_dlnc
+        self.max_relative_change_tolerance = max_relative_change_tolerance
+        self.max_residual_tolerance = max_residual_tolerance
+        self.use_full_geochemistry = use_full_geochemistry
         self.update_permeability = update_permeability
         self.update_porosity = update_porosity
         if pflotran_dir:
@@ -6595,6 +6604,8 @@ class pdata(object):
                 chem.database = self.splitter(line)  # take last word
             elif key == 'log_formulation':
                 chem.log_formulation = True
+            elif key == 'use_full_geochemistry':
+                chem.use_full_geochemistry = True
             elif key == 'update_porosity':
                 chem.update_porosity = True
             elif key == 'update_permeability':
@@ -6603,6 +6614,12 @@ class pdata(object):
                 chem.activity_coefficients = self.splitter(line)
             elif key == 'truncate_concentration':
                 chem.truncate_concentration = self.splitter(line)
+            elif key == 'max_dlnc':
+                chem.max_dlnc = self.splitter(line)
+            elif key == 'max_residual_tolerance':
+                chem.max_residual_tolerance = self.splitter(line)
+            elif key == 'max_relative_change_tolerance':
+                chem.max_relative_change_tolerance = self.splitter(line)
             elif key == 'molal':
                 chem.molal = True
             elif key == 'output':
@@ -6761,9 +6778,19 @@ class pdata(object):
             outfile.write('  DATABASE ' + c.database + '\n')
         if c.log_formulation:
             outfile.write('  LOG_FORMULATION\n')
+        if c.use_full_geochemistry:
+            outfile.write('  USE_FULL_GEOCHEMISTRY\n')
         if c.truncate_concentration:
             outfile.write('  TRUNCATE_CONCENTRATION ' +
                             c.truncate_concentration + '\n' )
+        if c.max_residual_tolerance:
+            outfile.write('  MAX_RESIDUAL_TOLERANCE ' +
+                            c.max_residual_tolerance + '\n' )
+        if c.max_relative_change_tolerance:
+            outfile.write('  MAX_RELATIVE_CHANGE_TOLERANCE ' +
+                            c.max_relative_change_tolerance + '\n' )
+        if c.max_dlnc:
+            outfile.write('  MAX_DLNC ' + c.max_dlnc + '\n')
         if c.update_permeability:
             outfile.write('  UPDATE_PERMEABILITY\n')
         if c.update_porosity:

@@ -137,11 +137,10 @@ print 'Number of successful files: ' + str(len(success_files))
 print 'Number of read fail files: ' + str(len(read_fail_files))
 print 'Number of write fail files: ' + str(len(write_fail_files))
 
-# read_with_error('/Users/satkarra/src/pflotran-dev-git/regression_tests/default//543/543_flow.in')
 
 # Compare regression outputs
 
-file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/general/1d_flux.in'
+file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/default/column/tracer.in'
 dir_name = os.path.dirname(file)
 read_and_write_with_error(file)
 new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]

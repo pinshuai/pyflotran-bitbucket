@@ -3588,8 +3588,12 @@ class pdata(object):
         key_bank = []
         while keep_reading0:  # Read through all cards
             line = infile.readline()  # get next line
+            if len(line.strip()) == 0:
+              continue
+            elif list(line)[0] in ['!', '#']:
+              continue
             key0 = line.strip().split()[0].lower()  # take first key word
-            # print key0
+            print key0
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
             elif key0 == 'process_models':
@@ -5195,6 +5199,10 @@ class pdata(object):
         keep_reading = True
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
+            if len(line.strip()) == 0:
+              continue
+            elif list(line)[0] in ['!', '#']:
+              continue
             key = line.strip().split()[0].lower()  # take first  key word
             word = line.strip().split()[-1].lower()
             if key == 'default':
@@ -5205,6 +5213,10 @@ class pdata(object):
                 keep_reading1 = True
                 while keep_reading1:
                     line = infile.readline()
+                    if len(line.strip()) == 0:
+                      continue
+                    elif list(line)[0] in ['!', '#']:
+                      continue
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'alpha':
                         characteristic_curves.sf_alpha = \
@@ -6399,10 +6411,8 @@ class pdata(object):
             outfile.write('  CHECKPOINT\n')
             if checkpoint.time_list:
                 outfile.write('    TIMES ')
-                outfile.write(checkpoint.time_list[-1].lower())
-                outfile.write(' ')
-                for i in range(len(checkpoint.time_list) - 1):
-                    outfile.write(str(checkpoint.time_list[i]).lower() + ' ')
+                for val in checkpoint.time_list:
+                    outfile.write(val.lower() + ' ')
                 outfile.write('\n')
             if checkpoint.periodic_time_list:
                 outfile.write('    PERIODIC TIME ')

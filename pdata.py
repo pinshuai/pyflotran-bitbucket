@@ -3593,7 +3593,6 @@ class pdata(object):
             elif list(line)[0] in ['!', '#']:
               continue
             key0 = line.strip().split()[0].lower()  # take first key word
-            print key0
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
             elif key0 == 'process_models':

@@ -1831,7 +1831,8 @@ class pflow(Frozen):
 
     def __init__(self, name='', units_list=None, iphase=None,
                  sync_timestep_with_update=False, datum=None,
-                 datum_type='', varlist=None, gradient=None, pm='',
+                 datum_type='', datum_time_unit=None, 
+                 varlist=None, gradient=None, pm='',
                  gradient_type=''):
 
         if datum is None:
@@ -1853,6 +1854,7 @@ class pflow(Frozen):
         self.datum_type = datum_type
         self.gradient = gradient
         self.gradient_type = gradient_type
+        self.datum_time_unit = datum_time_unit
         self.pm = pm
         self._freeze()
 
@@ -2590,6 +2592,8 @@ class pdata(object):
         self.nonuniform_velocity = pnonuniform_velocity()
         self.overwrite_restart_flow_params = False
         self.overwrite_restart_transport = False
+        self.initialize_flow_from_file = None
+        self.initialize_transport_from_file = None
         self.isothermal = False
         self.multiple_continuum = False
         self.regression = pregression()
@@ -3011,6 +3015,7 @@ class pdata(object):
             keep_reading = True
             while keep_reading:
                 p_line = get_next_line()
+                # print p_line
                 if not p_line:
                     keep_reading = False
                 if len(p_line.strip()) == 0:
@@ -3022,6 +3027,10 @@ class pdata(object):
                     self.overwrite_restart_flow_params = True
                 if card == 'overwrite_restart_transport':
                     self.overwrite_restart_transport = True
+                if card == 'initialize_flow_from_file':
+                    self.initialize_flow_from_file = p_line.split()[1]
+                if card == 'initialize_transport_from_file':
+                    self.initialize_transport_from_file = p_line.split()[1]
                 if card == 'isothermal':
                     self.isothermal = True
                 if card == 'skip':
@@ -3125,6 +3134,12 @@ class pdata(object):
 
         if self.overwrite_restart_transport:
             self._write_overwrite_restart_transport(outfile)
+
+        if self.initialize_flow_from_file is not None:
+            self._write_initialize_flow_from_file(outfile)
+
+        if self.initialize_transport_from_file is not None:
+            self._write_initialize_transport_from_file(outfile)
 
         if self.isothermal:
             self._write_isothermal(outfile)
@@ -3630,8 +3645,11 @@ class pdata(object):
         key_bank = []
         while keep_reading0:  # Read through all cards
             line = infile.readline()  # get next line
+            if len(line.strip()) == 0:
+              continue
+            elif list(line)[0] in ['!', '#']:
+              continue
             key0 = line.strip().split()[0].lower()  # take first key word
-            # print key0
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
             elif key0 == 'process_models':
@@ -3884,6 +3902,14 @@ class pdata(object):
     def _write_overwrite_restart_transport(self, outfile):
         outfile.write('OVERWRITE_RESTART_TRANSPORT' + '\n\n')
 
+    def _write_initialize_flow_from_file(self, outfile):
+        outfile.write('INITIALIZE_FLOW_FROM_FILE ' +
+          self.initialize_flow_from_file + '\n\n')
+
+    def _write_initialize_transport_from_file(self, outfile):
+        outfile.write('INITIALIZE_TRANSPORT_FROM_FILE ' +
+          self.initialize_transport_from_file + '\n\n')
+
     def _write_isothermal(self, outfile):
         outfile.write('ISOTHERMAL' + '\n\n')
 
@@ -4021,7 +4047,7 @@ class pdata(object):
                 outfile.write(' ' + grid.symmetry_type + '\n')
             elif grid.symmetry_type == 'spherical':
                 outfile.write(' ' + grid.symmetry_type + '\n')
-            if grid.lower_bounds:
+            if grid.lower_bounds[0] is not None:
                 if grid.symmetry_type == 'cartesian' or \
                         grid.symmetry_type == '':
                     outfile.write('  BOUNDS\n')
@@ -4067,7 +4093,7 @@ class pdata(object):
                         if j % 5 == 4 and j < len(grid.dz) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
-                    outfile.write('  END\n')
+                    outfile.write('  /\n')
                 elif grid.symmetry_type == 'cylindrical':  # cylindrical, DXYZ grid
                     for j in range(len(grid.dx)):  # for x or r
                         outfile.write('    ' + strD(grid.dx[j]))
@@ -4085,7 +4111,7 @@ class pdata(object):
                         if j % 5 == 4 and j < len(grid.dz) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
-                    outfile.write('  END\n')
+                    outfile.write('  /\n')
                 elif grid.symmetry_type == 'spherical':
                     raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
                                           grid.symmetry_type +
@@ -5237,6 +5263,10 @@ class pdata(object):
         keep_reading = True
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
+            if len(line.strip()) == 0:
+              continue
+            elif list(line)[0] in ['!', '#']:
+              continue
             key = line.strip().split()[0].lower()  # take first  key word
             word = line.strip().split()[-1].lower()
             if key == 'default':
@@ -5247,6 +5277,10 @@ class pdata(object):
                 keep_reading1 = True
                 while keep_reading1:
                     line = infile.readline()
+                    if len(line.strip()) == 0:
+                      continue
+                    elif list(line)[0] in ['!', '#']:
+                      continue
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'alpha':
                         characteristic_curves.sf_alpha = \
@@ -5731,6 +5765,8 @@ class pdata(object):
                         # check all pflow_variable object by name to
                         # determine correct assignment
                         for substring in tstring2:
+                            if substring in ['!']:
+                                break
                             # Checks all values/types on this line
                             for var in flow.varlist:
                                 # var represents a pflow_variable object
@@ -5747,13 +5783,32 @@ class pdata(object):
                 flow.sync_timestep_with_update = True
             elif key == 'datum':
                 # Assign file_name with list of d_dx, d_dy, d_dz values.
-                if line.strip().split()[1].upper() == 'FILE':
+                if line.strip().split()[1].lower() == 'file':
                     flow.datum_type = 'file'
                     flow.datum = line.split()[1]
-                if line.strip().split()[1].upper() == '':
-                    flow.datum_type = 'DATASET'
+                elif line.strip().split()[1].lower() == '':
+                    flow.datum_type = 'dataset'
                     flow.datum = line.split()[1]
                 # Assign d_dx, d_dy, d_dz values
+                elif line.strip().split()[1].lower() == 'list':
+                    flow.datum_type = 'list'
+                    keep_reading1 = True
+                    while keep_reading1:
+                        line = infile.readline()
+                        if len(list(line)) == 0:
+                            continue
+                        if list(line)[0] in ['!', '#']:
+                            continue
+                        val = line.strip().split()[0].lower()
+                        if val == 'time_units':
+                            flow.datum_time_unit = line.strip().split()[1]
+                        elif val in ['/', 'end']:
+                            keep_reading1 = False
+                        else:
+                            temp_list = [floatD(line.split()[0]), floatD(
+                                line.split()[1]), floatD(line.split()[2]),
+                                floatD(line.split()[3])]     
+                            flow.datum.append(temp_list)
                 else:
                     temp_list = [floatD(line.split()[1]), floatD(
                         line.split()[2]), floatD(line.split()[3])]
@@ -6033,28 +6088,6 @@ class pdata(object):
                 if flow.sync_timestep_with_update:
                     outfile.write('  SYNC_TIMESTEP_WITH_UPDATE\n')
 
-                if flow.datum:  # error-checking not yet added
-                    outfile.write('  DATUM')
-
-                    if isinstance(flow.datum, str):
-                        if flow.datum_type == 'file':
-                            outfile.write(' FILE ')
-                        if flow.datum_type == 'dataset':
-                            outfile.write(' DATASET ')
-                        outfile.write(flow.datum)
-                    elif all(isinstance(elem, list) for elem in flow.datum):
-                        # Checks if list of lists
-                        # Applies if datum is a list of [d_dx, d_dy, d_dz]
-                        # write out d_dx, d_dy, d_dz
-                        raise PyFLOTRAN_ERROR('DATUM LIST not implemented. ' +
-                                              'Contact Satish if you need it.')
-                    else:  # only a single list
-                        outfile.write(' ')
-                        outfile.write(strD(flow.datum[0]) + ' ')
-                        outfile.write(strD(flow.datum[1]) + ' ')
-                        outfile.write(strD(flow.datum[2]))
-                    outfile.write('\n')
-                # Following code is paired w/ this statement.
                 outfile.write('  TYPE\n')
                 # variable name and type from lists go here
                 for a_flow in flow.varlist:
@@ -6074,6 +6107,37 @@ class pdata(object):
                     outfile.write('\n')
 
                 outfile.write('  /\n')
+
+                if flow.datum:  # error-checking not yet added
+                    outfile.write('  DATUM')
+
+                    if isinstance(flow.datum, str):
+                        if flow.datum_type == 'file':
+                            outfile.write(' FILE ')
+                        if flow.datum_type == 'dataset':
+                            outfile.write(' DATASET ')
+                        outfile.write(flow.datum)
+                    elif flow.datum_type == 'list':
+                        outfile.write(' LIST\n')
+                        if flow.datum_time_unit is not None:
+                            outfile.write('    ')
+                            outfile.write('TIME_UNITS ' + \
+                                flow.datum_time_unit.lower() + '\n')
+                        for val in flow.datum:
+                            outfile.write('      ')
+                            outfile.write(strD(val[0]) + ' ') # time values
+                            outfile.write(strD(val[1]) + ' ')
+                            outfile.write(strD(val[2]) + ' ')
+                            outfile.write(strD(val[3]) + '\n')
+                        outfile.write('    /\n')
+                    else:  # only a single list
+                        outfile.write(' ')
+                        outfile.write(strD(flow.datum[0]) + ' ')
+                        outfile.write(strD(flow.datum[1]) + ' ')
+                        outfile.write(strD(flow.datum[2]))
+                        outfile.write('\n')
+                # Following code is paired w/ this statement.
+
                 if flow.iphase:
                     outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
                 if flow.gradient:
@@ -6086,7 +6150,7 @@ class pdata(object):
                 # variable name and values from lists along with units go here
                 for a_flow in flow.varlist:
                     if a_flow.valuelist:
-                        outfile.write('    ' + a_flow.name.upper())
+                        outfile.write('  ' + a_flow.name.upper())
                         if isinstance(a_flow.valuelist[0], str):
                             if a_flow.valuelist[0] == 'file':
                                 outfile.write(' FILE ' + a_flow.valuelist[1])
@@ -6441,10 +6505,8 @@ class pdata(object):
             outfile.write('  CHECKPOINT\n')
             if checkpoint.time_list:
                 outfile.write('    TIMES ')
-                outfile.write(checkpoint.time_list[-1].lower())
-                outfile.write(' ')
-                for i in range(len(checkpoint.time_list) - 1):
-                    outfile.write(str(checkpoint.time_list[i]).lower() + ' ')
+                for val in checkpoint.time_list:
+                    outfile.write(val.lower() + ' ')
                 outfile.write('\n')
             if checkpoint.periodic_time_list:
                 outfile.write('    PERIODIC TIME ')

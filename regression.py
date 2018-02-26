@@ -140,7 +140,7 @@ print 'Number of write fail files: ' + str(len(write_fail_files))
 
 # Compare regression outputs
 
-file = '/Users/satkarra/src/pflotran-dev-git/regression_tests/default/column/mineral_prefactor.in'
+file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/543/543_flow.in'
 dir_name = os.path.dirname(file)
 read_and_write_with_error(file)
 new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]

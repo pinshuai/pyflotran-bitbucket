@@ -264,7 +264,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'geomechanics_subsurface_coupling', 'geomechanics_time',
               'geomechanics_region', 'geomechanics_condition',
               'geomechanics_boundary_condition', 'geomechanics_strata',
-              'geomechanics_material_property', 'geomechanics_output']
+              'geomechanics_material_property', 'geomechanics_output',
+              'eos']
 
 headers = dict(zip(cards, headers))
 
@@ -2555,7 +2556,8 @@ class peos(Frozen):
 
     def __init__(self, fluid_name=None, fluid_density=['DEFAULT'],
                  fluid_viscosity=None, fluid_enthalpy=None, 
-                 fluid_henrys_constant=None):
+                 fluid_henrys_constant=None, fluid_test=None,
+                 fluid_formula_weight=None):
         if fluid_density is None:
             fluid_density = []
         if fluid_viscosity is None:
@@ -2567,6 +2569,8 @@ class peos(Frozen):
         self.fluid_viscosity = fluid_viscosity
         self.fluid_enthalpy = fluid_enthalpy
         self.fluid_henrys_constant = fluid_henrys_constant
+        self.fluid_test = fluid_test
+        self.fluid_formula_weight = fluid_formula_weight
         self._freeze()
 
 
@@ -2980,7 +2984,8 @@ class pdata(object):
                             self._read_boundary_condition,
                             self._read_strata,
                             self._read_geomechanics_prop,
-                            self._read_geomechanics_output],
+                            self._read_geomechanics_output,
+                            self._read_eos],
                            ))
 
         # associate each card name with
@@ -3052,7 +3057,8 @@ class pdata(object):
                                 'geomechanics_boundary_condition',
                                 'geomechanics_strata',
                                 'strata', 'geomechanics_material_property',
-                                'geomechanics_output']:
+                                'geomechanics_output',
+                                'eos']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -3510,6 +3516,42 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('reference_stress_state' +
                                   ' must have 6 components')
         outfile.write('\n\n')
+
+    def _read_eos(self, infile, line):
+        keep_reading = True
+        eos = peos()
+        if line.strip().split()[0].lower() == 'eos':
+            eos.fluid_name = line.strip().split()[-1].lower()
+
+        if eos.fluid_name not in ['water', 'gas']:
+            PyFLOTRAN_ERROR('Unknown fluid under EOS!')
+
+        while keep_reading:  # read through all cards
+            line = infile.readline()  # get next line
+            key = line.strip().split()[0].lower()  # take first keyword
+            if key == 'density':
+                for val in line.strip().split()[1:]:
+                    eos.fluid_density.append(val.lower())
+            elif key == 'enthalpy':
+                for val in line.strip().split()[1:]:
+                    eos.fluid_enthalpy.append(val.lower())
+            elif key == 'viscosity':
+                for val in line.strip().split()[1:]:
+                    eos.fluid_viscosity.append(val.lower())
+            elif key == 'test':
+                for val in line.strip().split()[1:]:
+                    eos.fluid_test.append(val.lower())
+            elif key == 'henrys_constant':
+                if eos.fluid_name not in ['gas']:
+                    PyFLOTRAN_ERROR('henrys_constant can only be set for fluid set to gas!')
+                for val in line.strip().split()[1:]:
+                    eos.fluid_henrys_constant.append(val.lower())
+            elif key == 'formula_weight':
+                if eos.fluid_name not in ['gas']:
+                    PyFLOTRAN_ERROR('formula_weight can only be set for fluid set to gas!')
+                eos.fluid_formula_weight = line.strip().split()[1]
+            elif key in ['/', 'end']:
+                keep_reading = False
 
     def _write_eos(self, outfile):
         if self.eos.fluid_name.upper() in eos_fluid_names_allowed:

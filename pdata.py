@@ -216,7 +216,16 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
 geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
                                              'one_way_coupled']
 
-eos_fluid_names_allowed = ['WATER', 'GAS']
+eos_fluid_names_allowed = ['water', 'gas']
+
+eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
+                             'rks']
+
+eos_enthalpy_types_allowed = ['constant', 'ideal', 'default']
+
+eos_viscosity_types_allowed = ['constant', 'default']
+
+eos_henrys_types_allowed = ['constant', 'default']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'restart',
@@ -232,7 +241,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
          'geomechanics_boundary_condition', 'geomechanics_strata',
          'geomechanics_time', 'geomechanics_material_property',
-         'geomechanics_output']
+         'geomechanics_output', 'eos']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -249,7 +258,7 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics time', 'geomechanics region',
            'geomechanics condition', 'geomechanics boundary condition',
            'geomechanics strata', 'geomechanics time',
-           'geomechanics material property', 'geomechanics output']
+           'geomechanics material property', 'geomechanics output', 'eos']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression',
@@ -2559,7 +2568,7 @@ class peos(Frozen):
     def __init__(self, fluid_name=None, fluid_density=['DEFAULT'],
                  fluid_viscosity=None, fluid_enthalpy=None, 
                  fluid_henrys_constant=None, fluid_test=None,
-                 fluid_formula_weight=None):
+                 fluid_formula_weight=None, rks=None):
         if fluid_density is None:
             fluid_density = []
         if fluid_viscosity is None:
@@ -2573,8 +2582,36 @@ class peos(Frozen):
         self.fluid_henrys_constant = fluid_henrys_constant
         self.fluid_test = fluid_test
         self.fluid_formula_weight = fluid_formula_weight
+        self.rks = rks
         self._freeze()
 
+class prks(Frozen):
+    """
+    Class for RKS density EOS.
+
+    :param hydrogen: set to 'hydrogen' or 'non-hydrogen'.
+    :type fluid_name: string
+    :param tc: critical temperature
+    :type tc: float
+    :param pc: critical pressure
+    :type pc: float
+    :param ac: acentric factor
+    :type ac: float
+    :param a: omegaa value
+    :type a: float
+    :param b: omegab value
+    :type b: float
+    """
+
+    def __init__(self, hydrogen=None, tc=None, pc=None, ac=None,
+                 a=None, b=None):
+        self.hydrogen = hydrogen
+        self.tc = tc
+        self.ac = ac
+        self.pc = pc
+        self.a = a
+        self.b = b
+        self._freeze()
 
 class pdata(object):
     """
@@ -2630,7 +2667,7 @@ class pdata(object):
         self.geomech_output = pgeomech_output()
         self.geomech_regression = pgeomech_regression()
         self.reference_stress_state = preference_stress_state()
-        self.eos = peos()
+        self.eoslist = []
 
         # run object
         self._path = ppath(parent=self)
@@ -3117,7 +3154,7 @@ class pdata(object):
         if self.reference_stress_state.value_list:
             self._write_reference_stress_state(outfile)
 
-        if self.eos.fluid_name:
+        if self.eoslist:
             self._write_eos(outfile)
 
         if self.nonuniform_velocity.filename:
@@ -3291,7 +3328,7 @@ class pdata(object):
                          pflow_variable, pinitial_condition,
                          pboundary_condition, psource_sink, pstrata,
                          ptransport, pconstraint, pconstraint_concentration,
-                         psecondary_continuum, pfluid]
+                         psecondary_continuum, pfluid, peos]
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
@@ -3323,6 +3360,8 @@ class pdata(object):
             self._add_nsolver(obj, overwrite)
         if isinstance(obj, pfluid):
             self._add_fluid(obj, overwrite)
+        if isinstance(obj, peos):
+            self._add_eos(obj, overwrite)
         if isinstance(obj, pregion):
             self._add_region(obj, overwrite)
         if isinstance(obj, pobservation):
@@ -3534,96 +3573,201 @@ class pdata(object):
 
     def _read_eos(self, infile, line):
         keep_reading = True
-        eos = peos()
+        eos = peos(fluid_density=None,fluid_enthalpy=None,fluid_henrys_constant=None)
         if line.strip().split()[0].lower() == 'eos':
             eos.fluid_name = line.strip().split()[-1].lower()
 
-        if eos.fluid_name not in ['water', 'gas']:
+        if eos.fluid_name not in eos_fluid_names_allowed:
             PyFLOTRAN_ERROR('Unknown fluid under EOS!')
 
         while keep_reading:  # read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'density':
-                for val in line.strip().split()[1:]:
-                    eos.fluid_density.append(val.lower())
+                den_type = line.strip().split()[1].lower()
+                if den_type in eos_density_types_allowed:
+                    eos.fluid_density.append(den_type)
+                    if den_type == 'rks':
+                        eos.rks = prks()
+                        keep_reading1 = True
+                        while keep_reading1:
+                            line1 = infile.readline()
+                            key1 = line1.strip().split()[0].lower()  # take first keyword
+                            if key1 in ['hydrogen', 'non-hydrogen']:
+                                eos.rks.hydrogen=key1
+                            elif key1 in ['tc', 'critical_temperature']:
+                                print key1
+                                eos.rks.tc = floatD(line1.strip().split()[1])
+                            elif key1 in ['pc', 'critical_pressure']:
+                                eos.rks.pc = floatD(line1.strip().split()[1])
+                            elif key1 in ['acentric_factor', 'ac']:
+                                eos.rks.ac = floatD(line1.strip().split()[1])
+                            elif key1 in ['omegaa', 'a']: 
+                                eos.rks.a = floatD(line1.strip().split()[1])
+                            elif key1 in ['omegab', 'b']:
+                                eos.rks.b = floatD(line1.strip().split()[1])
+                            elif key1 in ['/', 'end']:
+                                keep_reading1 = False
+                    elif len(line.strip().split()) > 2:
+                        for val in line.strip().split()[2:]:
+                            eos.fluid_density.append(floatD(val))
+                else:
+                    raise PyFLOTRAN_ERROR('Unknown EOS density type')
             elif key == 'enthalpy':
-                for val in line.strip().split()[1:]:
-                    eos.fluid_enthalpy.append(val.lower())
+                enthalpy_type = line.strip().split()[1].lower()
+                if enthalpy_type in eos_enthalpy_types_allowed:
+                    eos.fluid_enthalpy.append(enthalpy_type)
+                    if len(line.strip().split()) > 2:
+                        for val in line.strip().split()[2:]:
+                            eos.fluid_enthalpy.append(floatD(val))
+                else:
+                    raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')      
             elif key == 'viscosity':
-                for val in line.strip().split()[1:]:
-                    eos.fluid_viscosity.append(val.lower())
+                visc_type = line.strip().split()[1].lower()
+                if visc_type in eos_viscosity_types_allowed:
+                    eos.fluid_viscosity.append(visc_type)
+                    if len(line.strip().split()) > 2:
+                        for val in line.strip().split()[2:]:
+                            eos.fluid_viscosity.append(floatD(val))
             elif key == 'test':
                 for val in line.strip().split()[1:]:
-                    eos.fluid_test.append(val.lower())
+                    eos.fluid_test.append(val)
             elif key == 'henrys_constant':
                 if eos.fluid_name not in ['gas']:
                     PyFLOTRAN_ERROR('henrys_constant can only be set for fluid set to gas!')
-                for val in line.strip().split()[1:]:
-                    eos.fluid_henrys_constant.append(val.lower())
+                henrys_type = line.strip().split()[1]
+                if henrys_type in eos_henrys_types_allowed:
+                    eos.fluid_henrys_constant.append(henrys_type)
+                    if len(line.strip().split()) > 2:
+                        for val in line.strip().split()[2:]:
+                            eos.fluid_henrys_constant.append(floatD(val))
             elif key == 'formula_weight':
                 if eos.fluid_name not in ['gas']:
                     PyFLOTRAN_ERROR('formula_weight can only be set for fluid set to gas!')
-                eos.fluid_formula_weight = line.strip().split()[1]
+                eos.fluid_formula_weight = floatD(line.strip().split()[1])
             elif key in ['/', 'end']:
                 keep_reading = False
+        self.add(eos)
 
-    def _write_eos(self, outfile):
-        if self.eos.fluid_name.upper() in eos_fluid_names_allowed:
-            outfile.write('EOS ' + self.eos.fluid_name.upper() + '\n')
-            if self.eos.fluid_density:
-                if self.eos.fluid_density[0].upper() == 'CONSTANT' and \
-                        len(self.eos.fluid_density) == 2:
-                    outfile.write('  DENSITY ' +
-                                  self.eos.fluid_density[0].upper() + ' '
-                                  + strD(self.eos.fluid_density[1]) + '\n')
-                elif self.eos.fluid_density[0].upper() == 'EXPONENTIAL' and \
-                        len(self.eos.fluid_density) == 4:
-                    outfile.write('  DENSITY '
-                                  + self.eos.fluid_density[0].upper() + ' '
-                                  + strD(self.eos.fluid_density[1]) + ' '
-                                  + strD(self.eos.fluid_density[2]) + ' '
-                                  + strD(self.eos.fluid_density[3]) + '\n')
-                elif self.eos.fluid_density[0].upper() == 'LINEAR' and \
-                        len(self.eos.fluid_density) == 4:
-                    outfile.write('  DENSITY '
-                                  + self.eos.fluid_density[0].upper() + ' '
-                                  + strD(self.eos.fluid_density[1]) + ' '
-                                  + strD(self.eos.fluid_density[2]) + ' '
-                                  + strD(self.eos.fluid_density[3]) + '\n')
-                elif self.eos.fluid_density[0].upper() == 'DEFAULT':
-                    outfile.write('  DENSITY DEFAULT\n')
+    def _write_eos(self, outfile): 
+        self._header(outfile, headers['eos'])
+        for eos in self.eoslist:
+            if eos.fluid_name.lower() in eos_fluid_names_allowed:
+                outfile.write('EOS ' + eos.fluid_name.upper() + '\n')
+                if eos.fluid_density:
+                    if eos.fluid_density[0].upper() == 'RKS':
+                        outfile.write('  DENSITY ' +
+                                      eos.fluid_density[0].upper() + '\n')
+                        outfile.write('    ' +
+                                      eos.rks.hydrogen.upper() + '\n')
+                        outfile.write('    TC ' + 
+                                      strD(eos.rks.tc) + '\n')
+                        outfile.write('    PC ' + 
+                                      strD(eos.rks.pc) + '\n')
+                        outfile.write('    AC ' + 
+                                      strD(eos.rks.ac) + '\n')
+                        outfile.write('    OMEGAA ' + 
+                                      strD(eos.rks.a) + '\n')
+                        outfile.write('    OMEGAB ' + 
+                                      strD(eos.rks.b) + '\n')   
+                        outfile.write('  /\n')          
+                    elif eos.fluid_density[0].upper() == 'CONSTANT' and \
+                            len(eos.fluid_density) == 2:
+                        outfile.write('  DENSITY ' +
+                                      eos.fluid_density[0].upper() + ' '
+                                      + strD(eos.fluid_density[1]) + '\n')
+                    elif eos.fluid_density[0].upper() == 'EXPONENTIAL' and \
+                            len(eos.fluid_density) == 4:
+                        outfile.write('  DENSITY '
+                                      + eos.fluid_density[0].upper() + ' '
+                                      + strD(eos.fluid_density[1]) + ' '
+                                      + strD(eos.fluid_density[2]) + ' '
+                                      + strD(eos.fluid_density[3]) + '\n')
+                    elif eos.fluid_density[0].upper() == 'LINEAR' and \
+                            len(eos.fluid_density) == 4:
+                        outfile.write('  DENSITY '
+                                      + eos.fluid_density[0].upper() + ' '
+                                      + strD(eos.fluid_density[1]) + ' '
+                                      + strD(eos.fluid_density[2]) + ' '
+                                      + strD(eos.fluid_density[3]) + '\n')
+                    elif eos.fluid_density[0].upper() == 'DEFAULT':
+                        outfile.write('  DENSITY DEFAULT\n')
+                    else:
+                        raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
+                                              strD(eos.fluid_density) +
+                                              '\' has incorrect keyword or incorrect length')
+
+                if eos.fluid_viscosity:
+                    if eos.fluid_viscosity[0].upper() == 'CONSTANT' and \
+                            len(eos.fluid_viscosity) == 2:
+                        outfile.write('  VISCOSITY ' +
+                                      eos.fluid_viscosity[0].upper() + ' '
+                                      + strD(eos.fluid_viscosity[1]) + '\n')
+                    elif eos.fluid_viscosity[0].upper() == 'DEFAULT' and \
+                            len(eos.fluid_viscosity) == 1:
+                        outfile.write('  VISCOSITY ' +
+                                      eos.fluid_viscosity[0].upper() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' +
+                                              strD(eos.fluid_viscosity) +
+                                              '\' has incorrect keyword or incorrect length')
+
+                if eos.fluid_enthalpy:
+                    if eos.fluid_enthalpy[0].upper() == 'CONSTANT' and \
+                            len(eos.fluid_enthalpy) == 2:
+                        outfile.write('  ENTHALPY ' +
+                                      eos.fluid_enthalpy[0].upper() + ' '
+                                      + strD(eos.fluid_enthalpy[1]) + '\n')
+                    elif eos.fluid_enthalpy[0].upper() == 'DEFAULT' and \
+                            len(eos.fluid_enthalpy) == 1:
+                        outfile.write('  ENTHALPY ' +
+                                      eos.fluid_enthalpy[0].upper() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' +
+                                              strD(eos.fluid_enthalpy) +
+                                              '\' has incorrect keyword or incorrect length')
+                if eos.fluid_henrys_constant:
+                    if eos.fluid_henrys_constant[0].upper() == 'CONSTANT' and \
+                            len(eos.fluid_henrys_constant) == 2:
+                        outfile.write('  HENRYS_CONSTANT ' +
+                                      eos.fluid_henrys_constant[0].upper() + ' '
+                                      + strD(eos.fluid_henrys_constant[1]) + '\n')
+                    elif eos.fluid_henrys_constant[0].upper() == 'DEFAULT' and \
+                            len(eos.fluid_henrys_constant) == 1:
+                        outfile.write('  HENRYS_CONSTANT ' +
+                                      eos.fluid_henrys_constant[0].upper() + '\n')
+                    else:
+                        raise PyFLOTRAN_ERROR('eos.fluid_henrys_constant: \'' +
+                                              strD(eos.fluid_henrys_constant) +
+                                              '\' has incorrect keyword or incorrect length')
+                if eos.fluid_formula_weight:
+                    outfile.write('  FORMULA_WEIGHT ' + strD(eos.fluid_formula_weight) + '\n')
+                outfile.write('END\n\n')
+            else:
+                raise PyFLOTRAN_ERROR('eos.fluid_name: \'' + eos.fluid_name +
+                                      '\' is invalid')
+
+    def _add_eos(self, eos=peos(), overwrite=False):
+        # check if fluid already exists
+        if isinstance(eos, peos):
+            if eos.fluid_name in self.eos.keys():
+                if not overwrite:
+                    warning = 'WARNING: Fluid property phase ' + \
+                              str(fluid.phase) + '\' already exists. ' + \
+                              'fluid will not be defined, ' + \
+                              'use overwrite = True in add()' + \
+                              ' to overwrite the old fluid.'
+                    print warning,
+                    build_warnings.append(warning)
+                    return
                 else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
-                                          strD(self.eos.fluid_density) +
-                                          '\' has incorrect keyword or incorrect length')
+                    self.delete(self.eos[eos.fluid_name])
 
-            if self.eos.fluid_viscosity:
-                if self.eos.fluid_viscosity[0].upper() == 'CONSTANT' and \
-                        len(self.eos.fluid_viscosity) == 2:
-                    outfile.write('  VISCOSITY ' +
-                                  self.eos.fluid_viscosity[0].upper() + ' '
-                                  + strD(self.eos.fluid_viscosity[1]) + '\n')
-                else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' +
-                                          strD(self.eos.fluid_viscosity) +
-                                          '\' has incorrect keyword or incorrect length')
+        if eos not in self.eoslist:
+            self.eoslist.append(eos)
 
-            if self.eos.fluid_enthalpy:
-                if self.eos.fluid_enthalpy[0].upper() == 'CONSTANT' and \
-                        len(self.eos.fluid_enthalpy) == 2:
-                    outfile.write('  ENTHALPY ' +
-                                  self.eos.fluid_enthalpy[0].upper() + ' '
-                                  + strD(self.eos.fluid_enthalpy[1]) + '\n')
-                else:
-                    raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' +
-                                          strD(self.eos.fluid_enthalpy) +
-                                          '\' has incorrect keyword or incorrect length')
-
-            outfile.write('END\n\n')
-        else:
-            raise PyFLOTRAN_ERROR('eos.fluid_name: \'' + self.eos.fluid_name +
-                                  '\' is invalid')
+    def _delete_eos(self, eos=peos()):
+        self.eoslist.remove(eos)
 
     def _read_nonuniform_velocity(self, infile, line):
         filename = ''
@@ -7766,6 +7910,11 @@ class pdata(object):
     def fluid(self):
         return dict([flu.phase, flu] for flu in self.fluidlist
                     if flu.phase)
+
+    @property
+    def eos(self):
+        return dict([eos.fluid_name, eos] for eos in self.eoslist
+                    if eos.fluid_name)
 
     @property
     def char(self):

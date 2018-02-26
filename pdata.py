@@ -3596,7 +3596,6 @@ class pdata(object):
                             if key1 in ['hydrogen', 'non-hydrogen']:
                                 eos.rks.hydrogen=key1
                             elif key1 in ['tc', 'critical_temperature']:
-                                print key1
                                 eos.rks.tc = floatD(line1.strip().split()[1])
                             elif key1 in ['pc', 'critical_pressure']:
                                 eos.rks.pc = floatD(line1.strip().split()[1])

@@ -157,7 +157,7 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
 
 allowed_compressibility_functions = ['linear_model', 'bandis', 'turner']
 
-allowed_soil_compressibility_functions = ['CONSTANT', 'LEIJNSE', 'DEFAULT',
+allowed_soil_compressibility_functions = ['LINEAR', 'LEIJNSE', 'DEFAULT',
                                           'BRAGFLO', 'WIPP', 'QUADRATIC']
 
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
@@ -1245,26 +1245,30 @@ class pcheckpoint(Frozen):
     """
     Class for specifying checkpoint options.
 
-    :param time_list: List of times followed by units. e.g., [1,10,100,'y']
-    :type frequency: list
-    :param periodic_time: checkpoint at every n times. 
-     Give value and unit as a list. e.g., [1,'y']
-    :type periodic_time: list
+    :param time_list: List of times. e.g., [1,10,100]
+    :type time_list: list 
+    :param time_unit: Unit of times in time_list
+    :type time_unit: str
+    :param periodic_time: checkpoint at every prescribed time. 
+    :type periodic_time: float
+    :param periodic_time_unit: unit for periodic_time
+    :type periodic_time_unit: str
     :param periodic_timestep: checkpoint at every n timesteps
     :type periodic_timestep: int
     :param format: specify 'binary' or 'hdf5'.
     :type format: str
     """
 
-    def __init__(self, time_list=[], periodic_time_list=[], periodic_timestep=None,
-                 format=[]):
+    def __init__(self, time_list=[], periodic_time=None, 
+                 periodic_timestep=None, format=None, periodic_time_unit=None,
+                 time_unit=None):
         if time_list is None:
             time_list = []
-        if periodic_time_list is None:
-            periodic_time_list = []
+        self.periodic_time = periodic_time
         self.time_list = time_list
-        self.periodic_time_list = periodic_time_list
         self.periodic_timestep = periodic_timestep
+        self.periodic_time_unit = periodic_time_unit
+        self.time_unit = time_unit
         self.format = format
         self._freeze()
 
@@ -3874,23 +3878,23 @@ class pdata(object):
                 if len_extract > 3:
                     simulation.restart.time_unit = extract[3]
             elif key0 == 'checkpoint':
-                simulation.checkpoint = pcheckpoint(time_list=[],
-                    periodic_time_list=[], format=[])
+                simulation.checkpoint = pcheckpoint(time_list=None)
                 keep_reading = True
                 while keep_reading:  # Read through all cards
                     line = infile.readline()  # get next line
                     key = line.strip().split()[0].lower()  # take first key word
-                    if 'times' in key:  
-                        for val in line.strip().split()[1:]:
-                            simulation.checkpoint.time_list.append(str(val))
+                    if 'times' in key:
+                        simulation.checkpoint.time_unit = line.strip().split()[1]  
+                        for val in line.strip().split()[2:]:
+                            simulation.checkpoint.time_list.append(floatD(val))
                     elif 'periodic' in key: 
                         if 'timestep' in line.strip().split()[1].lower():
-                            simulation.checkpoint.periodic_timestep = self.splitter(line)
+                            simulation.checkpoint.periodic_timestep = line.strip().split()[2]
                         else:
-                            for val in line.strip().split()[1:]:
-                                simulation.checkpoint.periodic_time_list.append(str(val))  
+                            simulation.checkpoint.periodic_time = line.strip().split()[3]  
+                            simulation.checkpoint.periodic_time_unit = line.strip().split()[2]  
                     elif 'format' in key:
-                        simulation.checkpoint.format.append(self.splitter(line))
+                        simulation.checkpoint.format = line.strip().split()[1]
                     elif key in ['/', 'end']:
                         keep_reading = False
             elif key0 in ['/', 'end']:
@@ -6643,29 +6647,32 @@ class pdata(object):
 
     def _write_checkpoint(self, outfile):
         checkpoint = self.simulation.checkpoint
-        if checkpoint.time_list or checkpoint.periodic_time_list \
+        if checkpoint.time_list or checkpoint.periodic_time \
                 or checkpoint.periodic_timestep:
             outfile.write('  CHECKPOINT\n')
             if checkpoint.time_list:
                 outfile.write('    TIMES ')
+                if checkpoint.time_unit is None:
+                    raise PyFLOTRAN_ERROR('times list unit is required!')
+                else:
+                    outfile.write(checkpoint.time_unit + ' ')
                 for val in checkpoint.time_list:
-                    outfile.write(val.lower() + ' ')
+                    outfile.write(strD(val) + ' ')
                 outfile.write('\n')
-            if checkpoint.periodic_time_list:
+            if checkpoint.periodic_time is not None:
                 outfile.write('    PERIODIC TIME ')
-                outfile.write(str(checkpoint.periodic_time_list[0]) + ' ')
-                if len(checkpoint.periodic_time_list) > 1:
-                    outfile.write(str(checkpoint.periodic_time_list[1]))
+                if checkpoint.periodic_time_unit is not None:
+                    outfile.write(str(checkpoint.periodic_time_unit) + ' ')
+                outfile.write(strD(checkpoint.periodic_time))
                 outfile.write('\n')
             if checkpoint.periodic_timestep:
                 outfile.write('    PERIODIC TIMESTEP ')
-                outfile.write(str(checkpoint.periodic_timestep))
+                outfile.write(strD(checkpoint.periodic_timestep))
                 outfile.write('\n')
-            if checkpoint.format:
-                for val in checkpoint.format:
-                    outfile.write('    FORMAT ')
-                    outfile.write(str(val).upper())
-                    outfile.write('\n')
+            if checkpoint.format is not None:
+                outfile.write('    FORMAT ')
+                outfile.write(checkpoint.format.upper())
+                outfile.write('\n')
             outfile.write('  /\n')
 
     def _write_restart(self, outfile):

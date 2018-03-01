@@ -101,17 +101,48 @@ output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
 
 velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr']
 
-output_variables_allowed = ['liquid_pressure', 'liquid_saturation',
-                            'liquid_density', 'liquid_mobility',
-                            'liquid_energy', 'liquid_mole_fractions',
-                            'gas_pressure', 'gas_saturation',
-                            'gas_density', 'gas_mobility',
-                            'gas_mole_fractions', 'air_pressure',
-                            'capillary_pressure', 'thermodynamic_state',
-                            'temperature', 'residual', 'porosity',
-                            'mineral_porosity', 'permeability',
-                            'permeability_x', 'permeability_y',
-                            'permeability_z', 'mineral_porosity']
+output_variables_allowed = ['permeability',
+                             'permeability_x',
+                             'permeability_y',
+                             'permeability_z',
+                             'liquid_pressure',
+                             'liquid_saturation',
+                             'liquid_density',
+                             'liquid_head',
+                             'liquid_mobility',
+                             'liquid_energy',
+                             'liquid_mole_fractions',
+                             'liquid_mass_fractions',
+                             'gas_pressure',
+                             'gas_saturation',
+                             'gas_density',
+                             'gas_mobility',
+                             'gas_energy',
+                             'gas_mole_fractions',
+                             'gas_mass_fractions',
+                             'air_pressure',
+                             'capillary_pressure',
+                             'vapor_pressure',
+                             'saturation_pressure',
+                             'thermodynamic_state',
+                             'temperature',
+                             'residual',
+                             'porosity',
+                             'effective_porosity',
+                             'tortuosity',
+                             'mineral_porosity',
+                             'maximum_pressure',
+                             'oil_pressure',
+                             'oil_saturation',
+                             'oil_density',
+                             'oil_mobility',
+                             'oil_energy',
+                             'soil_compressibility',
+                             'soil_reference_pressure',
+                             'process_id',
+                             'volume',
+                             'material_id']
+
 
 # saturation_function - allowed strings
 saturation_function_types_allowed = ['VAN_GENUCHTEN', 'BROOKS_COREY',
@@ -1482,6 +1513,62 @@ class pnsolver(Frozen):
         self._freeze()
 
 
+class poutput_file(Frozen):
+    """
+    Class for output file type -- snapshot or observation or mass balance
+
+    :param format: output format, works only with snapshot file, e.g., hdf5
+    :type format: str
+    :param times_per_file: specify the number of time snapshots that will go in
+     one file
+    :type format: int
+    :param print_initial: set to False if you don't want to print initial state
+    :type format: bool
+    :param print_final: set to False if you don't want to print final state
+    :type format: bool
+    :param periodic_timestep: output at every specified time step value
+    :type format: float
+    :param periodic_time: output at every specified value of time
+    :type format: float
+    :param periodic_time_unit: unit of the periodic time value specified
+    :type format: str
+    :param time_list: list of times to print output
+    :type format: list of floats
+    :param time_unit: unit of the times list specified
+    :type format: str
+    :param periodic_observation_timestep: output of observation points and
+    mass balance at specified value of time step
+    :type periodic_observation_timestep: int
+    :param periodic_observation_time: output of observation points and 
+    mass balance at specified value of time
+    :type periodic_observation_time: float
+    :param periodic_observation_time_unit: unit of time specified in
+    periodic_observation_time
+    :type periodic_observation_time_unit: str
+    """
+    def __init__(self, format=None, times_per_file=None, print_initial=True,
+                 print_final=True, time_list=None, time_unit=None,
+                 periodic_timestep=None, periodic_time=None, 
+                 periodic_time_unit=None, periodic_observation_timestep=None,
+                 periodic_observation_time=None, 
+                 periodic_observation_time_unit=None)
+
+    if time_list is None:
+        time_list = []
+    self.time_list = time_list
+    self.format = format
+    self.times_per_file = times_per_file
+    self.print_initial = print_initial
+    self.print_final = print_final
+    self.time_unit = time_unit
+    self.periodic_timestep = periodic_timestep
+    self.periodic_time_unit = periodic_time_unit
+    self.periodic_time = periodic_time
+    self.periodic_observation_time = periodic_observation_time
+    self.periodic_observation_time_unit = periodic_observation_time_unit
+    self.periodic_observation_timestep = periodic_observation_timestep
+
+
 class poutput(Frozen):
     """
     Class for dumping simulation output.
@@ -1530,6 +1617,12 @@ class poutput(Frozen):
     :type mass_balance: bool - True or False
     :param variables_list: List of variables to be printed in the output file
     :type variables_list: [str]
+    :param snapshot_file: details of snapshot file
+    :type snapshot_file: poutput_file
+    :param observation_file: details of observation file
+    :type observation_file: poutput_file
+    :param mass_balance_file: details of mass balance file
+    :type mass_balance_file: poutput_file
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
@@ -1541,7 +1634,10 @@ class poutput(Frozen):
                  permeability=False, porosity=False,
                  velocities=False, velocity_at_center=False,
                  velocity_at_face=False, mass_balance=False,
-                 variables_list=None):
+                 variables_list=None, snapshot_file=poutput_file(),
+                 observation_file=poutput_file(),
+                 mass_balance_file=poutput_file()):
+
         if time_list is None:
             time_list = []
         if periodic_time is None:
@@ -1569,6 +1665,9 @@ class poutput(Frozen):
         self.variables_list = variables_list
         self.velocity_at_center = velocity_at_center
         self.velocity_at_face = velocity_at_face
+        self.observation_file = observation_file
+        self.mass_balance_file = mass_balance_file
+        self.snapshot_file = snapshot_file
         self._freeze()
 
 
@@ -5081,6 +5180,40 @@ class pdata(object):
                         raise PyFLOTRAN_ERROR(
                             'variable ' + str(key1) +
                             ' cannot be an output variable.')
+            elif key == 'snapshot_file':
+                keep_reading1 = True
+                while keep_reading1:
+                    line1 = infile.readline()
+                    key1 = line1.strip().split()[0].lower()
+                    if key1 == 'format':
+                        if len(line1.strip().split()) == 2:
+                            output.snapshot_file.format = line1.strip().split()[1].lower()
+                        elif len(line1.strip().split()) == 3:
+                            output.snapshot_file.format = line1.strip().split()[1:2].lower()
+                        elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
+                            output.snapshot_file.format = line1.strip().split()[1:2].lower()
+                            output.snapshot_file.times_per_file = line1.strip().split()[4]
+                    elif key1 == 'no_print_initial':
+                        output.snapshot_file.print_initial = False
+                    elif key1 == 'no_print_final':
+                        output.snapshot_file.print_final = False
+                    elif key1 == 'variables':
+                        keep_reading2 = True
+                        while keep_reading2:
+                            line2 = infile.readline()
+                            key2 = line2.strip().split()[0].lower()
+                            output.snapshot.variable.append(key2)
+                            if key2 in ['/', 'end']:
+                                keep_reading2 = False
+                    elif key1 = 'times':
+                        unit = line1.strip().split()[1].lower()
+                        if unit in time_units_allowed:
+                            output.snapshot_file.time_unit = unit
+                        else:
+                            raise PyFLOTRAN_ERROR('Unknown time unit for snapshot times!')
+                        for val in line1.strip().split()[2:].lower():
+                            output.snapshot_file.time_list.append(floatD(val))
+
             elif key in ['/', 'end']:
                 keep_reading = False
 

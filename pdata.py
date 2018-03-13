@@ -1328,7 +1328,7 @@ class psimulation(Frozen):
 
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
                  subsurface_transport='', mode='richards',
-                 flowtran_coupling='', geomechanics_subsurface='geomech',
+                 flowtran_coupling='', geomechanics_subsurface='',
                  isothermal='', max_pressure_change='',
                  max_saturation_change='',
                  max_temperature_change='', max_concentration_change='',

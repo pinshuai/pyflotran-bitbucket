@@ -4032,7 +4032,7 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
                                           grid.symmetry_type +
                                           '\' not currently supported')
-            else:  # DXYZ is only written if no bounds are provided
+            elif len(grid.dx) != 0:  # DXYZ is only written if no bounds are provided
                 outfile.write('  DXYZ\n')
                 if grid.symmetry_type == 'cartesian' or \
                         grid.symmetry_type == '':  # cartesian, DXYZ grid
@@ -4074,6 +4074,8 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
                                           grid.symmetry_type +
                                           '\' not supported')
+            else:
+                raise PyFLOTRAN_ERROR('either bounds or dx, dy, dz have to be specified!')
             outfile.write('  NXYZ' + ' ')
             if grid.lower_bounds:  # write NXYZ for BOUNDS 
                 for i in range(3):

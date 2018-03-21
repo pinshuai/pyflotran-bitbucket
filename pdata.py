@@ -1713,13 +1713,13 @@ class pcharacteristic_curves(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='default',
-                 saturation_function_type='van_genuchten', sf_alpha=None,
-                 sf_m=None, sf_lambda=None,
-                 sf_liquid_residual_saturation=None,
+                 saturation_function_type='van_genuchten', sf_alpha=1.e-4,
+                 sf_m=0.5, sf_lambda=None,
+                 sf_liquid_residual_saturation=0.1,
                  sf_gas_residual_saturation=None, max_capillary_pressure=None,
                  smooth='', power=None, default=False,
                  liquid_permeability_function_type='mualem_vg_liq',
-                 lpf_m=None, lpf_lambda=None,
+                 lpf_m=0.1, lpf_lambda=None,
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
@@ -2722,7 +2722,7 @@ class pdata(object):
 
         # set up and check path to executable
         exe_path = ppath()
-        exe_path.filename = exe
+        exe_path.filename = pflotran_dir + '/src/pflotran/pflotran'
 
         # if can't find the executable, halt
         if not os.path.isfile(exe_path.full_path):
@@ -6649,33 +6649,33 @@ class pdata(object):
 
     def _write_checkpoint(self, outfile):
         checkpoint = self.simulation.checkpoint
-        if checkpoint.time_list or checkpoint.periodic_time \
-                or checkpoint.periodic_timestep:
-            outfile.write('  CHECKPOINT\n')
-            if checkpoint.time_list:
-                outfile.write('    TIMES ')
-                if checkpoint.time_unit is None:
-                    raise PyFLOTRAN_ERROR('times list unit is required!')
-                else:
-                    outfile.write(checkpoint.time_unit + ' ')
-                for val in checkpoint.time_list:
-                    outfile.write(strD(val) + ' ')
-                outfile.write('\n')
-            if checkpoint.periodic_time is not None:
-                outfile.write('    PERIODIC TIME ')
-                if checkpoint.periodic_time_unit is not None:
-                    outfile.write(str(checkpoint.periodic_time_unit) + ' ')
-                outfile.write(strD(checkpoint.periodic_time))
-                outfile.write('\n')
-            if checkpoint.periodic_timestep:
-                outfile.write('    PERIODIC TIMESTEP ')
-                outfile.write(strD(checkpoint.periodic_timestep))
-                outfile.write('\n')
-            if checkpoint.format is not None:
-                outfile.write('    FORMAT ')
-                outfile.write(checkpoint.format.upper())
-                outfile.write('\n')
-            outfile.write('  /\n')
+        #if checkpoint.time_list or checkpoint.periodic_time \
+         #       or checkpoint.periodic_timestep:
+        outfile.write('  CHECKPOINT\n')
+        if checkpoint.time_list:
+            outfile.write('    TIMES ')
+            if checkpoint.time_unit is None:
+                raise PyFLOTRAN_ERROR('times list unit is required!')
+            else:
+                outfile.write(checkpoint.time_unit + ' ')
+            for val in checkpoint.time_list:
+                outfile.write(strD(val) + ' ')
+            outfile.write('\n')
+        if checkpoint.periodic_time is not None:
+            outfile.write('    PERIODIC TIME ')
+            if checkpoint.periodic_time_unit is not None:
+                outfile.write(str(checkpoint.periodic_time_unit) + ' ')
+            outfile.write(strD(checkpoint.periodic_time))
+            outfile.write('\n')
+        if checkpoint.periodic_timestep:
+            outfile.write('    PERIODIC TIMESTEP ')
+            outfile.write(strD(checkpoint.periodic_timestep))
+            outfile.write('\n')
+        if checkpoint.format is not None:
+            outfile.write('    FORMAT ')
+            outfile.write(checkpoint.format.upper())
+            outfile.write('\n')
+        outfile.write('  /\n')
 
     def _write_restart(self, outfile):
         restart = self.simulation.restart

@@ -102,46 +102,46 @@ output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
 velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr']
 
 output_variables_allowed = ['permeability',
-                             'permeability_x',
-                             'permeability_y',
-                             'permeability_z',
-                             'liquid_pressure',
-                             'liquid_saturation',
-                             'liquid_density',
-                             'liquid_head',
-                             'liquid_mobility',
-                             'liquid_energy',
-                             'liquid_mole_fractions',
-                             'liquid_mass_fractions',
-                             'gas_pressure',
-                             'gas_saturation',
-                             'gas_density',
-                             'gas_mobility',
-                             'gas_energy',
-                             'gas_mole_fractions',
-                             'gas_mass_fractions',
-                             'air_pressure',
-                             'capillary_pressure',
-                             'vapor_pressure',
-                             'saturation_pressure',
-                             'thermodynamic_state',
-                             'temperature',
-                             'residual',
-                             'porosity',
-                             'effective_porosity',
-                             'tortuosity',
-                             'mineral_porosity',
-                             'maximum_pressure',
-                             'oil_pressure',
-                             'oil_saturation',
-                             'oil_density',
-                             'oil_mobility',
-                             'oil_energy',
-                             'soil_compressibility',
-                             'soil_reference_pressure',
-                             'process_id',
-                             'volume',
-                             'material_id']
+                            'permeability_x',
+                            'permeability_y',
+                            'permeability_z',
+                            'liquid_pressure',
+                            'liquid_saturation',
+                            'liquid_density',
+                            'liquid_head',
+                            'liquid_mobility',
+                            'liquid_energy',
+                            'liquid_mole_fractions',
+                            'liquid_mass_fractions',
+                            'gas_pressure',
+                            'gas_saturation',
+                            'gas_density',
+                            'gas_mobility',
+                            'gas_energy',
+                            'gas_mole_fractions',
+                            'gas_mass_fractions',
+                            'air_pressure',
+                            'capillary_pressure',
+                            'vapor_pressure',
+                            'saturation_pressure',
+                            'thermodynamic_state',
+                            'temperature',
+                            'residual',
+                            'porosity',
+                            'effective_porosity',
+                            'tortuosity',
+                            'mineral_porosity',
+                            'maximum_pressure',
+                            'oil_pressure',
+                            'oil_saturation',
+                            'oil_density',
+                            'oil_mobility',
+                            'oil_energy',
+                            'soil_compressibility',
+                            'soil_reference_pressure',
+                            'process_id',
+                            'volume',
+                            'material_id']
 
 
 # saturation_function - allowed strings
@@ -1290,7 +1290,7 @@ class pcheckpoint(Frozen):
     :type format: str
     """
 
-    def __init__(self, time_list=[], periodic_time=None, 
+    def __init__(self, time_list=[], periodic_time=None,
                  periodic_timestep=None, format=None, periodic_time_unit=None,
                  time_unit=None):
         if time_list is None:
@@ -1546,27 +1546,37 @@ class poutput_file(Frozen):
     periodic_observation_time
     :type periodic_observation_time_unit: str
     """
+
     def __init__(self, format=None, times_per_file=None, print_initial=True,
                  print_final=True, time_list=None, time_unit=None,
-                 periodic_timestep=None, periodic_time=None, 
+                 periodic_timestep=None, periodic_time=None,
                  periodic_time_unit=None, periodic_observation_timestep=None,
-                 periodic_observation_time=None, 
-                 periodic_observation_time_unit=None)
+                 periodic_observation_time=None,
+                 periodic_observation_time_unit=None, variables_list=None,
+                 total_mass_regions = None):
 
-    if time_list is None:
-        time_list = []
-    self.time_list = time_list
-    self.format = format
-    self.times_per_file = times_per_file
-    self.print_initial = print_initial
-    self.print_final = print_final
-    self.time_unit = time_unit
-    self.periodic_timestep = periodic_timestep
-    self.periodic_time_unit = periodic_time_unit
-    self.periodic_time = periodic_time
-    self.periodic_observation_time = periodic_observation_time
-    self.periodic_observation_time_unit = periodic_observation_time_unit
-    self.periodic_observation_timestep = periodic_observation_timestep
+        if time_list is None:
+            time_list = []
+        if variables_list is None:
+            variables_list = []
+        if total_mass_regions is None:
+            total_mass_regions = []
+
+        self.time_list = time_list
+        self.format = format
+        self.times_per_file = times_per_file
+        self.print_initial = print_initial
+        self.print_final = print_final
+        self.time_unit = time_unit
+        self.periodic_timestep = periodic_timestep
+        self.periodic_time_unit = periodic_time_unit
+        self.periodic_time = periodic_time
+        self.periodic_observation_time = periodic_observation_time
+        self.periodic_observation_time_unit = periodic_observation_time_unit
+        self.periodic_observation_timestep = periodic_observation_timestep
+        self.variables_list = variables_list
+        self.total_mass_regions = total_mass_regions
+        self._freeze()
 
 
 class poutput(Frozen):
@@ -1943,7 +1953,7 @@ class pflow(Frozen):
 
     def __init__(self, name='', units_list=None, iphase=None,
                  sync_timestep_with_update=False, datum=None,
-                 datum_type='', datum_time_unit=None, 
+                 datum_type='', datum_time_unit=None,
                  varlist=None, gradient=None, pm='',
                  gradient_type=''):
 
@@ -2669,7 +2679,7 @@ class peos(Frozen):
     """
 
     def __init__(self, fluid_name=None, fluid_density=['DEFAULT'],
-                 fluid_viscosity=None, fluid_enthalpy=None, 
+                 fluid_viscosity=None, fluid_enthalpy=None,
                  fluid_henrys_constant=None, fluid_test=None,
                  fluid_formula_weight=None, rks=None):
         if fluid_density is None:
@@ -2687,6 +2697,7 @@ class peos(Frozen):
         self.fluid_formula_weight = fluid_formula_weight
         self.rks = rks
         self._freeze()
+
 
 class prks(Frozen):
     """
@@ -2715,6 +2726,7 @@ class prks(Frozen):
         self.a = a
         self.b = b
         self._freeze()
+
 
 class pdata(object):
     """
@@ -3676,7 +3688,8 @@ class pdata(object):
 
     def _read_eos(self, infile, line):
         keep_reading = True
-        eos = peos(fluid_density=None,fluid_enthalpy=None,fluid_henrys_constant=None)
+        eos = peos(fluid_density=None, fluid_enthalpy=None,
+                   fluid_henrys_constant=None)
         if line.strip().split()[0].lower() == 'eos':
             eos.fluid_name = line.strip().split()[-1].lower()
 
@@ -3695,16 +3708,17 @@ class pdata(object):
                         keep_reading1 = True
                         while keep_reading1:
                             line1 = infile.readline()
-                            key1 = line1.strip().split()[0].lower()  # take first keyword
+                            # take first keyword
+                            key1 = line1.strip().split()[0].lower()
                             if key1 in ['hydrogen', 'non-hydrogen']:
-                                eos.rks.hydrogen=key1
+                                eos.rks.hydrogen = key1
                             elif key1 in ['tc', 'critical_temperature']:
                                 eos.rks.tc = floatD(line1.strip().split()[1])
                             elif key1 in ['pc', 'critical_pressure']:
                                 eos.rks.pc = floatD(line1.strip().split()[1])
                             elif key1 in ['acentric_factor', 'ac']:
                                 eos.rks.ac = floatD(line1.strip().split()[1])
-                            elif key1 in ['omegaa', 'a']: 
+                            elif key1 in ['omegaa', 'a']:
                                 eos.rks.a = floatD(line1.strip().split()[1])
                             elif key1 in ['omegab', 'b']:
                                 eos.rks.b = floatD(line1.strip().split()[1])
@@ -3723,7 +3737,7 @@ class pdata(object):
                         for val in line.strip().split()[2:]:
                             eos.fluid_enthalpy.append(floatD(val))
                 else:
-                    raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')      
+                    raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')
             elif key == 'viscosity':
                 visc_type = line.strip().split()[1].lower()
                 if visc_type in eos_viscosity_types_allowed:
@@ -3736,7 +3750,8 @@ class pdata(object):
                     eos.fluid_test.append(val)
             elif key == 'henrys_constant':
                 if eos.fluid_name not in ['gas']:
-                    PyFLOTRAN_ERROR('henrys_constant can only be set for fluid set to gas!')
+                    PyFLOTRAN_ERROR(
+                        'henrys_constant can only be set for fluid set to gas!')
                 henrys_type = line.strip().split()[1]
                 if henrys_type in eos_henrys_types_allowed:
                     eos.fluid_henrys_constant.append(henrys_type)
@@ -3745,13 +3760,14 @@ class pdata(object):
                             eos.fluid_henrys_constant.append(floatD(val))
             elif key == 'formula_weight':
                 if eos.fluid_name not in ['gas']:
-                    PyFLOTRAN_ERROR('formula_weight can only be set for fluid set to gas!')
+                    PyFLOTRAN_ERROR(
+                        'formula_weight can only be set for fluid set to gas!')
                 eos.fluid_formula_weight = floatD(line.strip().split()[1])
             elif key in ['/', 'end']:
                 keep_reading = False
         self.add(eos)
 
-    def _write_eos(self, outfile): 
+    def _write_eos(self, outfile):
         self._header(outfile, headers['eos'])
         for eos in self.eoslist:
             if eos.fluid_name.lower() in eos_fluid_names_allowed:
@@ -3762,17 +3778,17 @@ class pdata(object):
                                       eos.fluid_density[0].upper() + '\n')
                         outfile.write('    ' +
                                       eos.rks.hydrogen.upper() + '\n')
-                        outfile.write('    TC ' + 
+                        outfile.write('    TC ' +
                                       strD(eos.rks.tc) + '\n')
-                        outfile.write('    PC ' + 
+                        outfile.write('    PC ' +
                                       strD(eos.rks.pc) + '\n')
-                        outfile.write('    AC ' + 
+                        outfile.write('    AC ' +
                                       strD(eos.rks.ac) + '\n')
-                        outfile.write('    OMEGAA ' + 
+                        outfile.write('    OMEGAA ' +
                                       strD(eos.rks.a) + '\n')
-                        outfile.write('    OMEGAB ' + 
-                                      strD(eos.rks.b) + '\n')   
-                        outfile.write('  /\n')          
+                        outfile.write('    OMEGAB ' +
+                                      strD(eos.rks.b) + '\n')
+                        outfile.write('  /\n')
                     elif eos.fluid_density[0].upper() == 'CONSTANT' and \
                             len(eos.fluid_density) == 2:
                         outfile.write('  DENSITY ' +
@@ -3832,7 +3848,8 @@ class pdata(object):
                     if eos.fluid_henrys_constant[0].upper() == 'CONSTANT' and \
                             len(eos.fluid_henrys_constant) == 2:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[0].upper() + ' '
+                                      eos.fluid_henrys_constant[
+                                          0].upper() + ' '
                                       + strD(eos.fluid_henrys_constant[1]) + '\n')
                     elif eos.fluid_henrys_constant[0].upper() == 'DEFAULT' and \
                             len(eos.fluid_henrys_constant) == 1:
@@ -3843,7 +3860,8 @@ class pdata(object):
                                               strD(eos.fluid_henrys_constant) +
                                               '\' has incorrect keyword or incorrect length')
                 if eos.fluid_formula_weight:
-                    outfile.write('  FORMULA_WEIGHT ' + strD(eos.fluid_formula_weight) + '\n')
+                    outfile.write('  FORMULA_WEIGHT ' +
+                                  strD(eos.fluid_formula_weight) + '\n')
                 outfile.write('END\n\n')
             else:
                 raise PyFLOTRAN_ERROR('eos.fluid_name: \'' + eos.fluid_name +
@@ -3892,9 +3910,9 @@ class pdata(object):
         while keep_reading0:  # Read through all cards
             line = infile.readline()  # get next line
             if len(line.strip()) == 0:
-              continue
+                continue
             elif list(line)[0] in ['!', '#']:
-              continue
+                continue
             key0 = line.strip().split()[0].lower()  # take first key word
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
@@ -3981,17 +3999,22 @@ class pdata(object):
                 keep_reading = True
                 while keep_reading:  # Read through all cards
                     line = infile.readline()  # get next line
-                    key = line.strip().split()[0].lower()  # take first key word
+                    # take first key word
+                    key = line.strip().split()[0].lower()
                     if 'times' in key:
-                        simulation.checkpoint.time_unit = line.strip().split()[1]  
+                        simulation.checkpoint.time_unit = line.strip().split()[
+                            1]
                         for val in line.strip().split()[2:]:
                             simulation.checkpoint.time_list.append(floatD(val))
-                    elif 'periodic' in key: 
+                    elif 'periodic' in key:
                         if 'timestep' in line.strip().split()[1].lower():
-                            simulation.checkpoint.periodic_timestep = line.strip().split()[2]
+                            simulation.checkpoint.periodic_timestep = line.strip().split()[
+                                2]
                         else:
-                            simulation.checkpoint.periodic_time = line.strip().split()[3]  
-                            simulation.checkpoint.periodic_time_unit = line.strip().split()[2]  
+                            simulation.checkpoint.periodic_time = line.strip().split()[
+                                3]
+                            simulation.checkpoint.periodic_time_unit = line.strip().split()[
+                                2]
                     elif 'format' in key:
                         simulation.checkpoint.format = line.strip().split()[1]
                     elif key in ['/', 'end']:
@@ -4150,11 +4173,11 @@ class pdata(object):
 
     def _write_initialize_flow_from_file(self, outfile):
         outfile.write('INITIALIZE_FLOW_FROM_FILE ' +
-          self.initialize_flow_from_file + '\n\n')
+                      self.initialize_flow_from_file + '\n\n')
 
     def _write_initialize_transport_from_file(self, outfile):
         outfile.write('INITIALIZE_TRANSPORT_FROM_FILE ' +
-          self.initialize_transport_from_file + '\n\n')
+                      self.initialize_transport_from_file + '\n\n')
 
     def _write_isothermal(self, outfile):
         outfile.write('ISOTHERMAL' + '\n\n')
@@ -4363,7 +4386,7 @@ class pdata(object):
                                           grid.symmetry_type +
                                           '\' not supported')
             outfile.write('  NXYZ' + ' ')
-            if grid.lower_bounds:  # write NXYZ for BOUNDS 
+            if grid.lower_bounds:  # write NXYZ for BOUNDS
                 for i in range(3):
                     if grid.nxyz[i]:
                         outfile.write(strI(grid.nxyz[i]) + ' ')
@@ -5115,7 +5138,6 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first key word
-
             if key == 'times':
                 tstring = line.split()[1:]  # Turn into list, exempt 1st word
                 for t in tstring:
@@ -5185,14 +5207,19 @@ class pdata(object):
                 while keep_reading1:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
+                    print key1
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
-                            output.snapshot_file.format = line1.strip().split()[1].lower()
+                            output.snapshot_file.format = line1.strip().split()[
+                                1].lower()
                         elif len(line1.strip().split()) == 3:
-                            output.snapshot_file.format = line1.strip().split()[1:2].lower()
+                            output.snapshot_file.format = line1.strip().split()[
+                                1:2].lower()
                         elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
-                            output.snapshot_file.format = line1.strip().split()[1:2].lower()
-                            output.snapshot_file.times_per_file = line1.strip().split()[4]
+                            output.snapshot_file.format = line1.strip().split()[
+                                1:2].lower()
+                            output.snapshot_file.times_per_file = line1.strip().split()[
+                                4]
                     elif key1 == 'no_print_initial':
                         output.snapshot_file.print_initial = False
                     elif key1 == 'no_print_final':
@@ -5202,18 +5229,194 @@ class pdata(object):
                         while keep_reading2:
                             line2 = infile.readline()
                             key2 = line2.strip().split()[0].lower()
-                            output.snapshot.variable.append(key2)
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
-                    elif key1 = 'times':
+                            elif key2 in output_variables_allowed:
+                                output.snapshot_file.variables_list.append(
+                                    key2)
+                    elif key1 == 'times':
                         unit = line1.strip().split()[1].lower()
                         if unit in time_units_allowed:
                             output.snapshot_file.time_unit = unit
                         else:
-                            raise PyFLOTRAN_ERROR('Unknown time unit for snapshot times!')
-                        for val in line1.strip().split()[2:].lower():
+                            raise PyFLOTRAN_ERROR(
+                                'Unknown time unit for snapshot times!')
+                        for val in line1.strip().split()[2:]:
                             output.snapshot_file.time_list.append(floatD(val))
-
+                    elif key1 == 'periodic':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_timestep = int(
+                                self.splitter(line1))
+                    elif key1 == 'periodic_observation':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_observation_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            output.snapshot_file.periodic_observation_timestep = int(
+                                self.splitter(line1))
+                    elif key1 in ['/', 'end']:
+                        keep_reading1 = False
+            elif key == 'observation_file':
+                keep_reading1 = True
+                while keep_reading1:
+                    line1 = infile.readline()
+                    key1 = line1.strip().split()[0].lower()
+                    print key1
+                    if key1 == 'format':
+                        if len(line1.strip().split()) == 2:
+                            output.observation_file.format = line1.strip().split()[
+                                1].lower()
+                        elif len(line1.strip().split()) == 3:
+                            output.observation_file.format = line1.strip().split()[
+                                1:2].lower()
+                        elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
+                            output.observation_file.format = line1.strip().split()[
+                                1:2].lower()
+                            output.observation_file.times_per_file = line1.strip().split()[
+                                4]
+                    elif key1 == 'no_print_initial':
+                        output.observation_file.print_initial = False
+                    elif key1 == 'no_print_final':
+                        output.observation_file.print_final = False
+                    elif key1 == 'variables':
+                        keep_reading2 = True
+                        while keep_reading2:
+                            line2 = infile.readline()
+                            key2 = line2.strip().split()[0].lower()
+                            if key2 in ['/', 'end']:
+                                keep_reading2 = False
+                            elif key2 in output_variables_allowed:
+                                output.observation_file.variables_list.append(
+                                    key2)
+                    elif key1 == 'times':
+                        unit = line1.strip().split()[1].lower()
+                        if unit in time_units_allowed:
+                            output.observation_file.time_unit = unit
+                        else:
+                            raise PyFLOTRAN_ERROR(
+                                'Unknown time unit for observation times!')
+                        for val in line1.strip().split()[2:]:
+                            output.observation_file.time_list.append(
+                                floatD(val))
+                    elif key1 == 'periodic':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_timestep = int(
+                                self.splitter(line1))
+                    elif key1 == 'periodic_observation':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_observation_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            output.snapshot_file.periodic_observation_timestep = int(
+                                self.splitter(line1))                                
+                    elif key1 in ['/', 'end']:
+                        keep_reading1 = False
+            elif key == 'mass_balance_file':
+                keep_reading1 = True
+                while keep_reading1:
+                    line1 = infile.readline()
+                    key1 = line1.strip().split()[0].lower()
+                    print key1
+                    if key1 == 'format':
+                        if len(line1.strip().split()) == 2:
+                            output.mass_balance_file.format = line1.strip().split()[
+                                1].lower()
+                        elif len(line1.strip().split()) == 3:
+                            output.mass_balance_file.format = line1.strip().split()[
+                                1:2].lower()
+                        elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
+                            output.mass_balance_file.format = line1.strip().split()[
+                                1:2].lower()
+                            output.mass_balance_file.times_per_file = line1.strip().split()[
+                                4]
+                    elif key1 == 'no_print_initial':
+                        output.mass_balance_file.print_initial = False
+                    elif key1 == 'no_print_final':
+                        output.mass_balance_file.print_final = False
+                    elif key1 == 'variables':
+                        keep_reading2 = True
+                        while keep_reading2:
+                            line2 = infile.readline()
+                            key2 = line2.strip().split()[0].lower()
+                            if key2 in ['/', 'end']:
+                                keep_reading2 = False
+                            elif key2 in output_variables_allowed:
+                                output.mass_balance_file.variables_list.append(
+                                    key2)
+                    elif key1 == 'times':
+                        unit = line1.strip().split()[1].lower()
+                        if unit in time_units_allowed:
+                            output.mass_balance_file.time_unit = unit
+                        else:
+                            raise PyFLOTRAN_ERROR(
+                                'Unknown time unit for snapshot times!')
+                        for val in line1.strip().split()[2:]:
+                            output.mass_balance_file.time_list.append(
+                                floatD(val))
+                    elif key1 == 'periodic':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_timestep = int(
+                                self.splitter(line1))
+                    elif key1 == 'periodic_observation':
+                        tstring = line1.strip().split()[
+                            1].lower()  # Read the 2nd word
+                        if tstring == 'time':
+                            # 2nd from last word.
+                            output.snapshot_file.periodic_observation_time = floatD(
+                                line1.split()[-2])
+                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
+                                line1)  # last word
+                        elif tstring == 'timestep':
+                            output.snapshot_file.periodic_observation_timestep = int(
+                                self.splitter(line1)) 
+                    elif key1 == 'total_mass_regions':
+                        keep_reading2 = True
+                        while keep_reading2:
+                            line2 = infile.readline()
+                            key2 = line2.strip().split()[0].lower()
+                            if key2 in ['/', 'end']:
+                                keep_reading2 = False
+                            else:
+                                output.mass_balance_file.total_mass_regions.append(key2) 
+                    elif key1 in ['/', 'end']:
+                        keep_reading1 = False
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -5544,9 +5747,9 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             if len(line.strip()) == 0:
-              continue
+                continue
             elif list(line)[0] in ['!', '#']:
-              continue
+                continue
             key = line.strip().split()[0].lower()  # take first  key word
             word = line.strip().split()[-1].lower()
             if key == 'default':
@@ -5558,9 +5761,9 @@ class pdata(object):
                 while keep_reading1:
                     line = infile.readline()
                     if len(line.strip()) == 0:
-                      continue
+                        continue
                     elif list(line)[0] in ['!', '#']:
-                      continue
+                        continue
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'alpha':
                         characteristic_curves.sf_alpha = \
@@ -6087,7 +6290,7 @@ class pdata(object):
                         else:
                             temp_list = [floatD(line.split()[0]), floatD(
                                 line.split()[1]), floatD(line.split()[2]),
-                                floatD(line.split()[3])]     
+                                floatD(line.split()[3])]
                             flow.datum.append(temp_list)
                 else:
                     temp_list = [floatD(line.split()[1]), floatD(
@@ -6401,11 +6604,11 @@ class pdata(object):
                         outfile.write(' LIST\n')
                         if flow.datum_time_unit is not None:
                             outfile.write('    ')
-                            outfile.write('TIME_UNITS ' + \
-                                flow.datum_time_unit.lower() + '\n')
+                            outfile.write('TIME_UNITS ' +
+                                          flow.datum_time_unit.lower() + '\n')
                         for val in flow.datum:
                             outfile.write('      ')
-                            outfile.write(strD(val[0]) + ' ') # time values
+                            outfile.write(strD(val[0]) + ' ')  # time values
                             outfile.write(strD(val[1]) + ' ')
                             outfile.write(strD(val[2]) + ' ')
                             outfile.write(strD(val[3]) + '\n')
@@ -7191,13 +7394,13 @@ class pdata(object):
             outfile.write('  NO_CHECPOINT_ACT_COEFS\n')
         if c.truncate_concentration:
             outfile.write('  TRUNCATE_CONCENTRATION ' +
-                            c.truncate_concentration + '\n' )
+                          c.truncate_concentration + '\n')
         if c.max_residual_tolerance:
             outfile.write('  MAX_RESIDUAL_TOLERANCE ' +
-                            c.max_residual_tolerance + '\n' )
+                          c.max_residual_tolerance + '\n')
         if c.max_relative_change_tolerance:
             outfile.write('  MAX_RELATIVE_CHANGE_TOLERANCE ' +
-                            c.max_relative_change_tolerance + '\n' )
+                          c.max_relative_change_tolerance + '\n')
         if c.max_dlnc:
             outfile.write('  MAX_DLNC ' + c.max_dlnc + '\n')
         if c.update_permeability:

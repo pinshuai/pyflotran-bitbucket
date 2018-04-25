@@ -1521,21 +1521,21 @@ class poutput_file(Frozen):
     :type format: str
     :param times_per_file: specify the number of time snapshots that will go in
      one file
-    :type format: int
+    :type times_per_file: int
     :param print_initial: set to False if you don't want to print initial state
-    :type format: bool
+    :type print_initial: bool
     :param print_final: set to False if you don't want to print final state
-    :type format: bool
+    :type print_final: bool
     :param periodic_timestep: output at every specified time step value
-    :type format: float
+    :type periodic_timestep: float
     :param periodic_time: output at every specified value of time
-    :type format: float
+    :type periodic_time: float
     :param periodic_time_unit: unit of the periodic time value specified
-    :type format: str
+    :type periodic_time_unit: str
     :param time_list: list of times to print output
-    :type format: list of floats
+    :type time_list: list of floats
     :param time_unit: unit of the times list specified
-    :type format: str
+    :type time_unit: str
     :param periodic_observation_timestep: output of observation points and
     mass balance at specified value of time step
     :type periodic_observation_timestep: int
@@ -1545,6 +1545,12 @@ class poutput_file(Frozen):
     :param periodic_observation_time_unit: unit of time specified in
     periodic_observation_time
     :type periodic_observation_time_unit: str
+    :param variables_list: list of variables to be printed
+    :type variables_list: list of string
+    :param total_mass_regions: list of regions where total mass needs to be outputted
+    :type total_mass_regions: list of string
+    :param extend_hdf5_time_format: set to True to extend hdf5 time format
+    :type extend_hdf5_time_format: bool
     """
 
     def __init__(self, format=None, times_per_file=None, print_initial=True,
@@ -1634,6 +1640,8 @@ class poutput(Frozen):
     :type observation_file: poutput_file
     :param mass_balance_file: details of mass balance file
     :type mass_balance_file: poutput_file
+    :param time_units: Units of time
+    :type time_units: str
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.

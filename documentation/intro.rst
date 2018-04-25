@@ -90,6 +90,7 @@ Contributors
 - Daniel Birdsell, CU Boulder
 - Cory Kitay, PSU
 - Md Islam, CCNY
+- David Dempsey, Univ. of Auckland
 
 Acknowledgements
 ----------------

@@ -4389,7 +4389,8 @@ class pdata(object):
                                           grid.symmetry_type +
                                           '\' not supported')
             else:
-                raise PyFLOTRAN_ERROR('either bounds or dx, dy, dz have to be specified!')
+                raise PyFLOTRAN_ERROR(
+                    'either bounds or dx, dy, dz have to be specified!')
             outfile.write('  NXYZ' + ' ')
             if grid.lower_bounds:  # write NXYZ for BOUNDS
                 for i in range(3):
@@ -5218,10 +5219,13 @@ class pdata(object):
                             output.snapshot_file.format = line1.strip().split()[
                                 1].lower()
                         elif len(line1.strip().split()) == 3:
-                            output.snapshot_file.format = ' '.join(line1.strip().split()[1:3]).lower()
+                            output.snapshot_file.format = ' '.join(
+                                line1.strip().split()[1:3]).lower()
                         elif len(line1.strip().split()) > 3 and 'times_per_file' in [val.lower() for val in line1.strip().split()[1:]]:
-                            output.snapshot_file.format = ' '.join(line1.strip().split()[1:3]).lower()
-                            output.snapshot_file.times_per_file = line1.strip().split()[4]
+                            output.snapshot_file.format = ' '.join(
+                                line1.strip().split()[1:3]).lower()
+                            output.snapshot_file.times_per_file = line1.strip().split()[
+                                4]
                     elif key1 == 'no_print_initial':
                         output.snapshot_file.print_initial = False
                     elif key1 == 'no_print_final':
@@ -5463,10 +5467,11 @@ class pdata(object):
                                       str(output.screen_output) +
                                       ' is not bool.')
         if output.time_units:
-           if output.time_units in time_units_allowed:
-              outfile.write('  TIME_UNITS ' + output.time_units + '\n')
-           else:
-              raise PyFLOTRAN_ERROR(output.time_units + ' invalid time unit\n')
+            if output.time_units in time_units_allowed:
+                outfile.write('  TIME_UNITS ' + output.time_units + '\n')
+            else:
+                raise PyFLOTRAN_ERROR(
+                    output.time_units + ' invalid time unit\n')
         if output.screen_periodic:
             try:  # Error checking to ensure screen_periodic is int (integer).
                 output.screen_periodic = int(output.screen_periodic)
@@ -5629,16 +5634,17 @@ class pdata(object):
                 outfile.write('\n')
             if output.snapshot_file.extend_hdf5_time_format:
                 outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
-            outfile.write('  /\n')                    
+            outfile.write('  /\n')
         if output.observation_file:
             outfile.write('  OBSERVATION_FILE\n')
             if output.observation_file.format is not None:
-                raise PyFLOTRAN_ERROR('FORMAT cannot be specified with OBSERVATION_FILE')
+                raise PyFLOTRAN_ERROR(
+                    'FORMAT cannot be specified with OBSERVATION_FILE')
             if output.observation_file.print_final is False:
                 outfile.write('    NO_PRINT_FINAL\n')
             if output.observation_file.print_initial is False:
                 outfile.write('    NO_PRINT_INTIAL\n')
-            if output.observation_file.variables_list: 
+            if output.observation_file.variables_list:
                 outfile.write('    VARIABLES\n')
                 for variable in output.observation_file.variables_list:
                     if variable.lower() in output_variables_allowed:
@@ -5686,17 +5692,19 @@ class pdata(object):
                 outfile.write('\n')
             if output.observation_file.extend_hdf5_time_format:
                 outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
-            outfile.write('  /\n')                    
+            outfile.write('  /\n')
         if output.mass_balance_file:
             outfile.write('  MASS_BALANCE_FILE\n')
             if output.mass_balance_file.format is not None:
-                raise PyFLOTRAN_ERROR('FORMAT cannot be specified with MASS_BALANCE_FILE')
+                raise PyFLOTRAN_ERROR(
+                    'FORMAT cannot be specified with MASS_BALANCE_FILE')
             if output.mass_balance_file.print_final is False:
                 outfile.write('    NO_PRINT_FINAL\n')
             if output.mass_balance_file.print_initial is False:
                 outfile.write('    NO_PRINT_INTIAL\n')
-            if output.mass_balance_file.variables_list: 
-                raise PyFLOTRAN_ERROR('VARIABLES cannot be used with MASS_BALANCE_FILE')
+            if output.mass_balance_file.variables_list:
+                raise PyFLOTRAN_ERROR(
+                    'VARIABLES cannot be used with MASS_BALANCE_FILE')
             if output.mass_balance_file.total_mass_regions:
                 outfile.write('    TOTAL_MASS_REGIONS\n')
                 for region in output.mass_balance_file.total_mass_regions:
@@ -5737,7 +5745,7 @@ class pdata(object):
                 outfile.write('\n')
             if output.mass_balance_file.extend_hdf5_time_format:
                 outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
-            outfile.write('  /\n')                    
+            outfile.write('  /\n')
         outfile.write('END\n\n')
 
     def _read_fluid(self, infile):
@@ -7165,8 +7173,8 @@ class pdata(object):
 
     def _write_checkpoint(self, outfile):
         checkpoint = self.simulation.checkpoint
-        #if checkpoint.time_list or checkpoint.periodic_time \
-         #       or checkpoint.periodic_timestep:
+        # if checkpoint.time_list or checkpoint.periodic_time \
+        #       or checkpoint.periodic_timestep:
         outfile.write('  CHECKPOINT\n')
         if checkpoint.time_list:
             outfile.write('    TIMES ')

@@ -55,6 +55,7 @@ Newton Solver
 Output
 ------
 .. autoclass:: pdata.poutput
+.. autoclass:: pdata.poutput_file
 
 Fluid Properties
 ----------------

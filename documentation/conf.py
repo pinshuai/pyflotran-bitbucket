@@ -171,21 +171,36 @@ htmlhelp_basename = 'PyFLOTRANdoc'
 PREAMBLE = '\\usepackage{sectsty}'
 #\\allsectionsfont{\\fontfamily{times}\selectfont}'
 
+# latex_elements = {
+# # The paper size ('letterpaper' or 'a4paper').
+# #'papersize': 'letterpaper',
+
+# 'classoptions': ',oneside',
+# 'babel': '\\usepackage[english]{babel}',
+# # The font size ('10pt', '11pt' or '12pt').
+# 'pointsize': '11pt',
+# #'fontpkg':'\\usepackage{palatino}',
+# #'fontpkg':'',
+# 'fncychap':'\\usepackage[Sonny]{fncychap}',
+# 'fontenc':'\\usepackage[T1]{fontenc}',
+# 'preamble': PREAMBLE
+# # Additional stuff for the LaTeX preamble.
+# #'preamble':
+# }
+
 latex_elements = {
 # The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
 
-'classoptions': ',oneside',
-'babel': '\\usepackage[english]{babel}',
 # The font size ('10pt', '11pt' or '12pt').
-'pointsize': '11pt',
-#'fontpkg':'\\usepackage{palatino}',
-#'fontpkg':'',
-'fncychap':'\\usepackage[Sonny]{fncychap}',
-'fontenc':'\\usepackage[T1]{fontenc}',
-'preamble': PREAMBLE
+    'pointsize': '11pt',
+
 # Additional stuff for the LaTeX preamble.
-#'preamble':
+    'preamble': r'''
+        \usepackage{charter}
+        \usepackage[defaultsans]{lato}
+        \usepackage{inconsolata}
+    ''',
 }
 
 latex_additional_documents = ['sphinxbook.cls' ]

@@ -1277,10 +1277,10 @@ class pcheckpoint(Frozen):
     Class for specifying checkpoint options.
 
     :param time_list: List of times. e.g., [1,10,100]
-    :type time_list: list 
+    :type time_list: list
     :param time_unit: Unit of times in time_list
     :type time_unit: str
-    :param periodic_time: checkpoint at every prescribed time. 
+    :param periodic_time: checkpoint at every prescribed time.
     :type periodic_time: float
     :param periodic_time_unit: unit for periodic_time
     :type periodic_time_unit: str
@@ -1485,7 +1485,7 @@ class pnsolver(Frozen):
     :type dtol: float
     :param itol: Tolerance compared to infinity norm.
     :type itol: float
-    :param itol_update: Tolerance for updates based on infinity norm 
+    :param itol_update: Tolerance for updates based on infinity norm
     :type itol_update: float
     :param max_it: Cuts time step if the number of iterations exceed
      this value.
@@ -1536,18 +1536,19 @@ class poutput_file(Frozen):
     :type time_list: list of floats
     :param time_unit: unit of the times list specified
     :type time_unit: str
-    :param periodic_observation_timestep: output of observation points and
-    mass balance at specified value of time step
+    :param periodic_observation_timestep: output of observation points
+      and mass balance at specified value of time step
     :type periodic_observation_timestep: int
-    :param periodic_observation_time: output of observation points and 
-    mass balance at specified value of time
+    :param periodic_observation_time: output of observation points and
+      mass balance at specified value of time
     :type periodic_observation_time: float
     :param periodic_observation_time_unit: unit of time specified in
-    periodic_observation_time
+      periodic_observation_time
     :type periodic_observation_time_unit: str
     :param variables_list: list of variables to be printed
     :type variables_list: list of string
-    :param total_mass_regions: list of regions where total mass needs to be outputted
+    :param total_mass_regions: list of regions where total mass needs to be
+      outputted
     :type total_mass_regions: list of string
     :param extend_hdf5_time_format: set to True to extend hdf5 time format
     :type extend_hdf5_time_format: bool
@@ -2655,7 +2656,7 @@ class pgeomech_regression(Frozen):
 
 class preference_stress_state(Frozen):
     """
-    Class for specifiying uniform reference stress state used in 
+    Class for specifiying uniform reference stress state used in
     conjunction with BANDIS_UNCOUPLED keyword.
 
     :param value_list: List of stress components [xx yy zz xy yz zx]
@@ -2676,16 +2677,16 @@ class peos(Frozen):
 
     :param fluid_name: Selects the type of fluid (either water or gas).
     :type fluid_name: string
-    :param fluid_density: Specifies option for fluid density including 
-     "default", "constant", "linear" and "exponential" options with optional 
-     trailing floats.  (e.g. to specify constant density of 1000 use 
-     ['constant',1000]). 
+    :param fluid_density: Specifies option for fluid density including
+     "default", "constant", "linear" and "exponential" options with optional
+     trailing floats.  (e.g. to specify constant density of 1000 use
+     ['constant',1000]).
     :type fluid_density: list
-    :param fluid_viscosity: Specifies option for fluid viscosity. 
-     "Constant" is currently supported. 
+    :param fluid_viscosity: Specifies option for fluid viscosity.
+     "Constant" is currently supported.
     :type fluid_viscosity: list
-    :param fluid_enthalpy: Specifies option for fluid viscosity. 
-     "Constant" is currently supported. 
+    :param fluid_enthalpy: Specifies option for fluid viscosity.
+     "Constant" is currently supported.
     :type fluid_enthalpy: list
     """
 
@@ -3762,7 +3763,8 @@ class pdata(object):
             elif key == 'henrys_constant':
                 if eos.fluid_name not in ['gas']:
                     PyFLOTRAN_ERROR(
-                        'henrys_constant can only be set for fluid set to gas!')
+                        'henrys_constant can only be set for fluid set ' +
+                        'to gas!')
                 henrys_type = line.strip().split()[1]
                 if henrys_type in eos_henrys_types_allowed:
                     eos.fluid_henrys_constant.append(henrys_type)

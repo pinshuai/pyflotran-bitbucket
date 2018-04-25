@@ -74,7 +74,7 @@ else:
 
 # Multiple classes/key words - allowed strings
 time_units_allowed = ['s', 'sec', 'm', 'min', 'h', 'hr', 'd', 'day', 'w',
-                      'week', 'mo', 'month', 'y']
+                      'week', 'mo', 'month', 'y', 'yr']
 solver_names_allowed = ['transport', 'tran', 'flow']  # newton and linear
 # simulation type - allowed strings
 simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
@@ -1553,7 +1553,7 @@ class poutput_file(Frozen):
                  periodic_time_unit=None, periodic_observation_timestep=None,
                  periodic_observation_time=None,
                  periodic_observation_time_unit=None, variables_list=None,
-                 total_mass_regions = None):
+                 total_mass_regions=None, extend_hdf5_time_format=False):
 
         if time_list is None:
             time_list = []
@@ -1576,6 +1576,7 @@ class poutput_file(Frozen):
         self.periodic_observation_timestep = periodic_observation_timestep
         self.variables_list = variables_list
         self.total_mass_regions = total_mass_regions
+        self.extend_hdf5_time_format = extend_hdf5_time_format
         self._freeze()
 
 
@@ -1646,7 +1647,8 @@ class poutput(Frozen):
                  velocity_at_face=False, mass_balance=False,
                  variables_list=None, snapshot_file=poutput_file(),
                  observation_file=poutput_file(),
-                 mass_balance_file=poutput_file()):
+                 mass_balance_file=poutput_file(),
+                 time_units=None):
 
         if time_list is None:
             time_list = []
@@ -1678,6 +1680,7 @@ class poutput(Frozen):
         self.observation_file = observation_file
         self.mass_balance_file = mass_balance_file
         self.snapshot_file = snapshot_file
+        self.time_units = time_units
         self._freeze()
 
 
@@ -5145,7 +5148,8 @@ class pdata(object):
                         output.time_list.append(floatD(t))
                     except:
                         output.time_list.append(t)
-
+            elif key == 'time_units':
+                output.time_units = self.splitter(line).lower()
             elif key == 'screen':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'periodic':
@@ -5207,19 +5211,15 @@ class pdata(object):
                 while keep_reading1:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
-                    print key1
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
                             output.snapshot_file.format = line1.strip().split()[
                                 1].lower()
                         elif len(line1.strip().split()) == 3:
-                            output.snapshot_file.format = line1.strip().split()[
-                                1:2].lower()
-                        elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
-                            output.snapshot_file.format = line1.strip().split()[
-                                1:2].lower()
-                            output.snapshot_file.times_per_file = line1.strip().split()[
-                                4]
+                            output.snapshot_file.format = ' '.join(line1.strip().split()[1:3]).lower()
+                        elif len(line1.strip().split()) > 3 and 'times_per_file' in [val.lower() for val in line1.strip().split()[1:]]:
+                            output.snapshot_file.format = ' '.join(line1.strip().split()[1:3]).lower()
+                            output.snapshot_file.times_per_file = line1.strip().split()[4]
                     elif key1 == 'no_print_initial':
                         output.snapshot_file.print_initial = False
                     elif key1 == 'no_print_final':
@@ -5268,6 +5268,8 @@ class pdata(object):
                         elif tstring == 'timestep':
                             output.snapshot_file.periodic_observation_timestep = int(
                                 self.splitter(line1))
+                    elif key1 == 'extend_hdf5_time_format':
+                        output.snapshot_file.extend_hdf5_time_format
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
             elif key == 'observation_file':
@@ -5275,7 +5277,6 @@ class pdata(object):
                 while keep_reading1:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
-                    print key1
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
                             output.observation_file.format = line1.strip().split()[
@@ -5317,26 +5318,28 @@ class pdata(object):
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_time = floatD(
+                            output.observation_file.periodic_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_time_unit = self.splitter(
+                            output.observation_file.periodic_time_unit = self.splitter(
                                 line1)  # last word
                         elif tstring == 'timestep':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_timestep = int(
+                            output.observation_file.periodic_timestep = int(
                                 self.splitter(line1))
                     elif key1 == 'periodic_observation':
                         tstring = line1.strip().split()[
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_observation_time = floatD(
+                            output.observation_file.periodic_observation_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
+                            output.observation_file.periodic_observation_time_unit = self.splitter(
                                 line1)  # last word
                         elif tstring == 'timestep':
-                            output.snapshot_file.periodic_observation_timestep = int(
-                                self.splitter(line1))                                
+                            output.observation_file.periodic_observation_timestep = int(
+                                self.splitter(line1))
+                    elif key1 == 'extend_hdf5_time_format':
+                        output.observation_file.extend_hdf5_time_format
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
             elif key == 'mass_balance_file':
@@ -5344,7 +5347,6 @@ class pdata(object):
                 while keep_reading1:
                     line1 = infile.readline()
                     key1 = line1.strip().split()[0].lower()
-                    print key1
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
                             output.mass_balance_file.format = line1.strip().split()[
@@ -5386,26 +5388,26 @@ class pdata(object):
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_time = floatD(
+                            output.mass_balance_file.periodic_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_time_unit = self.splitter(
+                            output.mass_balance_file.periodic_time_unit = self.splitter(
                                 line1)  # last word
                         elif tstring == 'timestep':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_timestep = int(
+                            output.mass_balance_file.periodic_timestep = int(
                                 self.splitter(line1))
                     elif key1 == 'periodic_observation':
                         tstring = line1.strip().split()[
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_observation_time = floatD(
+                            output.mass_balance_file.periodic_observation_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
+                            output.mass_balance_file.periodic_observation_time_unit = self.splitter(
                                 line1)  # last word
                         elif tstring == 'timestep':
-                            output.snapshot_file.periodic_observation_timestep = int(
-                                self.splitter(line1)) 
+                            output.mass_balance_file.periodic_observation_timestep = int(
+                                self.splitter(line1))
                     elif key1 == 'total_mass_regions':
                         keep_reading2 = True
                         while keep_reading2:
@@ -5414,7 +5416,10 @@ class pdata(object):
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
                             else:
-                                output.mass_balance_file.total_mass_regions.append(key2) 
+                                output.mass_balance_file.total_mass_regions.append(
+                                    key2)
+                    elif key1 == 'extend_hdf5_time_format':
+                        output.mass_balance_file.extend_hdf5_time_format
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
             elif key in ['/', 'end']:
@@ -5455,7 +5460,11 @@ class pdata(object):
                 raise PyFLOTRAN_ERROR('output.screen_output:' +
                                       str(output.screen_output) +
                                       ' is not bool.')
-
+        if output.time_units:
+           if output.time_units in time_units_allowed:
+              outfile.write('  TIME_UNITS ' + output.time_units + '\n')
+           else:
+              raise PyFLOTRAN_ERROR(output.time_units + ' invalid time unit\n')
         if output.screen_periodic:
             try:  # Error checking to ensure screen_periodic is int (integer).
                 output.screen_periodic = int(output.screen_periodic)
@@ -5556,6 +5565,177 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR(
                         'output.variable: \'' + variable + '\' is invalid.')
             outfile.write('  /\n')
+        if output.snapshot_file:
+            outfile.write('  SNAPSHOT_FILE\n')
+            if output.snapshot_file.format is not None:
+                outfile.write('    FORMAT ')
+                for form in output.snapshot_file.format:
+                    outfile.write(form.upper())
+                if output.snapshot_file.times_per_file is not None:
+                    outfile.write(' TIMES_PER_FILE ')
+                    outfile.write(str(output.snapshot_file.times_per_file))
+                outfile.write('\n')
+            if output.snapshot_file.print_final is False:
+                outfile.write('    NO_PRINT_FINAL\n')
+            if output.snapshot_file.print_initial is False:
+                outfile.write('    NO_PRINT_INTIAL\n')
+            if output.snapshot_file.variables_list:
+                outfile.write('    VARIABLES\n')
+                for variable in output.snapshot_file.variables_list:
+                    if variable.lower() in output_variables_allowed:
+                        outfile.write('      ' + variable.upper() + '\n')
+                    else:
+                        print '       valid output.variable:', \
+                            output_variables_allowed, '\n'
+                        raise PyFLOTRAN_ERROR(
+                            'output.variable: \'' + variable + '\' is invalid.')
+                outfile.write('    /\n')
+            if output.snapshot_file.total_mass_regions:
+                raise PyFLOTRAN_ERROR(
+                    'SNAPSHOT_FILE cannot have TOTAL_MASS_REGIONS')
+            if output.snapshot_file.time_list:
+                outfile.write('    TIMES ')
+                if output.snapshot_file.time_unit is not None:
+                    outfile.write(outpout.snapshot_file.time_unit + ' ')
+                for time in output.snapshot_file.time_list:
+                    outfile.write(strD(time))
+                    outfile.write(' ')
+                outfile.write('\n')
+            if output.snapshot_file.periodic_timestep is not None:
+                outfile.write('    PERIODIC TIMESTEP ')
+                outfile.write(str(output.snapshot_file.periodic_timestep))
+                outfile.write('\n')
+            if output.snapshot_file.periodic_time is not None:
+                outfile.write('    PERIODIC TIME ')
+                outfile.write(strD(output.snapshot_file.periodic_time))
+                if output.snapshot_file.periodic_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.snapshot_file.periodic_time_unit)
+                outfile.write('\n')
+            if output.snapshot_file.periodic_observation_timestep is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIMESTEP ')
+                outfile.write(
+                    str(output.snapshot_file.periodic_observation_timestep))
+                outfile.write('\n')
+            if output.snapshot_file.periodic_observation_time is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIME ')
+                outfile.write(
+                    strD(output.snapshot_file.periodic_observation_time))
+                if output.snapshot_file.periodic_observation_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.snapshot_file.periodic_observation_time_unit)
+                outfile.write('\n')
+            if output.snapshot_file.extend_hdf5_time_format:
+                outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
+            outfile.write('  /\n')                    
+        if output.observation_file:
+            outfile.write('  OBSERVATION_FILE\n')
+            if output.observation_file.format is not None:
+                raise PyFLOTRAN_ERROR('FORMAT cannot be specified with OBSERVATION_FILE')
+            if output.observation_file.print_final is False:
+                outfile.write('    NO_PRINT_FINAL\n')
+            if output.observation_file.print_initial is False:
+                outfile.write('    NO_PRINT_INTIAL\n')
+            if output.observation_file.variables_list: 
+                outfile.write('    VARIABLES\n')
+                for variable in output.observation_file.variables_list:
+                    if variable.lower() in output_variables_allowed:
+                        outfile.write('      ' + variable.upper() + '\n')
+                    else:
+                        print '       valid output.variable:', \
+                            output_variables_allowed, '\n'
+                        raise PyFLOTRAN_ERROR(
+                            'output.variable: \'' + variable + '\' is invalid.')
+                outfile.write('    /\n')
+            if output.observation_file.total_mass_regions:
+                raise PyFLOTRAN_ERROR(
+                    'OBSERVATION_FILE cannot have TOTAL_MASS_REGIONS')
+            if output.observation_file.time_list:
+                outfile.write('    TIMES ')
+                if output.observation_file.time_unit is not None:
+                    outfile.write(output.observation_file.time_unit + ' ')
+                for time in output.observation_file.time_list:
+                    outfile.write(strD(time))
+                    outfile.write(' ')
+                outfile.write('\n')
+            if output.observation_file.periodic_timestep is not None:
+                outfile.write('    PERIODIC TIMESTEP ')
+                outfile.write(str(output.observation_file.periodic_timestep))
+                outfile.write('\n')
+            if output.observation_file.periodic_time is not None:
+                outfile.write('    PERIODIC TIME ')
+                outfile.write(strD(output.observation_file.periodic_time))
+                if output.observation_file.periodic_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.observation_file.periodic_time_unit)
+                outfile.write('\n')
+            if output.observation_file.periodic_observation_timestep is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIMESTEP ')
+                outfile.write(
+                    str(output.observation_file.periodic_observation_timestep))
+                outfile.write('\n')
+            if output.observation_file.periodic_observation_time is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIME ')
+                outfile.write(
+                    strD(output.observation_file.periodic_observation_time))
+                if output.observation_file.periodic_observation_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.observation_file.periodic_observation_time_unit)
+                outfile.write('\n')
+            if output.observation_file.extend_hdf5_time_format:
+                outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
+            outfile.write('  /\n')                    
+        if output.mass_balance_file:
+            outfile.write('  MASS_BALANCE_FILE\n')
+            if output.mass_balance_file.format is not None:
+                raise PyFLOTRAN_ERROR('FORMAT cannot be specified with MASS_BALANCE_FILE')
+            if output.mass_balance_file.print_final is False:
+                outfile.write('    NO_PRINT_FINAL\n')
+            if output.mass_balance_file.print_initial is False:
+                outfile.write('    NO_PRINT_INTIAL\n')
+            if output.mass_balance_file.variables_list: 
+                raise PyFLOTRAN_ERROR('VARIABLES cannot be used with MASS_BALANCE_FILE')
+            if output.mass_balance_file.total_mass_regions:
+                outfile.write('    TOTAL_MASS_REGIONS\n')
+                for region in output.mass_balance_file.total_mass_regions:
+                    outfile.write('      ' + region)
+                    outfile.write('\n')
+                outfile.write('    /\n')
+            if output.mass_balance_file.time_list:
+                outfile.write('    TIMES ')
+                if output.mass_balance_file.time_unit is not None:
+                    outfile.write(outpout.mass_balance_file.time_unit + ' ')
+                for time in output.mass_balance_file.time_list:
+                    outfile.write(strD(time))
+                    outfile.write(' ')
+                outfile.write('\n')
+            if output.mass_balance_file.periodic_timestep is not None:
+                outfile.write('    PERIODIC TIMESTEP ')
+                outfile.write(str(output.mass_balance_file.periodic_timestep))
+                outfile.write('\n')
+            if output.mass_balance_file.periodic_time is not None:
+                outfile.write('    PERIODIC TIME ')
+                outfile.write(strD(output.mass_balance_file.periodic_time))
+                if output.mass_balance_file.periodic_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.mass_balance_file.periodic_time_unit)
+                outfile.write('\n')
+            if output.mass_balance_file.periodic_observation_timestep is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIMESTEP ')
+                outfile.write(
+                    str(output.mass_balance_file.periodic_observation_timestep))
+                outfile.write('\n')
+            if output.mass_balance_file.periodic_observation_time is not None:
+                outfile.write('    PERIODIC_OBSERVATION TIME ')
+                outfile.write(
+                    strD(output.mass_balance_file.periodic_observation_time))
+                if output.mass_balance_file.periodic_observation_time_unit is not None:
+                    outfile.write(
+                        ' ' + output.mass_balance_file.periodic_observation_time_unit)
+                outfile.write('\n')
+            if output.mass_balance_file.extend_hdf5_time_format:
+                outfile.write('    EXTEND_HDF5_TIME_FORMAT\n')
+            outfile.write('  /\n')                    
         outfile.write('END\n\n')
 
     def _read_fluid(self, infile):

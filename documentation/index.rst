@@ -13,7 +13,7 @@ Contents:
 
    intro 
    pdata
-   unsupported_keywords
+.. unsupported_keywords
  
 
 Indices and tables

@@ -3237,6 +3237,12 @@ class pdata(object):
                         read_fn[card](infile)
 
     def print_inputfile_to_screen(self, filename=''):
+        """
+        Print file to screen.
+
+        :param filename: Name of the file to be printed to screen
+        :type filename: str
+        """
         if filename:
             file = filename
         elif self.filename:
@@ -3659,6 +3665,12 @@ class pdata(object):
 
     @staticmethod
     def splitter(a_line):
+        """
+        Returns the last element of the split list.
+
+        :param a_line: Line input
+        :type a_line: str
+        """
         return a_line.split()[-1]
 
     def _read_uniform_velocity(self, infile, line):

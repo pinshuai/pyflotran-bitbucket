@@ -141,9 +141,9 @@ Dataset
 -------
 .. autoclass:: pdata.pdataset
 
-QK3
----
-.. autoclass:: pdata.pquake
+Secondary Continuum
+-------------------
+.. autoclass:: pdata.psecondary_continuum
 
 Reference Stress State
 ----------------------
@@ -152,6 +152,33 @@ Reference Stress State
 Equation of State
 -----------------
 .. autoclass:: pdata.peos
+
+RKS
+---
+.. autoclass:: pdata.prks
+
+Point
+-----
+.. autoclass:: pdata.ppoint
+
+Characteristic Curves
+---------------------
+.. autoclass:: pdata.pcharacteristic_curves
+
+QK3
+---
+.. autoclass:: pdata.pquake
+
+Geomechanics
+------------
+.. autoclass:: pdata.pgeomech_subsurface_coupling
+.. autoclass:: pdata.pgeomech_material
+.. autoclass:: pdata.pgeomech_grid
+.. autoclass:: pdata.pgeomech_output
+.. autoclass:: pdata.pgeomech_time
+.. autoclass:: pdata.pgeomech_regression
+
+
 
 
 
@@ -169,6 +196,8 @@ Methods
 .. automethod:: pdata.pdata.terzaghi
 .. automethod:: pdata.pdata.terzaghi_flip
 .. automethod:: pdata.pgrid.dump_vtk
+.. automethod:: pdata.pdata.print_inputfile_to_screen
+.. automethod:: pdata.pdata.splitter
 
 Line plots using Matplotlib
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

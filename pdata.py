@@ -12,6 +12,7 @@ import matplotlib as mpl
 
 mpl.use('Agg')
 from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 """ Class for pyflotran data """
 

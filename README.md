@@ -16,3 +16,5 @@ One can install PyFLOTRAN using ``pip`` as follows:
 To remove PyFLOTRAN, type:
 
 ``pip uninstall pyflotran``
+
+See https://bitbucket.org/satkarra/pyflotran/wiki/Home for more details.

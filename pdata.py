@@ -5642,7 +5642,7 @@ class pdata(object):
             if output.snapshot_file.time_list:
                 outfile.write('    TIMES ')
                 if output.snapshot_file.time_unit is not None:
-                    outfile.write(outpout.snapshot_file.time_unit + ' ')
+                    outfile.write(output.snapshot_file.time_unit + ' ')
                 for time in output.snapshot_file.time_list:
                     outfile.write(strD(time))
                     outfile.write(' ')
@@ -5753,7 +5753,7 @@ class pdata(object):
             if output.mass_balance_file.time_list:
                 outfile.write('    TIMES ')
                 if output.mass_balance_file.time_unit is not None:
-                    outfile.write(outpout.mass_balance_file.time_unit + ' ')
+                    outfile.write(output.mass_balance_file.time_unit + ' ')
                 for time in output.mass_balance_file.time_list:
                     outfile.write(strD(time))
                     outfile.write(' ')

@@ -30,11 +30,15 @@ PyFLOTRAN_ source can be downloaded from https://bitbucket.org/satkarra/pyflotra
 
 __ PyFLOTRAN_
 
-One can install PyFLOTRAN using pip as follows:
+One can install PyFLOTRAN using ``pip`` as follows:
 
 ``pip install hg+https://satkarra@bitbucket.org/satkarra/pyflotran``
 
-Alternatively, if you do not use pip, you can download, and run the setup script: 
+To remove PyFLOTRAN, type:
+
+``pip uninstall pyflotran``
+
+Alternatively, if you do not use pip, you can download PyFLOTRAN, and run the setup script: 
 
 ``python setup.py install``
 

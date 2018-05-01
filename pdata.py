@@ -1335,27 +1335,29 @@ class psimulation(Frozen):
     :param mode: Specify the mode for the subsurface flow model
     :type mode: str
     :param flowtran_coupling: Specify the type for the flow transport coupling
-    :type mode: str
+    :type flowtran_coupling: str
     :param isothermal: Turn on isothermal case
-    :type mode: bool
+    :type isothermal: bool
     :param max_saturation_change: Set maximum saturation change in timestepping
-    :type mode: float
+    :type max_saturation_change: float
     :param max_temperature_change: Set maximum temperature change in
      timestepping
-    :type mode: float
+    :type max_temperature_change: float
     :param max_pressure_change: Set maximum pressure change in
      timestepping
-    :type mode: float
+    :type max_pressure_change: float
     :param max_concentration_change: Set maximum concentration
      change in timestepping
-    :type mode: float
+    :type max_concentration_change: float
     :param max_cfl: Set maximum CFL number
-    :type mode: float
+    :type max_cfl: float
     :param numerical_derivatives: Turn this on if you want
      numerical derivatives in Jacobian
-    :type mode: bool
+    :type numerical_derivatives: bool
     :param pressure_dampening_factor: Specify the dampening factor value
-    :type mode: float
+    :type pressure_dampening_factor: float
+    :param max_volume_fraction_change: Specify the maximum volume fraction change
+    :type max_volume_fraction_change: float
     """
 
     def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
@@ -1366,7 +1368,8 @@ class psimulation(Frozen):
                  max_temperature_change='', max_concentration_change='',
                  max_cfl='', numerical_derivatives='',
                  pressure_dampening_factor='',
-                 restart='', checkpoint=''):
+                 restart='', checkpoint='',
+                 max_volume_fraction_change=''):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -1383,6 +1386,7 @@ class psimulation(Frozen):
         self.pressure_dampening_factor = pressure_dampening_factor
         self.restart = restart
         self.checkpoint = checkpoint
+        self.max_volume_fraction_change = max_volume_fraction_change
         self._freeze()
 
 
@@ -3996,6 +4000,9 @@ class pdata(object):
                             key1 = line1.strip().split()[0].lower()
                             if key1 == 'global_implicit':
                                 simulation.flowtran_coupling = key1
+                            elif key1 == 'max_volume_fraction_change':
+                                simulation.max_volume_fraction_change =\
+                                    floatD(self.splitter(line1))
                             elif key1 in ['/', 'end']:
                                 keep_reading_2 = False
                         # else:
@@ -4124,6 +4131,10 @@ class pdata(object):
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
+            if simulation.max_volume_fraction_change:
+                outfile.write('      MAX_VOLUME_FRACTION_CHANGE ' +
+                              strD(simulation.max_volume_fraction_change) +
+                              '\n')
             outfile.write('    / ' + '\n')
             outfile.write('  / ' + '\n')
         elif simulation.subsurface_flow:
@@ -4149,8 +4160,9 @@ class pdata(object):
                                       '\n')
                     if simulation.max_concentration_change:
                         outfile.write('        MAX_CONCENTRATION_CHANGE ' +
-                                      strD(simulation.max_concentration_change)
-                                      + '\n')
+                                      strD(simulation.
+                                           max_concentration_change) +
+                                      '\n')
                     if simulation.max_temperature_change:
                         outfile.write('        MAX_TEMPERATURE_CHANGE ' +
                                       strD(simulation.max_temperature_change) +
@@ -4169,6 +4181,10 @@ class pdata(object):
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
+            if simulation.max_volume_fraction_change:
+                outfile.write('      MAX_VOLUME_FRACTION_CHANGE ' +
+                              strD(simulation.max_volume_fraction_change) +
+                              '\n')
             outfile.write('    / ' + '\n')
             outfile.write('  / ' + '\n')
         if simulation.checkpoint:

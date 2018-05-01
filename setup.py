@@ -1,10 +1,11 @@
 # PyFLOTRAN setup script
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='PyFLOTRAN',
-      version='1.0.1',
+      version='1.0',
       description='Python scripting library for PFLOTRAN simulations',
-      author='Satish Karra, Cory Kitay',
+      author='Satish Karra',
       author_email='satkarra@lanl.gov',
       py_modules=['ptool', 'pdata', 'pdflt'],
+      install_requires=['numpy','matplotlib']
       )

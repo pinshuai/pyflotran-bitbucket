@@ -24,7 +24,7 @@ found at http://www.python.org. PyFLOTRAN requires NumPy, SciPy, Matplotlib modu
 PyFLOTRAN
 ^^^^^^^^^
 
-A download link for the latest release version 1.0.0 of PyFLOTRAN_ can be found at https://bitbucket.org/satkarra/pyflotran-release-v1.0.0 
+PyFLOTRAN_ can be downloaded from https://bitbucket.org/satkarra/pyflotran
 
 .. _PyFLOTRAN: http://pyflotran.lanl.gov
 
@@ -38,7 +38,7 @@ PFLOTRAN
 ^^^^^^^^
 PFLOTRAN_ (http://www.pflotran.org) is a massively parallel subsurface flow and reactive transport code. PFLOTRAN solves a system of partial differential equations for multiphase, multicomponent and multiscale reactive flow and transport in porous media. The code is designed to run on leadership-class supercomputers as well as workstations and laptops.
 
-For successfully using PyFLOTRAN, one needs to install PFLOTRAN. For details to install PFLOTRAN please see the wikipage: https://bitbucket.org/pflotran/pflotran-dev/wiki/Home 
+For successfully using PyFLOTRAN, one needs to install PFLOTRAN. For details to install PFLOTRAN please see: http://documentation.pflotran.org/user_guide/how_to/installation/installation.html
 
 .. _PFLOTRAN: https://www.pflotran.org/
 
@@ -75,7 +75,7 @@ top of any Python script
 
 ``from pdata import*``
 
-Before doing this, one needs to ensure that pyflotran directory is in the PYTHONPATH. This can be done by configuring cshrc or bashrc files. Alternatively, one can add the PyFLOTRAN path using sys.path.append() in their driver script.
+.. Before doing this, one needs to ensure that PyFLOTRAN directory is in the PYTHONPATH. This can be done by configuring cshrc or bashrc files. Alternatively, one can add the PyFLOTRAN path using sys.path.append() in their driver script.
 
 About this  manual
 ------------------

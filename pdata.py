@@ -99,7 +99,7 @@ grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical', '']
 output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
                           'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
-velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr']
+velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr', 'm/y']
 
 output_variables_allowed = ['permeability',
                             'permeability_x',

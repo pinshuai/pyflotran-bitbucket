@@ -24,13 +24,17 @@ found at http://www.python.org. PyFLOTRAN requires NumPy, SciPy, Matplotlib modu
 PyFLOTRAN
 ^^^^^^^^^
 
-PyFLOTRAN_ can be downloaded from https://bitbucket.org/satkarra/pyflotran
+PyFLOTRAN_ source can be downloaded from https://bitbucket.org/satkarra/pyflotran
 
 .. _PyFLOTRAN: http://pyflotran.lanl.gov
 
 __ PyFLOTRAN_
 
-To install, download and extract the zip file, and run the setup script at the command line: 
+One can install PyFLOTRAN using pip as follows:
+
+``pip install hg+https://satkarra@bitbucket.org/satkarra/pyflotran``
+
+Alternatively, if you do not use pip, you can download, and run the setup script: 
 
 ``python setup.py install``
 

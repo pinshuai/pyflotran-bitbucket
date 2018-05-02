@@ -76,6 +76,15 @@ def floatD(string):
         string = strD(string)  # Convert to string if not string.
     return float(string.lower().replace('d', 'e'))
 
+def boolS(string):
+    """
+    Converts an input string to a Boolean.
+    Evaluates against ['1','true','t','yes','y','on'].
+
+    :param string: String to be converted
+    :type string: string
+    """
+    return string.strip().lower in ['1','true','t','yes','y','on']
 
 def strD(number):
     """Converts input float to string, replacing 'e' with 'd'
@@ -98,6 +107,12 @@ def strI(number):
     """
     tstring = str(int(number))
     return tstring
+
+def strB(logical):
+    """
+    Converts a Boolean into a string.
+    """
+    return str(logical).upper()
 
 
 def PyFLOTRAN_WARNING(string):

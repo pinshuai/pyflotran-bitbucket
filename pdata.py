@@ -2348,21 +2348,105 @@ class pchemistry_m_kinetic(Frozen):
     :type rate_constant_list: [float, str]
     """
 
+    class prefactor_species(Frozen):
+        def __init__(self, name=None, alpha=None, beta=None, attenuation_coef=None):
+            self.name = name
+            self.alpha = alpha
+            self.beta = beta
+            self.attenuation_coef = attenuation_coef
+
     def __init__(self, name=None, rate_constant_list=None,
                  activation_energy=None, prefactor_rate_constant_list=None,
-                 prefactor_species_list=None, prefactor_alpha_list=None):
+                 prefactor_species_list=None, prefactor_alpha_list=None, 
+                 affinity_threshold=None,rate_limiter=None,irreversible=None,
+                 surface_area_porosity_power=None,surface_area_vol_frac_power=None,
+                 prefactor_activation_energy=None):
+
+        # Verify correct input types
+        assert isinstance(affinity_threshold, (int,long,float,type(None))),'AFFINITY_THRESHOLD must be a float'
+        assert isinstance(rate_limiter, (int,long,float,type(None))),'RATE_LIMITER must be a float'
+        assert isinstance(irreversible, (bool,type(None))),'IRREVERSIBLE must be a boolean'
+        assert isinstance(surface_area_porosity_power, (int,long,float,type(None))),'SURFACE_AREA_POROSITY_POWER must be a float'
+        assert isinstance(surface_area_vol_frac_power, (int,long,float,type(None))),'SURFACE_AREA_VOL_FRAC_POWER must be a float'
+
+        # Construct MINERAL_KINETICS object
         if rate_constant_list is None:
             rate_constant_list = []
+        
         self.name = name
         self.rate_constant_list = rate_constant_list
         self.activation_energy = activation_energy
+        self.affinity_threshold = affinity_threshold
+        self.rate_limiter = rate_limiter
+        self.irreversible = irreversible
+        self.surface_area_porosity_power = surface_area_porosity_power
+        self.surface_area_vol_frac_power = surface_area_vol_frac_power
+        self.prefactor_activation_energy = prefactor_activation_energy
+
+        # Construct PREFACTOR objects
         if prefactor_rate_constant_list is None:
             self.prefactor_rate_constant_list = []
         if prefactor_species_list is None:
             self.prefactor_species_list = []
         if prefactor_alpha_list is None:
             self.prefactor_alpha_list = []
+
+        # Freeze
         self._freeze()
+
+    def add_prefactor_species(self,name,alpha=None,beta=None,attenuation_coef=None):
+        pf_spec = self.prefactor_species(name=name,alpha=alpha,beta=beta,attenuation_coef=attenuation_coef)
+        self.prefactor_species_list.append(pf_spec)
+
+    def view(self):
+        """
+        View the metadata of a pchemistry_m_kinetic object.
+
+        All attributes of the object, along with any prefactor species, are
+        written to stdout.
+        """
+
+        prefrac_str = ""
+        for obj in self.prefactor_species_list:
+            meta = '''
+            ----------------------------------------
+            PREFACTOR_SPECIES
+            ----------------------------------------
+            Name: {}
+            Attenutation coefficient: {}
+            Alpha: {}
+            Beta: {}
+            '''.format(obj.name.upper(),obj.attenuation_coef,obj.alpha,obj.beta)
+            prefrac_str += meta
+
+        meta = '''
+        ----------------------------------------
+        MINERAL_KINETICS
+        ----------------------------------------
+        Name: {}
+        Rate constant: {}
+        Activation energy: {}
+        Affinity threshold: {}
+        Rate limiter: {}
+        Irreversible: {}
+        Surface area porosity power: {}
+        Surface area vol frac power: {}
+        ========================================
+        PREFACTOR:
+        Prefactor rate constant: {}
+        Prefactor activation energy: {}
+        Prefactor species count: {}
+        {}
+        ----------------------------------------
+        '''.format(self.name,self.rate_constant_list,self.activation_energy,self.affinity_threshold,self.rate_limiter,
+                   self.irreversible,self.surface_area_porosity_power,self.surface_area_vol_frac_power,
+                   self.prefactor_rate_constant_list,self.prefactor_activation_energy,
+                   len(self.prefactor_species_list),prefrac_str)
+        print(meta)
+
+        #print("Full object dump:")
+        #print(self.__dict__)
+
 
 
 class ptransport(Frozen):
@@ -7423,6 +7507,121 @@ class pdata(object):
                                 except ValueError:
                                     mkinetic.rate_constant_list.append(
                                         substring)
+                        elif key == 'activation_energy':
+                            try:
+                                mkinetic.activation_energy = floatD(tstring[0])
+                            except:
+                                mkinetic.activation_energy = tstring[0]
+                        elif key == 'affinity_threshold':
+                            try:
+                                mkinetic.affinity_threshold = floatD(tstring[0])
+                            except:
+                                mkinetic.affinity_threshold = tstring[0]
+                        elif key == 'rate_limiter':
+                            try:
+                                mkinetic.rate_limiter = floatD(tstring[0])
+                            except:
+                                mkinetic.rate_limiter = tstring[0]
+                        elif key == 'irreversible':
+                            try:
+                                mkinetic.irreversible = boolS(tstring[0])
+                            except:
+                                mkinetic.irreversible = tstring[0]
+                        elif key == 'surface_area_porosity_power':
+                            try:
+                                mkinetic.surface_area_porosity_power = floatD(tstring[0])
+                            except ValueError:
+                                mkinetic.surface_area_porosity_power = tstring[0]
+                        elif key == 'surface_area_vol_frac_power':
+                            # Sample:
+                            # SURFACE_AREA_VOL_FRAC_POWER 0.666667d0
+                            try:
+                                mkinetic.surface_area_vol_frac_power = floatD(tstring[0])
+                            except ValueError:
+                                mkinetic.surface_area_vol_frac_power = tstring[0]
+                        elif key == 'prefactor':
+                            # PREFACTOR is a unique card within the MINERAL_KINETICS block.
+                            # PREFACTOR has its own set of cards, and own set of closing lines.
+                            # In additional, PREFACTOR_SPECIES has its own set of parameters and closing lines.
+                            # We're going deep into the rabbit hole.
+
+                            # while (PREFACTOR has not been closed)...
+                            while True:
+
+                                # Read & check for closure
+                                pref_line = infile.readline()
+                                if pref_line.strip() in ['/', 'end']: break
+                                
+                                # Capture the PREFACTOR card
+                                pref_key = pref_line.strip().split()[0].lower()
+
+                                pref_tstring = pref_line.split()[1:]
+
+                                # Read keys...
+                                if pref_key == 'rate_constant':
+                                    # Example:
+                                    #    RATE_CONSTANT 3.5d-8      mol/m^2-sec
+                                    for pref_substring in pref_tstring:
+                                        try:
+                                            mkinetic.prefactor_rate_constant_list.append(floatD(pref_substring))
+                                        except ValueError:
+                                            mkinetic.prefactor_rate_constant_list.append(pref_substring)
+
+                                if pref_key == 'activation_energy':
+                                    # Example:
+                                    #    ACTIVATION_ENERGY 0.31d0
+                                    try:
+                                        mkinetic.prefactor_activation_energy = floatD(pref_tstring[0])
+                                    except:
+                                        mkinetic.prefactor_activation_energy = pref_tstring[0]
+
+                                elif pref_key == 'prefactor_species':
+                                    # Example:
+                                    #    PREFACTOR_SPECIES H+
+
+                                    # Enter into the PREFACTOR_SPECIES block
+                                    pref_spec_name = pref_line.strip().split()[1]
+                                    pref_spec_alpha = None
+                                    pref_spec_beta = None
+                                    pref_spec_attencoef = None
+
+                                    # while (PREFACTOR_SPECIES has not been closed)...
+                                    while True:
+                                        prefspec_line = infile.readline()  # get next line
+                                        if prefspec_line.strip() in ['/', 'end']:
+                                            break
+                                        # key is a kinetic mineral attribute here
+                                        prefspec_key = prefspec_line.strip().split()[0].lower()  # take 1st
+
+                                        prefspec_tstring = prefspec_line.split()[1:]
+
+                                        if prefspec_key == 'alpha':
+                                            # Example:
+                                            #    ALPHA 0.37d0
+                                            try:
+                                                pref_spec_alpha = floatD(prefspec_tstring[0])
+                                            except:
+                                                pref_spec_alpha = prefspec_tstring[0]
+
+                                        elif prefspec_key == 'beta':
+                                            # Example:
+                                            #    BETA 1.d0
+                                            try:
+                                                pref_spec_beta = floatD(prefspec_tstring[0])
+                                            except:
+                                                pref_spec_beta = prefspec_tstring[0]
+
+                                        elif prefspec_key == 'attenuation_coef':
+                                            # Example:
+                                            #    ATTENUATION_COEF 1.d9
+                                            try:
+                                                pref_spec_attencoef = floatD(prefspec_tstring[0])
+                                            except:
+                                                pref_spec_attencoef = prefspec_tstring[0]
+
+                                    mkinetic.add_prefactor_species(pref_spec_name,alpha=pref_spec_alpha,beta=pref_spec_beta,
+                                                                                       attenuation_coef=pref_spec_attencoef)
+
 
                     chem.m_kinetics_list.append(mkinetic)  # object assigned
             elif key == 'database':
@@ -7574,6 +7773,8 @@ class pdata(object):
                 if not isinstance(mk.rate_constant_list, list):
                     raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                           'to rate_constant_list!')
+
+                # Write out MINERAL_KINETICS RATE_CONSTANT
                 if mk.rate_constant_list:
                     outfile.write('      RATE_CONSTANT ')
                     for rate in mk.rate_constant_list:
@@ -7583,19 +7784,50 @@ class pdata(object):
                             outfile.write(rate + ' ')
                     outfile.write('\n')
 
+                if mk.activation_energy is not None:           outfile.write('      ACTIVATION_ENERGY '+strD(mk.activation_energy)+'\n')
+                if mk.affinity_threshold is not None:          outfile.write('      AFFINITY_THRESHOLD '+strD(mk.affinity_threshold)+'\n')
+                if mk.rate_limiter is not None:                outfile.write('      RATE_LIMITER '+strD(mk.rate_limiter)+'\n')
+                if mk.irreversible is not None:                outfile.write('      IRREVERSIBLE '+strB(mk.irreversible)+'\n')
+                if mk.surface_area_porosity_power is not None: outfile.write('      SURFACE_AREA_POROSITY_POWER '+strD(mk.surface_area_porosity_power)+'\n')
+                if mk.surface_area_vol_frac_power is not None: outfile.write('      SURFACE_AREA_VOL_FRAC_POWER '+strD(mk.surface_area_vol_frac_power)+'\n')
+
                 if not isinstance(mk.prefactor_rate_constant_list, list):
                     raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                           'to prefactor_rate_constant_list!')
+                
+                # Check if ANY prefactor-related attributes are set
+                has_prefactor = (len(mk.prefactor_rate_constant_list) > 0 or mk.prefactor_activation_energy is not None or len(mk.prefactor_species_list) > 0)
 
-                if mk.prefactor_rate_constant_list:
+                #==================================================
+                # Write out PREFACTOR and PREFACTOR_SPECIES
+                #==================================================
+
+                if has_prefactor:
                     outfile.write('      PREFACTOR\n')
-                    outfile.write('        RATE_CONSTANT ')
-                    for rate in mk.prefactor_rate_constant_list:
-                        try:
-                            outfile.write(strD(rate) + ' ')
-                        except TypeError:
-                            outfile.write(rate + ' ')
-                    outfile.write('\n')
+
+                    # IF prefactor rate constant exists, then write out
+                    if len(mk.prefactor_rate_constant_list) > 0:
+                        outfile.write('        RATE_CONSTANT ')
+                        for rate in mk.prefactor_rate_constant_list:
+                            try:
+                                outfile.write(strD(rate) + ' ')
+                            except TypeError:
+                                outfile.write(rate + ' ')
+                        outfile.write('\n')
+
+                    # If prefactor activation energy exists, then write out
+                    if mk.prefactor_activation_energy is not None:
+                        outfile.write('        ACTIVATION_ENERGY '+strD(item[1])+'\n')
+
+                    if len(mk.prefactor_species_list) > 0:
+                        for pf_spec in mk.prefactor_species_list:
+                            outfile.write('        PREFACTOR_SPECIES '+pf_spec.name+'\n')
+                            if pf_spec.alpha is not None:             outfile.write('          ALPHA '+strD(pf_spec.alpha)+'\n')
+                            if pf_spec.beta is not None:              outfile.write('          BETA '+strD(pf_spec.beta)+'\n')
+                            if pf_spec.attenuation_coef is not None:  outfile.write('          ATTENUATION_COEF '+strD(pf_spec.attenuation_coef)+'\n')
+                            outfile.write('        /\n')
+
+                    '''
                     if mk.prefactor_species_list and mk.prefactor_alpha_list:
                         for item in zip(mk.prefactor_species_list,
                                         mk.prefactor_alpha_list):
@@ -7604,6 +7836,7 @@ class pdata(object):
                             outfile.write(
                                 '          ALPHA ' + strD(item[1]) + '\n')
                             outfile.write('        /\n')
+                    '''
                     outfile.write('      /\n')
                 outfile.write('    /\n')  # marks end for mineral name
             outfile.write('  /\n')  # marks end for mineral_kinetics

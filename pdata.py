@@ -7485,7 +7485,8 @@ class pdata(object):
                     line = infile.readline()  # get next line
                     if line.strip() in ['/', 'end']:
                         break
-
+                    elif list(line)[0] in ['!', '#']:
+                        continue
                     mkinetic = pchemistry_m_kinetic()  # temporary object
                     mkinetic.rate_constant_list = []
 
@@ -7858,7 +7859,7 @@ class pdata(object):
                     # If prefactor activation energy exists, then write out
                     if mk.prefactor_activation_energy is not None:
                         outfile.write(
-                            '        ACTIVATION_ENERGY ' + strD(item[1]) +
+                            '        ACTIVATION_ENERGY ' + strD(mk.prefactor_activation_energy) +
                             '\n')
 
                     if len(mk.prefactor_species_list) > 0:
@@ -8090,6 +8091,8 @@ class pdata(object):
 
                     if line.strip().lower() in ['/', 'end']:
                         break  # Stop loop if line is a / or 'end'
+                    elif list(line)[0] in ['!', '#']:
+                        continue
 
                     concentrations = pconstraint_concentration()
 
@@ -8111,6 +8114,8 @@ class pdata(object):
                     tstring = line.split()
                     if line.strip().lower() in ['/', 'end']:
                         break
+                    elif list(line)[0] in ['!', '#']:
+                        continue
                     mineral = pconstraint_mineral()
 
                     try:

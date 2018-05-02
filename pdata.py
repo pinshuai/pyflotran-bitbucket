@@ -2411,7 +2411,7 @@ class pchemistry_m_kinetic(Frozen):
             Attenutation coefficient: {}
             Alpha: {}
             Beta: {}
-            '''.format(obj.name,obj.attenuation_coef,obj.alpha,obj.beta)
+            '''.format(obj.name.upper(),obj.attenuation_coef,obj.alpha,obj.beta)
             prefrac_str += meta
 
         meta = '''
@@ -2439,8 +2439,8 @@ class pchemistry_m_kinetic(Frozen):
                    len(self.prefactor_species_list),prefrac_str)
         print(meta)
 
-        print("Full object dump:")
-        print(self.__dict__)
+        #print("Full object dump:")
+        #print(self.__dict__)
 
 
 

@@ -2349,6 +2349,17 @@ class pchemistry_m_kinetic(Frozen):
     """
 
     class prefactor(Frozen):
+      """
+      Class of pchemistry_m_kinetic. Contains PREFACTOR parameters for a MINERAL_KINETIC object.
+
+      :param rate_constant: Kinetic rate constant [mol/m2/sec].
+      :type rate_constant: [float, str]
+      :param activation_energy: Activation energy for rate constant k_{ml}
+      :type activation_energy: float
+      :param pf_species: One or more PREFACTOR_SPECIES objects assigned to this PREFACTOR instance
+      :type pf_species: list containing pchemistry_m_kinetic.prefactor_species objects
+      """
+
       def __init__(self, rate_constant=None, activation_energy=None, pf_species=None):
 
         # Ensure the types are correct
@@ -2371,9 +2382,16 @@ class pchemistry_m_kinetic(Frozen):
         """
         Add a PREFACTOR_SPECIES instance to a PREFACTOR object.
 
-        :param name: Species name
-        :type name: str 
+        :param name: Prefactor species name
+        :type name: str
+        :param alpha: a_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :type alpha: float
+        :param beta: B_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :type beta: float
+        :param attenuation_coef: K_{jl} in mineral precipitation-dissolution reaction equation
+        :type attenuation_coef: float
         """
+
         assert isinstance(alpha, (int,long,float,type(None))),'ALPHA must be a float'
         assert isinstance(beta, (int,long,float,type(None))),'BETA must be a float'
         assert isinstance(attenuation_coef, (int,long,float,type(None))),'ATTENUATION_COEF must be a float'
@@ -2384,6 +2402,20 @@ class pchemistry_m_kinetic(Frozen):
 
 
     class prefactor_species(Frozen):
+        """
+        Define a PREFACTOR_SPECIES to be used in conjunction with PREFACTOR for
+        mineral precipitation-dissolution reactions.
+
+        :param name: Prefactor species name
+        :type name: str
+        :param alpha: a_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :type alpha: float
+        :param beta: B_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :type beta: float
+        :param attenuation_coef: K_{jl} in mineral precipitation-dissolution reaction equation
+        :type attenuation_coef: float
+        """
+
         def __init__(self, name=None, alpha=None, beta=None, attenuation_coef=None):
             self.name = name
             self.alpha = alpha
@@ -2430,16 +2462,16 @@ class pchemistry_m_kinetic(Frozen):
         """
         Add a new PREFACTOR instance to MINERAL_KINETICS object
 
+        :param rate_constant: Kinetic rate constant [mol/m2/sec].
+        :type rate_constant: [float, str]
+        :param activation_energy: Activation energy for rate constant k_{ml}
+        :type activation_energy: float
+        :param pf_species: One or more PREFACTOR_SPECIES objects assigned to this PREFACTOR instance
+        :type pf_species: list containing pchemistry_m_kinetic.prefactor_species objects
         """
         pf_instance = self.prefactor(rate_constant=rate_constant, activation_energy=activation_energy, pf_species=pf_species)
         self.prefactors.append(pf_instance)
         return pf_instance
-
-    '''
-    def add_prefactor_species(self,name,alpha=None,beta=None,attenuation_coef=None):
-        pf_spec = self.prefactor_species(name=name,alpha=alpha,beta=beta,attenuation_coef=attenuation_coef)
-        self.prefactor_species_list.append(pf_spec)
-    '''
 
     def view(self):
         """
@@ -2447,44 +2479,57 @@ class pchemistry_m_kinetic(Frozen):
 
         All attributes of the object, along with any prefactor species, are
         written to stdout.
+
         """
 
+        # Compute a string full of all associated prefactors
         prefrac_str = ""
-        for obj in self.prefactor_species_list:
-            meta = '''
-            ----------------------------------------
-            PREFACTOR_SPECIES
-            ----------------------------------------
-            Name: {}
+        for pf in self.prefactors:
+
+            # Compute a string full of all associated PREFACTOR_SPECIES
+            prefrac_spec_str = ""
+            for pfs in pf.pf_species:
+                smeta = '''
+        ----------------------------------------
+        PREFACTOR_SPECIES: {}
+        ----------------------------------------
             Attenutation coefficient: {}
             Alpha: {}
             Beta: {}
-            '''.format(obj.name.upper(),obj.attenuation_coef,obj.alpha,obj.beta)
-            prefrac_str += meta
+            '''.format(pfs.name,pfs.attenuation_coef,
+                       pfs.alpha,pfs.beta)
 
-        meta = '''
-        ----------------------------------------
-        MINERAL_KINETICS
-        ----------------------------------------
-        Name: {}
-        Rate constant: {}
-        Activation energy: {}
-        Affinity threshold: {}
-        Rate limiter: {}
-        Irreversible: {}
-        Surface area porosity power: {}
-        Surface area vol frac power: {}
+                prefrac_spec_str += smeta
+
+            pfmeta = '''
         ========================================
         PREFACTOR:
-        Prefactor rate constant: {}
-        Prefactor activation energy: {}
-        Prefactor species count: {}
-        {}
+            Prefactor rate constant: {}
+            Prefactor activation energy: {}
+            Prefactor species count: {}{}
+        '''.format(pf.rate_constant, pf.activation_energy,
+          len(pf.pf_species),prefrac_spec_str)
+
+            prefrac_str += pfmeta
+
+        # Display object attributes, along with any PREFACTOR
+        # or PREFACTOR_SPECIES attached to the object
+        meta = '''
         ----------------------------------------
-        '''.format(self.name,self.rate_constant_list,self.activation_energy,self.affinity_threshold,self.rate_limiter,
-                   self.irreversible,self.surface_area_porosity_power,self.surface_area_vol_frac_power,
-                   self.prefactor_rate_constant_list,self.prefactor_activation_energy,
-                   len(self.prefactor_species_list),prefrac_str)
+        MINERAL_KINETICS: {}
+        ----------------------------------------
+            Rate constant: {}
+            Activation energy: {}
+            Affinity threshold: {}
+            Rate limiter: {}
+            Irreversible: {}
+            Surface area porosity power: {}
+            Surface area vol frac power: {}{}
+        ----------------------------------------
+        '''.format(self.name,self.rate_constant_list,self.activation_energy,
+                   self.affinity_threshold,self.rate_limiter,self.irreversible,
+                   self.surface_area_porosity_power,self.surface_area_vol_frac_power,
+                   prefrac_str)
         print(meta)
 
         #print("Full object dump:")
@@ -7640,10 +7685,9 @@ class pdata(object):
                                     # while (PREFACTOR_SPECIES has not been closed)...
                                     while True:
                                         prefspec_line = infile.readline()  # get next line
-                                        if prefspec_line.strip() in ['/', 'end']:
-                                            break
-                                        # key is a kinetic mineral attribute here
-                                        prefspec_key = prefspec_line.strip().split()[0].lower()  # take 1st
+                                        if prefspec_line.strip() in ['/', 'end']: break
+
+                                        prefspec_key = prefspec_line.strip().split()[0].lower()
 
                                         prefspec_tstring = prefspec_line.split()[1:]
 
@@ -7670,10 +7714,6 @@ class pdata(object):
                                                 mkpf_species.attenuation_coef = floatD(prefspec_tstring[0])
                                             except:
                                                 mkpf_species.attenuation_coef = prefspec_tstring[0]
-
-                                    #mkinetic.add_prefactor_species(pref_spec_name,alpha=pref_spec_alpha,beta=pref_spec_beta,
-                                                                                       #attenuation_coef=pref_spec_attencoef)
-
 
                     chem.m_kinetics_list.append(mkinetic)  # object assigned
             elif key == 'database':
@@ -7842,13 +7882,8 @@ class pdata(object):
                 if mk.irreversible is not None:                outfile.write('      IRREVERSIBLE '+strB(mk.irreversible)+'\n')
                 if mk.surface_area_porosity_power is not None: outfile.write('      SURFACE_AREA_POROSITY_POWER '+strD(mk.surface_area_porosity_power)+'\n')
                 if mk.surface_area_vol_frac_power is not None: outfile.write('      SURFACE_AREA_VOL_FRAC_POWER '+strD(mk.surface_area_vol_frac_power)+'\n')
-
-                #if not isinstance(mk.prefactor_rate_constant_list, list):
-                #    raise PyFLOTRAN_ERROR('A list needs to be passed ' +
-               #                           'to prefactor_rate_constant_list!')
                 
                 # Check if ANY prefactor-related attributes are set
-                #has_prefactor = (len(mk.prefactor_rate_constant_list) > 0 or mk.prefactor_activation_energy is not None or len(mk.prefactor_species_list) > 0)
                 has_prefactor = (len(mk.prefactors) > 0)
 
                 #==================================================
@@ -7889,7 +7924,7 @@ class pdata(object):
 
                         outfile.write('      /\n') # Close PREFACTOR
                 outfile.write('    /\n')  # Close mineral name
-            outfile.write('  /\n')  # Close MINERAL_KINETICS
+            outfile.write('  /\n')  # Close MINERAL_K
 
         if c.database:
             outfile.write('  DATABASE ' + c.database + '\n')

@@ -4353,6 +4353,9 @@ class pdata(object):
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
+            if simulation.flowtran_coupling:
+                outfile.write(
+                    '      ' + simulation.flowtran_coupling.upper() + '\n')
             if simulation.max_volume_fraction_change:
                 outfile.write('      MAX_VOLUME_FRACTION_CHANGE ' +
                               strD(simulation.max_volume_fraction_change) +

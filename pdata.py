@@ -4477,7 +4477,7 @@ class pdata(object):
         while keep_reading:
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
-            if list(key)[0] in ['#']:
+            if line[0] in ['#','!']:
                 continue
             elif key == 'type':
                 grid.type = line.strip().split()[1].lower()
@@ -7027,7 +7027,7 @@ class pdata(object):
                         if flow.datum_time_unit is not None:
                             outfile.write('    ')
                             outfile.write('TIME_UNITS ' +
-                                          flow.datum_time_unit.lower() + '\n')
+                                          flow.datum_time_unit + '\n')
                         for val in flow.datum:
                             outfile.write('      ')
                             outfile.write(strD(val[0]) + ' ')  # time values
@@ -7066,12 +7066,8 @@ class pdata(object):
                             for flow_val in a_flow.valuelist:
                                 outfile.write(' ' + strD(flow_val))
                         if a_flow.unit:
-                            if a_flow.unit == 'c' or a_flow.unit == 'C':
                                 outfile.write(
-                                    ' ' + a_flow.unit.upper())
-                            else:
-                                outfile.write(
-                                    ' ' + a_flow.unit.lower())
+                                    ' ' + a_flow.unit)
                         outfile.write('\n')
                     elif a_flow.list:
                         outfile.write(

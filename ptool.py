@@ -114,6 +114,51 @@ def strB(logical):
     """
     return str(logical).upper()
 
+def lineFromSubstr(line,substr='DBASE_VALUE',at_front=True):
+    """
+    Returns the substring of a line beginning at
+    substr and ending at EOL.
+
+    Example:
+    >>> lineFromSubstr('ID DBASE_VALUE soil2_id')
+    DBASE_VALUE soil2_id
+
+    :param line: string to parse
+    :type line: str
+    :param substr: substring to start capture at
+    :type substr: str
+    :param at_front: Flag to indicate if capture should begin
+    at the beginning of substr or at the end
+    :type at_front: bool
+    """
+
+    if at_front is True:
+        return line[line.lower().find(substr.lower()):]
+    else:
+        return line[line.lower().find(substr.lower()) + 
+        len(substr):]
+
+def filterComment(line):
+    """
+    Returns a line with any trailing comment removed.
+    Example:
+
+        >>> filterComment('8 ! west')
+        8
+
+    :param line: string to filter
+    :type line: str
+    """
+    
+    comments = ['!','#']
+
+    for cchar in comments:
+        idx = line.find(cchar)
+        if idx > -1:
+            return line[:idx].strip()
+
+    return line
+
 
 def PyFLOTRAN_WARNING(string):
     return warnings.warn(string)

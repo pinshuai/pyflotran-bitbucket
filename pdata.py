@@ -91,7 +91,8 @@ gradient_types_allowed = ['pressure', 'temperature']
 
 # grid - allowed strings
 grid_types_allowed = ['structured', 'unstructured_explicit',
-                      'unstructured_implicit']
+                      'unstructured_implicit', 'unstructured',
+                      'unstructured_polyhedra']
 
 # cartesian is default in pflotran
 grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical', '']
@@ -206,7 +207,9 @@ geomech_condition_type_names_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
 
 pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
-                          'seepage']
+                          'seepage', 'heterogeneous_conductance',
+                          'heterogeneous_seepage',
+                          'neumann']
 
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate',
                       'scaled_mass_rate']
@@ -2957,7 +2960,6 @@ class pdata(object):
         self.regression = pregression()
         self.simulation = psimulation()
         self.datasetlist = []
-        self.dbaselist = []
         self.chemistry = None
         self.grid = pgrid()
         self.timestepper_flow = None
@@ -3511,9 +3513,6 @@ class pdata(object):
 
         if self.reference_temperature:
             self._write_reference_temperature(outfile)
-
-        if self.dbaselist:
-            self._write_dbase(outfile)
 
         if self.datasetlist:
             self._write_dataset(outfile)
@@ -4445,10 +4444,11 @@ class pdata(object):
                 while keep_reading_2:
                     for i in range(100):
                         line1 = infile.readline()
+                        if line1.strip()[0] == '!': continue
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
-                        cell_list.append(int(line1))
+                        cell_list.append(int(filterComment(line1)))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
@@ -4490,16 +4490,15 @@ class pdata(object):
                 keep_reading_2 = True
                 while keep_reading_2:
                     line1 = infile.readline()
-                    grid.lower_bounds[0] = floatD(line1.split()[0])
-                    grid.lower_bounds[1] = floatD(line1.split()[1])
-                    grid.lower_bounds[2] = floatD(line1.split()[2])
+                    grid.lower_bounds = [floatD(bnd) for bnd in line1.split()]
+
                     line2 = infile.readline()
-                    grid.upper_bounds[0] = floatD(line2.split()[0])
-                    grid.upper_bounds[1] = floatD(line2.split()[1])
-                    grid.upper_bounds[2] = floatD(line2.split()[2])
+                    grid.upper_bounds = [floatD(bnd) for bnd in line2.split()]
+
                     line3 = infile.readline()
                     if line3.strip().split()[0].lower() in ['/', 'end']:
                         keep_reading_2 = False
+
             elif key == 'origin':
                 grid.origin.append(floatD(line.strip().split()[1]))
                 grid.origin.append(floatD(line.strip().split()[2]))
@@ -4559,10 +4558,10 @@ class pdata(object):
                         grid.symmetry_type == '':
                     outfile.write('  BOUNDS\n')
                     outfile.write('    ')
-                    for i in range(3):
+                    for i in range(len(grid.lower_bounds)):
                         outfile.write(strD(grid.lower_bounds[i]) + ' ')
                     outfile.write('\n    ')
-                    for i in range(3):
+                    for i in range(len(grid.upper_bounds)):
                         outfile.write(strD(grid.upper_bounds[i]) + ' ')
                     outfile.write('\n  /\n')
                 elif grid.symmetry_type == 'cylindrical':
@@ -4766,21 +4765,19 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
-                if line.split()[1].lower() == 'dbase_value':
-                    np_id = line.split()[1::]
-                else:
-                    np_id = int(self.splitter(line))
+                np_id = int(self.splitter(line))
             elif key == 'characteristic_curves':
                 np_characteristic_curves = self.splitter(line)
             elif key == 'porosity':
                 if line.split()[1].lower() == 'dataset':
                     np_porosity = self.splitter(line)
-                elif line.split()[1].lower() == 'dbase_value':
-                    np_porosity = line.split()[1::]
                 else:
                     np_porosity = floatD(self.splitter(line))
             elif key == 'tortuosity':
-                np_tortuosity = floatD(self.splitter(line))
+                if line.split()[1].lower() == 'dataset':
+                    np_porosity = self.splitter(line)
+                else:
+                    np_tortuosity = floatD(self.splitter(line))
             elif key == 'rock_density':
                 if len(line.strip().split()[1:]) > 1:
                     np_density_unit = line.strip().split()[2]
@@ -5290,6 +5287,7 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first key word
+            line = filterComment(line)
 
             if key == 'atol':
                 nsolver.atol = floatD(self.splitter(line))
@@ -5687,8 +5685,10 @@ class pdata(object):
                     outfile.write('\n'.join(['  TIMES {} {}'.format(
                       output.time_list[i],strD(output.time_list[i+1]).lower())
                        for i in range(0,len(output.time_list),2)]))
-                except:
-                    print('TIMES sub-block of OUTPUT could not be collated')
+                except IndexError:
+                    outfile.write('TIMES ' + ' '.join(
+                      [str(elem) for elem in output.time_list]) + '\n')
+                    #perror('TIMES sub-block of OUTPUT could not be collated')
             else:
                 print '       valid time.units', time_units_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
@@ -6379,12 +6379,16 @@ class pdata(object):
                     outfile.write('  / ' + '\n')
 
                 if char.gas_permeability_function_type:
+
                     if char.gas_permeability_function_type in \
                             characteristic_curves_gas_permeability_function_types_allowed:
                         outfile.write('  PERMEABILITY_FUNCTION ' +
                                       char.gas_permeability_function_type.upper() + '\n')
+
                     if char.phase:
                         outfile.write('   PHASE GAS' + '\n')
+                    elif char.phase is None and 'gas' in char.gas_permeability_function_type:
+                        pass
                     else:
 
                         print '       valid  char.gas_permeability_function_types', \
@@ -6393,6 +6397,7 @@ class pdata(object):
                             'char.gas_permeability_function_type: \'' +
                             char.gas_permeability_function_type +
                             '\' is invalid.')
+
                     if char.gpf_m:
                         outfile.write('   M ' + strD(char.gpf_m) + '\n')
                     if char.gpf_lambda:
@@ -6599,7 +6604,13 @@ class pdata(object):
         total_end_count = 1
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
-            key = line.strip().split()[0].lower()  # take first keyword
+
+            # Read key, or skip line if empty
+            try:
+                key = line.strip().split()[0].lower()  # take first keyword
+            except IndexError:
+                continue
+
             if key == 'type':
                 total_end_count = 2  # Basically ensures that both read ifs for
                 # the varlist will execute
@@ -6698,14 +6709,15 @@ class pdata(object):
                 flow.sync_timestep_with_update = True
             elif key == 'datum':
                 # Assign file_name with list of d_dx, d_dy, d_dz values.
-                if line.strip().split()[1].lower() == 'file':
+                subkey = line.strip().split()[1].lower()
+                if subkey == 'file':
                     flow.datum_type = 'file'
                     flow.datum = line.split()[1]
-                elif line.strip().split()[1].lower() == '':
+                elif subkey == '':
                     flow.datum_type = 'dataset'
                     flow.datum = line.split()[1]
                 # Assign d_dx, d_dy, d_dz values
-                elif line.strip().split()[1].lower() == 'list':
+                elif subkey == 'list':
                     flow.datum_type = 'list'
                     keep_reading1 = True
                     while keep_reading1:
@@ -6724,6 +6736,9 @@ class pdata(object):
                                 line.split()[1]), floatD(line.split()[2]),
                                 floatD(line.split()[3])]
                             flow.datum.append(temp_list)
+                elif subkey == 'dataset':
+                    flow.datum_type = 'dataset'
+                    flow.datum = line.split()[1]
                 else:
                     temp_list = [floatD(line.split()[1]), floatD(
                         line.split()[2]), floatD(line.split()[3])]
@@ -7057,10 +7072,15 @@ class pdata(object):
                     outfile.write('  IPHASE ' + str(flow.iphase) + '\n')
                 if flow.gradient:
                     outfile.write('  GRADIENT\n')
-                    outfile.write('    ' + flow.gradient_type.upper() +
-                                  ' ' + str(flow.gradient[0]) + ' ' + str(
-                        flow.gradient[1]) + ' ' +
-                        str(flow.gradient[2]) + '\n')
+
+                    if flow.gradient[0].lower() == 'file':
+                        outfile.write('    ' + flow.gradient_type.upper() + 
+                          ' ' + ' '.join(flow.gradient))
+                    else:
+                        outfile.write('    ' + flow.gradient_type.upper() +
+                                      ' ' + str(flow.gradient[0]) + ' ' + str(
+                            flow.gradient[1]) + ' ' +
+                            str(flow.gradient[2]) + '\n')
                     outfile.write('  /\n')
                 # variable name and values from lists along with units go here
                 for a_flow in flow.varlist:
@@ -7535,33 +7555,6 @@ class pdata(object):
 
     def _delete_dataset(self, dat=pdataset()):
         self.datasetlist.remove(dat)
-
-    def _write_dbase(self, outfile):
-        '''
-        Write DBASE_FILENAME to outfile
-        '''
-
-        self._header(outfile, headers['dbase'])
-
-        for dbase in self.dbaselist:
-            outfile.write('DBASE_FILENAME '+dbase+'\n')
-
-        outfile.write('\n')
-
-    def _add_dbase(self, dbase):
-        if isinstance(dbase, str):
-            if dbase not in self.dbaselist:
-                self.dbaselist.append(dbase)
-            else:
-                print('WARNING: DBASE_FILENAME '+dbase+' is already stored')
-        else:
-            error('Attempted to add unknown datatype as DBASE_FILENAME')
-
-    def _remove_dbase(self, dbase):
-        if isinstance(dbase, str):
-            self.dbaselist.remove(dbase)
-        else:
-            error('Attempted to remove unknown datatype from DBASE_FILENAME')
 
     def _read_chemistry(self, infile):
         chem = pchemistry()

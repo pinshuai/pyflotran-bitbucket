@@ -2220,7 +2220,6 @@ class pdataset(Frozen):
         self.realization_dependent = realization_dependent
         self._freeze()
 
-
 class pchemistry(Frozen):
     """
     Class for specifying chemistry.
@@ -2958,6 +2957,7 @@ class pdata(object):
         self.regression = pregression()
         self.simulation = psimulation()
         self.datasetlist = []
+        self.dbaselist = []
         self.chemistry = None
         self.grid = pgrid()
         self.timestepper_flow = None
@@ -3511,6 +3511,9 @@ class pdata(object):
 
         if self.reference_temperature:
             self._write_reference_temperature(outfile)
+
+        if self.dbaselist:
+            self._write_dbase(outfile)
 
         if self.datasetlist:
             self._write_dataset(outfile)
@@ -4763,12 +4766,17 @@ class pdata(object):
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
-                np_id = int(self.splitter(line))
+                if line.split()[1].lower() == 'dbase_value':
+                    np_id = line.split()[1::]
+                else:
+                    np_id = int(self.splitter(line))
             elif key == 'characteristic_curves':
                 np_characteristic_curves = self.splitter(line)
             elif key == 'porosity':
                 if line.split()[1].lower() == 'dataset':
                     np_porosity = self.splitter(line)
+                elif line.split()[1].lower() == 'dbase_value':
+                    np_porosity = line.split()[1::]
                 else:
                     np_porosity = floatD(self.splitter(line))
             elif key == 'tortuosity':
@@ -4802,7 +4810,7 @@ class pdata(object):
             elif key == 'permeability_min_scale_factor':
                 np_permeability_min_scale_factor = self.splitter(line)
             elif key == 'longitudinal_dispersivity':
-                np_longitudinal_dispersivity = self.splitter(line)
+                np_longitudinal_dispersivity = ' '.join(line.split()[1:])
             elif key == 'transverse_dispersivity_h':
                 np_transverse_dispersivity_h = self.splitter(line)
             elif key == 'transverse_dispersivity_v':
@@ -5675,10 +5683,12 @@ class pdata(object):
         if output.time_list:
             # Check if 1st variable in list a valid time unit
             if output.time_list[0].lower() in time_units_allowed:
-                outfile.write('  TIMES ')
-                # Write remaining number(s) after time unit is specified
-                for value in output.time_list:
-                    outfile.write(' ' + strD(value).lower())
+                try:
+                    outfile.write('\n'.join(['  TIMES {} {}'.format(
+                      output.time_list[i],strD(output.time_list[i+1]).lower())
+                       for i in range(0,len(output.time_list),2)]))
+                except:
+                    print('TIMES sub-block of OUTPUT could not be collated')
             else:
                 print '       valid time.units', time_units_allowed, '\n'
                 raise PyFLOTRAN_ERROR(
@@ -7525,6 +7535,33 @@ class pdata(object):
 
     def _delete_dataset(self, dat=pdataset()):
         self.datasetlist.remove(dat)
+
+    def _write_dbase(self, outfile):
+        '''
+        Write DBASE_FILENAME to outfile
+        '''
+
+        self._header(outfile, headers['dbase'])
+
+        for dbase in self.dbaselist:
+            outfile.write('DBASE_FILENAME '+dbase+'\n')
+
+        outfile.write('\n')
+
+    def _add_dbase(self, dbase):
+        if isinstance(dbase, str):
+            if dbase not in self.dbaselist:
+                self.dbaselist.append(dbase)
+            else:
+                print('WARNING: DBASE_FILENAME '+dbase+' is already stored')
+        else:
+            error('Attempted to add unknown datatype as DBASE_FILENAME')
+
+    def _remove_dbase(self, dbase):
+        if isinstance(dbase, str):
+            self.dbaselist.remove(dbase)
+        else:
+            error('Attempted to remove unknown datatype from DBASE_FILENAME')
 
     def _read_chemistry(self, infile):
         chem = pchemistry()

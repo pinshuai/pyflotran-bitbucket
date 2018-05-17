@@ -5384,11 +5384,13 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first key word
             if key == 'times':
                 tstring = line.split()[1:]  # Turn into list, exempt 1st word
+                times = []
                 for t in tstring:
                     try:
-                        output.time_list.append(floatD(t))
+                        times.append(floatD(t))
                     except:
-                        output.time_list.append(t)
+                        times.append(t)
+                output.time_list.append(times)
             elif key == 'time_units':
                 output.time_units = self.splitter(line).lower()
             elif key == 'screen':
@@ -5679,21 +5681,18 @@ class pdata(object):
         outfile.write('OUTPUT\n')
 
         if output.time_list:
-            # Check if 1st variable in list a valid time unit
-            if output.time_list[0].lower() in time_units_allowed:
-                try:
-                    outfile.write('\n'.join(['  TIMES {} {}'.format(
-                      output.time_list[i],strD(output.time_list[i+1]).lower())
-                       for i in range(0,len(output.time_list),2)]))
-                except IndexError:
-                    outfile.write('TIMES ' + ' '.join(
-                      [str(elem) for elem in output.time_list]) + '\n')
-                    #perror('TIMES sub-block of OUTPUT could not be collated')
-            else:
-                print '       valid time.units', time_units_allowed, '\n'
-                raise PyFLOTRAN_ERROR(
-                    'output.time_list[0]: ' + output.time_list[0] +
-                    ' is invalid.')
+
+            for unit in output.time_list:
+                if unit[0].lower() in time_units_allowed:
+                    prefix = '  TIMES ' + unit[0] + ' '
+                    coeffs = ' '.join([strD(ele) for ele in unit[1:]])
+
+                    outfile.write(prefix + coeffs + '\n')
+                else:
+                    print '       valid time.units', time_units_allowed, '\n'
+                    raise PyFLOTRAN_ERROR(
+                        'output.time_list[0]: ' + output.time_list[0] +
+                        ' is invalid.')
             outfile.write('\n')
 
         # This is here on purpose - Needed later

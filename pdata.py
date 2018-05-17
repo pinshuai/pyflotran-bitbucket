@@ -4448,7 +4448,7 @@ class pdata(object):
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
-                        cell_list.append(int(filterComment(line1)))
+                        cell_list.append(int(filter_comment(line1)))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
@@ -5287,7 +5287,7 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = infile.readline()  # get next line
             key = line.strip().split()[0].lower()  # take first key word
-            line = filterComment(line)
+            line = filter_comment(line)
 
             if key == 'atol':
                 nsolver.atol = floatD(self.splitter(line))

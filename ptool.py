@@ -114,13 +114,13 @@ def strB(logical):
     """
     return str(logical).upper()
 
-def lineFromSubstr(line,substr='DBASE_VALUE',at_front=True):
+def line_from_substr(line,substr='DBASE_VALUE',at_front=True):
     """
     Returns the substring of a line beginning at
     substr and ending at EOL.
 
     Example:
-    >>> lineFromSubstr('ID DBASE_VALUE soil2_id')
+    >>> line_from_substr('ID DBASE_VALUE soil2_id')
     DBASE_VALUE soil2_id
 
     :param line: string to parse
@@ -138,12 +138,12 @@ def lineFromSubstr(line,substr='DBASE_VALUE',at_front=True):
         return line[line.lower().find(substr.lower()) + 
         len(substr):]
 
-def filterComment(line):
+def filter_comment(line):
     """
     Returns a line with any trailing comment removed.
     Example:
 
-        >>> filterComment('8 ! west')
+        >>> filter_comment('8 ! west')
         8
 
     :param line: string to filter

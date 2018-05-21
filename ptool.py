@@ -138,6 +138,62 @@ def line_from_substr(line,substr='DBASE_VALUE',at_front=True):
         return line[line.lower().find(substr.lower()) + 
         len(substr):]
 
+def is_comment(line):
+    """
+    Returns a true or false value if the line is a commented line
+    Example:
+
+    >>> is_comment('# TODO: add is_comment func')
+    True
+    >>> is_comment('NEWTON_SOLVER TRANSPORT')
+    False
+
+    :param line: string to test
+    :type line: str
+    """
+
+    return line.strip()[0] in ['#','!']
+
+def get_next_line(infile):
+    """
+    Returns the next uncommented line in a file.
+    Iterates until an uncommented line is found,
+    and returns that line.
+
+    example_file.in:
+        # Comment 1
+        ! Comment 2
+        FIRST_LINE # with comment
+        # Comment 3
+        SECOND_LINE
+
+    >>> infile = open('example_file.in','r')
+    >>> get_next_line(infile)
+    FIRST_LINE
+    >>> get_next_line(infile)
+    SECOND_LINE
+
+    :param infile: Open file-read stream
+    :type infile: file stream (_io.TextIOWrapper)
+    """
+
+    while True:
+        line = infile.readline()
+
+        # Check for SKIP/NOSKIP
+        if line.strip().lower() == 'skip':
+            while True:
+                pline = infile.readline()
+                if pline.strip().lower() == 'noskip':
+                    break
+        else:
+            # Check for empty lines
+            if line.strip() == '': continue
+
+            # Check for comments
+            if not line.strip()[0] in ['#','!']:
+                return filter_comment(line)
+
 def filter_comment(line):
     """
     Returns a line with any trailing comment removed.

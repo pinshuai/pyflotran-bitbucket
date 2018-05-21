@@ -254,7 +254,7 @@ geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
 eos_fluid_names_allowed = ['water', 'gas']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
-                             'rks']
+                             'rks','batzle_and_wang']
 
 eos_enthalpy_types_allowed = ['constant', 'ideal', 'default']
 
@@ -2897,6 +2897,8 @@ class peos(Frozen):
             fluid_viscosity = []
         if fluid_enthalpy is None:
             fluid_enthalpy = []
+        if fluid_test is None:
+            fluid_test = []
         self.fluid_name = fluid_name
         self.fluid_density = fluid_density
         self.fluid_viscosity = fluid_viscosity
@@ -3359,6 +3361,37 @@ class pdata(object):
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
 
+        def preprocess_file(pinfile,outfile='_pyflotran_preproc.in'):
+            """
+            Replaces all instances of EXTERNAL_FILE in a PFLOTRAN infile
+            with the contents of that external file.
+            """
+
+            # Open the file to be written to
+            child_file = open(outfile,'w')
+
+            # Iterate over the PFLOTRAN input file...
+            with open(pinfile,'r') as parent_file:
+                for line in parent_file:
+
+                    # If EXTERNAL_FILE is present, fill
+                    # child_file with its contents
+                    if 'external_file' in line.lower():
+                        exfile = line.split()[1]
+                        expath = os.path.join(
+                                 os.path.dirname(self.filename),exfile)
+                        with open(expath,'r') as extern_file:
+                            for eline in extern_file:
+                                child_file.write(eline)
+
+                    # Otherwise, just write the contents of the
+                    # input file
+                    else:
+                        child_file.write(line)
+
+            child_file.close()
+            return outfile
+
         def get_next_line(skip_readline=skip_readline, line=p_line):
             """
             Used by read function to avoid skipping a line in cases where
@@ -3372,11 +3405,18 @@ class pdata(object):
                 line = infile.readline()
                 return line
 
-        with open(self.filename, 'r') as infile:
+        # EXTERNAL_FILE contains blocks that read() will need to parse.
+        # Check if read() has them.
+        if 'external_file' in open(self.filename,'r').read().lower():
+            infile_name = preprocess_file(self.filename,outfile='_pyflotran_preproc.in')
+        else:
+            infile_name = self.filename
+
+        with open(infile_name, 'r') as infile:
             keep_reading = True
             while keep_reading:
                 p_line = get_next_line()
-                # print p_line
+
                 if not p_line:
                     keep_reading = False
                 if len(p_line.strip()) == 0:
@@ -3918,8 +3958,9 @@ class pdata(object):
             PyFLOTRAN_ERROR('Unknown fluid under EOS!')
 
         while keep_reading:  # read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
+
             if key == 'density':
                 den_type = line.strip().split()[1].lower()
                 if den_type in eos_density_types_allowed:
@@ -3967,8 +4008,17 @@ class pdata(object):
                         for val in line.strip().split()[2:]:
                             eos.fluid_viscosity.append(floatD(val))
             elif key == 'test':
+                # Create a list storing the TEST card
+                # Ex: 
+                #    TEST 10.d0 400.d0 1.d4 1.d8 10 10 uniform uniform
+                eos_test = []
                 for val in line.strip().split()[1:]:
-                    eos.fluid_test.append(val)
+                    try:
+                        eos_test.append(floatD(val))
+                    except ValueError:
+                        eos_test.append(val)
+
+                eos.fluid_test.append(eos_test)
             elif key == 'henrys_constant':
                 if eos.fluid_name not in ['gas']:
                     PyFLOTRAN_ERROR(
@@ -4443,8 +4493,7 @@ class pdata(object):
                 cell_list = []
                 while keep_reading_2:
                     for i in range(100):
-                        line1 = infile.readline()
-                        if line1.strip()[0] == '!': continue
+                        line1 = get_next_line(infile)
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
@@ -4478,21 +4527,22 @@ class pdata(object):
         keep_reading = True
         bounds_key = False
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)  # get next line
             key = line.strip().split()[0].lower()  # take first keyword
-            if line[0] in ['#','!']:
-                continue
-            elif key == 'type':
+
+            if key == 'type':
                 grid.type = line.strip().split()[1].lower()
                 if grid.type in ['unstructured_explicit', 'unstructured_implicit']:
                     grid.filename = self.splitter(line)
             elif key == 'bounds':
                 keep_reading_2 = True
                 while keep_reading_2:
-                    line1 = infile.readline()
+
+                    line1 = get_next_line(infile)
                     grid.lower_bounds = [floatD(bnd) for bnd in line1.split()]
 
-                    line2 = infile.readline()
+                    line2 = get_next_line(infile)
+
                     grid.upper_bounds = [floatD(bnd) for bnd in line2.split()]
 
                     line3 = infile.readline()
@@ -4656,7 +4706,8 @@ class pdata(object):
             timestepper.ts_mode = line.strip().split()[-1].lower()
 
         while keep_reading:  # read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
+
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'ts_acceleration':
                 timestepper.ts_acceleration = int(self.splitter(line))
@@ -5439,7 +5490,7 @@ class pdata(object):
             elif key == 'variables':
                 keep_reading_1 = True
                 while keep_reading_1:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     key1 = line1.strip().split()[0].lower()
                     if key1 in output_variables_allowed:
                         output.variables_list.append(key1)
@@ -5995,7 +6046,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)  # get next line
             key = line.strip().split()[0].lower()  # take first
 
             if key == 'diffusion_coefficient':
@@ -6057,7 +6108,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first  key word
 
             if key == 'permeability_function_type':
@@ -6433,15 +6484,15 @@ class pdata(object):
             if key == 'coordinates':
                 keep_reading_2 = True
                 while keep_reading_2:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     region.coordinates_lower[0] = floatD(line1.split()[0])
                     region.coordinates_lower[1] = floatD(line1.split()[1])
                     region.coordinates_lower[2] = floatD(line1.split()[2])
-                    line2 = infile.readline()
+                    line2 = get_next_line(infile)
                     region.coordinates_upper[0] = floatD(line2.split()[0])
                     region.coordinates_upper[1] = floatD(line2.split()[1])
                     region.coordinates_upper[2] = floatD(line2.split()[2])
-                    line3 = infile.readline()
+                    line3 = get_next_line(infile)
                     if line3.strip().split()[0].lower() in ['/', 'end']:
                         keep_reading_2 = False
             elif key == 'face':
@@ -6513,14 +6564,15 @@ class pdata(object):
                             for i in range(3):
                                 outfile.write(strD(point.coordinate[i]) + ' ')
                             outfile.write('\n')
-                    else:
+                    elif not all(x is None for x in region.coordinates_lower):
                         outfile.write('  COORDINATES\n')
                         outfile.write('    ')
-                        for i in range(3):
+
+                        for i in range(len(region.coordinates_lower)):
                             outfile.write(strD(region.coordinates_lower[i]) +
                                           ' ')
                         outfile.write('\n    ')
-                        for i in range(3):
+                        for i in range(len(region.coordinates_upper)):
                             outfile.write(strD(region.coordinates_upper[i]) +
                                           ' ')
                         outfile.write('\n')
@@ -6655,7 +6707,7 @@ class pdata(object):
                         keep_reading_list = True
                         while keep_reading_list:
 
-                            line = infile.readline()  # get next line
+                            line = get_next_line(infile)
                             # split the whole string/line
                             tstring2 = line.split()[:]
                             for var in flow.varlist:  # var represents
@@ -7131,7 +7183,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)  # get next line
             key = line.strip().split()[0].lower()  # take first  key word
 
             if key == 'flow_condition':
@@ -7561,28 +7613,27 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
+
             try:
                 key = line.strip().split()[0].lower()  # take first key word
             except IndexError:
                 continue  # Read the next line if line is empty.
             if key == 'primary_species':
                 while True:
-                    line = infile.readline()  # get next line
-                    if line[0] in ['#', '!']:
-                        continue
+                    line = get_next_line(infile)
                     if line.strip() in ['/', 'end']:
                         break
                     chem.primary_species_list.append(line.strip())
             elif key == 'skip':
                 keep_reading_1 = True
                 while keep_reading_1:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     if line1.strip().split()[0].lower() == 'noskip':
                         keep_reading_1 = False
             elif key == 'secondary_species':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line[0] in ['#', '!']:
                         continue
                     if line.strip() in ['/', 'end']:
@@ -7590,7 +7641,7 @@ class pdata(object):
                     chem.secondary_species_list.append(line.strip())
             elif key == 'gas_species':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line[0] in ['#', '!']:
                         continue
                     if line.strip() in ['/', 'end']:
@@ -7598,7 +7649,7 @@ class pdata(object):
                     chem.gas_species_list.append(line.strip())
             elif key == 'passive_gas_species':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line[0] in ['#', '!']:
                         continue
                     if line.strip() in ['/', 'end']:
@@ -7606,7 +7657,7 @@ class pdata(object):
                     chem.passive_gas_species_list.append(line.strip())
             elif key == 'active_gas_species':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line[0] in ['#', '!']:
                         continue
                     if line.strip() in ['/', 'end']:
@@ -7614,7 +7665,7 @@ class pdata(object):
                     chem.active_gas_species_list.append(line.strip())
             elif key == 'minerals':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line[0] in ['#', '!']:
                         continue
                     if line.strip() in ['/', 'end']:
@@ -7622,10 +7673,9 @@ class pdata(object):
                     chem.minerals_list.append(line.strip())
             elif key == 'mineral_kinetics':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)  # get next line
                     # Check for comments
-                    if line[0] in ['#', '!']:
-                        continue
+
                     if line.strip() in ['/', 'end']:
                         break
 
@@ -7637,13 +7687,10 @@ class pdata(object):
 
                     # Write mineral attributes here
                     while True:
-                        line = infile.readline()  # get next line
+                        line = get_next_line(infile)
 
                         if line.strip().lower() in ['/', 'end']:
                             break
-
-                        if line[0] in ['#', '!']:
-                            continue
 
                         # key is a kinetic mineral attribute here
                         key = line.strip().split()[0].lower()  # take 1st
@@ -7710,11 +7757,10 @@ class pdata(object):
                             while True:
 
                                 # Read & check for closure
-                                pref_line = infile.readline()
+                                pref_line = get_next_line(infile)
+
                                 if pref_line.strip() in ['/', 'end']:
                                     break
-                                if pref_line[0] in ['#', '!']:
-                                    continue
 
                                 # Capture the PREFACTOR card
                                 pref_key = pref_line.strip().split()[0].lower()
@@ -7757,11 +7803,10 @@ class pdata(object):
                                     # while (PREFACTOR_SPECIES has not been
                                     # closed)...
                                     while True:
-                                        prefspec_line = infile.readline()  # get next line
+                                        prefspec_line = get_next_line(infile) # get next line
+
                                         if prefspec_line.strip() in ['/', 'end']:
                                             break
-                                        if prefspec_line[0] in ['#', '!']:
-                                            continue
 
                                         prefspec_key = prefspec_line.strip().split()[
                                             0].lower()
@@ -7832,7 +7877,7 @@ class pdata(object):
                 chem.molal = True
             elif key == 'output':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     if line.strip() in ['/', 'end']:
                         break
                     chem.output_list.append(line.strip())
@@ -8093,7 +8138,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile) # get next line
             key = line.split()[0].lower()  # take first key word
 
             if key == 'type':
@@ -8162,6 +8207,7 @@ class pdata(object):
     def _write_transport(self, outfile):
         self._header(outfile, headers['transport_condition'])
         tl = self.transportlist
+
         for t in tl:  # t for transport
             if t.name:
                 outfile.write('TRANSPORT_CONDITION ' + t.name.lower() + '\n')
@@ -8256,14 +8302,10 @@ class pdata(object):
 
             elif key == 'minerals':
                 while True:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     tstring = line.split()
                     if line.strip().lower() in ['/', 'end']:
                         break
-
-                    # Check for comments
-                    if line[0] == "#":
-                        continue
 
                     mineral = pconstraint_mineral()
 

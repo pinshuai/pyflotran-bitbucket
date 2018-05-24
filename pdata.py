@@ -179,7 +179,8 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
     lower_list))
 
 characteristic_curves_liquid_permeability_function_types_allowed = [
-    'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ']
+    'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ',
+    'TOUGH2_LINEAR_OIL']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -209,10 +210,12 @@ pressure_types_allowed = ['dirichlet', 'heterogeneous_dirichlet',
                           'hydrostatic', 'zero_gradient', 'conductance',
                           'seepage', 'heterogeneous_conductance',
                           'heterogeneous_seepage',
-                          'neumann']
+                          'neumann', 'surface_dirichlet', 'surface_spillover',
+                          'surface_zero_gradheight',
+                          'heterogeneous_surface_seepage']
 
 rate_types_allowed = ['mass_rate', 'volumetric_rate', 'scaled_volumetric_rate',
-                      'scaled_mass_rate']
+                      'scaled_mass_rate', 'heterogeneous_mass_rate']
 
 scaling_options_allowed = ['perm', 'volume', 'neighbor_perm']
 
@@ -224,7 +227,7 @@ flux_types_allowed = ['dirichlet', 'neumann', 'mass_rate', 'hydrostatic',
                       'volumetric_rate', 'equilibrium']
 
 temperature_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient',
-                             'neumann']
+                             'neumann', 'heterogeneous_dirichlet']
 
 concentration_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
 
@@ -251,12 +254,12 @@ transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
 geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
                                              'one_way_coupled']
 
-eos_fluid_names_allowed = ['water', 'gas']
+eos_fluid_names_allowed = ['water', 'gas', 'oil']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
-                             'rks','batzle_and_wang']
+                             'rks','batzle_and_wang', 'linear']
 
-eos_enthalpy_types_allowed = ['constant', 'ideal', 'default']
+eos_enthalpy_types_allowed = ['constant', 'ideal', 'default', 'linear_temp']
 
 eos_viscosity_types_allowed = ['constant', 'default']
 
@@ -1677,6 +1680,8 @@ class poutput(Frozen):
             format_list = []
         if variables_list is None:
             variables_list = []
+        if periodic_timestep is None:
+            periodic_timestep = []
 
         self.time_list = time_list
         self.print_column_ids = print_column_ids
@@ -1975,7 +1980,7 @@ class pflow(Frozen):
                  sync_timestep_with_update=False, datum=None,
                  datum_type='', datum_time_unit=None,
                  varlist=None, gradient=None, pm='',
-                 gradient_type=''):
+                 gradient_type='', datum_data_unit=None):
 
         if datum is None:
             datum = []
@@ -1997,6 +2002,7 @@ class pflow(Frozen):
         self.gradient = gradient
         self.gradient_type = gradient_type
         self.datum_time_unit = datum_time_unit
+        self.datum_data_unit = datum_data_unit
         self.pm = pm
         self._freeze()
 
@@ -3993,6 +3999,7 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('Unknown EOS density type')
             elif key == 'enthalpy':
                 enthalpy_type = line.strip().split()[1].lower()
+
                 if enthalpy_type in eos_enthalpy_types_allowed:
                     eos.fluid_enthalpy.append(enthalpy_type)
                     if len(line.strip().split()) > 2:
@@ -4566,13 +4573,13 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
                 keep_reading_2 = True
                 while keep_reading_2:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     grid.dx = [floatD(val) for val in line.strip().split()]
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     grid.dy = [floatD(val) for val in line.strip().split()]
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     grid.dz = [floatD(val) for val in line.strip().split()]
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     if line.strip().split()[0].lower() not in ['/', 'end']:
                         raise PyFLOTRAN_ERROR(
                             'dx dy dz -- all three are not specified!')
@@ -4813,7 +4820,7 @@ class pdata(object):
         np_cond_wet_unit = p.cond_wet_unit
 
         while keep_reading:  # read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
                 np_id = int(self.splitter(line))
@@ -4866,8 +4873,9 @@ class pdata(object):
             elif key == 'permeability':
                 keep_reading_2 = True
                 while keep_reading_2:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     key = line.split()[0].lower()  # take first keyword
+
                     if key == 'perm_iso':
                         np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'perm_x':
@@ -5098,7 +5106,7 @@ class pdata(object):
 
         keep_reading = True
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.split()[0].lower()  # take first keyword
             if key == 'final_time':
                 tstring = line.split()[1:]  # temp list of strings,
@@ -5431,7 +5439,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
             if key == 'times':
                 tstring = line.split()[1:]  # Turn into list, exempt 1st word
@@ -5457,9 +5465,7 @@ class pdata(object):
                         self.splitter(line))  # last word
                 elif tstring == 'timestep':
                     # 2nd from last word.
-                    output.periodic_timestep.append(floatD(line.split()[-2]))
-                    output.periodic_timestep.append(
-                        self.splitter(line))  # last word
+                    output.periodic_timestep = int(line.split()[-1])
             elif key == 'periodic_observation':
                 tstring = line.strip().split()[1].lower()  # Read the 2nd word
                 if tstring == 'time':
@@ -6299,7 +6305,7 @@ class pdata(object):
                 characteristic_curves.liquid_permeability_function_type = word
                 keep_reading1 = True
                 while keep_reading1:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'phase':
                         characteristic_curves.phase = \
@@ -6488,10 +6494,17 @@ class pdata(object):
                     region.coordinates_lower[0] = floatD(line1.split()[0])
                     region.coordinates_lower[1] = floatD(line1.split()[1])
                     region.coordinates_lower[2] = floatD(line1.split()[2])
+                    
                     line2 = get_next_line(infile)
-                    region.coordinates_upper[0] = floatD(line2.split()[0])
-                    region.coordinates_upper[1] = floatD(line2.split()[1])
-                    region.coordinates_upper[2] = floatD(line2.split()[2])
+                    try:
+                        region.coordinates_upper[0] = floatD(line2.split()[0])
+                        region.coordinates_upper[1] = floatD(line2.split()[1])
+                        region.coordinates_upper[2] = floatD(line2.split()[2])
+                    except ValueError:
+                        region.coordinates_upper = [None,None,None]
+                        keep_reading2 = False
+                        break
+
                     line3 = get_next_line(infile)
                     if line3.strip().split()[0].lower() in ['/', 'end']:
                         keep_reading_2 = False
@@ -6721,7 +6734,7 @@ class pdata(object):
                                         var.time_unit_type = tstring2[1]
                                     elif tstring2[0].lower() == 'data_units':
                                         var.data_unit_type = tstring2[1]
-                                    elif line.split()[0] in ['/', 'end']:
+                                    elif line.split()[0].lower() in ['/', 'end']:
                                         keep_reading_list = False
                                     else:
                                         tvarlist = pflow_variable_list()
@@ -6772,16 +6785,19 @@ class pdata(object):
                     flow.datum_type = 'list'
                     keep_reading1 = True
                     while keep_reading1:
-                        line = infile.readline()
+                        line = get_next_line(infile)
                         if len(list(line)) == 0:
                             continue
                         if list(line)[0] in ['!', '#']:
                             continue
                         val = line.strip().split()[0].lower()
+
                         if val == 'time_units':
                             flow.datum_time_unit = line.strip().split()[1]
                         elif val in ['/', 'end']:
                             keep_reading1 = False
+                        elif val == 'data_units':
+                            flow.datum_data_unit = line.strip().split()[1]
                         else:
                             temp_list = [floatD(line.split()[0]), floatD(
                                 line.split()[1]), floatD(line.split()[2]),
@@ -6987,7 +7003,7 @@ class pdata(object):
                         enthalpy_types_allowed, '\n'
                     raise PyFLOTRAN_ERROR(
                         'flow.varlist.type: \'' +
-                        conition_type + '\' is invalid.')
+                        condition_type + '\' is invalid.')
                 return 0  # Break out of function
             elif condition_name.upper() == 'MOLE_FRACTION':
                 if condition_type.lower() in mole_fraction_types_allowed:
@@ -7104,6 +7120,10 @@ class pdata(object):
                             outfile.write('    ')
                             outfile.write('TIME_UNITS ' +
                                           flow.datum_time_unit + '\n')
+                        if flow.datum_data_unit is not None:
+                            outfile.write('    ')
+                            outfile.write('DATA_UNITS ' + 
+                                          flow.datum_data_unit + '\n')
                         for val in flow.datum:
                             outfile.write('      ')
                             outfile.write(strD(val[0]) + ' ')  # time values

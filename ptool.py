@@ -74,6 +74,8 @@ def floatD(string):
     """
     if not isinstance(string, str):
         string = strD(string)  # Convert to string if not string.
+    if '*' in string:
+        return eval(string.replace('d','e'))
     return float(string.lower().replace('d', 'e'))
 
 def boolS(string):
@@ -156,9 +158,12 @@ def is_comment(line):
 
 def get_next_line(infile):
     """
-    Returns the next uncommented line in a file.
-    Iterates until an uncommented line is found,
-    and returns that line.
+    Returns the next valid line in a file.
+    That is, no (i) commented lines are
+    returned, (ii) no items within a skip 
+    block are returned, (iii) no empty lines
+    are returned, and (iv) any valid lines with
+    trailing comments have those comments removed.
 
     example_file.in:
         # Comment 1
@@ -189,6 +194,23 @@ def get_next_line(infile):
         else:
             # Check for empty lines
             if line.strip() == '': continue
+
+            # Check for extended line characters: \
+            if "\\" in filter_comment(line):
+                extended_line = ""
+
+                while True:
+                    idx = line.find("\\")
+
+                    # If there is no more continuation chars,
+                    # then append current line and quit
+                    if idx == -1:
+                        extended_line += line
+                        return extended_line.strip()
+
+                    # Get line up to \
+                    extended_line += line[:idx]
+                    line = filter_comment(infile.readline())
 
             # Check for comments
             if not line.strip()[0] in ['#','!']:

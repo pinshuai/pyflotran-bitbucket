@@ -143,7 +143,8 @@ output_variables_allowed = ['permeability',
                             'soil_reference_pressure',
                             'process_id',
                             'volume',
-                            'material_id']
+                            'material_id',
+                            'natural_id']
 
 
 # saturation_function - allowed strings
@@ -161,7 +162,10 @@ permeability_function_types_allowed = ['VAN_GENUCHTEN', 'MUALEM', 'BURDINE',
 
 # characteristic_curves - allowed strings - saturation & permeability functions
 characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN',
-                                                           'BROOKS_COREY']
+                                                           'BROOKS_COREY',
+                                                           'LINEAR',
+                                                           'CONSTANT',
+                                                           'BRAGFLO_KRP9']
 lower_list = [sat.lower() for sat in
               characteristic_curves_saturation_function_types_allowed]
 
@@ -180,7 +184,8 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
 
 characteristic_curves_liquid_permeability_function_types_allowed = [
     'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ',
-    'TOUGH2_LINEAR_OIL']
+    'TOUGH2_LINEAR_OIL', 'BURDINE_BC_LIQ', 'BURDINE_LINEAR_LIQ',
+    'BRAGFLO_KRP9_LIQ']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -245,7 +250,7 @@ gas_flux_types_allowed = ['neumann']
 
 gas_saturation_types_allowed = ['dirichlet']
 
-enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient']
+enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'temperature']
 
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'equilibrium', 'neumann', 'mole',
@@ -257,7 +262,8 @@ geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
 eos_fluid_names_allowed = ['water', 'gas', 'oil']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
-                             'rks','batzle_and_wang', 'linear']
+                             'rks','batzle_and_wang', 'linear', 'trangenstein',
+                             'inverse_linear']
 
 eos_enthalpy_types_allowed = ['constant', 'ideal', 'default', 'linear_temp']
 
@@ -1857,7 +1863,8 @@ class pcharacteristic_curves(Frozen):
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
-                 gpf_gas_residual_saturation=None, phase=None):
+                 gpf_gas_residual_saturation=None, phase=None,
+                 lpf_gas_residual_saturation=None):
         self.name = name
         self.saturation_function_type = saturation_function_type
         self.sf_alpha = sf_alpha
@@ -1873,6 +1880,7 @@ class pcharacteristic_curves(Frozen):
             liquid_permeability_function_type
         self.lpf_m = lpf_m
         self.lpf_lambda = lpf_lambda
+        self.lpf_gas_residual_saturation = lpf_gas_residual_saturation
         self.lpf_liquid_residual_saturation = lpf_liquid_residual_saturation
         self.gas_permeability_function_type = gas_permeability_function_type
         self.gpf_m = gpf_m
@@ -4089,7 +4097,14 @@ class pdata(object):
                                       + strD(eos.fluid_density[3]) + '\n')
                     elif eos.fluid_density[0].upper() == 'DEFAULT':
                         outfile.write('  DENSITY DEFAULT\n')
+                    elif eos.fluid_density[0].upper() == 'IDEAL':
+                        outfile.write('  DENSITY IDEAL\n')
+                    elif eos.fluid_density[0].upper() == 'BATZLE_AND_WANG':
+                        outfile.write('  DENSITY BATZLE_AND_WANG\n')
+                    elif eos.fluid_density[0].upper() == 'TRANGENSTEIN':
+                        outfile.write('  DENSITY TRANGENSTEIN\n')
                     else:
+                        print(eos.fluid_density)
                         raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
                                               strD(eos.fluid_density) +
                                               '\' has incorrect keyword or incorrect length')
@@ -4119,6 +4134,11 @@ class pdata(object):
                             len(eos.fluid_enthalpy) == 1:
                         outfile.write('  ENTHALPY ' +
                                       eos.fluid_enthalpy[0].upper() + '\n')
+                    elif eos.fluid_enthalpy[0].upper() == 'LINEAR_TEMP' and \
+                            len(eos.fluid_enthalpy) == 2:
+                        outfile.write('  ENTHALPY ' +
+                                      eos.fluid_enthalpy[0].upper() + ' '
+                                      + strD(eos.fluid_enthalpy[1]) + '\n')
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' +
                                               strD(eos.fluid_enthalpy) +
@@ -4211,7 +4231,7 @@ class pdata(object):
                             elif key1 == 'options':
                                 keep_reading_2 = True
                                 while keep_reading_2:
-                                    line = infile.readline()
+                                    line = get_next_line(infile)
                                     key2 = line.strip().split()[0].lower()
                                     if key2 == 'isothermal':
                                         simulation.isothermal = True
@@ -6247,7 +6267,7 @@ class pdata(object):
                     line)
                 keep_reading1 = True
                 while keep_reading1:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     if len(line.strip()) == 0:
                         continue
                     elif list(line)[0] in ['!', '#']:
@@ -6282,7 +6302,7 @@ class pdata(object):
                 characteristic_curves.gas_permeability_function_type = word
                 keep_reading1 = True
                 while keep_reading1:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     key1 = line.strip().split()[0].lower()
                     if key1 == 'phase':
                         characteristic_curves.phase = \
@@ -6485,7 +6505,7 @@ class pdata(object):
 
         keep_reading = True
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'coordinates':
                 keep_reading_2 = True
@@ -6813,7 +6833,7 @@ class pdata(object):
             elif key == 'gradient':
                 keep_reading1 = True
                 while keep_reading1:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     type = line.strip().split()[0].lower()
                     if type in gradient_types_allowed:
                         flow.gradient_type = type

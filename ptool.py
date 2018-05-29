@@ -202,7 +202,7 @@ def get_next_line(infile):
                 while True:
                     idx = line.find("\\")
 
-                    # If there is no more continuation chars,
+                    # If there are no more continuation chars,
                     # then append current line and quit
                     if idx == -1:
                         extended_line += line

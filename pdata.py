@@ -165,7 +165,8 @@ characteristic_curves_saturation_function_types_allowed = ['VAN_GENUCHTEN',
                                                            'BROOKS_COREY',
                                                            'LINEAR',
                                                            'CONSTANT',
-                                                           'BRAGFLO_KRP9']
+                                                           'BRAGFLO_KRP9',
+                                                           'BRAGFLO_KRP4']
 lower_list = [sat.lower() for sat in
               characteristic_curves_saturation_function_types_allowed]
 
@@ -185,7 +186,7 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
 characteristic_curves_liquid_permeability_function_types_allowed = [
     'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ',
     'TOUGH2_LINEAR_OIL', 'BURDINE_BC_LIQ', 'BURDINE_LINEAR_LIQ',
-    'BRAGFLO_KRP9_LIQ']
+    'BRAGFLO_KRP9_LIQ', 'BRAGFLO_KRP4_LIQ']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -2192,6 +2193,10 @@ class pstrata(Frozen):
         self.pm = pm
         self._freeze()
 
+class pdbase(Frozen):
+    def __init__(self,value):
+        assert isinstance(value,str)
+        self.value = value
 
 class pdataset(Frozen):
     """
@@ -3375,35 +3380,43 @@ class pdata(object):
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
 
+        def capture_external_file(cinfile):
+            """
+            Recursive function that is called with each capture of 
+            EXTERNAL_FILE.
+            """
+
+            # Store the working file text to this variable.
+            # It will get expanded as this function is 
+            # recursively called.
+            filetxt = ''
+
+            # Get the pathname - this may be relative, so 
+            # we must update it here
+            cwd = os.path.dirname(cinfile)
+
+            with open(cinfile,'r') as child_file:
+                for line in child_file:
+                    if 'external_file' in line.lower():
+                        exfile = line.split()[1]
+                        expath = os.path.join(cwd,exfile)
+                        filetxt += capture_external_file(expath)
+                    else:
+                        filetxt += line
+
+            # Return the file contents
+            return filetxt
+
+
         def preprocess_file(pinfile,outfile='_pyflotran_preproc.in'):
             """
             Replaces all instances of EXTERNAL_FILE in a PFLOTRAN infile
             with the contents of that external file.
             """
 
-            # Open the file to be written to
-            child_file = open(outfile,'w')
+            with open(outfile,'w') as parent_file:
+                parent_file.write(capture_external_file(pinfile))
 
-            # Iterate over the PFLOTRAN input file...
-            with open(pinfile,'r') as parent_file:
-                for line in parent_file:
-
-                    # If EXTERNAL_FILE is present, fill
-                    # child_file with its contents
-                    if 'external_file' in line.lower():
-                        exfile = line.split()[1]
-                        expath = os.path.join(
-                                 os.path.dirname(self.filename),exfile)
-                        with open(expath,'r') as extern_file:
-                            for eline in extern_file:
-                                child_file.write(eline)
-
-                    # Otherwise, just write the contents of the
-                    # input file
-                    else:
-                        child_file.write(line)
-
-            child_file.close()
             return outfile
 
         def get_next_line(skip_readline=skip_readline, line=p_line):
@@ -4524,7 +4537,10 @@ class pdata(object):
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
-                        cell_list.append(int(filter_comment(line1)))
+
+                        # Convert however many ints exist on this line into
+                        # a list and extend
+                        cell_list.extend(list(map(int,line1.split())))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
@@ -4841,14 +4857,20 @@ class pdata(object):
 
         while keep_reading:  # read through all cards
             line = get_next_line(infile)
+            
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
-                np_id = int(self.splitter(line))
+                if line.split()[1].lower() == 'dbase_value':
+                    np_id = pdbase(self.splitter(line))
+                else:
+                    np_id = int(self.splitter(line))
             elif key == 'characteristic_curves':
                 np_characteristic_curves = self.splitter(line)
             elif key == 'porosity':
                 if line.split()[1].lower() == 'dataset':
                     np_porosity = self.splitter(line)
+                elif line.split()[1].lower() == 'dbase_value':
+                    np_porosity = pdbase(self.splitter(line))
                 else:
                     np_porosity = floatD(self.splitter(line))
             elif key == 'tortuosity':
@@ -4896,14 +4918,11 @@ class pdata(object):
                     line = get_next_line(infile)
                     key = line.split()[0].lower()  # take first keyword
 
-                    if key == 'perm_iso':
-                        np_permeability.append(floatD(self.splitter(line)))
-                    elif key == 'perm_x':
-                        np_permeability.append(floatD(self.splitter(line)))
-                    elif key == 'perm_y':
-                        np_permeability.append(floatD(self.splitter(line)))
-                    elif key == 'perm_z':
-                        np_permeability.append(floatD(self.splitter(line)))
+                    if key in ['perm_iso','perm_x','perm_y','perm_z']:
+                        if 'dbase_value' in line.lower():
+                            np_permeability.append(pdbase(self.splitter(line)))
+                        else:
+                            np_permeability.append(floatD(self.splitter(line)))
                     elif key == 'dataset':
                         np_permeability.append(self.splitter(line))
                     elif key in ['/', 'end']:
@@ -6253,7 +6272,7 @@ class pdata(object):
         characteristic_curves.name = self.splitter(line).lower()
         keep_reading = True
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             if len(line.strip()) == 0:
                 continue
             elif list(line)[0] in ['!', '#']:
@@ -6268,6 +6287,7 @@ class pdata(object):
                 keep_reading1 = True
                 while keep_reading1:
                     line = get_next_line(infile)
+
                     if len(line.strip()) == 0:
                         continue
                     elif list(line)[0] in ['!', '#']:
@@ -6601,14 +6621,18 @@ class pdata(object):
                         outfile.write('  COORDINATES\n')
                         outfile.write('    ')
 
-                        for i in range(len(region.coordinates_lower)):
-                            outfile.write(strD(region.coordinates_lower[i]) +
-                                          ' ')
-                        outfile.write('\n    ')
-                        for i in range(len(region.coordinates_upper)):
-                            outfile.write(strD(region.coordinates_upper[i]) +
-                                          ' ')
-                        outfile.write('\n')
+                        upper = [x for x in region.coordinates_upper if x is not None]
+                        lower = [x for x in region.coordinates_lower if x is not None]
+
+                        upper_line = ' '.join(list(map(strD,upper)))
+                        lower_line = ' '.join(list(map(strD,lower)))
+
+                        if upper_line != '':
+                            outfile.write('    ' + upper_line + '\n')
+
+                        if lower_line != '':
+                            outfile.write('    ' + lower_line + '\n')
+
                         outfile.write('  /\n')
                 outfile.write('END\n\n')
 

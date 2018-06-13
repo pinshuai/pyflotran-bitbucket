@@ -831,20 +831,20 @@ class pgrid(Frozen):
             cells = []
             conn = []
             with open(filename, 'r') as f:
-                line = f.readline()
+                line = get_next_line(infile)
                 num_cells = int(line.split()[1])
                 for i in range(num_cells):
-                    line = f.readline()
+                    line = get_next_line(infile)
                     x_cell = float(line.split()[1])
                     y_cell = float(line.split()[2])
                     z_cell = float(line.split()[3])
                     cells.append([x_cell, y_cell, z_cell])
                 self._celllist = cells
                 self.nxyz = num_cells
-                line = f.readline()
+                line = get_next_line(infile)
                 num_conn = int(line.split()[1])
                 for i in range(num_conn):
-                    line = f.readline()
+                    line = get_next_line(infile)
                     id_up = int(line.split()[0])
                     id_dn = int(line.split()[1])
                     x_conn = float(line.split()[2])
@@ -3996,7 +3996,7 @@ class pdata(object):
                         eos.rks = prks()
                         keep_reading1 = True
                         while keep_reading1:
-                            line1 = infile.readline()
+                            line1 = get_next_line(infile)
                             # take first keyword
                             key1 = line1.strip().split()[0].lower()
                             if key1 in ['hydrogen', 'non-hydrogen']:
@@ -4117,9 +4117,8 @@ class pdata(object):
                     elif eos.fluid_density[0].upper() == 'TRANGENSTEIN':
                         outfile.write('  DENSITY TRANGENSTEIN\n')
                     else:
-                        print(eos.fluid_density)
                         raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
-                                              strD(eos.fluid_density) +
+                                              str(eos.fluid_density) +
                                               '\' has incorrect keyword or incorrect length')
 
                 if eos.fluid_viscosity:
@@ -4220,7 +4219,7 @@ class pdata(object):
         keep_reading0 = True
         key_bank = []
         while keep_reading0:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             if len(line.strip()) == 0:
                 continue
             elif list(line)[0] in ['!', '#']:
@@ -4231,13 +4230,13 @@ class pdata(object):
             elif key0 == 'process_models':
                 keep_reading = True
                 while keep_reading:
-                    line = infile.readline()
+                    line = get_next_line(infile)
                     key = line.strip().split()[0].lower()
                     if key == 'subsurface_flow':
                         simulation.subsurface_flow = self.splitter(line)
                         keep_reading_1 = True
                         while keep_reading_1:
-                            line = infile.readline()
+                            line = get_next_line(infile)
                             key1 = line.strip().split()[0].lower()
                             if key1 == 'mode':
                                 simulation.mode = self.splitter(line).lower()
@@ -4278,7 +4277,7 @@ class pdata(object):
                         simulation.subsurface_transport = self.splitter(line)
                         keep_reading_2 = True
                         while keep_reading_2:
-                            line1 = infile.readline()
+                            line1 = get_next_line(infile)
                             key1 = line1.strip().split()[0].lower()
                             if key1 == 'global_implicit':
                                 simulation.flowtran_coupling = key1
@@ -4313,7 +4312,7 @@ class pdata(object):
                 simulation.checkpoint = pcheckpoint(time_list=None)
                 keep_reading = True
                 while keep_reading:  # Read through all cards
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     # take first key word
                     key = line.strip().split()[0].lower()
                     if 'times' in key:
@@ -4525,7 +4524,7 @@ class pdata(object):
         regression = pregression()
         keep_reading = True
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'cells':
@@ -4588,7 +4587,7 @@ class pdata(object):
 
                     grid.upper_bounds = [floatD(bnd) for bnd in line2.split()]
 
-                    line3 = infile.readline()
+                    line3 = get_next_line(infile)
                     if line3.strip().split()[0].lower() in ['/', 'end']:
                         keep_reading_2 = False
 
@@ -5312,12 +5311,12 @@ class pdata(object):
     def _read_lsolver(self, infile, line):
         lsolver = plsolver()  # temporary object while reading
         # solver type - tran_solver or flow_solver
-        lsolver.name = self.splitter(line).lower()
+        lsolver.name = self.splitter(filter_comment(line)).lower()
 
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'solver':
@@ -5383,7 +5382,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile) # get next line
             key = line.strip().split()[0].lower()  # take first key word
             line = filter_comment(line)
 
@@ -5548,7 +5547,7 @@ class pdata(object):
             elif key == 'snapshot_file':
                 keep_reading1 = True
                 while keep_reading1:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
@@ -5569,7 +5568,7 @@ class pdata(object):
                     elif key1 == 'variables':
                         keep_reading2 = True
                         while keep_reading2:
-                            line2 = infile.readline()
+                            line2 = get_next_line(infile)
                             key2 = line2.strip().split()[0].lower()
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
@@ -5617,7 +5616,7 @@ class pdata(object):
             elif key == 'observation_file':
                 keep_reading1 = True
                 while keep_reading1:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
@@ -5638,7 +5637,7 @@ class pdata(object):
                     elif key1 == 'variables':
                         keep_reading2 = True
                         while keep_reading2:
-                            line2 = infile.readline()
+                            line2 = get_next_line(infile)
                             key2 = line2.strip().split()[0].lower()
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
@@ -5687,7 +5686,7 @@ class pdata(object):
             elif key == 'mass_balance_file':
                 keep_reading1 = True
                 while keep_reading1:
-                    line1 = infile.readline()
+                    line1 = get_next_line(infile)
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
@@ -5708,7 +5707,7 @@ class pdata(object):
                     elif key1 == 'variables':
                         keep_reading2 = True
                         while keep_reading2:
-                            line2 = infile.readline()
+                            line2 = get_next_line(infile)
                             key2 = line2.strip().split()[0].lower()
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
@@ -5753,7 +5752,7 @@ class pdata(object):
                     elif key1 == 'total_mass_regions':
                         keep_reading2 = True
                         while keep_reading2:
-                            line2 = infile.readline()
+                            line2 = get_next_line(infile)
                             key2 = line2.strip().split()[0].lower()
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
@@ -6642,7 +6641,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'region':
                 observation.region = self.splitter(line)
@@ -6711,7 +6710,7 @@ class pdata(object):
         end_count = 0
         total_end_count = 1
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
 
             # Read key, or skip line if empty
             try:
@@ -6858,12 +6857,13 @@ class pdata(object):
                 keep_reading1 = True
                 while keep_reading1:
                     line = get_next_line(infile)
-                    type = line.strip().split()[0].lower()
-                    if type in gradient_types_allowed:
-                        flow.gradient_type = type
+                    gtype = line.strip().split()[0].lower()
+
+                    if gtype in gradient_types_allowed:
+                        flow.gradient_type = gtype
                         for val in line.strip().split()[1:]:
                             flow.gradient.append(val)
-                    elif type in ['/', 'end']:
+                    elif gtype in ['/', 'end']:
                         keep_reading1 = False
                     else:
                         raise PyFLOTRAN_ERROR('Incorrect gradient type!')
@@ -7331,7 +7331,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.split()[0].lower()  # take first key word
 
             if key == 'flow_condition':
@@ -7421,7 +7421,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'flow_condition':
@@ -7492,7 +7492,7 @@ class pdata(object):
             strata.pm = 'geomechanics'
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
             if 'region' in key:
@@ -7599,7 +7599,7 @@ class pdata(object):
         keep_reading = True
         dataset.dataset_name = self.splitter(line)
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first  key word
             if key == 'dataset_mapped_name':
                 dataset.dataset_mapped_name = self.splitter(line)
@@ -8213,7 +8213,7 @@ class pdata(object):
                 np_time_units = self.splitter(line)
             elif key == 'constraint_list':
                 keep_reading_2 = True
-                line = infile.readline()
+                line = get_next_line(infile)
                 while keep_reading_2:
                     try:
                         # print
@@ -8231,7 +8231,7 @@ class pdata(object):
                                               'Number and type should = ' +
                                               ' String\n')
 
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     # Used to stop loop when / or end is read
                     key = line.split()[0].lower()
                     if key in ['/', 'end']:
@@ -8334,12 +8334,12 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.split()[0].lower()  # take first key word
 
             if key == 'concentrations':
                 while True:
-                    line = infile.readline()  # get next line
+                    line = get_next_line(infile)
                     tstring = line.split()
                     # Convert line to temporary list of strings
 
@@ -8583,7 +8583,7 @@ class pdata(object):
 
         keep_reading = True
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key in ['#']:
                 pass
@@ -8750,7 +8750,7 @@ class pdata(object):
         coupling.coupling_type = line.strip().split()[-1].lower()
         keep_reading = True
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key in ['#']:
                 pass
@@ -8778,7 +8778,7 @@ class pdata(object):
         time = pgeomech_time()
         keep_reading = True
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key in ['#']:
                 pass
@@ -8810,7 +8810,7 @@ class pdata(object):
         output = pgeomech_output()
         keep_reading = True
         while keep_reading:
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key in ['#']:
                 pass
@@ -8865,7 +8865,7 @@ class pdata(object):
         regression = pgeomech_regression()
         keep_reading = True
         while keep_reading:  # Read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
             if key == 'vertices':
@@ -8873,7 +8873,7 @@ class pdata(object):
                 vertex_list = []
                 while keep_reading_2:
                     for i in range(100000):
-                        line1 = infile.readline()
+                        line1 = get_next_line(infile)
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
@@ -8884,7 +8884,7 @@ class pdata(object):
                 variable_list = []
                 while keep_reading_2:
                     for i in range(100):
-                        line1 = infile.readline()
+                        line1 = get_next_line(infile)
                         if line1.strip().split()[0].lower() in ['/', 'end']:
                             keep_reading_2 = False
                             break
@@ -8941,7 +8941,7 @@ class pdata(object):
         p = pgeomech_material(id=np_id)
         keep_reading = True
         while keep_reading:  # read through all cards
-            line = infile.readline()  # get next line
+            line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
                 np_id = int(self.splitter(line))

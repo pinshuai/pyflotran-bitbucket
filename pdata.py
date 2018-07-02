@@ -2511,7 +2511,32 @@ class pchemistry(Frozen):
                 self.freundlich_n = freundlich_n
                 self.kd_mineral_name = kd_mineral_name
 
-        class psurface_complexion_rxn(Frozen):
+        class psurface_complexation_rxn(Frozen):
+            '''
+            Specifies parameters for a surface complexation reaction.
+
+            :param sorption_type: One of: ['equilibrium','multirate_kinetic','kinetic']
+            :type sorption_type: str
+            :param complex_kinetics: Opens a block specifying forward and backward rate constants
+            CLASS TYPE
+            :type complex_kinetics: sdfsadfasdfsdf
+            :param rates: Specific kinetic rates associated with SITE_FRACTIONs.
+            :type rates: list <float>
+            :param site_fraction: Specifies site fractions associated with RATES for multirate kinetic sorption.
+            :type site_fraction: list <float>
+            :param mineral: The name of the mineral with which the sorption site density is associated
+            :type mineral: str
+            :param multirate_scale_factor: Floating point number that scales all rate constants for multirate kinetic sorption.
+            :type multirate_scale_factor: float
+            :param colloid: Name of the colloid associated with surface complexation reaction
+            :type colloid: str
+            :param rock_density: a flag which allows the calculation of surface site concentration based on rock density
+            :type rock_density: bool
+            :param site: name of site and site density [mol/m^3]
+            :type site: list [str,float]
+            :param complexes: opens a block listing the names of surface complexes associated with the surface complexation reaction and the surface site.
+            :type complexes: CLASS CLASS?????????
+            '''
             
             def __init__(self,sorption_type=None,complex_kinetics=None,
                          rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,

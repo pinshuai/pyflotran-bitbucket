@@ -6,6 +6,11 @@ import filecmp
 import pickle
 import json
 
+PYFLOTRAN_RF_ERROR   = 15 # Read fail error
+PYFLOTRAN_WF_ERROR   = 16 # Write fail error
+PYFLOTRAN_PFLO_ERROR = 12 # PFLOTRAN runtime error
+PYFLOTRAN_COMP_ERROR = 13 # Regression comparison error
+
 try:
     pflotran_dir = os.environ['PFLOTRAN_DIR']
 except KeyError:
@@ -105,7 +110,7 @@ def read_and_write(file):
         print('Error in reading: ' + file)
         read_fail_files.append(file)
 
-def regression_diff(file1, file2, verbose=False, json_diff_dir=None):
+def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=None):
     '''
     Performs regression tests with native input file vs. PyFLOTRAN input file.
     Constructs a dictionary from the regression output file, and uses
@@ -149,14 +154,28 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None):
             pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file)
 
         if 'ERROR' in out:
-            print('PFLOTRAN ERROR: Fail on read ' + file)
+            print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
+                out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
+                +'\n'+'-'*50)
             os.chdir(current_dir)
+            if debug_dict is not None:
+                debug_dict['failed']['pflotran_runtime'][file] = out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
+            return False
+
+        elif 'ERROR' in err:
+            print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m\n'+err+'\n'+'-'*50)
+            os.chdir(current_dir)
+            if debug_dict is not None:
+                debug_dict['failed']['pflotran_runtime'][file] = err
             return False
 
         # Capture the regression file written out
         capture_idx = out.find(capture)
         if capture_idx == -1:
             os.chdir(current_dir)
+            if debug_dict is not None:
+                debug_dict['failed']['pflotran_runtime'][file] = out
+            print('\033[91mUNKNOWN ERROR\033[0m\n'+'-'*50)
             return False
 
         reg_file = out[capture_idx+len(capture)+1:out.find('\n',capture_idx)]
@@ -197,13 +216,24 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None):
     # Compare JSON files
     out, err = run_popen(json_diff_dir+' tmp_dump1.json tmp_dump2.json')
 
+    # Remove JSON files
+    os.remove('tmp_dump1.json')
+    os.remove('tmp_dump2.json')
+
     if verbose:
         print(' | '.join(list(map(os.path.basename,[file1,file2]))) + \
             '\n'.join([out,err,'-'*50]))
 
     if out == '' and err == '':
+        print('\033[92mPASSED\033[0m\n'+'-'*50)
+        if debug_dict is not None:
+                debug_dict['passed'].append(file1)
         return True
     else:
+        print('\033[91mREGRESSION COMPARISON ERROR:\033[0m FAILED ON COMPARISON\n'+'-'*50)
+        #print([file1,file2])
+        if debug_dict is not None:
+                debug_dict['failed']['regression_comp'][file1] = out
         return False
 
 def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_dir=None):
@@ -242,30 +272,55 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
     fail_list = []
     success_list = []
 
+    # Dictionary recording status of all files
+    # Useful for debugging
+    debug_dict = {
+        'passed':[],
+        'failed':{
+            'pflotran_runtime':{},
+            'pyflotran_runtime':{},
+            'regression_comp':{}
+        }
+    }
+
     # Iterate over each file...
     for file in file_list:
+        print('FILEEEEEE!!!'+file)
         # Try reading
         try:
-            dat = pdata(file)
+            print('\033[94m'+file+'\033[0m')
             tmp_file = os.path.join(os.path.dirname(file),tmp_out)
-            dat.write(tmp_file)
-        except:
-            print('PyFLOTRAN ERROR: Could not parse \'%s\'' % file)
+            pdata(file).write(tmp_file)
+        except Exception as e:
+            print('\033[91mPyFLOTRAN RUNTIME ERROR:\033[0m Could not parse \'%s\'' % file)
             fail_list.append(file)
+            print(e)
+            debug_dict['failed']['pyflotran_runtime'][file] = e
             continue
 
+        print('DID I PASS')
+
         os.chdir(current_dir)
-        status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir)
+        status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir,debug_dict=debug_dict)
 
         if status:
             success_list.append(file)
         else:
             fail_list.append(file)
 
-        os.remove(tmp_file)
+        #os.remove(tmp_file)
 
     print("Number of successful regressions:   %d" % len(success_list))
     print("Number of failed regressions:       %d" % len(fail_list))
+
+    # Write out complete pass/fail
+    if False == True:
+        with open('DEBUG_LOG','w') as f:
+            f.write("Passed:       %d" % len(success_list) + '\n' + 
+                    "Failed:       %d" % len(fail_list) + '\n\n' + 
+                    json.dumps(debug_dict))
+
+    return debug_dict
 
 def cleanup():
     files = check_file('find ' + pflotran_dir +
@@ -274,45 +329,57 @@ def cleanup():
         print file
         run_popen('rm -f ' + file)
 
+def run_single(file):
+    tmp_file = os.path.join(os.path.dirname(file),'temp.in')
+    #json_diff_dir = '/Users/livingston/.bin/pyflotran/node_modules/json-diff/bin/json-diff.js'
+    regression_validation([file],verbose=True)
+    #regression_diff(file,tmp_file,json_diff_dir=json_diff_dir)
+    print('vim '+file)
+    print('vim '+tmp_file)
 
-cleanup()
-
-files = check_file('find ' + pflotran_dir +
-                   '/regression_tests/ -type f -name "*.in"')
+run_single('/Users/livingston/.bin/pflotran//regression_tests//ascem/batch/ion-exchange-valocchi.in')
 
 
-for file in files:
-    if file != '':
-        # print file
-        if file.replace('/', ' ').split()[-1] in tests_list:
-            read_and_write(file)
+if (__name__ == '__main2__'):
+    cleanup()
 
-# print results
-print 'Successful files:'
-print success_files
-print 'Read fail files:'
-print read_fail_files
-print 'Write fail files:'
-print write_fail_files
+    files = check_file('find ' + pflotran_dir +
+                       '/regression_tests/ -type f -name "*.in"')
 
-print 'Number of successful files: ' + str(len(success_files))
-print 'Number of read fail files: ' + str(len(read_fail_files))
-print 'Number of write fail files: ' + str(len(write_fail_files))
+    '''
+    for file in files:
+        if file != '':
+            # print file
+            if file.replace('/', ' ').split()[-1] in tests_list:
+                read_and_write(file)
+    '''
 
-# Run regression validation
-regression_validation(files,verbose=True)
+    # print results
+    print 'Successful files:'
+    print success_files
+    print 'Read fail files:'
+    print read_fail_files
+    print 'Write fail files:'
+    print write_fail_files
 
-# Compare regression outputs
+    print 'Number of successful files: ' + str(len(success_files))
+    print 'Number of read fail files: ' + str(len(read_fail_files))
+    print 'Number of write fail files: ' + str(len(write_fail_files))
 
-file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/543/543_flow_dbase.in'
-dir_name = os.path.dirname(file)
-read_and_write_with_error(file)
-new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
-new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
-# compare_regression_tests(file, new_file)
+    # Run regression validation
+    regression_validation(files,verbose=False)
 
-# for file in success_files:
-#     dir_name = os.path.dirname(file)
-#     new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
-#     new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
-#     compare_regression_tests(file, new_file)
+    # Compare regression outputs
+
+    file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/543/543_flow_dbase.in'
+    dir_name = os.path.dirname(file)
+    read_and_write_with_error(file)
+    new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
+    new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
+    # compare_regression_tests(file, new_file)
+
+    # for file in success_files:
+    #     dir_name = os.path.dirname(file)
+    #     new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
+    #     new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
+    #     compare_regression_tests(file, new_file)

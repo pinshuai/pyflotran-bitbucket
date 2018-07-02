@@ -1944,12 +1944,13 @@ class pobservation(Frozen):
     def __init__(self, region=None, secondary_temperature=None,
                  secondary_concentration=None,
                  secondary_mineral_volfrac=None,
-                 velocity=None):
+                 velocity=None, at_cell_center=False):
         self.region = region
         self.secondary_temperature = secondary_temperature
         self.secondary_concentration = secondary_concentration
         self.secondary_mineral_volfrac = secondary_mineral_volfrac
         self.velocity = velocity
+        self.at_cell_center = at_cell_center
         self._freeze()
 
 
@@ -2305,7 +2306,7 @@ class pchemistry(Frozen):
                  max_residual_tolerance=None,
                  max_relative_change_tolerance=None, activity_water=False,
                  update_mineral_surface_area=False, no_bdot=False,
-                 no_checkpoint_act_coefs=False):
+                 no_checkpoint_act_coefs=False, general_reaction=None,sorption=None):
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2345,6 +2346,8 @@ class pchemistry(Frozen):
         self.update_porosity = update_porosity
         self.no_bdot = no_bdot
         self.no_checkpoint_act_coefs = no_checkpoint_act_coefs
+        self.general_reaction = general_reaction
+        self.sorption = None
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
         else:
@@ -2355,6 +2358,242 @@ class pchemistry(Frozen):
         self.output_list = output_list
         self._freeze()
 
+    class psorption(Frozen):
+        '''
+        Specifies parameters for sorption reactions.
+
+        :param ion_exchange_rxn: Sorption defined through ion exchange reactions.
+        :type ion_exchange_rxn: class pchemistry.psorption.pion_exchange_rxn
+        :param isotherm_reactions: Sorption reactions defined by isotherms (e.g. linear, Langmuir, Freundlich).
+        :type isotherm_reactions: class pchemistry.psorption.pisotherm_reactions
+        :param surface_complexion_rxn: Opens surface complexation reaction block.
+        :type surface_complexion_rxn: class pchemistry.psorption.psurface_complexion_rxn
+        '''
+
+        def __init__(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexion_rxn=None):
+
+            assert isinstance(ion_exchange_rxn,(pchemistry.psorption.pion_exchange_rxn,type(None))),'Must be an instance of pion_exchange_rxn'
+            assert isinstance(isotherm_reactions,(pchemistry.psorption.pisotherm_reactions,type(None))),'Must be an instance of pisotherm_reactions'
+            assert isinstance(surface_complexion_rxn,(pchemistry.psorption.psurface_complexion_rxn,type(None))),'Must be an instance of psurface_complexion_rxn'
+
+            self.ion_exchange_rxn = ion_exchange_rxn
+            self.isotherm_reactions = isotherm_reactions
+            self.surface_complexion_rxn = surface_complexion_rxn
+
+        def add_ion_exchange_rxn(self,cec=None,cations=None,mineral=None):
+            '''
+            Add an ION_EXCHANGE_RXN block to SORPTION.
+
+            :param cec: Cation exchange capacity in (1) equivalents per volume of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume [eq/m^3_bulk]
+            :type cec: float
+            :param cations: Opens the CATIONS block for listing cations participating in the reaction.
+            :type cations: list of <pchemistry.psorption.pion_exchange_rxn.cation>
+            :param mineral: Name of the mineral to which the cations sorb.
+            :type mineral: str
+            '''
+
+            self.ion_exchange_rxn = pchemistry.psorption.pion_exchange_rxn(cec=cec,cations=cations,mineral=mineral)
+            return self.ion_exchange_rxn
+
+        def add_isotherm_reactions(self,name=None,distribution_coefficient=None,ir_type=None,
+                                   langmuir_b=None,freundlich_n=None,kd_mineral_name=None):
+            '''
+            Specifies parameters for a sorption reaction defined by an isotherm (e.g. linear, Langmuir, Freundlich).
+
+            :param name: Name of primary species that sorbs.
+            :type name: str
+            :param distribution_coefficient: The value of K_D [kg_water / m^3_bulk].
+            :type distribution_coefficient: float
+            :param ir_type: Type of isotherm, where the options for <string> include: ['linear','langmuir','freundlich']
+            :type ir_type: str
+            :param langmuir_b: b coefficient for Langmuir isotherm. Automatically sets the ir_type to langmuir.
+            :type langmuir_b: float
+            :param freundlich_n: n exponent in Freundlich isotherm. Automatically sets the ir_type to Freundlich.
+            :type freundlich_n: float
+            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation for more information.
+            :type kd_mineral_name: str
+            '''
+            self.isotherm_reactions = pchemistry.psorption.pisotherm_reactions(
+                                                          name=name,
+                                                          distribution_coefficient=distribution_coefficient,
+                                                          ir_type=ir_type,langmuir_b=langmuir_b,freundlich_n=freundlich_n,
+                                                          kd_mineral_name=kd_mineral_name)
+            return self.isotherm_reactions
+
+        def add_surface_complexion_rxn(self,sorption_type=None,complex_kinetics=None,
+                                      rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,
+                                      colloid=None,rock_density=None,site=None,complexes=None):
+            self.surface_complexion_rxn = pchemistry.psorption.psurface_complexion_rxn(
+                                                                  sorption_type=sorption_type,
+                                                                  complex_kinetics=complex_kinetics,rates=rates,
+                                                                  site_fraction=site_fraction,
+                                                                  mineral=mineral,multirate_scale_factor=multirate_scale_factor,
+                                                                  colloid=colloid,rock_density=rock_density,
+                                                                  site=site,complexes=complexes)
+            return self.surface_complexion_rxn
+
+        class pion_exchange_rxn(Frozen):
+            '''
+            Add an ION_EXCHANGE_RXN block to SORPTION.
+
+            :param cec: Cation exchange capacity in (1) equivalents per volume of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume [eq/m^3_bulk]
+            :type cec: float
+            :param cations: Opens the CATIONS block for listing cations participating in the reaction.
+            :type cations: list of <pchemistry.psorption.pion_exchange_rxn.cation>
+            :param mineral: Name of the mineral to which the cations sorb.
+            :type mineral: str
+            '''
+            def __init__(self,cec=None,cations=None,mineral=None):
+
+                assert isinstance(cec,(int,float,type(None))),'ion_exchange_rxn.cec must be a number'
+                assert isinstance(mineral,(str,type(None))),'ion_exchange_rxn.mineral must be a string'
+
+                if cations is None:
+                    cations = []
+
+                self.cec = cec
+                self.cations = cations
+                self.mineral = mineral
+
+            class cation(Frozen):
+                '''
+                Cation participating in an ION_EXCHANGE_RXN.
+
+                :param name: Name of cation 
+                :type name: str
+                :param value: Associated selectivity coefficient
+                :type value: float
+                :param reference: Single reference cation with selectivity coeff. of 1 relative to other cations in rxn
+                :type reference: bool
+                '''
+                def __init__(self,name=None,value=None,reference=False):
+                    assert isinstance(name,(str,type(None))),'cation.name must be a string'
+                    assert isinstance(value,(int,float,type(None))),'cation.value must be a number'
+                    assert isinstance(reference,bool),'cation.reference must be a boolean'
+
+                    self.name = name
+                    self.value = value
+                    self.reference = reference
+
+            def add_cation(self,name=None,value=None,reference=False):
+                '''
+                Adds a new cation to an ion exchange reaction.
+                '''
+                new_cation = pchemistry.psorption.pion_exchange_rxn.cation(name=name,value=value,reference=reference)
+                self.cations.append(new_cation)
+                return new_cation
+
+        class pisotherm_reactions(Frozen):
+            '''
+            Specifies parameters for a sorption reaction defined by an isotherm (e.g. linear, Langmuir, Freundlich).
+
+            :param name: Name of primary species that sorbs.
+            :type name: str
+            :param distribution_coefficient: The value of K_D [kg_water / m^3_bulk].
+            :type distribution_coefficient: float
+            :param ir_type: Type of isotherm, where the options for <string> include: ['linear','langmuir','freundlich']
+            :type ir_type: str
+            :param langmuir_b: b coefficient for Langmuir isotherm. Automatically sets the ir_type to langmuir.
+            :type langmuir_b: float
+            :param freundlich_n: n exponent in Freundlich isotherm. Automatically sets the ir_type to Freundlich.
+            :type freundlich_n: float
+            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation for more information.
+            :type kd_mineral_name: str
+            '''
+
+            def __init__(self,name=None,distribution_coefficient=None,ir_type=None,
+                         langmuir_b=None,freundlich_n=None,kd_mineral_name=None):
+
+                self.name = name
+                self.distribution_coefficient = distribution_coefficient
+                self.ir_type = ir_type
+                self.langmuir_b = langmuir_b
+                self.freundlich_n = freundlich_n
+                self.kd_mineral_name = kd_mineral_name
+
+        class psurface_complexion_rxn(Frozen):
+            
+            def __init__(self,sorption_type=None,complex_kinetics=None,
+                         rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,
+                         colloid=None,rock_density=None,site=None,complexes=None):
+
+                PyFLOTRAN_ERROR('Functionality not yet implemented!')
+
+    def add_sorption(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexion_rxn=None):
+        '''
+        Adds a SORPTION block to CHEMISTRY.
+        Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and add_surface_complexion_rxn
+        to fill out the SORPTION block.
+        '''
+
+        self.sorption = psorption(ion_exchange_rxn=ion_exchange_rxn,isotherm_reactions=isotherm_reactions,surface_complexion_rxn=surface_complexion_rxn)
+        return self.sorption
+
+    class pgeneral_reaction(Frozen):
+        '''
+        CHEMISTRY: GENERAL_REACTION
+        Specifies parameters for general forward/reverse kinetic reaction.
+
+        Example:
+
+          >>> chem.add_general_reaction(reaction='Tracer <-> Tracer2',
+                                        forward_rate=1.7584e-7,backward_rate=0.0)
+
+        :param reaction: Reaction equation. The forward rate is applied to the reaction quotient
+        of species on the left side of the reaction. The reverse or backward rate is applied to the right side.
+        :type reaction: str
+        :param forward_rate: Rate constant for nth-order forward reaction [kg-water(n-1)/mol(n-1) -sec]
+        :type forward_rate: float or int
+        :param backward_rate: Rate constant for nth-order reverse reaction [kg-water(n-1)/mol(n-1) -sec]
+        :type backward_rate: float or int
+        '''
+
+        def __init__(self,reaction=None,forward_rate=None,backward_rate=None):
+
+            assert isinstance(reaction,(str,type(None))),'chem.general_reaction.reaction must be a string'
+            assert isinstance(forward_rate,(int,float,type(None))),'chem.general_reaction.forward_rate must be a float or int'
+            assert isinstance(backward_rate,(int,float,type(None))),'chem.general_reaction.backward_rate must be a float or int'
+
+            self.reaction = reaction
+            self.forward_rate = forward_rate
+            self.backward_rate = backward_rate
+
+            self._freeze()
+
+    def add_general_reaction(self,reaction=None,forward_rate=None,backward_rate=None):
+        '''
+        CHEMISTRY: GENERAL_REACTION
+        Specifies parameters for general forward/reverse kinetic reaction.
+
+        Example:
+
+          >>> chem.add_general_reaction(reaction='Tracer <-> Tracer2',
+                                        forward_rate=1.7584e-7,backward_rate=0.0)
+
+        :param reaction: Reaction equation. The forward rate is applied to the reaction quotient
+        of species on the left side of the reaction. The reverse or backward rate is applied to the right side.
+        :type reaction: str
+        :param forward_rate: Rate constant for nth-order forward reaction [kg-water(n-1)/mol(n-1) -sec]
+        :type forward_rate: float or int
+        :param backward_rate: Rate constant for nth-order reverse reaction [kg-water(n-1)/mol(n-1) -sec]
+        :type backward_rate: float or int
+
+        Returns:
+
+        :param self.general_reaction: instance of pchemistry_general_reaction
+        :type self.general_reaction: pchemistry_general_reaction
+        '''
+
+        assert isinstance(reaction,(str,type(None))),'chem.general_reaction.reaction must be a string'
+        assert isinstance(forward_rate,(int,float,type(None))),'chem.general_reaction.forward_rate must be a float or int'
+        assert isinstance(backward_rate,(int,float,type(None))),'chem.general_reaction.backward_rate must be a float or int'
+
+        self.general_reaction = pchemistry.pgeneral_reaction()
+        self.general_reaction.reaction = reaction
+        self.general_reaction.forward_rate = forward_rate
+        self.general_reaction.backward_rate = backward_rate
+
+        return self.general_reaction
 
 class pchemistry_m_kinetic(Frozen):
     """
@@ -3939,7 +4178,7 @@ class pdata(object):
 
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
-        tstring = line.split()[1:]  # Convert to list, ignore 1st word
+        tstring = filter_comment(line).split()[1:]  # Convert to list, ignore 1st word
         i = 0  # index/count
         while i < len(tstring):
             try:
@@ -6618,19 +6857,18 @@ class pdata(object):
                             outfile.write('\n')
                     elif not all(x is None for x in region.coordinates_lower):
                         outfile.write('  COORDINATES\n')
-                        outfile.write('    ')
 
-                        upper = [x for x in region.coordinates_upper if x is not None]
                         lower = [x for x in region.coordinates_lower if x is not None]
+                        upper = [x for x in region.coordinates_upper if x is not None]
 
-                        upper_line = ' '.join(list(map(strD,upper)))
                         lower_line = ' '.join(list(map(strD,lower)))
-
-                        if upper_line != '':
-                            outfile.write('    ' + upper_line + '\n')
+                        upper_line = ' '.join(list(map(strD,upper)))
 
                         if lower_line != '':
                             outfile.write('    ' + lower_line + '\n')
+
+                        if upper_line != '':
+                            outfile.write('    ' + upper_line + '\n')
 
                         outfile.write('  /\n')
                 outfile.write('END\n\n')
@@ -6647,6 +6885,8 @@ class pdata(object):
                 observation.region = self.splitter(line)
             elif key == 'velocity':
                 observation.velocity = True
+            elif key == 'at_cell_center':
+                observation.at_cell_center = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -6684,6 +6924,8 @@ class pdata(object):
             outfile.write('OBSERVATION\n')
             if observation.region:
                 outfile.write('  REGION ' + observation.region.lower() + '\n')
+            if observation.at_cell_center:
+                outfile.write('  AT_CELL_CENTER\n')
             if observation.velocity:
                 outfile.write('  VELOCITY\n')
             if self.multiple_continuum:
@@ -7909,6 +8151,24 @@ class pdata(object):
                                                     0]
 
                     chem.m_kinetics_list.append(mkinetic)  # object assigned
+            elif key == 'general_reaction':
+                general_reaction = chem.add_general_reaction()
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.split()[0].lower()
+
+                    if subkey == 'reaction':
+                        general_reaction.reaction = subline.strip().split(' ',1)[1]
+                    elif subkey == 'forward_rate':
+                        general_reaction.forward_rate = floatD(
+                          subline.split()[-1])
+                    elif subkey == 'backward_rate':
+                        general_reaction.backward_rate = floatD(
+                          subline.split()[-1])
+
+                    if subline.strip() in ['/','end']:
+                        break
+
             elif key == 'database':
                 chem.database = self.splitter(line)  # take last word
             elif key == 'log_formulation':
@@ -8051,6 +8311,18 @@ class pdata(object):
         if not isinstance(c.m_kinetics_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to m_kinetics_list!')
+
+        # Write out the GENERAL_REACTION block if it exists
+        if c.general_reaction is not None:
+            outfile.write('  GENERAL_REACTION\n')
+            if c.general_reaction.reaction is not None:
+                outfile.write('    REACTION '+c.general_reaction.reaction+'\n')
+            if c.general_reaction.forward_rate is not None:
+                outfile.write('    FORWARD_RATE '+strD(c.general_reaction.forward_rate)+'\n')
+            if c.general_reaction.backward_rate is not None:
+                outfile.write('    BACKWARD_RATE '+strD(c.general_reaction.backward_rate)+'\n')
+            outfile.write('  /\n')
+
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')
             for mk in c.m_kinetics_list:  # mk = mineral_kinetics
@@ -8379,6 +8651,8 @@ class pdata(object):
                             mineral.volume_fraction = tstring[2]
                             if tstring[3].lower() == 'dataset':
                                 mineral.surface_area = tstring[4]
+                                if len(tstring) > 5:
+                                    mineral.surface_area_units = tstring[5]
                             else:
                                 mineral.surface_area = floatD(tstring[3])
                                 mineral.surface_area_units = tstring[4]
@@ -8386,6 +8660,8 @@ class pdata(object):
                             mineral.volume_fraction = floatD(tstring[1])
                             if tstring[2].lower() == 'dataset':
                                 mineral.surface_area = tstring[3]
+                                if len(tstring) > 4:
+                                    mineral.surface_area_units = tstring[4]
                             else:
                                 mineral.surface_area = floatD(tstring[2])
                                 mineral.surface_area_units = tstring[3]

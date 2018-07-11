@@ -292,6 +292,7 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
             print('\033[94m'+file+'\033[0m')
             tmp_file = os.path.join(os.path.dirname(file),tmp_out)
             pdata(file).write(tmp_file)
+            print('\033[94m'+tmp_file+'\033[0m')
         except Exception as e:
             print('\033[91mPyFLOTRAN RUNTIME ERROR:\033[0m Could not parse \'%s\'' % file)
             fail_list.append(file)
@@ -392,17 +393,3 @@ if (__name__ == '__main__'):
     else:
         parser.print_help()
 
-    # Compare regression outputs
-
-    #file = '/Users/satkarra/src/pflotran-dev-git/regression_tests//default/543/543_flow_dbase.in'
-    #dir_name = os.path.dirname(file)
-    #read_and_write_with_error(file)
-    #new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
-    #new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
-    # compare_regression_tests(file, new_file)
-
-    # for file in success_files:
-    #     dir_name = os.path.dirname(file)
-    #     new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
-    #     new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
-    #     compare_regression_tests(file, new_file)

@@ -1990,7 +1990,8 @@ class pflow(Frozen):
                  sync_timestep_with_update=False, datum=None,
                  datum_type='', datum_time_unit=None,
                  varlist=None, gradient=None, pm='',
-                 gradient_type='', datum_data_unit=None):
+                 gradient_type='', datum_data_unit=None,
+                 interpolation=None):
 
         if datum is None:
             datum = []
@@ -2014,6 +2015,7 @@ class pflow(Frozen):
         self.datum_time_unit = datum_time_unit
         self.datum_data_unit = datum_data_unit
         self.pm = pm
+        self.interpolation = interpolation
         self._freeze()
 
 
@@ -2370,15 +2372,15 @@ class pchemistry(Frozen):
         :type surface_complexion_rxn: class pchemistry.psorption.psurface_complexion_rxn
         '''
 
-        def __init__(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexion_rxn=None):
+        def __init__(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexation_rxn=None):
 
             assert isinstance(ion_exchange_rxn,(pchemistry.psorption.pion_exchange_rxn,type(None))),'Must be an instance of pion_exchange_rxn'
             assert isinstance(isotherm_reactions,(pchemistry.psorption.pisotherm_reactions,type(None))),'Must be an instance of pisotherm_reactions'
-            assert isinstance(surface_complexion_rxn,(pchemistry.psorption.psurface_complexion_rxn,type(None))),'Must be an instance of psurface_complexion_rxn'
+            assert isinstance(surface_complexation_rxn,(pchemistry.psorption.psurface_complexation_rxn,type(None))),'Must be an instance of psurface_complexation_rxn'
 
             self.ion_exchange_rxn = ion_exchange_rxn
             self.isotherm_reactions = isotherm_reactions
-            self.surface_complexion_rxn = surface_complexion_rxn
+            self.surface_complexation_rxn = surface_complexation_rxn
 
         def add_ion_exchange_rxn(self,cec=None,cations=None,mineral=None):
             '''
@@ -2420,17 +2422,17 @@ class pchemistry(Frozen):
                                                           kd_mineral_name=kd_mineral_name)
             return self.isotherm_reactions
 
-        def add_surface_complexion_rxn(self,sorption_type=None,complex_kinetics=None,
+        def add_surface_complexation_rxn(self,sorption_type=None,complex_kinetics=None,
                                       rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,
                                       colloid=None,rock_density=None,site=None,complexes=None):
-            self.surface_complexion_rxn = pchemistry.psorption.psurface_complexion_rxn(
+            self.surface_complexation_rxn = pchemistry.psorption.psurface_complexation_rxn(
                                                                   sorption_type=sorption_type,
                                                                   complex_kinetics=complex_kinetics,rates=rates,
                                                                   site_fraction=site_fraction,
                                                                   mineral=mineral,multirate_scale_factor=multirate_scale_factor,
                                                                   colloid=colloid,rock_density=rock_density,
                                                                   site=site,complexes=complexes)
-            return self.surface_complexion_rxn
+            return self.surface_complexation_rxn
 
         class pion_exchange_rxn(Frozen):
             '''
@@ -2544,14 +2546,14 @@ class pchemistry(Frozen):
 
                 PyFLOTRAN_ERROR('Functionality not yet implemented!')
 
-    def add_sorption(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexion_rxn=None):
+    def add_sorption(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexation_rxn=None):
         '''
         Adds a SORPTION block to CHEMISTRY.
-        Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and add_surface_complexion_rxn
+        Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and add_surface_complexation_rxn
         to fill out the SORPTION block.
         '''
 
-        self.sorption = psorption(ion_exchange_rxn=ion_exchange_rxn,isotherm_reactions=isotherm_reactions,surface_complexion_rxn=surface_complexion_rxn)
+        self.sorption = pchemistry.psorption(ion_exchange_rxn=ion_exchange_rxn,isotherm_reactions=isotherm_reactions,surface_complexation_rxn=surface_complexation_rxn)
         return self.sorption
 
     class pgeneral_reaction(Frozen):
@@ -4816,14 +4818,14 @@ class pdata(object):
         self._header(outfile, headers['regression'])
         regression = self.regression
         outfile.write('REGRESSION' + '\n')
+        if regression.cells_per_process:
+            outfile.write('  CELLS_PER_PROCESS' + ' ' +
+                          str(regression.cells_per_process) + '\n')
         if regression.cells and regression.cells[0] != '':
             outfile.write('  CELLS' + '\n')
             for cell in regression.cells:
                 outfile.write('    ' + str(cell) + '\n')
             outfile.write('  /' + '\n')
-        if regression.cells_per_process:
-            outfile.write('  CELLS_PER_PROCESS' + ' ' +
-                          str(regression.cells_per_process) + '\n')
         outfile.write('END' + '\n\n')
 
     def _read_grid(self, infile, line):
@@ -5307,7 +5309,9 @@ class pdata(object):
                 outfile.write('  TRANSVERSE_DISPERSIVITY_V ' +
                               strD(prop.transverse_dispersivity_v) + '\n')
 
-            if prop.permeability and self.simulation.subsurface_flow:
+            print(prop.permeability)
+
+            if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
                 if type(prop.permeability[0]) is str:
                     outfile.write('    DATASET ' + prop.permeability[0] + '\n')
@@ -7134,6 +7138,8 @@ class pdata(object):
                         keep_reading1 = False
                     else:
                         raise PyFLOTRAN_ERROR('Incorrect gradient type!')
+            elif key == 'interpolation':
+                flow.interpolation = line.split()[1].lower()
             # Detect if there is carriage return after '/' or 'end' to end loop
             # Alternative method of count implemented by Satish
             elif key in ['/', 'end']:
@@ -7415,6 +7421,9 @@ class pdata(object):
                     outfile.write('\n')
 
                 outfile.write('  /\n')
+
+                if flow.interpolation:
+                    outfile.write('  INTERPOLATION %s\n' % flow.interpolation.upper())
 
                 if flow.datum:  # error-checking not yet added
                     outfile.write('  DATUM')
@@ -8194,6 +8203,43 @@ class pdata(object):
                     if subline.strip() in ['/','end']:
                         break
 
+            elif key == 'sorption':
+                sorb = chem.add_sorption()
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.split()[0].lower()
+
+                    # Parse for ION_EXCHANGE_RXN
+                    if subkey == 'ion_exchange_rxn':
+                        irxn = sorb.add_ion_exchange_rxn()
+                        while True:
+                            subsubline = get_next_line(infile)
+                            subsubkey = subsubline.split()[0].lower()
+                            if subsubkey == 'cec':
+                                if len(subsubline.split()[1:]) > 1:
+                                    irxn.cec = subsubline.split()[1:]
+                                    irxn.cec[0] = floatD(irxn.cec[0])
+                                else:
+                                    irxn.cec = subsubline.split()[1]
+                            elif subsubkey == 'mineral':
+                                irxn.mineral = subsubline.split()[1]
+                            elif subsubkey == 'cations':
+                                while True:
+                                    catline = get_next_line(infile).split()
+                                    catkey = catline[0].lower()
+                                    if catkey.lower() in ['/','end']:
+                                        break
+                                    else:
+                                        cat_name = catline[0]
+                                        cat_val = floatD(catline[1])
+                                        cat_ref = True if len(catline) >= 3 else False
+
+                                        irxn.add_cation(name=cat_name,value=cat_val,reference=cat_ref)
+                            if subsubkey.lower() in ['/','end']:
+                                break
+
+                    if subkey.lower() in ['/','end']:
+                        break
             elif key == 'database':
                 chem.database = self.splitter(line)  # take last word
             elif key == 'log_formulation':
@@ -8337,17 +8383,6 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to m_kinetics_list!')
 
-        # Write out the GENERAL_REACTION block if it exists
-        if c.general_reaction is not None:
-            outfile.write('  GENERAL_REACTION\n')
-            if c.general_reaction.reaction is not None:
-                outfile.write('    REACTION '+c.general_reaction.reaction+'\n')
-            if c.general_reaction.forward_rate is not None:
-                outfile.write('    FORWARD_RATE '+strD(c.general_reaction.forward_rate)+'\n')
-            if c.general_reaction.backward_rate is not None:
-                outfile.write('    BACKWARD_RATE '+strD(c.general_reaction.backward_rate)+'\n')
-            outfile.write('  /\n')
-
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')
             for mk in c.m_kinetics_list:  # mk = mineral_kinetics
@@ -8442,6 +8477,38 @@ class pdata(object):
                         outfile.write('      /\n')  # Close PREFACTOR
                 outfile.write('    /\n')  # Close mineral name
             outfile.write('  /\n')  # Close MINERAL_K
+
+        # Write out the GENERAL_REACTION block if it exists
+        if c.general_reaction is not None:
+            outfile.write('  GENERAL_REACTION\n')
+            if c.general_reaction.reaction is not None:
+                outfile.write('    REACTION '+c.general_reaction.reaction+'\n')
+            if c.general_reaction.forward_rate is not None:
+                outfile.write('    FORWARD_RATE '+strD(c.general_reaction.forward_rate)+'\n')
+            if c.general_reaction.backward_rate is not None:
+                outfile.write('    BACKWARD_RATE '+strD(c.general_reaction.backward_rate)+'\n')
+            outfile.write('  /\n')
+
+        if c.sorption is not None:
+            outfile.write('  SORPTION\n')
+            if c.sorption.ion_exchange_rxn is not None:
+                outfile.write('    ION_EXCHANGE_RXN\n')
+                if c.sorption.ion_exchange_rxn.mineral is not None:
+                    outfile.write('      MINERAL %s\n' % c.sorption.ion_exchange_rxn.mineral)
+                if c.sorption.ion_exchange_rxn.cec is not None:
+                    if isinstance(c.sorption.ion_exchange_rxn.cec,list):
+                        outfile.write('      CEC %s %s\n' % (strD(c.sorption.ion_exchange_rxn.cec[0]),
+                                                                 c.sorption.ion_exchange_rxn.cec[1]))
+                    else:
+                        outfile.write('      CEC %s \n' % strD(c.sorption.ion_exchange_rxn.cec))
+                if c.sorption.ion_exchange_rxn.cations is not None:
+                    outfile.write('      CATIONS\n')
+                    for cat in c.sorption.ion_exchange_rxn.cations:
+                        is_ref = 'REFERENCE' if cat.reference == True else ''
+                        outfile.write('        %s %s %s\n' % (cat.name.ljust(8),cat.value,is_ref))
+                    outfile.write('      /\n')
+                outfile.write('    /\n')
+            outfile.write('  /\n')
 
         if c.database:
             outfile.write('  DATABASE ' + c.database + '\n')

@@ -5309,8 +5309,6 @@ class pdata(object):
                 outfile.write('  TRANSVERSE_DISPERSIVITY_V ' +
                               strD(prop.transverse_dispersivity_v) + '\n')
 
-            print(prop.permeability)
-
             if prop.permeability:
                 outfile.write('  PERMEABILITY\n')
                 if type(prop.permeability[0]) is str:

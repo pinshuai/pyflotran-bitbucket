@@ -1991,7 +1991,7 @@ class pflow(Frozen):
                  datum_type='', datum_time_unit=None,
                  varlist=None, gradient=None, pm='',
                  gradient_type='', datum_data_unit=None,
-                 interpolation=None):
+                 interpolation=None,cyclic=False):
 
         if datum is None:
             datum = []
@@ -2015,6 +2015,7 @@ class pflow(Frozen):
         self.datum_time_unit = datum_time_unit
         self.datum_data_unit = datum_data_unit
         self.pm = pm
+        self.cyclic = cyclic
         self.interpolation = interpolation
         self._freeze()
 
@@ -7083,12 +7084,14 @@ class pdata(object):
                 flow.iphase = int(self.splitter(line))
             elif key == 'sync_timestep_with_update':
                 flow.sync_timestep_with_update = True
+            elif key == 'cyclic':
+                flow.cyclic = True
             elif key == 'datum':
                 # Assign file_name with list of d_dx, d_dy, d_dz values.
                 subkey = line.strip().split()[1].lower()
                 if subkey == 'file':
                     flow.datum_type = 'file'
-                    flow.datum = line.split()[1]
+                    flow.datum = line.split()[-1]
                 elif subkey == '':
                     flow.datum_type = 'dataset'
                     flow.datum = line.split()[1]
@@ -7423,6 +7426,9 @@ class pdata(object):
                 if flow.interpolation:
                     outfile.write('  INTERPOLATION %s\n' % flow.interpolation.upper())
 
+                if flow.cyclic:
+                    outfile.write('  CYCLIC\n')
+
                 if flow.datum:  # error-checking not yet added
                     outfile.write('  DATUM')
 
@@ -7431,7 +7437,7 @@ class pdata(object):
                             outfile.write(' FILE ')
                         if flow.datum_type == 'dataset':
                             outfile.write(' DATASET ')
-                        outfile.write(flow.datum)
+                        outfile.write(flow.datum+'\n')
                     elif flow.datum_type == 'list':
                         outfile.write(' LIST\n')
                         if flow.datum_time_unit is not None:

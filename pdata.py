@@ -5046,18 +5046,18 @@ class pdata(object):
         if self.timestepper_flow:
             outfile.write('TIMESTEPPER ' +
                           self.timestepper_flow.ts_mode.upper() + '\n')
-            if self.timestepper_flow.ts_acceleration:
+            if self.timestepper_flow.ts_acceleration is not None:
                 outfile.write('  ' + 'TS_ACCELERATION ' +
                               str(self.timestepper_flow.ts_acceleration) +
                               '\n')
-            if self.timestepper_flow.num_steps_after_cut:
+            if self.timestepper_flow.num_steps_after_cut is not None:
                 outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
                               str(self.timestepper_flow.num_steps_after_cut) +
                               '\n')
-            if self.timestepper_flow.max_ts_cuts:
+            if self.timestepper_flow.max_ts_cuts is not None:
                 outfile.write('  ' + 'MAX_TS_CUTS ' +
                               str(self.timestepper_flow.max_ts_cuts) + '\n')
-            if self.timestepper_flow.max_steps:
+            if self.timestepper_flow.max_steps is not None:
                 outfile.write('  ' + 'MAX_STEPS ' +
                               str(self.timestepper_flow.max_steps) + '\n')
             if self.timestepper_flow.initialize_to_steady_state:

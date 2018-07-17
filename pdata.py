@@ -3272,6 +3272,7 @@ class pdata(object):
         self.filename = filename
         self.hydroquake = pquake()
         self.reference_temperature = ''
+        self.reference_porosity = ''
         self.geomech_grid = pgeomech_grid()
         self.geomech_proplist = []
         self.geomech_subsurface_coupling = pgeomech_subsurface_coupling()
@@ -3726,6 +3727,10 @@ class pdata(object):
                     self.initialize_flow_from_file = p_line.split()[1]
                 if card == 'initialize_transport_from_file':
                     self.initialize_transport_from_file = p_line.split()[1]
+                if card == 'reference_temperature':
+                    self.reference_temperature = floatD(p_line.split()[1])
+                if card == 'reference_porosity':
+                    self.reference_porosity = floatD(p_line.split()[1])
                 if card == 'isothermal':
                     self.isothermal = True
                 if card == 'skip':
@@ -3847,6 +3852,9 @@ class pdata(object):
 
         if self.reference_temperature:
             self._write_reference_temperature(outfile)
+
+        if self.reference_porosity:
+            self._write_reference_porosity(outfile)
 
         if self.datasetlist:
             self._write_dataset(outfile)
@@ -4778,6 +4786,10 @@ class pdata(object):
     def _write_reference_temperature(self, outfile):
         outfile.write('REFERENCE_TEMPERATURE ' +
                       strD(self.reference_temperature) + '\n\n')
+
+    def _write_reference_porosity(self, outfile):
+        outfile.write('REFERENCE_POROSITY' +
+                      strD(self.reference_porosity) + '\n\n')
 
     def _write_co2_database(self, outfile):
         self._header(outfile, headers['co2_database'])

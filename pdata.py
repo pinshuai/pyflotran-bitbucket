@@ -4788,7 +4788,7 @@ class pdata(object):
                       strD(self.reference_temperature) + '\n\n')
 
     def _write_reference_porosity(self, outfile):
-        outfile.write('REFERENCE_POROSITY' +
+        outfile.write('REFERENCE_POROSITY ' +
                       strD(self.reference_porosity) + '\n\n')
 
     def _write_co2_database(self, outfile):

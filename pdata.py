@@ -186,7 +186,7 @@ characteristic_curves_gas_permeability_function_types_allowed = list(set(
 characteristic_curves_liquid_permeability_function_types_allowed = [
     'MUALEM', 'BURDINE', 'MUALEM_VG_LIQ', 'MUALEM_BC_LIQ',
     'TOUGH2_LINEAR_OIL', 'BURDINE_BC_LIQ', 'BURDINE_LINEAR_LIQ',
-    'BRAGFLO_KRP9_LIQ', 'BRAGFLO_KRP4_LIQ']
+    'BRAGFLO_KRP9_LIQ', 'BRAGFLO_KRP4_LIQ', 'MOD_BC_OIL']
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_liquid_permeability_function_types_allowed]
@@ -2361,6 +2361,225 @@ class pchemistry(Frozen):
         self.output_list = output_list
         self._freeze()
 
+    class pimmobile_decay_reaction(Frozen):
+        '''
+        Specifies parameters for first-order decay of an immobile species.
+
+        :param species_name: Name of immobile species to undergo first-order decay.
+        :type species_name: str
+        :param rate_constant: First-order rate constant [1/sec]. Can set rate_constant or half_life but not both.
+        :type rate_constant: float
+        :param half_life: Half life of species [sec]. Can set rate_constant or half_life but not both.
+        :type half_life: float
+        '''
+
+        def __init__(self,species_name=None,rate_constant=None,half_life=None):
+
+            assert isinstance(species_name,(str,type(None))), 'SPECIES_NAME must be a string'
+            assert isinstance(rate_constant,(float,int,type(None))), 'RATE_CONSTANT must be a float'
+            assert isinstance(half_life,(float,int,type(None))), 'HALF_LIFE must be a float'
+            assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
+
+            self.species_name = species_name
+            self.rate_constant = rate_constant
+            self.half_life = half_life
+
+        def _write_immobile_decay_reaction(self,outfile):
+            if self is None: return
+
+            if self.rate_constant is not None and self.half_life is not None:
+                PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+
+            if self.rate_constant is not None:
+                rxn_type = 'RATE_CONSTANT'
+                rxn_val = strD(self.rate_constant)
+            elif self.half_life is not None:
+                rxn_type = 'HALF_LIFE'
+                rxn_val = strD(self.half_life)
+            else:
+                perror('Must define either RATE_CONSTANT or HALF_LIFE')
+
+            outfile.write('  IMMOBILE_DECAY_REACTION\n')
+            outfile.write('    SPECIES_NAME %s\n' % self.species_name)
+            outfile.write('    %s %s\n' % (rxn_type,rxn_val))
+            outfile.write('  /\n')
+
+    class pradioactive_decay_reaction(Frozen):
+        '''
+        Specifies parameters for radioactive decay reaction.
+        This reaction differs from the GENERAL_REACTION in that only one
+        reactant species may be specified with a unit stoichiometry
+        (i.e. the rate is always first order) and the reactant species is decayed
+        in both the aqueous and sorbed phases.
+
+        :param reaction: Reaction equation. Only one reactant species may be
+        listed on the left side of the equation
+        (i.e. or on the right side with a negative stoichiometry).
+        The reactant’s stoichiometry is fixed at 1.0.
+        The forward rate is applied to that one species as a first order rate 
+        constant [1/sec]. Multiple species are supported as daughter products
+        on the right hand side and stoichiometries can be specified.
+        :type reaction: str
+        :param rate_constant: Rate constant for 1st-order decay reaction [1/sec, default units].
+        The rate constant may be calculated from -ln(0.5) / half-life.
+        :type rate_constant: float or list<float,str>.
+        :param half_life: Half life of species [sec, default units].
+        :type half_life: float or list<float,str>.
+        '''
+
+        def __init__(self,reaction=None,rate_constant=None,
+                    half_life=None):
+
+            assert isinstance(reaction,(str,type(None))), 'REACTION must be a string'
+            assert isinstance(rate_constant,(float,int,list,type(None))), 'RATE_CONSTANT must be a float or a list: [float,str]'
+            assert isinstance(half_life,(float,int,list,type(None))), 'HALF_LIFE must be a float or a list: [float,str]'
+            assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
+
+            self.reaction = reaction
+            self.rate_constant = rate_constant
+            self.half_life = half_life
+
+        def _write_radioactive_decay_reaction(self,outfile):
+            if self is None: return
+
+            if self.rate_constant is not None and self.half_life is not None:
+                PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+
+            if self.rate_constant is not None:
+                rxn_type = 'RATE_CONSTANT'
+                rxn_val = self.rate_constant
+            elif self.half_life is not None:
+                rxn_type = 'HALF_LIFE'
+                rxn_val = self.half_life
+            else:
+                perror('Must define either RATE_CONSTANT or HALF_LIFE')
+
+            # Handle the case where: rxn_val -> [coeff., units]
+            if isinstance(rxn_val,list):
+                rxn_val = strD(rxn_val[0]) + ' ' + str(rxn_val[1])
+            else:
+                rxn_val = strD(rxn_val)
+
+            outfile.write('  RADIOACTIVE_DECAY_REACTION\n')
+            outfile.write('    REACTION %s\n' % self.reaction)
+            outfile.write('    %s %s\n' % (rxn_type,rxn_val))
+            outfile.write('  /\n')
+
+
+    class pmicrobial_reaction(Frozen):
+        '''
+        Specifies parameters for microbially-mediated reactions.
+
+        :param reaction: Reaction equation. The rate constant is multiplied by the Monod
+        expressions for electron donor and acceptor for select species on the left
+        side of the equation. The reaction may be inhibited by any species in the system.
+        :type reaction: str
+        :param rate_constant: Rate constant for the reaction, where the units are [mol/L-sec]
+        if no biomass, or [mol-m3 bulk/(L water-mol biomass-sec)] if biomass.
+        :type rate_constant: float
+        :param monod: Specifies the Monod equation for the electron donor or acceptor.
+        :type monod: pmicrobial_reaction.monod
+        :param inhibition: Specifies inhibition based on species concentration and an
+        inhibition constant(s). Three types of inhibition are currently supported:
+        MONOD, INVERSE_MONOD, THRESHOLD.
+        :type inhibition: pmicrobial_reaction.inhibition
+        :param biomass: Specifies the immobile biomass species to be included in the rate expression.
+        :type biomass: pmicrobial_reaction.biomass
+        '''
+
+        class monod(Frozen):
+            def __init__(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
+                self.species_name = species_name
+                self.half_saturation_constant = half_saturation_constant
+                self.threshold_concentration = threshold_concentration
+        class inhibition(Frozen):
+            def __init__(self,species_name=None,inhibition_type=None,inhibition_constant=None):
+                self.species_name = species_name
+                self.inhibition_type = inhibition_type
+                self.inhibition_constant = inhibition_constant
+        class biomass(Frozen):
+            def __init__(self,species_name=None,biomass_yield=None):
+                self.species_name = species_name
+                self.biomass_yield = biomass_yield
+
+        def __init__(self,reaction=None,rate_constant=None,monod=None,inhibition=None,biomass=None):
+
+            assert isinstance(reaction,(str,type(None))), 'REACTION must be a string'
+            assert isinstance(rate_constant,(float,int,type(None))), 'RATE_CONSTANT must be a float'
+            assert isinstance(monod,(pmicrobial_reaction.monod,type(None))), 'MONOD must be of type pmicrobial_reaction.monod'
+            assert isinstance(inhibition,(pmicrobial_reaction.inhibition,type(None))), 'INHIBITION must be of type pmicrobial_reaction.inhibition'
+            assert isinstance(biomass,(pmicrobial_reaction.biomass,type(None))), 'BIOMASS must be of type pmicrobial_reaction.biomass'
+
+            self.reaction = reaction
+            self.rate_constant = rate_constant
+            self.monod = monod
+            self.inhibition = inhibition
+            self.biomass = biomass
+
+        def set_monod(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
+            self.monod = pmicrobial_reaction.monod(species_name=species_name,half_saturation_constant=half_saturation_constant,threshold_concentration=threshold_concentration)
+            return self.monod
+
+        def set_biomass(self,species_name=None,biomass_yield=None)
+            self.biomass = pmicrobial_reaction.biomass(species_name=species_name,biomass_yield=biomass_yield)
+            return self.biomass
+
+        def set_inhibition(self,species_name=None,inhibition_type=None,inhibition_constant=None):
+            self.inhibition = pmicrobial_reaction.inhibition(species_name=species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+            return self.inhibition
+
+        def _write_microbial_reaction(self,outfile):
+            if self is None: return
+
+            if self.reaction is None and self.rate_constant is None:
+                perror('Required MICROBIAL_REACTION cards are missing!')
+
+            outfile.write('  MICROBIAL_REACTION\n')
+            outfile.write('    REACTION %s\n' % self.reaction)
+            outfile.write('    RATE_CONSTANT %s\n' % strD(self.rate_constant))
+
+            if self.monod is not None:
+                outfile.write('    MONOD\n')
+                outfile.write('      SPECIES_NAME %s\n' % self.monod.species_name)
+                outfile.write('      HALF_SATURATION_CONSTANT %s\n' % strD(self.monod.half_saturation_constant))
+                outfile.write('      THRESHOLD_CONCENTRATION %s\n' % strD(self.monod.threshold_concentration))
+                outfile.write('    /\n')
+
+            if self.inhibition is not None:
+                outfile.write('    INHIBITION\n')
+                outfile.write('      SPECIES_NAME %s\n' % self.inhibition.species_name)
+                outfile.write('      TYPE %s\n' % self.inhibition.type)
+                outfile.write('      INHIBITION_CONSTANT %s\n' % strD(self.inhibition.inhibition_constant))
+                outfile.write('    /\n')
+
+            if self.biomass is not None:
+                outfile.write('    BIOMASS\n')
+                outfile.write('      SPECIES_NAME %s\n' % self.biomass.species_name)
+                outfile.write('      YIELD %s\n' % self.biomass.biomass_yield)
+                outfile.write('    /\n')
+
+            outfile.write('  /\n')
+
+    def set_immobile_decay_reaction(self,species_name=None,
+                                    rate_constant=None,half_life=None):
+        self.immobile_decay_reaction = pimmobile_decay_reaction(species_name=species_name,rate_constant=rate_constant,half_life=half_life)
+        return self.immobile_decay_reaction
+
+    def set_radioactive_decay_reaction(self,reaction,rate_constant,half_life):
+        self.radioactive_decay_reaction = pradioactive_decay_reaction(reaction=reaction,rate_constant=rate_constant,half_life=half_life)
+        return self.radioactive_decay_reaction
+
+    def set_microbial_reaction(self,reaction=None,rate_constant=None,
+        monod_species_name=None,monod_half_saturation_constant=None,monod_threshold_concentration=None,
+        inhibition_species_name=None,inhibition_type=None,inhibition_constant=None,
+        biomass_species_name=None,biomass_yield=None):
+
+        self.microbial_reaction = pmicrobial_reaction(reaction=reaction,rate_constant=rate_constant)
+        self.microbial_reaction.set_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
+        self.microbial_reaction.set_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
+        self.microbial_reaction.set_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+        return self.microbial_reaction
+
     class psorption(Frozen):
         '''
         Specifies parameters for sorption reactions.
@@ -3171,12 +3390,15 @@ class peos(Frozen):
     :param fluid_enthalpy: Specifies option for fluid viscosity.
      "Constant" is currently supported.
     :type fluid_enthalpy: list
+    :param density_params: an optional explicit key/value pairing of density parameters
+    :type density_params: dict{str,float}
     """
 
     def __init__(self, fluid_name=None, fluid_density=['DEFAULT'],
                  fluid_viscosity=None, fluid_enthalpy=None,
                  fluid_henrys_constant=None, fluid_test=None,
-                 fluid_formula_weight=None, rks=None):
+                 fluid_formula_weight=None, rks=None,
+                 density_params=None):
         if fluid_density is None:
             fluid_density = []
         if fluid_viscosity is None:
@@ -3193,6 +3415,7 @@ class peos(Frozen):
         self.fluid_test = fluid_test
         self.fluid_formula_weight = fluid_formula_weight
         self.rks = rks
+        self.density_params = density_params
         self._freeze()
 
 
@@ -4291,6 +4514,20 @@ class pdata(object):
                     elif len(line.strip().split()) > 2:
                         for val in line.strip().split()[2:]:
                             eos.fluid_density.append(floatD(val))
+                    elif den_type == 'linear':
+                        # Here, we are assuming a multiline
+                        # DENSITY LINEAR block.
+                        eos.density_params = {}
+                        while True:
+                            subline = get_next_line(infile)
+                            subkey = subline.strip().split()[0].lower()
+
+                            if subkey in ['/','end']:
+                                break
+
+                            subvalue = subline.strip().split()[1].lower()
+                            eos.density_params[subkey] = floatD(subvalue)
+
                 else:
                     raise PyFLOTRAN_ERROR('Unknown EOS density type')
             elif key == 'enthalpy':
@@ -4391,6 +4628,12 @@ class pdata(object):
                         outfile.write('  DENSITY BATZLE_AND_WANG\n')
                     elif eos.fluid_density[0].upper() == 'TRANGENSTEIN':
                         outfile.write('  DENSITY TRANGENSTEIN\n')
+                    elif eos.density_params is not None:
+                        outfile.write('  DENSITY LINEAR\n')
+                        for dkey in eos.density_params.keys():
+                            outfile.write('    %s %s\n' % (dkey.upper(),
+                                        strD(eos.density_params[dkey])))
+                        outfile.write('  /\n')
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
                                               str(eos.fluid_density) +

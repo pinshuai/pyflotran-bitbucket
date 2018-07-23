@@ -2309,7 +2309,9 @@ class pchemistry(Frozen):
                  max_residual_tolerance=None,
                  max_relative_change_tolerance=None, activity_water=False,
                  update_mineral_surface_area=False, no_bdot=False,
-                 no_checkpoint_act_coefs=False, general_reaction=None,sorption=None):
+                 no_checkpoint_act_coefs=False, general_reaction=None,sorption=None,
+                 immobile_decay_reaction=None,radioactive_decay_reaction=None,
+                 microbial_reaction=None):
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2351,6 +2353,9 @@ class pchemistry(Frozen):
         self.no_checkpoint_act_coefs = no_checkpoint_act_coefs
         self.general_reaction = general_reaction
         self.sorption = None
+        self.microbial_reaction = microbial_reaction
+        self.radioactive_decay_reaction = radioactive_decay_reaction
+        self.immobile_decay_reaction = immobile_decay_reaction
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
         else:
@@ -2384,9 +2389,7 @@ class pchemistry(Frozen):
             self.rate_constant = rate_constant
             self.half_life = half_life
 
-        def _write_immobile_decay_reaction(self,outfile):
-            if self is None: return
-
+        def _write(self,outfile):
             if self.rate_constant is not None and self.half_life is not None:
                 PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
 
@@ -2439,9 +2442,7 @@ class pchemistry(Frozen):
             self.rate_constant = rate_constant
             self.half_life = half_life
 
-        def _write_radioactive_decay_reaction(self,outfile):
-            if self is None: return
-
+        def _write(self,outfile):
             if self.rate_constant is not None and self.half_life is not None:
                 PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
 
@@ -2528,9 +2529,7 @@ class pchemistry(Frozen):
             self.inhibition = pmicrobial_reaction.inhibition(species_name=species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
             return self.inhibition
 
-        def _write_microbial_reaction(self,outfile):
-            if self is None: return
-
+        def _write(self,outfile):
             if self.reaction is None and self.rate_constant is None:
                 perror('Required MICROBIAL_REACTION cards are missing!')
 
@@ -8641,6 +8640,15 @@ class pdata(object):
         if not isinstance(c.m_kinetics_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to m_kinetics_list!')
+
+        if c.immobile_decay_reaction:
+            c.immobile_decay_reaction._write(outfile)
+
+        if c.radioactive_decay_reaction:
+            c.radioactive_decay_reaction._write(outfile)
+
+        if c.microbial_reaction:
+            c.microbial_reaction._write(outfile)
 
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')

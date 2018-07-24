@@ -232,7 +232,6 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         return True
     else:
         print('\033[91mREGRESSION COMPARISON ERROR:\033[0m FAILED ON COMPARISON\n'+'-'*50)
-        #print([file1,file2])
         if debug_dict is not None:
                 debug_dict['failed']['regression_comp'][file1] = out
         return False
@@ -358,8 +357,8 @@ written out. This should be considered a 'first-pass' for verifying I/O, functio
 capabilities of PyFLOTRAN.
 
 The second and more rigorous test is to perform a regression analysis on output from PFLOTRAN:
-this is done by a comparitive analysis on PFLOTRAN output from a 'gold standard' file and a file
-output from PyFLOTRAN.''',
+this is done by a comparitive analysis on PFLOTRAN output from a 'gold standard' input file and
+from a PyFLOTRAN generated input file.''',
 '''Run both validation and regression tests.''',
 '''Run *only* the comparative regression analysis.''',
 '''Run *only* the PyFLOTRAN I/O validation.''',

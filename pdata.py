@@ -2311,7 +2311,8 @@ class pchemistry(Frozen):
                  update_mineral_surface_area=False, no_bdot=False,
                  no_checkpoint_act_coefs=False, general_reaction=None,sorption=None,
                  immobile_decay_reaction=None,radioactive_decay_reaction=None,
-                 microbial_reaction=None):
+                 microbial_reaction=None,immobile_species_list=None):
+
         if primary_species_list is None:
             primary_species_list = []
         if secondary_species_list is None:
@@ -2328,15 +2329,27 @@ class pchemistry(Frozen):
             m_kinetics_list = []
         if output_list is None:
             output_list = []
+        if microbial_reaction is None:
+            microbial_reaction = []
+        if radioactive_decay_reaction is None:
+            radioactive_decay_reaction = []
+        if immobile_decay_reaction is None:
+            immobile_decay_reaction = []
+        if immobile_species_list is None:
+            immobile_species_list = []
+
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
+        
         # Secondary_species (E.g. 'OH-' - string
         self.secondary_species_list = secondary_species_list
         self.gas_species_list = gas_species_list  # E.g. 'CO2(g)'
+        
         # E.g. 'CO2(g)'
         self.passive_gas_species_list = passive_gas_species_list
         self.active_gas_species_list = active_gas_species_list  # E.g. 'CO2(g)'
         self.minerals_list = minerals_list  # E.g. 'Calcite'
+
         # has pchemistry_m_kinetic assigned to it
         self.m_kinetics_list = m_kinetics_list
         self.log_formulation = log_formulation
@@ -2356,10 +2369,13 @@ class pchemistry(Frozen):
         self.microbial_reaction = microbial_reaction
         self.radioactive_decay_reaction = radioactive_decay_reaction
         self.immobile_decay_reaction = immobile_decay_reaction
+        self.immobile_species_list = immobile_species_list
+
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
         else:
             self.database = database  # Database path (String)
+
         self.activity_coefficients = activity_coefficients
         self.molal = molal  # boolean
         # incl. molarity/all, species and mineral names - string
@@ -2418,7 +2434,7 @@ class pchemistry(Frozen):
         :param reaction: Reaction equation. Only one reactant species may be
         listed on the left side of the equation
         (i.e. or on the right side with a negative stoichiometry).
-        The reactant’s stoichiometry is fixed at 1.0.
+        The reactant's stoichiometry is fixed at 1.0.
         The forward rate is applied to that one species as a first order rate 
         constant [1/sec]. Multiple species are supported as daughter products
         on the right hand side and stoichiometries can be specified.
@@ -2507,9 +2523,16 @@ class pchemistry(Frozen):
 
             assert isinstance(reaction,(str,type(None))), 'REACTION must be a string'
             assert isinstance(rate_constant,(float,int,type(None))), 'RATE_CONSTANT must be a float'
-            assert isinstance(monod,(pmicrobial_reaction.monod,type(None))), 'MONOD must be of type pmicrobial_reaction.monod'
-            assert isinstance(inhibition,(pmicrobial_reaction.inhibition,type(None))), 'INHIBITION must be of type pmicrobial_reaction.inhibition'
-            assert isinstance(biomass,(pmicrobial_reaction.biomass,type(None))), 'BIOMASS must be of type pmicrobial_reaction.biomass'
+            #assert isinstance(monod,(pmicrobial_reaction.monod,type(None))), 'MONOD must be of type pmicrobial_reaction.monod'
+            #assert isinstance(inhibition,(pmicrobial_reaction.inhibition,type(None))), 'INHIBITION must be of type pmicrobial_reaction.inhibition'
+            #assert isinstance(biomass,(pmicrobial_reaction.biomass,type(None))), 'BIOMASS must be of type pmicrobial_reaction.biomass'
+
+            if monod is None:
+                monod = []
+            if inhibition is None:
+                inhibition = []
+            if biomass is None:
+                biomass = []
 
             self.reaction = reaction
             self.rate_constant = rate_constant
@@ -2517,17 +2540,20 @@ class pchemistry(Frozen):
             self.inhibition = inhibition
             self.biomass = biomass
 
-        def set_monod(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
-            self.monod = pmicrobial_reaction.monod(species_name=species_name,half_saturation_constant=half_saturation_constant,threshold_concentration=threshold_concentration)
-            return self.monod
+        def add_monod(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
+            mon = pchemistry.pmicrobial_reaction.monod(species_name=species_name,half_saturation_constant=half_saturation_constant,threshold_concentration=threshold_concentration)
+            self.monod.append(mon)
+            return mon
 
-        def set_biomass(self,species_name=None,biomass_yield=None)
-            self.biomass = pmicrobial_reaction.biomass(species_name=species_name,biomass_yield=biomass_yield)
-            return self.biomass
+        def add_biomass(self,species_name=None,biomass_yield=None):
+            biom = pchemistry.pmicrobial_reaction.biomass(species_name=species_name,biomass_yield=biomass_yield)
+            self.biomass.append(biom)
+            return biom
 
-        def set_inhibition(self,species_name=None,inhibition_type=None,inhibition_constant=None):
-            self.inhibition = pmicrobial_reaction.inhibition(species_name=species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
-            return self.inhibition
+        def add_inhibition(self,species_name=None,inhibition_type=None,inhibition_constant=None):
+            inhibit = pchemistry.pmicrobial_reaction.inhibition(species_name=species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+            self.inhibition.append(inhibit)
+            return inhibit
 
         def _write(self,outfile):
             if self.reaction is None and self.rate_constant is None:
@@ -2538,46 +2564,51 @@ class pchemistry(Frozen):
             outfile.write('    RATE_CONSTANT %s\n' % strD(self.rate_constant))
 
             if self.monod is not None:
-                outfile.write('    MONOD\n')
-                outfile.write('      SPECIES_NAME %s\n' % self.monod.species_name)
-                outfile.write('      HALF_SATURATION_CONSTANT %s\n' % strD(self.monod.half_saturation_constant))
-                outfile.write('      THRESHOLD_CONCENTRATION %s\n' % strD(self.monod.threshold_concentration))
-                outfile.write('    /\n')
+                for mon in self.monod:
+                    outfile.write('    MONOD\n')
+                    outfile.write('      SPECIES_NAME %s\n' % mon.species_name)
+                    outfile.write('      HALF_SATURATION_CONSTANT %s\n' % strD(mon.half_saturation_constant))
+                    outfile.write('      THRESHOLD_CONCENTRATION %s\n' % strD(mon.threshold_concentration))
+                    outfile.write('    /\n')
 
             if self.inhibition is not None:
-                outfile.write('    INHIBITION\n')
-                outfile.write('      SPECIES_NAME %s\n' % self.inhibition.species_name)
-                outfile.write('      TYPE %s\n' % self.inhibition.type)
-                outfile.write('      INHIBITION_CONSTANT %s\n' % strD(self.inhibition.inhibition_constant))
-                outfile.write('    /\n')
+                for inhib in self.inhibition:
+                    outfile.write('    INHIBITION\n')
+                    outfile.write('      SPECIES_NAME %s\n' % inhib.species_name)
+                    outfile.write('      TYPE %s\n' % inhib.inhibition_type)
+                    outfile.write('      INHIBITION_CONSTANT %s\n' % strD(inhib.inhibition_constant))
+                    outfile.write('    /\n')
 
             if self.biomass is not None:
-                outfile.write('    BIOMASS\n')
-                outfile.write('      SPECIES_NAME %s\n' % self.biomass.species_name)
-                outfile.write('      YIELD %s\n' % self.biomass.biomass_yield)
-                outfile.write('    /\n')
+                for biom in self.biomass:
+                    outfile.write('    BIOMASS\n')
+                    outfile.write('      SPECIES_NAME %s\n' % biom.species_name)
+                    outfile.write('      YIELD %s\n' % biom.biomass_yield)
+                    outfile.write('    /\n')
 
             outfile.write('  /\n')
 
-    def set_immobile_decay_reaction(self,species_name=None,
-                                    rate_constant=None,half_life=None):
-        self.immobile_decay_reaction = pimmobile_decay_reaction(species_name=species_name,rate_constant=rate_constant,half_life=half_life)
-        return self.immobile_decay_reaction
+    def add_immobile_decay_reaction(self,species_name=None,rate_constant=None,half_life=None):
+        idr_rxn = pchemistry.pimmobile_decay_reaction(species_name=species_name,rate_constant=rate_constant,half_life=half_life)
+        self.immobile_decay_reaction.append(idr_rxn)
+        return idr_rxn
 
-    def set_radioactive_decay_reaction(self,reaction,rate_constant,half_life):
-        self.radioactive_decay_reaction = pradioactive_decay_reaction(reaction=reaction,rate_constant=rate_constant,half_life=half_life)
-        return self.radioactive_decay_reaction
+    def add_radioactive_decay_reaction(self,reaction=None,rate_constant=None,half_life=None):
+        rad_rxn = pchemistry.pradioactive_decay_reaction(reaction=reaction,rate_constant=rate_constant,half_life=half_life)
+        self.radioactive_decay_reaction.append(rad_rxn)
+        return rad_rxn
 
-    def set_microbial_reaction(self,reaction=None,rate_constant=None,
+    def add_microbial_reaction(self,reaction=None,rate_constant=None,
         monod_species_name=None,monod_half_saturation_constant=None,monod_threshold_concentration=None,
         inhibition_species_name=None,inhibition_type=None,inhibition_constant=None,
         biomass_species_name=None,biomass_yield=None):
 
-        self.microbial_reaction = pmicrobial_reaction(reaction=reaction,rate_constant=rate_constant)
-        self.microbial_reaction.set_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
-        self.microbial_reaction.set_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
-        self.microbial_reaction.set_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
-        return self.microbial_reaction
+        microbe = pchemistry.pmicrobial_reaction(reaction=reaction,rate_constant=rate_constant)
+        #microbe.add_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
+        #microbe.add_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
+        #microbe.add_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+        self.microbial_reaction.append(microbe)
+        return microbe
 
     class psorption(Frozen):
         '''
@@ -2740,7 +2771,7 @@ class pchemistry(Frozen):
             :type sorption_type: str
             :param complex_kinetics: Opens a block specifying forward and backward rate constants
             CLASS TYPE
-            :type complex_kinetics: sdfsadfasdfsdf
+            :type complex_kinetics: <UNDEFINED>
             :param rates: Specific kinetic rates associated with SITE_FRACTIONs.
             :type rates: list <float>
             :param site_fraction: Specifies site fractions associated with RATES for multirate kinetic sorption.
@@ -8229,6 +8260,16 @@ class pdata(object):
                     line1 = get_next_line(infile)
                     if line1.strip().split()[0].lower() == 'noskip':
                         keep_reading_1 = False
+            elif key == 'immobile_species':
+                while True:
+                    subline = get_next_line(infile).strip().split()
+                    subkey = subline[0]
+
+                    if subkey in ['/','end']:
+                        break
+                    else:
+                        chem.immobile_species_list.append(subkey)
+
             elif key == 'secondary_species':
                 while True:
                     line = get_next_line(infile)
@@ -8498,6 +8539,96 @@ class pdata(object):
 
                     if subkey.lower() in ['/','end']:
                         break
+            elif key == 'immobile_decay_reaction':
+                id_rxn = chem.add_immobile_decay_reaction()
+                while True:
+                    subline = get_next_line(infile).strip().split()
+                    subkey = subline[0].lower()
+
+                    if subkey == 'species_name':
+                        id_rxn.species_name = subline[-1]
+                    elif subkey == 'rate_constant':
+                        id_rxn.rate_constant = floatD(subline[-1])
+                    elif subkey == 'half_life':
+                        id_rxn.half_life = floatD(subline[-1])
+                    elif subkey in ['/','end']:
+                        break
+
+            elif key == 'radioactive_decay_reaction':
+                rad_rxn = chem.add_radioactive_decay_reaction()
+                while True:
+                    subline = get_next_line(infile).strip().split()
+                    subkey = subline[0].lower()
+
+                    if subkey == 'reaction':
+                        rad_rxn.reaction = ' '.join(subline[1:])
+                    elif subkey == 'rate_constant':
+                        rad_rxn.rate_constant = floatD(subline[1]) if len(subline) <= 2 \
+                                                else [floatD(subline[1]),subline[2]]
+                    elif subkey == 'half_life':
+                        rad_rxn.half_life = floatD(subline[1]) if len(subline) <= 2 \
+                                            else [floatD(subline[1]),subline[2]]
+                    elif subkey in ['/','end']:
+                        break
+
+            elif key == 'microbial_reaction':
+                bio_rxn = chem.add_microbial_reaction()
+
+                while True:
+                    subline = get_next_line(infile).strip().split()
+                    subkey = subline[0].lower()
+
+                    if subkey == 'reaction':
+                        bio_rxn.reaction = ' '.join(subline[1:])
+                    elif subkey == 'rate_constant':
+                        bio_rxn.rate_constant = floatD(subline[1])
+
+                    elif subkey == 'monod':
+                        monod = bio_rxn.add_monod()
+                        while True:
+                            subsubline = get_next_line(infile).strip().split()
+                            subsubkey = subsubline[0].lower()
+
+                            if subsubkey == 'species_name':
+                                monod.species_name = subsubline[1]
+                            elif subsubkey == 'half_saturation_constant':
+                                monod.half_saturation_constant = floatD(subsubline[1])
+                            elif subsubkey == 'threshold_concentration':
+                                monod.threshold_concentration = floatD(subsubline[1])
+                            elif subsubkey in ['/','end']:
+                                break
+
+                    elif subkey == 'inhibition':
+                        inhibit = bio_rxn.add_inhibition()
+                        while True:
+                            subsubline = get_next_line(infile).strip().split()
+                            subsubkey = subsubline[0].lower()
+
+                            if subsubkey == 'species_name':
+                                inhibit.species_name = subsubline[1]
+                            elif subsubkey == 'type':
+                                inhibit.inhibition_type = subsubline[1]
+                            elif subsubkey == 'inhibition_constant':
+                                inhibit.inhibition_constant = floatD(subsubline[1])
+                            elif subsubkey in ['/','end']:
+                                break
+
+                    elif subkey == 'biomass':
+                        biomass = bio_rxn.add_biomass()
+                        while True:
+                            subsubline = get_next_line(infile).strip().split()
+                            subsubkey = subsubline[0].lower()
+
+                            if subsubkey == 'species_name':
+                                biomass.species_name = subsubline[1]
+                            elif subsubkey == 'yield':
+                                biomass.biomass_yield = floatD(subsubline[1])
+                            elif subsubkey in ['/','end']:
+                                break
+
+                    elif subkey in ['/','end']:
+                        break
+
             elif key == 'database':
                 chem.database = self.splitter(line)  # take last word
             elif key == 'log_formulation':
@@ -8641,14 +8772,22 @@ class pdata(object):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to m_kinetics_list!')
 
+        if c.immobile_species_list:
+            outfile.write('  IMMOBILE_SPECIES\n')
+            outfile.write(''.join(['    %s\n' % b for b in c.immobile_species_list]))
+            outfile.write('  /\n')
+
         if c.immobile_decay_reaction:
-            c.immobile_decay_reaction._write(outfile)
+            for id_rxn in c.immobile_decay_reaction:
+                id_rxn._write(outfile)
 
         if c.radioactive_decay_reaction:
-            c.radioactive_decay_reaction._write(outfile)
+            for rd_rxn in c.radioactive_decay_reaction:
+                rd_rxn._write(outfile)
 
         if c.microbial_reaction:
-            c.microbial_reaction._write(outfile)
+            for mb_rxn in c.microbial_reaction:
+                mb_rxn._write(outfile)
 
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')

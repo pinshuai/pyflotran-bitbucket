@@ -198,7 +198,8 @@ characteristic_curves_liquid_permeability_function_types_allowed = list(set(
 allowed_compressibility_functions = ['linear_model', 'bandis', 'turner']
 
 allowed_soil_compressibility_functions = ['LINEAR', 'LEIJNSE', 'DEFAULT',
-                                          'BRAGFLO', 'WIPP', 'QUADRATIC']
+                                          'BRAGFLO', 'WIPP', 'QUADRATIC',
+                                          'BANDIS']
 
 flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'CONCENTRATION', 'SATURATION', 'WELL',
@@ -264,13 +265,13 @@ eos_fluid_names_allowed = ['water', 'gas', 'oil']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
                              'rks','batzle_and_wang', 'linear', 'trangenstein',
-                             'inverse_linear']
+                             'inverse_linear', 'pr_methane', 'duanmo']
 
 eos_enthalpy_types_allowed = ['constant', 'ideal', 'default', 'linear_temp']
 
 eos_viscosity_types_allowed = ['constant', 'default']
 
-eos_henrys_types_allowed = ['constant', 'default']
+eos_henrys_types_allowed = ['constant', 'default','duanmao']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'restart',
@@ -286,7 +287,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
          'geomechanics_boundary_condition', 'geomechanics_strata',
          'geomechanics_time', 'geomechanics_material_property',
-         'geomechanics_output', 'eos']
+         'geomechanics_output', 'eos','integral_flux']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -303,7 +304,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics time', 'geomechanics region',
            'geomechanics condition', 'geomechanics boundary condition',
            'geomechanics strata', 'geomechanics time',
-           'geomechanics material property', 'geomechanics output', 'eos']
+           'geomechanics material property', 'geomechanics output', 'eos',
+           'integral_flux']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression',
@@ -422,7 +424,36 @@ class pmaterial(Frozen):
     :param normal_vector: Defines fracture normal vector for 
      GEOMECHANICS_SUBSURFACE_PROPS keyword and BANDIS model. 
     :type normal_vector: [float, float, float]
-
+    :type A_Bandis: float
+    :param A_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type B_Bandis: float
+    :param B_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type b_min_Bandis: float
+    :param b_min_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type b_max_Bandis: float
+    :param b_max_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type sigma_x_Bandis: float
+    :param sigma_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type normal_x_Bandis: float
+    :param normal_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type friction_Bandis: float
+    :param friction_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type perm_multiplier_Bandis: float
+    :param perm_multiplier_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type frac_present_Bandis: float
+    :param frac_present_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
+    :type b_p_Bandis: float
+    :param b_p_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+     MATERIAL_PROPERTY
 
     """
 
@@ -439,7 +470,14 @@ class pmaterial(Frozen):
                  soil_compressibility_function='', soil_reference_pressure=None,
                  soil_compressibility=None, compressibility_function='',
                  bandis_A=None, bandis_B=None, maximum_aperture=None,
-                 normal_vector=None, density_unit='', cond_wet_unit='',
+                 normal_vector=None, B_Bandis=None,
+                 A_Bandis=None, b_min_Bandis=None, b_max_Bandis=None,
+                 sigma_n_Bandis=None,sigma_x_Bandis=None,sigma_y_Bandis=None,
+                 sigma_z_Bandis=None,normal_x_Bandis=None,normal_y_Bandis=None,
+                 normal_z_Bandis=None,friction_Bandis=None,
+                 perm_multiplier_Bandis = None,
+                 frac_present_Bandis=None,
+                 b_p_Bandis=None, density_unit='', cond_wet_unit='',
                  cond_dry_unit='', specific_heat_unit='',
                  heat_capacity='', heat_capacity_unit=''):
 
@@ -477,6 +515,57 @@ class pmaterial(Frozen):
             maximum_aperture = []
         if normal_vector is None:
             normal_vector = []
+
+        if B_Bandis is None:
+            B_Bandis = []
+        self.B_Bandis = B_Bandis
+        if A_Bandis is None:
+            A_Bandis = []
+        self.A_Bandis = A_Bandis
+        if b_max_Bandis is None:
+            b_max_Bandis = []
+        self.b_max_Bandis = b_max_Bandis
+        if b_min_Bandis is None:
+            b_min_Bandis = []
+        self.b_min_Bandis = b_min_Bandis
+        if sigma_n_Bandis is None:
+            sigma_n_Bandis = []
+        self.sigma_n_Bandis = sigma_n_Bandis
+
+        if friction_Bandis is None:
+            friction_Bandis = []
+        self.friction_Bandis = friction_Bandis
+
+        if perm_multiplier_Bandis is None:
+            perm_multiplier_Bandis = []
+        self.perm_multiplier_Bandis = perm_multiplier_Bandis
+
+        if sigma_x_Bandis is None:
+            sigma_x_Bandis = []
+        self.sigma_x_Bandis = sigma_x_Bandis
+        if sigma_y_Bandis is None:
+            sigma_y_Bandis = []
+        self.sigma_y_Bandis = sigma_y_Bandis
+        if sigma_z_Bandis is None:
+            sigma_z_Bandis = []
+        self.sigma_z_Bandis = sigma_z_Bandis
+
+        if normal_x_Bandis is None:
+            normal_x_Bandis = []
+        self.normal_x_Bandis = normal_x_Bandis
+        if normal_y_Bandis is None:
+            normal_y_Bandis = []
+        self.normal_y_Bandis = normal_y_Bandis
+        if normal_z_Bandis is None:
+            normal_z_Bandis = []
+        self.normal_z_Bandis = normal_z_Bandis
+        
+        if frac_present_Bandis is None:
+            frac_present_Bandis = []
+        self.frac_present_Bandis = frac_present_Bandis
+        if b_p_Bandis is None:
+            b_p_Bandis = []
+        self.b_p_Bandis = b_p_Bandis
 
         self.bandis_A = bandis_A
         self.bandis_B = bandis_B
@@ -1930,6 +2019,35 @@ class pregion(Frozen):
         self.block = block
         self._freeze()
 
+
+class pintegral_flux(Frozen):
+    """
+    Class for specifying INTEGRAL_FLUX card. Multiple objects
+    can be created.
+
+    :param name: Name of flux condition (e.g. outflow).
+    :type name: str
+    :param coordinates_lower: Lower/minimum 3D coordinates for defining a
+     planar region between two points in space in
+     order of x1, y1, z1. e.g., [0.e0, 0.e0, 0.e0]
+    :type coordinates_lower: [float]*3
+    :param coordinates_upper: Upper/maximum 3D coordinates for defining a
+     planar region between two points in space in order
+     of x2, y2, z2. e.g., [321.e0, 1.e0,  51.e0]
+    :type coordinates_upper: [float]*3
+    :param invert_direction: Will add INVERT_DIRECITON keyword.
+    :type face: logical
+    """
+
+    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None):
+        if coordinates_lower is None:
+            coordinates_lower = [0.0, 0.0, 0.0]
+        if coordinates_upper is None:
+            coordinates_upper = [0.0, 0.0, 0.0]
+        self.name = name.lower()
+        self.coordinates_lower = coordinates_lower  # 3D coordinates
+        self.coordinates_upper = coordinates_upper  # 3D coordinates
+        self._freeze()
 
 class pobservation(Frozen):
     """
@@ -3513,6 +3631,7 @@ class pdata(object):
         self.fluidlist = []
         self.saturationlist = []
         self.regionlist = []  # There are multiple regions
+        self.integral_flux_list = []  # There are multiple integral_fluxes
         self.charlist = []
         self.observation_list = []
         self.flowlist = []
@@ -4181,6 +4300,9 @@ class pdata(object):
             raise PyFLOTRAN_ERROR(
                 'regionlist is required, it is currently reading as empty!')
 
+        if self.integral_flux_list:
+            self._write_integral_flux(outfile)
+
         if self.observation_list:
             self._write_observation(outfile)
 
@@ -4253,7 +4375,7 @@ class pdata(object):
                          pflow_variable, pinitial_condition,
                          pboundary_condition, psource_sink, pstrata,
                          ptransport, pconstraint, pconstraint_concentration,
-                         psecondary_continuum, pfluid, peos]
+                         psecondary_continuum, pfluid, peos, pintegral_flux]
 
         # Check if obj first is an object that belongs to add_checklist
         checklist_bool = [isinstance(obj, item) for item in add_checklist]
@@ -4289,6 +4411,8 @@ class pdata(object):
             self._add_eos(obj, overwrite)
         if isinstance(obj, pregion):
             self._add_region(obj, overwrite)
+        if isinstance(obj, pintegral_flux):
+            self._add_integral_flux(obj, overwrite)
         if isinstance(obj, pobservation):
             self._add_observation(obj, overwrite)
         if isinstance(obj, pflow):
@@ -4389,6 +4513,13 @@ class pdata(object):
             for obji in copy(obj):
                 if isinstance(obji, pregion):
                     self._delete_region(obji)
+
+        if isinstance(obj, pintegral_flux):
+            self._delete_integral_flux(obj)
+        elif isinstance(obj, list):
+            for obji in copy(obj):
+                if isinstance(obji, pintegral_flux):
+                    self._delete_integral_flux(obji)
 
         if isinstance(obj, pflow):
             self._delete_flow(obj)
@@ -4658,6 +4789,10 @@ class pdata(object):
                         outfile.write('  DENSITY BATZLE_AND_WANG\n')
                     elif eos.fluid_density[0].upper() == 'TRANGENSTEIN':
                         outfile.write('  DENSITY TRANGENSTEIN\n')
+                    elif eos.fluid_density[0].upper() == 'PR_METHANE':
+                        outfile.write('  DENSITY '+eos.fluid_density[0].upper() +'\n')
+                    elif eos.fluid_density[0].upper() == 'DUANMAO':
+                        outfile.write('  DENSITY '+eos.fluid_density[0].upper() +'\n')
                     elif eos.density_params is not None:
                         outfile.write('  DENSITY LINEAR\n')
                         for dkey in eos.density_params.keys():
@@ -4707,10 +4842,13 @@ class pdata(object):
                     if eos.fluid_henrys_constant[0].upper() == 'CONSTANT' and \
                             len(eos.fluid_henrys_constant) == 2:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[
-                                          0].upper() + ' '
+                                      eos.fluid_henrys_constant[0].upper() + ' '
                                       + strD(eos.fluid_henrys_constant[1]) + '\n')
                     elif eos.fluid_henrys_constant[0].upper() == 'DEFAULT' and \
+                            len(eos.fluid_henrys_constant) == 1:
+                        outfile.write('  HENRYS_CONSTANT ' +
+                                      eos.fluid_henrys_constant[0].upper() + '\n')
+                    elif eos.fluid_henrys_constant[0].upper() == 'DUANMAO' and \
                             len(eos.fluid_henrys_constant) == 1:
                         outfile.write('  HENRYS_CONSTANT ' +
                                       eos.fluid_henrys_constant[0].upper() + '\n')
@@ -5656,6 +5794,95 @@ class pdata(object):
                                       strD(prop.normal_vector[1]) + ' ' +
                                       strD(prop.normal_vector[2]) + '\n')
                     outfile.write('  /\n')
+
+            if prop.B_Bandis:
+                if type(prop.B_Bandis) is str:
+                    outfile.write('  B_BANDIS DATASET ' + prop.B_Bandis + '\n')
+                else:
+                    outfile.write('  B_BANDIS ' + strD(prop.B_Bandis) + '\n')
+            if prop.A_Bandis:
+                if type(prop.A_Bandis) is str:
+                    outfile.write('  A_BANDIS DATASET ' + prop.A_Bandis + '\n')
+                else:
+                    outfile.write('  A_BANDIS ' + strD(prop.A_Bandis) + '\n')
+            if prop.b_min_Bandis:
+                if type(prop.b_min_Bandis) is str:
+                    outfile.write('  B_MIN_BANDIS DATASET ' + prop.b_min_Bandis + '\n')
+                else:
+                    outfile.write('  B_MIN_BANDIS ' + strD(prop.b_min_Bandis) + '\n')
+            elif prop.b_min_Bandis == 0.0:
+                    outfile.write('  B_MIN_BANDIS ' + strD(prop.b_min_Bandis) + '\n')
+            if prop.b_max_Bandis:
+                if type(prop.b_max_Bandis) is str:
+                    outfile.write('  B_MAX_BANDIS DATASET ' + prop.b_max_Bandis + '\n')
+                else:
+                    outfile.write('  B_MAX_BANDIS ' + strD(prop.b_max_Bandis) + '\n')
+            if prop.sigma_n_Bandis:
+                if type(prop.sigma_n_Bandis) is str:
+                    outfile.write('  SIGMA_N_BANDIS DATASET ' + prop.sigma_n_Bandis + '\n')
+                else:
+                    outfile.write('  SIGMA_N_BANDIS ' + strD(prop.sigma_n_Bandis) + '\n')
+
+            if prop.friction_Bandis:
+                if type(prop.friction_Bandis) is str:
+                    outfile.write('  FRICTION_BANDIS DATASET ' + prop.friction_Bandis + '\n')
+                else:
+                    outfile.write('  FRICTION_BANDIS ' + strD(prop.friction_Bandis) + '\n')
+
+            if prop.perm_multiplier_Bandis:
+                if type(prop.perm_multiplier_Bandis) is str:
+                    outfile.write('  PERM_MULTIPLIER_BANDIS DATASET ' + prop.perm_multiplier_Bandis + '\n')
+                else:
+                    outfile.write('  PERM_MULTIPLIER_BANDIS ' + strD(prop.perm_multiplier_Bandis) + '\n')
+
+            if prop.sigma_x_Bandis:
+                if type(prop.sigma_x_Bandis) is str:
+                    outfile.write('  SIGMA_XX_BANDIS DATASET ' + prop.sigma_x_Bandis + '\n')
+                else:
+                    outfile.write('  SIGMA_XX_BANDIS ' + strD(prop.sigma_x_Bandis) + '\n')
+
+            if prop.sigma_y_Bandis:
+                if type(prop.sigma_y_Bandis) is str:
+                    outfile.write('  SIGMA_YY_BANDIS DATASET ' + prop.sigma_y_Bandis + '\n')
+                else:
+                    outfile.write('  SIGMA_YY_BANDIS ' + strD(prop.sigma_y_Bandis) + '\n')
+
+            if prop.sigma_z_Bandis:
+                if type(prop.sigma_z_Bandis) is str:
+                    outfile.write('  SIGMA_ZZ_BANDIS DATASET ' + prop.sigma_z_Bandis + '\n')
+                else:
+                    outfile.write('  SIGMA_ZZ_BANDIS ' + strD(prop.sigma_z_Bandis) + '\n')
+
+            if prop.normal_x_Bandis:
+                if type(prop.normal_x_Bandis) is str:
+                    outfile.write('  NORMAL_X_BANDIS DATASET ' + prop.normal_x_Bandis + '\n')
+                else:
+                    outfile.write('  NORMAL_X_BANDIS ' + strD(prop.normal_x_Bandis) + '\n')
+
+            if prop.normal_y_Bandis:
+                if type(prop.normal_y_Bandis) is str:
+                    outfile.write('  NORMAL_Y_BANDIS DATASET ' + prop.normal_y_Bandis + '\n')
+                else:
+                    outfile.write('  NORMAL_Y_BANDIS ' + strD(prop.normal_y_Bandis) + '\n')
+
+            if prop.normal_z_Bandis:
+                if type(prop.normal_z_Bandis) is str:
+                    outfile.write('  NORMAL_Z_BANDIS DATASET ' + prop.normal_z_Bandis + '\n')
+                else:
+                    outfile.write('  NORMAL_Z_BANDIS ' + strD(prop.normal_z_Bandis) + '\n')
+
+            if prop.frac_present_Bandis:
+                if type(prop.frac_present_Bandis) is str:
+                    outfile.write('  FRAC_PRESENT_BANDIS DATASET ' + prop.frac_present_Bandis + '\n')
+                else:
+                    outfile.write('  FRAC_PRESENT_BANDIS ' + strD(prop.frac_present_Bandis) + '\n')
+            elif prop.frac_present_Bandis == 0.0:
+                    outfile.write('  FRAC_PRESENT_BANDIS ' + strD(prop.frac_present_Bandis) + '\n')
+            if prop.b_p_Bandis:
+                if type(prop.b_p_Bandis) is str:
+                    outfile.write('  B_P_BANDIS DATASET ' + prop.b_p_Bandis + '\n')
+                else:
+                    outfile.write('  B_P_BANDIS ' + strD(prop.b_p_Bandis) + '\n')
 
             outfile.write('END\n\n')
 
@@ -6743,6 +6970,56 @@ class pdata(object):
 
         # Create an empty saturation function and assign the values read in
         self.add(saturation)
+    # Adds a integral flux object
+    def _add_integral_flux(self, integral_flux=pintegral_flux(), 
+                           overwrite=False):
+        # check if integral_flux already exists
+        if isinstance(integral_flux, pintegral_flux):
+            if integral_flux.name in self.integral_flux.keys():
+                if not overwrite:
+                    warning = 'WARNING: A integra_flux with name \'' + \
+                              str(
+                                  integral_flux.name) + '\' already exists.' \
+                                                 ' Integral flux will' + \
+                              'not be defined, use overwrite = ' + \
+                              'True in add() to overwrite the old region.'
+                    print warning,
+                    build_warnings.append(warning)
+                    return
+                else:
+                    self.delete(self.integral_flux[integral_flux.name])
+
+        if integral_flux not in self.integral_flux_list:
+            self.integral_flux_list.append(integral_flux)
+
+    def _write_integral_flux(self, outfile):
+        self._header(outfile, headers['integral_flux'])
+
+        # Write out all valid region object entries with Region as Key word
+        for integral_flux in self.integral_flux_list:
+            outfile.write('INTEGRAL_FLUX\n')
+            if integral_flux.name:
+                outfile.write('  NAME '+integral_flux.name+'\n')
+            else:
+                outfile.write('  NAME default_integral_flux\n')
+            # if integral_flux.invert_direction:
+            #     outfile.write('  INVERT_DIRECITON\n')
+
+            outfile.write('  COORDINATES\n')
+            outfile.write('    ')
+            for i in range(3):
+                outfile.write(strD(integral_flux.coordinates_lower[i]) +
+                              ' ')
+            outfile.write('\n    ')
+            for i in range(3):
+                outfile.write(strD(integral_flux.coordinates_upper[i]) +
+                              ' ')
+            outfile.write('\n')
+            outfile.write('  /\n')
+            outfile.write('END\n\n')
+
+    def _delete_integral_flux(self, integral_flux=pintegral_flux()):
+        self.integral_flux_list.remove(integral_flux)
 
     # Adds a saturation object.
     def _add_saturation(self, sat=psaturation(), overwrite=False):
@@ -9818,6 +10095,11 @@ class pdata(object):
     def region(self):
         return dict([region.name.lower(), region] for region in
                     self.regionlist if region.name)
+
+    @property
+    def integral_flux(self):
+        return dict([integral_flux.name.lower(), integral_flux] for integral_flux in
+                    self.integral_flux_list if integral_flux.name)
 
     @property
     def observation(self):

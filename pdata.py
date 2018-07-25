@@ -9,10 +9,10 @@ from pdflt import *
 import math
 import shutil
 import matplotlib as mpl
-
-mpl.use('Agg')
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+mpl.use('Agg')
 
 """ Class for pyflotran data """
 
@@ -265,8 +265,9 @@ geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
 eos_fluid_names_allowed = ['water', 'gas', 'oil']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
-                             'rks', 'batzle_and_wang', 'linear', 'trangenstein',
-                             'inverse_linear', 'pr_methane', 'duanmo']
+                             'rks', 'batzle_and_wang', 'linear',
+                             'trangenstein', 'inverse_linear', 'pr_methane',
+                             'duanmo']
 
 eos_enthalpy_types_allowed = ['constant', 'ideal', 'default', 'linear_temp']
 
@@ -404,56 +405,56 @@ class pmaterial(Frozen):
     :type transverse_dispersivity_v: float
     :param anisotropic: Turn this on if permeability is anisotropic
     :type anisotropic: Bool
-    :param soil_compressibility_function: Selects the 
+    :param soil_compressibility_function: Selects the
      compressibility function if geomechanics is not use (e.g. LEIJNSE)
     :type soil_compressibility_function: String
     :param soil_compressibility: Compressibility of soil matrix (Pa^-1)
     :type soil_compressibility: Float
     :param compressibility_function: Inserts the GEOMECHANICS_SUBSURFACE_PROPS
-     keyword and points to a compressibility function (e.g. 'LINEAR_MODEL', 
-     'BANDIS', 'TURNER') 
+     keyword and points to a compressibility function (e.g. 'LINEAR_MODEL',
+     'BANDIS', 'TURNER')
     :type compressibility_function: String
     :param bandis_A: Used with GEOMECHANICS_SUBSURFACE_PROPS
-     keyword and BANDIS model. 
+     keyword and BANDIS model.
     :type bandis_A: float
     :param bandis_B: Used with GEOMECHANICS_SUBSURFACE_PROPS
-     keyword and BANDIS model. 
+     keyword and BANDIS model.
     :type bandis_B: float
     :param maximum_aperture: Used with GEOMECHANICS_SUBSURFACE_PROPS
-     keyword and BANDIS model. 
+     keyword and BANDIS model.
     :type maximum_aperture: float
-    :param normal_vector: Defines fracture normal vector for 
-     GEOMECHANICS_SUBSURFACE_PROPS keyword and BANDIS model. 
+    :param normal_vector: Defines fracture normal vector for
+     GEOMECHANICS_SUBSURFACE_PROPS keyword and BANDIS model.
     :type normal_vector: [float, float, float]
     :type A_Bandis: float
-    :param A_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param A_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type B_Bandis: float
-    :param B_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param B_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type b_min_Bandis: float
-    :param b_min_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param b_min_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type b_max_Bandis: float
-    :param b_max_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param b_max_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type sigma_x_Bandis: float
-    :param sigma_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param sigma_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type normal_x_Bandis: float
-    :param normal_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param normal_x_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type friction_Bandis: float
-    :param friction_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param friction_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
     :type perm_multiplier_Bandis: float
-    :param perm_multiplier_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
-     MATERIAL_PROPERTY
+    :param perm_multiplier_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION
+     BANDIS in MATERIAL_PROPERTY
     :type frac_present_Bandis: float
-    :param frac_present_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
-     MATERIAL_PROPERTY
+    :param frac_present_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION
+     BANDIS in MATERIAL_PROPERTY
     :type b_p_Bandis: float
-    :param b_p_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in 
+    :param b_p_Bandis: Used with SOIL_COMPRESSIBILITY_FUNCTION BANDIS in
      MATERIAL_PROPERTY
 
     """
@@ -468,13 +469,15 @@ class pmaterial(Frozen):
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
                  secondary_continuum='', anisotropic=False,
-                 soil_compressibility_function='', soil_reference_pressure=None,
+                 soil_compressibility_function='',
+                 soil_reference_pressure=None,
                  soil_compressibility=None, compressibility_function='',
                  bandis_A=None, bandis_B=None, maximum_aperture=None,
                  normal_vector=None, B_Bandis=None,
                  A_Bandis=None, b_min_Bandis=None, b_max_Bandis=None,
                  sigma_n_Bandis=None, sigma_x_Bandis=None, sigma_y_Bandis=None,
-                 sigma_z_Bandis=None, normal_x_Bandis=None, normal_y_Bandis=None,
+                 sigma_z_Bandis=None, normal_x_Bandis=None,
+                 normal_y_Bandis=None,
                  normal_z_Bandis=None, friction_Bandis=None,
                  perm_multiplier_Bandis=None,
                  frac_present_Bandis=None,
@@ -688,10 +691,10 @@ class pgrid(Frozen):
     :param type: Grid type. Valid entries include: 'structured',
      'unstructured'.
     :type type: str
-    :param symmetry_type: Grid symmetry type. Valid entries include: 
-     'cartesian' and 'cylindrical'.  Blank entries are equivalent 
+    :param symmetry_type: Grid symmetry type. Valid entries include:
+     'cartesian' and 'cylindrical'.  Blank entries are equivalent
      to cartesian.  Only used for structured grids.  When 'cylindrical'
-     is used in conjunction with the lower_bounds and upper_bounds keywords, 
+     is used in conjunction with the lower_bounds and upper_bounds keywords,
      the first entry is for radius, the third is for z, and the second is
      a non-used dummy value.
     :type type: str
@@ -1363,7 +1366,7 @@ class pgrid(Frozen):
         """
         Dumps vtk format of the mesh, currently only for structured grid
 
-        :param filename: Name of the vtk file to be dumped. 
+        :param filename: Name of the vtk file to be dumped.
         :type filename: str
         """
         try:
@@ -1459,7 +1462,8 @@ class psimulation(Frozen):
     :type numerical_derivatives: bool
     :param pressure_dampening_factor: Specify the dampening factor value
     :type pressure_dampening_factor: float
-    :param max_volume_fraction_change: Specify the maximum volume fraction change
+    :param max_volume_fraction_change: Specify the maximum volume fraction
+     change
     :type max_volume_fraction_change: float
     """
 
@@ -2050,7 +2054,8 @@ class pintegral_flux(Frozen):
     :type face: logical
     """
 
-    def __init__(self, name='', coordinates_lower=None, coordinates_upper=None):
+    def __init__(self, name='', coordinates_lower=None,
+                 coordinates_upper=None):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:
@@ -2384,8 +2389,8 @@ class pchemistry(Frozen):
     """
     Class for specifying chemistry.
 
-    :param primary_species_list: List of primary species that fully describe the
-     chemical composition of the fluid. The set of primary species must
+    :param primary_species_list: List of primary species that fully describe
+     the chemical composition of the fluid. The set of primary species must
      form an independent set of species in terms of which all homogeneous
      aqueous equilibrium reactions can be expressed.
     :type primar_species_list: [str]
@@ -2443,7 +2448,8 @@ class pchemistry(Frozen):
                  max_residual_tolerance=None,
                  max_relative_change_tolerance=None, activity_water=False,
                  update_mineral_surface_area=False, no_bdot=False,
-                 no_checkpoint_act_coefs=False, general_reaction=None, sorption=None,
+                 no_checkpoint_act_coefs=False, general_reaction=None,
+                 sorption=None,
                  immobile_decay_reaction=None, radioactive_decay_reaction=None,
                  microbial_reaction=None, immobile_species_list=None):
 
@@ -2520,15 +2526,19 @@ class pchemistry(Frozen):
         '''
         Specifies parameters for first-order decay of an immobile species.
 
-        :param species_name: Name of immobile species to undergo first-order decay.
+        :param species_name: Name of immobile species to undergo first-order
+         decay.
         :type species_name: str
-        :param rate_constant: First-order rate constant [1/sec]. Can set rate_constant or half_life but not both.
+        :param rate_constant: First-order rate constant [1/sec].
+         Can set rate_constant or half_life but not both.
         :type rate_constant: float
-        :param half_life: Half life of species [sec]. Can set rate_constant or half_life but not both.
+        :param half_life: Half life of species [sec].
+         Can set rate_constant or half_life but not both.
         :type half_life: float
         '''
 
-        def __init__(self, species_name=None, rate_constant=None, half_life=None):
+        def __init__(self, species_name=None, rate_constant=None,
+                     half_life=None):
 
             assert isinstance(species_name, (str, type(None))
                               ), 'SPECIES_NAME must be a string'
@@ -2536,7 +2546,8 @@ class pchemistry(Frozen):
                 None))), 'RATE_CONSTANT must be a float'
             assert isinstance(half_life, (float, int, type(None))
                               ), 'HALF_LIFE must be a float'
-            assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
+            assert half_life is None or rate_constant is None, \
+                'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
 
             self.species_name = species_name
             self.rate_constant = rate_constant
@@ -2545,7 +2556,8 @@ class pchemistry(Frozen):
         def _write(self, outfile):
             if self.rate_constant is not None and self.half_life is not None:
                 PyFLOTRAN_WARNING(
-                    'Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+                    'Both RATE_CONSTANT and HALF_LIFE are defined. '
+                    'Reverting to RATE_CONSTANT')
 
             if self.rate_constant is not None:
                 rxn_type = 'RATE_CONSTANT'
@@ -2566,18 +2578,19 @@ class pchemistry(Frozen):
         Specifies parameters for radioactive decay reaction.
         This reaction differs from the GENERAL_REACTION in that only one
         reactant species may be specified with a unit stoichiometry
-        (i.e. the rate is always first order) and the reactant species is decayed
-        in both the aqueous and sorbed phases.
+        (i.e. the rate is always first order) and the reactant species is 
+        decayed in both the aqueous and sorbed phases.
 
         :param reaction: Reaction equation. Only one reactant species may be
         listed on the left side of the equation
         (i.e. or on the right side with a negative stoichiometry).
         The reactant's stoichiometry is fixed at 1.0.
-        The forward rate is applied to that one species as a first order rate 
+        The forward rate is applied to that one species as a first order rate
         constant [1/sec]. Multiple species are supported as daughter products
         on the right hand side and stoichiometries can be specified.
         :type reaction: str
-        :param rate_constant: Rate constant for 1st-order decay reaction [1/sec, default units].
+        :param rate_constant: Rate constant for 1st-order decay reaction
+         [1/sec, default units].
         The rate constant may be calculated from -ln(0.5) / half-life.
         :type rate_constant: float or list<float,str>.
         :param half_life: Half life of species [sec, default units].
@@ -2593,7 +2606,8 @@ class pchemistry(Frozen):
                 None))), 'RATE_CONSTANT must be a float or a list: [float,str]'
             assert isinstance(half_life, (float, int, list, type(
                 None))), 'HALF_LIFE must be a float or a list: [float,str]'
-            assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
+            assert half_life is None or rate_constant is None, \
+            'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
 
             self.reaction = reaction
             self.rate_constant = rate_constant
@@ -2602,7 +2616,8 @@ class pchemistry(Frozen):
         def _write(self, outfile):
             if self.rate_constant is not None and self.half_life is not None:
                 PyFLOTRAN_WARNING(
-                    'Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+                    'Both RATE_CONSTANT and HALF_LIFE are defined. '
+                     'Reverting to RATE_CONSTANT')
 
             if self.rate_constant is not None:
                 rxn_type = 'RATE_CONSTANT'
@@ -2628,33 +2643,44 @@ class pchemistry(Frozen):
         '''
         Specifies parameters for microbially-mediated reactions.
 
-        :param reaction: Reaction equation. The rate constant is multiplied by the Monod
-        expressions for electron donor and acceptor for select species on the left
-        side of the equation. The reaction may be inhibited by any species in the system.
+        :param reaction: Reaction equation. The rate constant is
+         multiplied by the Monod expressions for electron donor and acceptor
+         for select species on the left
+         side of the equation. The reaction may be inhibited by any
+         species in the system.
         :type reaction: str
-        :param rate_constant: Rate constant for the reaction, where the units are [mol/L-sec]
-        if no biomass, or [mol-m3 bulk/(L water-mol biomass-sec)] if biomass.
+        :param rate_constant: Rate constant for the reaction, where
+         the units are [mol/L-sec]
+         if no biomass, or [mol-m3 bulk/(L water-mol biomass-sec)] if biomass.
         :type rate_constant: float
-        :param monod: Specifies the Monod equation for the electron donor or acceptor.
+        :param monod: Specifies the Monod equation for the electron donor
+         or acceptor.
         :type monod: pmicrobial_reaction.monod
-        :param inhibition: Specifies inhibition based on species concentration and an
-        inhibition constant(s). Three types of inhibition are currently supported:
-        MONOD, INVERSE_MONOD, THRESHOLD.
+        :param inhibition: Specifies inhibition based on species concentration
+         and an
+         inhibition constant(s). Three types of inhibition are
+         currently supported:
+         MONOD, INVERSE_MONOD, THRESHOLD.
         :type inhibition: pmicrobial_reaction.inhibition
-        :param biomass: Specifies the immobile biomass species to be included in the rate expression.
+        :param biomass: Specifies the immobile biomass species to be
+         included in the rate expression.
         :type biomass: pmicrobial_reaction.biomass
         '''
 
         class monod(Frozen):
 
-            def __init__(self, species_name=None, half_saturation_constant=None, threshold_concentration=None):
+            def __init__(self, species_name=None,
+                         half_saturation_constant=None,
+                        threshold_concentration=None):
                 self.species_name = species_name
                 self.half_saturation_constant = half_saturation_constant
                 self.threshold_concentration = threshold_concentration
 
         class inhibition(Frozen):
 
-            def __init__(self, species_name=None, inhibition_type=None, inhibition_constant=None):
+            def __init__(self, species_name=None,
+                         inhibition_type=None,
+                         inhibition_constant=None):
                 self.species_name = species_name
                 self.inhibition_type = inhibition_type
                 self.inhibition_constant = inhibition_constant
@@ -2665,7 +2691,9 @@ class pchemistry(Frozen):
                 self.species_name = species_name
                 self.biomass_yield = biomass_yield
 
-        def __init__(self, reaction=None, rate_constant=None, monod=None, inhibition=None, biomass=None):
+        def __init__(self, reaction=None, rate_constant=None,
+                     monod=None, inhibition=None,
+                     biomass=None):
 
             assert isinstance(reaction, (str, type(None))
                               ), 'REACTION must be a string'
@@ -2688,9 +2716,13 @@ class pchemistry(Frozen):
             self.inhibition = inhibition
             self.biomass = biomass
 
-        def add_monod(self, species_name=None, half_saturation_constant=None, threshold_concentration=None):
+        def add_monod(self, species_name=None,
+                      half_saturation_constant=None,
+                      threshold_concentration=None):
             mon = pchemistry.pmicrobial_reaction.monod(
-                species_name=species_name, half_saturation_constant=half_saturation_constant, threshold_concentration=threshold_concentration)
+                species_name=species_name,
+                half_saturation_constant=half_saturation_constant,
+                threshold_concentration=threshold_concentration)
             self.monod.append(mon)
             return mon
 
@@ -2700,9 +2732,11 @@ class pchemistry(Frozen):
             self.biomass.append(biom)
             return biom
 
-        def add_inhibition(self, species_name=None, inhibition_type=None, inhibition_constant=None):
+        def add_inhibition(self, species_name=None, inhibition_type=None,
+                           inhibition_constant=None):
             inhibit = pchemistry.pmicrobial_reaction.inhibition(
-                species_name=species_name, inhibition_type=inhibition_type, inhibition_constant=inhibition_constant)
+                species_name=species_name, inhibition_type=inhibition_type,
+                inhibition_constant=inhibition_constant)
             self.inhibition.append(inhibit)
             return inhibit
 
@@ -2744,13 +2778,17 @@ class pchemistry(Frozen):
 
             outfile.write('  /\n')
 
-    def add_immobile_decay_reaction(self, species_name=None, rate_constant=None, half_life=None):
+    def add_immobile_decay_reaction(self, species_name=None,
+                                    rate_constant=None, half_life=None):
         idr_rxn = pchemistry.pimmobile_decay_reaction(
-            species_name=species_name, rate_constant=rate_constant, half_life=half_life)
+            species_name=species_name, rate_constant=rate_constant,
+            half_life=half_life)
         self.immobile_decay_reaction.append(idr_rxn)
         return idr_rxn
 
-    def add_radioactive_decay_reaction(self, reaction=None, rate_constant=None, half_life=None):
+    def add_radioactive_decay_reaction(self, reaction=None,
+                                       rate_constant=None,
+                                       half_life=None):
         rad_rxn = pchemistry.pradioactive_decay_reaction(
             reaction=reaction, rate_constant=rate_constant, half_life=half_life)
         self.radioactive_decay_reaction.append(rad_rxn)

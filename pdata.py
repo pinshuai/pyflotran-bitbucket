@@ -252,7 +252,8 @@ gas_flux_types_allowed = ['neumann']
 
 gas_saturation_types_allowed = ['dirichlet']
 
-enthalpy_types_allowed = ['dirichlet', 'hydrostatic', 'zero_gradient', 'temperature']
+enthalpy_types_allowed = ['dirichlet',
+                          'hydrostatic', 'zero_gradient', 'temperature']
 
 transport_condition_types_allowed = ['dirichlet', 'dirichlet_zero_gradient',
                                      'equilibrium', 'neumann', 'mole',
@@ -264,14 +265,14 @@ geomech_subsurface_coupling_types_allowed = ['two_way_coupled',
 eos_fluid_names_allowed = ['water', 'gas', 'oil']
 
 eos_density_types_allowed = ['constant', 'exponential', 'default', 'ideal',
-                             'rks','batzle_and_wang', 'linear', 'trangenstein',
+                             'rks', 'batzle_and_wang', 'linear', 'trangenstein',
                              'inverse_linear', 'pr_methane', 'duanmo']
 
 eos_enthalpy_types_allowed = ['constant', 'ideal', 'default', 'linear_temp']
 
 eos_viscosity_types_allowed = ['constant', 'default']
 
-eos_henrys_types_allowed = ['constant', 'default','duanmao']
+eos_henrys_types_allowed = ['constant', 'default', 'duanmao']
 
 cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'simulation', 'regression', 'restart',
@@ -287,7 +288,7 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_time', 'geomechanics_region', 'geomechanics_condition',
          'geomechanics_boundary_condition', 'geomechanics_strata',
          'geomechanics_time', 'geomechanics_material_property',
-         'geomechanics_output', 'eos','integral_flux']
+         'geomechanics_output', 'eos', 'integral_flux']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -472,10 +473,10 @@ class pmaterial(Frozen):
                  bandis_A=None, bandis_B=None, maximum_aperture=None,
                  normal_vector=None, B_Bandis=None,
                  A_Bandis=None, b_min_Bandis=None, b_max_Bandis=None,
-                 sigma_n_Bandis=None,sigma_x_Bandis=None,sigma_y_Bandis=None,
-                 sigma_z_Bandis=None,normal_x_Bandis=None,normal_y_Bandis=None,
-                 normal_z_Bandis=None,friction_Bandis=None,
-                 perm_multiplier_Bandis = None,
+                 sigma_n_Bandis=None, sigma_x_Bandis=None, sigma_y_Bandis=None,
+                 sigma_z_Bandis=None, normal_x_Bandis=None, normal_y_Bandis=None,
+                 normal_z_Bandis=None, friction_Bandis=None,
+                 perm_multiplier_Bandis=None,
                  frac_present_Bandis=None,
                  b_p_Bandis=None, density_unit='', cond_wet_unit='',
                  cond_dry_unit='', specific_heat_unit='',
@@ -559,7 +560,7 @@ class pmaterial(Frozen):
         if normal_z_Bandis is None:
             normal_z_Bandis = []
         self.normal_z_Bandis = normal_z_Bandis
-        
+
         if frac_present_Bandis is None:
             frac_present_Bandis = []
         self.frac_present_Bandis = frac_present_Bandis
@@ -2059,6 +2060,7 @@ class pintegral_flux(Frozen):
         self.coordinates_upper = coordinates_upper  # 3D coordinates
         self._freeze()
 
+
 class pobservation(Frozen):
     """
     Class for specifying an observation region. Multiple observation objects
@@ -2119,7 +2121,7 @@ class pflow(Frozen):
                  datum_type='', datum_time_unit=None,
                  varlist=None, gradient=None, pm='',
                  gradient_type='', datum_data_unit=None,
-                 interpolation=None,cyclic=False):
+                 interpolation=None, cyclic=False):
 
         if datum is None:
             datum = []
@@ -2325,10 +2327,13 @@ class pstrata(Frozen):
         self.pm = pm
         self._freeze()
 
+
 class pdbase(Frozen):
-    def __init__(self,value):
-        assert isinstance(value,str)
+
+    def __init__(self, value):
+        assert isinstance(value, str)
         self.value = value
+
 
 class pdataset(Frozen):
     """
@@ -2373,6 +2378,7 @@ class pdataset(Frozen):
         self.max_buffer_size = max_buffer_size
         self.realization_dependent = realization_dependent
         self._freeze()
+
 
 class pchemistry(Frozen):
     """
@@ -2437,9 +2443,9 @@ class pchemistry(Frozen):
                  max_residual_tolerance=None,
                  max_relative_change_tolerance=None, activity_water=False,
                  update_mineral_surface_area=False, no_bdot=False,
-                 no_checkpoint_act_coefs=False, general_reaction=None,sorption=None,
-                 immobile_decay_reaction=None,radioactive_decay_reaction=None,
-                 microbial_reaction=None,immobile_species_list=None):
+                 no_checkpoint_act_coefs=False, general_reaction=None, sorption=None,
+                 immobile_decay_reaction=None, radioactive_decay_reaction=None,
+                 microbial_reaction=None, immobile_species_list=None):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -2468,11 +2474,11 @@ class pchemistry(Frozen):
 
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
-        
+
         # Secondary_species (E.g. 'OH-' - string
         self.secondary_species_list = secondary_species_list
         self.gas_species_list = gas_species_list  # E.g. 'CO2(g)'
-        
+
         # E.g. 'CO2(g)'
         self.passive_gas_species_list = passive_gas_species_list
         self.active_gas_species_list = active_gas_species_list  # E.g. 'CO2(g)'
@@ -2522,20 +2528,24 @@ class pchemistry(Frozen):
         :type half_life: float
         '''
 
-        def __init__(self,species_name=None,rate_constant=None,half_life=None):
+        def __init__(self, species_name=None, rate_constant=None, half_life=None):
 
-            assert isinstance(species_name,(str,type(None))), 'SPECIES_NAME must be a string'
-            assert isinstance(rate_constant,(float,int,type(None))), 'RATE_CONSTANT must be a float'
-            assert isinstance(half_life,(float,int,type(None))), 'HALF_LIFE must be a float'
+            assert isinstance(species_name, (str, type(None))
+                              ), 'SPECIES_NAME must be a string'
+            assert isinstance(rate_constant, (float, int, type(
+                None))), 'RATE_CONSTANT must be a float'
+            assert isinstance(half_life, (float, int, type(None))
+                              ), 'HALF_LIFE must be a float'
             assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
 
             self.species_name = species_name
             self.rate_constant = rate_constant
             self.half_life = half_life
 
-        def _write(self,outfile):
+        def _write(self, outfile):
             if self.rate_constant is not None and self.half_life is not None:
-                PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+                PyFLOTRAN_WARNING(
+                    'Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
 
             if self.rate_constant is not None:
                 rxn_type = 'RATE_CONSTANT'
@@ -2548,7 +2558,7 @@ class pchemistry(Frozen):
 
             outfile.write('  IMMOBILE_DECAY_REACTION\n')
             outfile.write('    SPECIES_NAME %s\n' % self.species_name)
-            outfile.write('    %s %s\n' % (rxn_type,rxn_val))
+            outfile.write('    %s %s\n' % (rxn_type, rxn_val))
             outfile.write('  /\n')
 
     class pradioactive_decay_reaction(Frozen):
@@ -2574,21 +2584,25 @@ class pchemistry(Frozen):
         :type half_life: float or list<float,str>.
         '''
 
-        def __init__(self,reaction=None,rate_constant=None,
-                    half_life=None):
+        def __init__(self, reaction=None, rate_constant=None,
+                     half_life=None):
 
-            assert isinstance(reaction,(str,type(None))), 'REACTION must be a string'
-            assert isinstance(rate_constant,(float,int,list,type(None))), 'RATE_CONSTANT must be a float or a list: [float,str]'
-            assert isinstance(half_life,(float,int,list,type(None))), 'HALF_LIFE must be a float or a list: [float,str]'
+            assert isinstance(reaction, (str, type(None))
+                              ), 'REACTION must be a string'
+            assert isinstance(rate_constant, (float, int, list, type(
+                None))), 'RATE_CONSTANT must be a float or a list: [float,str]'
+            assert isinstance(half_life, (float, int, list, type(
+                None))), 'HALF_LIFE must be a float or a list: [float,str]'
             assert half_life is None or rate_constant is None, 'Only one of HALF_LIFE or RATE_CONSTANT can be set!'
 
             self.reaction = reaction
             self.rate_constant = rate_constant
             self.half_life = half_life
 
-        def _write(self,outfile):
+        def _write(self, outfile):
             if self.rate_constant is not None and self.half_life is not None:
-                PyFLOTRAN_WARNING('Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
+                PyFLOTRAN_WARNING(
+                    'Both RATE_CONSTANT and HALF_LIFE are defined. Reverting to RATE_CONSTANT')
 
             if self.rate_constant is not None:
                 rxn_type = 'RATE_CONSTANT'
@@ -2600,16 +2614,15 @@ class pchemistry(Frozen):
                 perror('Must define either RATE_CONSTANT or HALF_LIFE')
 
             # Handle the case where: rxn_val -> [coeff., units]
-            if isinstance(rxn_val,list):
+            if isinstance(rxn_val, list):
                 rxn_val = strD(rxn_val[0]) + ' ' + str(rxn_val[1])
             else:
                 rxn_val = strD(rxn_val)
 
             outfile.write('  RADIOACTIVE_DECAY_REACTION\n')
             outfile.write('    REACTION %s\n' % self.reaction)
-            outfile.write('    %s %s\n' % (rxn_type,rxn_val))
+            outfile.write('    %s %s\n' % (rxn_type, rxn_val))
             outfile.write('  /\n')
-
 
     class pmicrobial_reaction(Frozen):
         '''
@@ -2633,24 +2646,31 @@ class pchemistry(Frozen):
         '''
 
         class monod(Frozen):
-            def __init__(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
+
+            def __init__(self, species_name=None, half_saturation_constant=None, threshold_concentration=None):
                 self.species_name = species_name
                 self.half_saturation_constant = half_saturation_constant
                 self.threshold_concentration = threshold_concentration
+
         class inhibition(Frozen):
-            def __init__(self,species_name=None,inhibition_type=None,inhibition_constant=None):
+
+            def __init__(self, species_name=None, inhibition_type=None, inhibition_constant=None):
                 self.species_name = species_name
                 self.inhibition_type = inhibition_type
                 self.inhibition_constant = inhibition_constant
+
         class biomass(Frozen):
-            def __init__(self,species_name=None,biomass_yield=None):
+
+            def __init__(self, species_name=None, biomass_yield=None):
                 self.species_name = species_name
                 self.biomass_yield = biomass_yield
 
-        def __init__(self,reaction=None,rate_constant=None,monod=None,inhibition=None,biomass=None):
+        def __init__(self, reaction=None, rate_constant=None, monod=None, inhibition=None, biomass=None):
 
-            assert isinstance(reaction,(str,type(None))), 'REACTION must be a string'
-            assert isinstance(rate_constant,(float,int,type(None))), 'RATE_CONSTANT must be a float'
+            assert isinstance(reaction, (str, type(None))
+                              ), 'REACTION must be a string'
+            assert isinstance(rate_constant, (float, int, type(
+                None))), 'RATE_CONSTANT must be a float'
             #assert isinstance(monod,(pmicrobial_reaction.monod,type(None))), 'MONOD must be of type pmicrobial_reaction.monod'
             #assert isinstance(inhibition,(pmicrobial_reaction.inhibition,type(None))), 'INHIBITION must be of type pmicrobial_reaction.inhibition'
             #assert isinstance(biomass,(pmicrobial_reaction.biomass,type(None))), 'BIOMASS must be of type pmicrobial_reaction.biomass'
@@ -2668,22 +2688,25 @@ class pchemistry(Frozen):
             self.inhibition = inhibition
             self.biomass = biomass
 
-        def add_monod(self,species_name=None,half_saturation_constant=None,threshold_concentration=None):
-            mon = pchemistry.pmicrobial_reaction.monod(species_name=species_name,half_saturation_constant=half_saturation_constant,threshold_concentration=threshold_concentration)
+        def add_monod(self, species_name=None, half_saturation_constant=None, threshold_concentration=None):
+            mon = pchemistry.pmicrobial_reaction.monod(
+                species_name=species_name, half_saturation_constant=half_saturation_constant, threshold_concentration=threshold_concentration)
             self.monod.append(mon)
             return mon
 
-        def add_biomass(self,species_name=None,biomass_yield=None):
-            biom = pchemistry.pmicrobial_reaction.biomass(species_name=species_name,biomass_yield=biomass_yield)
+        def add_biomass(self, species_name=None, biomass_yield=None):
+            biom = pchemistry.pmicrobial_reaction.biomass(
+                species_name=species_name, biomass_yield=biomass_yield)
             self.biomass.append(biom)
             return biom
 
-        def add_inhibition(self,species_name=None,inhibition_type=None,inhibition_constant=None):
-            inhibit = pchemistry.pmicrobial_reaction.inhibition(species_name=species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+        def add_inhibition(self, species_name=None, inhibition_type=None, inhibition_constant=None):
+            inhibit = pchemistry.pmicrobial_reaction.inhibition(
+                species_name=species_name, inhibition_type=inhibition_type, inhibition_constant=inhibition_constant)
             self.inhibition.append(inhibit)
             return inhibit
 
-        def _write(self,outfile):
+        def _write(self, outfile):
             if self.reaction is None and self.rate_constant is None:
                 perror('Required MICROBIAL_REACTION cards are missing!')
 
@@ -2695,46 +2718,54 @@ class pchemistry(Frozen):
                 for mon in self.monod:
                     outfile.write('    MONOD\n')
                     outfile.write('      SPECIES_NAME %s\n' % mon.species_name)
-                    outfile.write('      HALF_SATURATION_CONSTANT %s\n' % strD(mon.half_saturation_constant))
-                    outfile.write('      THRESHOLD_CONCENTRATION %s\n' % strD(mon.threshold_concentration))
+                    outfile.write('      HALF_SATURATION_CONSTANT %s\n' %
+                                  strD(mon.half_saturation_constant))
+                    outfile.write('      THRESHOLD_CONCENTRATION %s\n' %
+                                  strD(mon.threshold_concentration))
                     outfile.write('    /\n')
 
             if self.inhibition is not None:
                 for inhib in self.inhibition:
                     outfile.write('    INHIBITION\n')
-                    outfile.write('      SPECIES_NAME %s\n' % inhib.species_name)
+                    outfile.write('      SPECIES_NAME %s\n' %
+                                  inhib.species_name)
                     outfile.write('      TYPE %s\n' % inhib.inhibition_type)
-                    outfile.write('      INHIBITION_CONSTANT %s\n' % strD(inhib.inhibition_constant))
+                    outfile.write('      INHIBITION_CONSTANT %s\n' %
+                                  strD(inhib.inhibition_constant))
                     outfile.write('    /\n')
 
             if self.biomass is not None:
                 for biom in self.biomass:
                     outfile.write('    BIOMASS\n')
-                    outfile.write('      SPECIES_NAME %s\n' % biom.species_name)
+                    outfile.write('      SPECIES_NAME %s\n' %
+                                  biom.species_name)
                     outfile.write('      YIELD %s\n' % biom.biomass_yield)
                     outfile.write('    /\n')
 
             outfile.write('  /\n')
 
-    def add_immobile_decay_reaction(self,species_name=None,rate_constant=None,half_life=None):
-        idr_rxn = pchemistry.pimmobile_decay_reaction(species_name=species_name,rate_constant=rate_constant,half_life=half_life)
+    def add_immobile_decay_reaction(self, species_name=None, rate_constant=None, half_life=None):
+        idr_rxn = pchemistry.pimmobile_decay_reaction(
+            species_name=species_name, rate_constant=rate_constant, half_life=half_life)
         self.immobile_decay_reaction.append(idr_rxn)
         return idr_rxn
 
-    def add_radioactive_decay_reaction(self,reaction=None,rate_constant=None,half_life=None):
-        rad_rxn = pchemistry.pradioactive_decay_reaction(reaction=reaction,rate_constant=rate_constant,half_life=half_life)
+    def add_radioactive_decay_reaction(self, reaction=None, rate_constant=None, half_life=None):
+        rad_rxn = pchemistry.pradioactive_decay_reaction(
+            reaction=reaction, rate_constant=rate_constant, half_life=half_life)
         self.radioactive_decay_reaction.append(rad_rxn)
         return rad_rxn
 
-    def add_microbial_reaction(self,reaction=None,rate_constant=None,
-        monod_species_name=None,monod_half_saturation_constant=None,monod_threshold_concentration=None,
-        inhibition_species_name=None,inhibition_type=None,inhibition_constant=None,
-        biomass_species_name=None,biomass_yield=None):
+    def add_microbial_reaction(self, reaction=None, rate_constant=None,
+                               monod_species_name=None, monod_half_saturation_constant=None, monod_threshold_concentration=None,
+                               inhibition_species_name=None, inhibition_type=None, inhibition_constant=None,
+                               biomass_species_name=None, biomass_yield=None):
 
-        microbe = pchemistry.pmicrobial_reaction(reaction=reaction,rate_constant=rate_constant)
-        #microbe.add_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
-        #microbe.add_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
-        #microbe.add_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+        microbe = pchemistry.pmicrobial_reaction(
+            reaction=reaction, rate_constant=rate_constant)
+        # microbe.add_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
+        # microbe.add_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
+        # microbe.add_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
         self.microbial_reaction.append(microbe)
         return microbe
 
@@ -2750,17 +2781,20 @@ class pchemistry(Frozen):
         :type surface_complexion_rxn: class pchemistry.psorption.psurface_complexion_rxn
         '''
 
-        def __init__(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexation_rxn=None):
+        def __init__(self, ion_exchange_rxn=None, isotherm_reactions=None, surface_complexation_rxn=None):
 
-            assert isinstance(ion_exchange_rxn,(pchemistry.psorption.pion_exchange_rxn,type(None))),'Must be an instance of pion_exchange_rxn'
-            assert isinstance(isotherm_reactions,(pchemistry.psorption.pisotherm_reactions,type(None))),'Must be an instance of pisotherm_reactions'
-            assert isinstance(surface_complexation_rxn,(pchemistry.psorption.psurface_complexation_rxn,type(None))),'Must be an instance of psurface_complexation_rxn'
+            assert isinstance(ion_exchange_rxn, (pchemistry.psorption.pion_exchange_rxn, type(
+                None))), 'Must be an instance of pion_exchange_rxn'
+            assert isinstance(isotherm_reactions, (pchemistry.psorption.pisotherm_reactions, type(
+                None))), 'Must be an instance of pisotherm_reactions'
+            assert isinstance(surface_complexation_rxn, (pchemistry.psorption.psurface_complexation_rxn, type(
+                None))), 'Must be an instance of psurface_complexation_rxn'
 
             self.ion_exchange_rxn = ion_exchange_rxn
             self.isotherm_reactions = isotherm_reactions
             self.surface_complexation_rxn = surface_complexation_rxn
 
-        def add_ion_exchange_rxn(self,cec=None,cations=None,mineral=None):
+        def add_ion_exchange_rxn(self, cec=None, cations=None, mineral=None):
             '''
             Add an ION_EXCHANGE_RXN block to SORPTION.
 
@@ -2772,11 +2806,12 @@ class pchemistry(Frozen):
             :type mineral: str
             '''
 
-            self.ion_exchange_rxn = pchemistry.psorption.pion_exchange_rxn(cec=cec,cations=cations,mineral=mineral)
+            self.ion_exchange_rxn = pchemistry.psorption.pion_exchange_rxn(
+                cec=cec, cations=cations, mineral=mineral)
             return self.ion_exchange_rxn
 
-        def add_isotherm_reactions(self,name=None,distribution_coefficient=None,ir_type=None,
-                                   langmuir_b=None,freundlich_n=None,kd_mineral_name=None):
+        def add_isotherm_reactions(self, name=None, distribution_coefficient=None, ir_type=None,
+                                   langmuir_b=None, freundlich_n=None, kd_mineral_name=None):
             '''
             Specifies parameters for a sorption reaction defined by an isotherm (e.g. linear, Langmuir, Freundlich).
 
@@ -2794,22 +2829,22 @@ class pchemistry(Frozen):
             :type kd_mineral_name: str
             '''
             self.isotherm_reactions = pchemistry.psorption.pisotherm_reactions(
-                                                          name=name,
-                                                          distribution_coefficient=distribution_coefficient,
-                                                          ir_type=ir_type,langmuir_b=langmuir_b,freundlich_n=freundlich_n,
-                                                          kd_mineral_name=kd_mineral_name)
+                name=name,
+                distribution_coefficient=distribution_coefficient,
+                ir_type=ir_type, langmuir_b=langmuir_b, freundlich_n=freundlich_n,
+                kd_mineral_name=kd_mineral_name)
             return self.isotherm_reactions
 
-        def add_surface_complexation_rxn(self,sorption_type=None,complex_kinetics=None,
-                                      rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,
-                                      colloid=None,rock_density=None,site=None,complexes=None):
+        def add_surface_complexation_rxn(self, sorption_type=None, complex_kinetics=None,
+                                         rates=None, site_fraction=None, mineral=None, multirate_scale_factor=None,
+                                         colloid=None, rock_density=None, site=None, complexes=None):
             self.surface_complexation_rxn = pchemistry.psorption.psurface_complexation_rxn(
-                                                                  sorption_type=sorption_type,
-                                                                  complex_kinetics=complex_kinetics,rates=rates,
-                                                                  site_fraction=site_fraction,
-                                                                  mineral=mineral,multirate_scale_factor=multirate_scale_factor,
-                                                                  colloid=colloid,rock_density=rock_density,
-                                                                  site=site,complexes=complexes)
+                sorption_type=sorption_type,
+                complex_kinetics=complex_kinetics, rates=rates,
+                site_fraction=site_fraction,
+                mineral=mineral, multirate_scale_factor=multirate_scale_factor,
+                colloid=colloid, rock_density=rock_density,
+                site=site, complexes=complexes)
             return self.surface_complexation_rxn
 
         class pion_exchange_rxn(Frozen):
@@ -2823,10 +2858,13 @@ class pchemistry(Frozen):
             :param mineral: Name of the mineral to which the cations sorb.
             :type mineral: str
             '''
-            def __init__(self,cec=None,cations=None,mineral=None):
 
-                assert isinstance(cec,(int,float,type(None))),'ion_exchange_rxn.cec must be a number'
-                assert isinstance(mineral,(str,type(None))),'ion_exchange_rxn.mineral must be a string'
+            def __init__(self, cec=None, cations=None, mineral=None):
+
+                assert isinstance(cec, (int, float, type(None))
+                                  ), 'ion_exchange_rxn.cec must be a number'
+                assert isinstance(mineral, (str, type(None))
+                                  ), 'ion_exchange_rxn.mineral must be a string'
 
                 if cations is None:
                     cations = []
@@ -2846,20 +2884,25 @@ class pchemistry(Frozen):
                 :param reference: Single reference cation with selectivity coeff. of 1 relative to other cations in rxn
                 :type reference: bool
                 '''
-                def __init__(self,name=None,value=None,reference=False):
-                    assert isinstance(name,(str,type(None))),'cation.name must be a string'
-                    assert isinstance(value,(int,float,type(None))),'cation.value must be a number'
-                    assert isinstance(reference,bool),'cation.reference must be a boolean'
+
+                def __init__(self, name=None, value=None, reference=False):
+                    assert isinstance(name, (str, type(None))
+                                      ), 'cation.name must be a string'
+                    assert isinstance(value, (int, float, type(
+                        None))), 'cation.value must be a number'
+                    assert isinstance(
+                        reference, bool), 'cation.reference must be a boolean'
 
                     self.name = name
                     self.value = value
                     self.reference = reference
 
-            def add_cation(self,name=None,value=None,reference=False):
+            def add_cation(self, name=None, value=None, reference=False):
                 '''
                 Adds a new cation to an ion exchange reaction.
                 '''
-                new_cation = pchemistry.psorption.pion_exchange_rxn.cation(name=name,value=value,reference=reference)
+                new_cation = pchemistry.psorption.pion_exchange_rxn.cation(
+                    name=name, value=value, reference=reference)
                 self.cations.append(new_cation)
                 return new_cation
 
@@ -2881,8 +2924,8 @@ class pchemistry(Frozen):
             :type kd_mineral_name: str
             '''
 
-            def __init__(self,name=None,distribution_coefficient=None,ir_type=None,
-                         langmuir_b=None,freundlich_n=None,kd_mineral_name=None):
+            def __init__(self, name=None, distribution_coefficient=None, ir_type=None,
+                         langmuir_b=None, freundlich_n=None, kd_mineral_name=None):
 
                 self.name = name
                 self.distribution_coefficient = distribution_coefficient
@@ -2917,21 +2960,22 @@ class pchemistry(Frozen):
             :param complexes: opens a block listing the names of surface complexes associated with the surface complexation reaction and the surface site.
             :type complexes: CLASS CLASS?????????
             '''
-            
-            def __init__(self,sorption_type=None,complex_kinetics=None,
-                         rates=None,site_fraction=None,mineral=None,multirate_scale_factor=None,
-                         colloid=None,rock_density=None,site=None,complexes=None):
+
+            def __init__(self, sorption_type=None, complex_kinetics=None,
+                         rates=None, site_fraction=None, mineral=None, multirate_scale_factor=None,
+                         colloid=None, rock_density=None, site=None, complexes=None):
 
                 PyFLOTRAN_ERROR('Functionality not yet implemented!')
 
-    def add_sorption(self,ion_exchange_rxn=None,isotherm_reactions=None,surface_complexation_rxn=None):
+    def add_sorption(self, ion_exchange_rxn=None, isotherm_reactions=None, surface_complexation_rxn=None):
         '''
         Adds a SORPTION block to CHEMISTRY.
         Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and add_surface_complexation_rxn
         to fill out the SORPTION block.
         '''
 
-        self.sorption = pchemistry.psorption(ion_exchange_rxn=ion_exchange_rxn,isotherm_reactions=isotherm_reactions,surface_complexation_rxn=surface_complexation_rxn)
+        self.sorption = pchemistry.psorption(
+            ion_exchange_rxn=ion_exchange_rxn, isotherm_reactions=isotherm_reactions, surface_complexation_rxn=surface_complexation_rxn)
         return self.sorption
 
     class pgeneral_reaction(Frozen):
@@ -2953,11 +2997,14 @@ class pchemistry(Frozen):
         :type backward_rate: float or int
         '''
 
-        def __init__(self,reaction=None,forward_rate=None,backward_rate=None):
+        def __init__(self, reaction=None, forward_rate=None, backward_rate=None):
 
-            assert isinstance(reaction,(str,type(None))),'chem.general_reaction.reaction must be a string'
-            assert isinstance(forward_rate,(int,float,type(None))),'chem.general_reaction.forward_rate must be a float or int'
-            assert isinstance(backward_rate,(int,float,type(None))),'chem.general_reaction.backward_rate must be a float or int'
+            assert isinstance(reaction, (str, type(None))
+                              ), 'chem.general_reaction.reaction must be a string'
+            assert isinstance(forward_rate, (int, float, type(
+                None))), 'chem.general_reaction.forward_rate must be a float or int'
+            assert isinstance(backward_rate, (int, float, type(
+                None))), 'chem.general_reaction.backward_rate must be a float or int'
 
             self.reaction = reaction
             self.forward_rate = forward_rate
@@ -2965,7 +3012,7 @@ class pchemistry(Frozen):
 
             self._freeze()
 
-    def add_general_reaction(self,reaction=None,forward_rate=None,backward_rate=None):
+    def add_general_reaction(self, reaction=None, forward_rate=None, backward_rate=None):
         '''
         CHEMISTRY: GENERAL_REACTION
         Specifies parameters for general forward/reverse kinetic reaction.
@@ -2989,9 +3036,12 @@ class pchemistry(Frozen):
         :type self.general_reaction: pchemistry_general_reaction
         '''
 
-        assert isinstance(reaction,(str,type(None))),'chem.general_reaction.reaction must be a string'
-        assert isinstance(forward_rate,(int,float,type(None))),'chem.general_reaction.forward_rate must be a float or int'
-        assert isinstance(backward_rate,(int,float,type(None))),'chem.general_reaction.backward_rate must be a float or int'
+        assert isinstance(reaction, (str, type(None))
+                          ), 'chem.general_reaction.reaction must be a string'
+        assert isinstance(forward_rate, (int, float, type(
+            None))), 'chem.general_reaction.forward_rate must be a float or int'
+        assert isinstance(backward_rate, (int, float, type(
+            None))), 'chem.general_reaction.backward_rate must be a float or int'
 
         self.general_reaction = pchemistry.pgeneral_reaction()
         self.general_reaction.reaction = reaction
@@ -2999,6 +3049,7 @@ class pchemistry(Frozen):
         self.general_reaction.backward_rate = backward_rate
 
         return self.general_reaction
+
 
 class pchemistry_m_kinetic(Frozen):
     """
@@ -4037,19 +4088,19 @@ class pdata(object):
             """
 
             # Store the working file text to this variable.
-            # It will get expanded as this function is 
+            # It will get expanded as this function is
             # recursively called.
             filetxt = ''
 
-            # Get the pathname - this may be relative, so 
+            # Get the pathname - this may be relative, so
             # we must update it here
             cwd = os.path.dirname(cinfile)
 
-            with open(cinfile,'r') as child_file:
+            with open(cinfile, 'r') as child_file:
                 for line in child_file:
                     if 'external_file' in line.lower():
                         exfile = line.split()[1]
-                        expath = os.path.join(cwd,exfile)
+                        expath = os.path.join(cwd, exfile)
                         filetxt += capture_external_file(expath)
                     else:
                         filetxt += line
@@ -4057,14 +4108,13 @@ class pdata(object):
             # Return the file contents
             return filetxt
 
-
-        def preprocess_file(pinfile,outfile='_pyflotran_preproc.in'):
+        def preprocess_file(pinfile, outfile='_pyflotran_preproc.in'):
             """
             Replaces all instances of EXTERNAL_FILE in a PFLOTRAN infile
             with the contents of that external file.
             """
 
-            with open(outfile,'w') as parent_file:
+            with open(outfile, 'w') as parent_file:
                 parent_file.write(capture_external_file(pinfile))
 
             return outfile
@@ -4084,8 +4134,9 @@ class pdata(object):
 
         # EXTERNAL_FILE contains blocks that read() will need to parse.
         # Check if read() has them.
-        if 'external_file' in open(self.filename,'r').read().lower():
-            infile_name = preprocess_file(self.filename,outfile='_pyflotran_preproc.in')
+        if 'external_file' in open(self.filename, 'r').read().lower():
+            infile_name = preprocess_file(
+                self.filename, outfile='_pyflotran_preproc.in')
         else:
             infile_name = self.filename
 
@@ -4608,7 +4659,8 @@ class pdata(object):
 
     def _read_uniform_velocity(self, infile, line):
         np_value_list = []
-        tstring = filter_comment(line).split()[1:]  # Convert to list, ignore 1st word
+        # Convert to list, ignore 1st word
+        tstring = filter_comment(line).split()[1:]
         i = 0  # index/count
         while i < len(tstring):
             try:
@@ -4693,7 +4745,7 @@ class pdata(object):
                             subline = get_next_line(infile)
                             subkey = subline.strip().split()[0].lower()
 
-                            if subkey in ['/','end']:
+                            if subkey in ['/', 'end']:
                                 break
 
                             subvalue = subline.strip().split()[1].lower()
@@ -4720,7 +4772,7 @@ class pdata(object):
                             eos.fluid_viscosity.append(floatD(val))
             elif key == 'test':
                 # Create a list storing the TEST card
-                # Ex: 
+                # Ex:
                 #    TEST 10.d0 400.d0 1.d4 1.d8 10 10 uniform uniform
                 eos_test = []
                 for val in line.strip().split()[1:]:
@@ -4800,14 +4852,16 @@ class pdata(object):
                     elif eos.fluid_density[0].upper() == 'TRANGENSTEIN':
                         outfile.write('  DENSITY TRANGENSTEIN\n')
                     elif eos.fluid_density[0].upper() == 'PR_METHANE':
-                        outfile.write('  DENSITY '+eos.fluid_density[0].upper() +'\n')
+                        outfile.write(
+                            '  DENSITY ' + eos.fluid_density[0].upper() + '\n')
                     elif eos.fluid_density[0].upper() == 'DUANMAO':
-                        outfile.write('  DENSITY '+eos.fluid_density[0].upper() +'\n')
+                        outfile.write(
+                            '  DENSITY ' + eos.fluid_density[0].upper() + '\n')
                     elif eos.density_params is not None:
                         outfile.write('  DENSITY LINEAR\n')
                         for dkey in eos.density_params.keys():
                             outfile.write('    %s %s\n' % (dkey.upper(),
-                                        strD(eos.density_params[dkey])))
+                                                           strD(eos.density_params[dkey])))
                         outfile.write('  /\n')
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
@@ -4852,7 +4906,8 @@ class pdata(object):
                     if eos.fluid_henrys_constant[0].upper() == 'CONSTANT' and \
                             len(eos.fluid_henrys_constant) == 2:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[0].upper() + ' '
+                                      eos.fluid_henrys_constant[
+                                          0].upper() + ' '
                                       + strD(eos.fluid_henrys_constant[1]) + '\n')
                     elif eos.fluid_henrys_constant[0].upper() == 'DEFAULT' and \
                             len(eos.fluid_henrys_constant) == 1:
@@ -5239,7 +5294,7 @@ class pdata(object):
 
                         # Convert however many ints exist on this line into
                         # a list and extend
-                        cell_list.extend(list(map(int,line1.split())))
+                        cell_list.extend(list(map(int, line1.split())))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
@@ -5556,7 +5611,7 @@ class pdata(object):
 
         while keep_reading:  # read through all cards
             line = get_next_line(infile)
-            
+
             key = line.strip().split()[0].lower()  # take first keyword
             if key == 'id':
                 if line.split()[1].lower() == 'dbase_value':
@@ -5617,7 +5672,7 @@ class pdata(object):
                     line = get_next_line(infile)
                     key = line.split()[0].lower()  # take first keyword
 
-                    if key in ['perm_iso','perm_x','perm_y','perm_z']:
+                    if key in ['perm_iso', 'perm_x', 'perm_y', 'perm_z']:
                         if 'dbase_value' in line.lower():
                             np_permeability.append(pdbase(self.splitter(line)))
                         else:
@@ -5817,82 +5872,110 @@ class pdata(object):
                     outfile.write('  A_BANDIS ' + strD(prop.A_Bandis) + '\n')
             if prop.b_min_Bandis:
                 if type(prop.b_min_Bandis) is str:
-                    outfile.write('  B_MIN_BANDIS DATASET ' + prop.b_min_Bandis + '\n')
+                    outfile.write('  B_MIN_BANDIS DATASET ' +
+                                  prop.b_min_Bandis + '\n')
                 else:
-                    outfile.write('  B_MIN_BANDIS ' + strD(prop.b_min_Bandis) + '\n')
+                    outfile.write('  B_MIN_BANDIS ' +
+                                  strD(prop.b_min_Bandis) + '\n')
             elif prop.b_min_Bandis == 0.0:
-                    outfile.write('  B_MIN_BANDIS ' + strD(prop.b_min_Bandis) + '\n')
+                outfile.write('  B_MIN_BANDIS ' +
+                              strD(prop.b_min_Bandis) + '\n')
             if prop.b_max_Bandis:
                 if type(prop.b_max_Bandis) is str:
-                    outfile.write('  B_MAX_BANDIS DATASET ' + prop.b_max_Bandis + '\n')
+                    outfile.write('  B_MAX_BANDIS DATASET ' +
+                                  prop.b_max_Bandis + '\n')
                 else:
-                    outfile.write('  B_MAX_BANDIS ' + strD(prop.b_max_Bandis) + '\n')
+                    outfile.write('  B_MAX_BANDIS ' +
+                                  strD(prop.b_max_Bandis) + '\n')
             if prop.sigma_n_Bandis:
                 if type(prop.sigma_n_Bandis) is str:
-                    outfile.write('  SIGMA_N_BANDIS DATASET ' + prop.sigma_n_Bandis + '\n')
+                    outfile.write('  SIGMA_N_BANDIS DATASET ' +
+                                  prop.sigma_n_Bandis + '\n')
                 else:
-                    outfile.write('  SIGMA_N_BANDIS ' + strD(prop.sigma_n_Bandis) + '\n')
+                    outfile.write('  SIGMA_N_BANDIS ' +
+                                  strD(prop.sigma_n_Bandis) + '\n')
 
             if prop.friction_Bandis:
                 if type(prop.friction_Bandis) is str:
-                    outfile.write('  FRICTION_BANDIS DATASET ' + prop.friction_Bandis + '\n')
+                    outfile.write('  FRICTION_BANDIS DATASET ' +
+                                  prop.friction_Bandis + '\n')
                 else:
-                    outfile.write('  FRICTION_BANDIS ' + strD(prop.friction_Bandis) + '\n')
+                    outfile.write('  FRICTION_BANDIS ' +
+                                  strD(prop.friction_Bandis) + '\n')
 
             if prop.perm_multiplier_Bandis:
                 if type(prop.perm_multiplier_Bandis) is str:
-                    outfile.write('  PERM_MULTIPLIER_BANDIS DATASET ' + prop.perm_multiplier_Bandis + '\n')
+                    outfile.write('  PERM_MULTIPLIER_BANDIS DATASET ' +
+                                  prop.perm_multiplier_Bandis + '\n')
                 else:
-                    outfile.write('  PERM_MULTIPLIER_BANDIS ' + strD(prop.perm_multiplier_Bandis) + '\n')
+                    outfile.write('  PERM_MULTIPLIER_BANDIS ' +
+                                  strD(prop.perm_multiplier_Bandis) + '\n')
 
             if prop.sigma_x_Bandis:
                 if type(prop.sigma_x_Bandis) is str:
-                    outfile.write('  SIGMA_XX_BANDIS DATASET ' + prop.sigma_x_Bandis + '\n')
+                    outfile.write('  SIGMA_XX_BANDIS DATASET ' +
+                                  prop.sigma_x_Bandis + '\n')
                 else:
-                    outfile.write('  SIGMA_XX_BANDIS ' + strD(prop.sigma_x_Bandis) + '\n')
+                    outfile.write('  SIGMA_XX_BANDIS ' +
+                                  strD(prop.sigma_x_Bandis) + '\n')
 
             if prop.sigma_y_Bandis:
                 if type(prop.sigma_y_Bandis) is str:
-                    outfile.write('  SIGMA_YY_BANDIS DATASET ' + prop.sigma_y_Bandis + '\n')
+                    outfile.write('  SIGMA_YY_BANDIS DATASET ' +
+                                  prop.sigma_y_Bandis + '\n')
                 else:
-                    outfile.write('  SIGMA_YY_BANDIS ' + strD(prop.sigma_y_Bandis) + '\n')
+                    outfile.write('  SIGMA_YY_BANDIS ' +
+                                  strD(prop.sigma_y_Bandis) + '\n')
 
             if prop.sigma_z_Bandis:
                 if type(prop.sigma_z_Bandis) is str:
-                    outfile.write('  SIGMA_ZZ_BANDIS DATASET ' + prop.sigma_z_Bandis + '\n')
+                    outfile.write('  SIGMA_ZZ_BANDIS DATASET ' +
+                                  prop.sigma_z_Bandis + '\n')
                 else:
-                    outfile.write('  SIGMA_ZZ_BANDIS ' + strD(prop.sigma_z_Bandis) + '\n')
+                    outfile.write('  SIGMA_ZZ_BANDIS ' +
+                                  strD(prop.sigma_z_Bandis) + '\n')
 
             if prop.normal_x_Bandis:
                 if type(prop.normal_x_Bandis) is str:
-                    outfile.write('  NORMAL_X_BANDIS DATASET ' + prop.normal_x_Bandis + '\n')
+                    outfile.write('  NORMAL_X_BANDIS DATASET ' +
+                                  prop.normal_x_Bandis + '\n')
                 else:
-                    outfile.write('  NORMAL_X_BANDIS ' + strD(prop.normal_x_Bandis) + '\n')
+                    outfile.write('  NORMAL_X_BANDIS ' +
+                                  strD(prop.normal_x_Bandis) + '\n')
 
             if prop.normal_y_Bandis:
                 if type(prop.normal_y_Bandis) is str:
-                    outfile.write('  NORMAL_Y_BANDIS DATASET ' + prop.normal_y_Bandis + '\n')
+                    outfile.write('  NORMAL_Y_BANDIS DATASET ' +
+                                  prop.normal_y_Bandis + '\n')
                 else:
-                    outfile.write('  NORMAL_Y_BANDIS ' + strD(prop.normal_y_Bandis) + '\n')
+                    outfile.write('  NORMAL_Y_BANDIS ' +
+                                  strD(prop.normal_y_Bandis) + '\n')
 
             if prop.normal_z_Bandis:
                 if type(prop.normal_z_Bandis) is str:
-                    outfile.write('  NORMAL_Z_BANDIS DATASET ' + prop.normal_z_Bandis + '\n')
+                    outfile.write('  NORMAL_Z_BANDIS DATASET ' +
+                                  prop.normal_z_Bandis + '\n')
                 else:
-                    outfile.write('  NORMAL_Z_BANDIS ' + strD(prop.normal_z_Bandis) + '\n')
+                    outfile.write('  NORMAL_Z_BANDIS ' +
+                                  strD(prop.normal_z_Bandis) + '\n')
 
             if prop.frac_present_Bandis:
                 if type(prop.frac_present_Bandis) is str:
-                    outfile.write('  FRAC_PRESENT_BANDIS DATASET ' + prop.frac_present_Bandis + '\n')
+                    outfile.write('  FRAC_PRESENT_BANDIS DATASET ' +
+                                  prop.frac_present_Bandis + '\n')
                 else:
-                    outfile.write('  FRAC_PRESENT_BANDIS ' + strD(prop.frac_present_Bandis) + '\n')
+                    outfile.write('  FRAC_PRESENT_BANDIS ' +
+                                  strD(prop.frac_present_Bandis) + '\n')
             elif prop.frac_present_Bandis == 0.0:
-                    outfile.write('  FRAC_PRESENT_BANDIS ' + strD(prop.frac_present_Bandis) + '\n')
+                outfile.write('  FRAC_PRESENT_BANDIS ' +
+                              strD(prop.frac_present_Bandis) + '\n')
             if prop.b_p_Bandis:
                 if type(prop.b_p_Bandis) is str:
-                    outfile.write('  B_P_BANDIS DATASET ' + prop.b_p_Bandis + '\n')
+                    outfile.write('  B_P_BANDIS DATASET ' +
+                                  prop.b_p_Bandis + '\n')
                 else:
-                    outfile.write('  B_P_BANDIS ' + strD(prop.b_p_Bandis) + '\n')
+                    outfile.write('  B_P_BANDIS ' +
+                                  strD(prop.b_p_Bandis) + '\n')
 
             outfile.write('END\n\n')
 
@@ -6171,7 +6254,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = get_next_line(infile) # get next line
+            line = get_next_line(infile)  # get next line
             key = line.strip().split()[0].lower()  # take first key word
             line = filter_comment(line)
 
@@ -6981,7 +7064,8 @@ class pdata(object):
         # Create an empty saturation function and assign the values read in
         self.add(saturation)
     # Adds a integral flux object
-    def _add_integral_flux(self, integral_flux=pintegral_flux(), 
+
+    def _add_integral_flux(self, integral_flux=pintegral_flux(),
                            overwrite=False):
         # check if integral_flux already exists
         if isinstance(integral_flux, pintegral_flux):
@@ -6990,7 +7074,7 @@ class pdata(object):
                     warning = 'WARNING: A integra_flux with name \'' + \
                               str(
                                   integral_flux.name) + '\' already exists.' \
-                                                 ' Integral flux will' + \
+                        ' Integral flux will' + \
                               'not be defined, use overwrite = ' + \
                               'True in add() to overwrite the old region.'
                     print warning,
@@ -7009,7 +7093,7 @@ class pdata(object):
         for integral_flux in self.integral_flux_list:
             outfile.write('INTEGRAL_FLUX\n')
             if integral_flux.name:
-                outfile.write('  NAME '+integral_flux.name+'\n')
+                outfile.write('  NAME ' + integral_flux.name + '\n')
             else:
                 outfile.write('  NAME default_integral_flux\n')
             # if integral_flux.invert_direction:
@@ -7372,14 +7456,14 @@ class pdata(object):
                     region.coordinates_lower[0] = floatD(line1.split()[0])
                     region.coordinates_lower[1] = floatD(line1.split()[1])
                     region.coordinates_lower[2] = floatD(line1.split()[2])
-                    
+
                     line2 = get_next_line(infile)
                     try:
                         region.coordinates_upper[0] = floatD(line2.split()[0])
                         region.coordinates_upper[1] = floatD(line2.split()[1])
                         region.coordinates_upper[2] = floatD(line2.split()[2])
                     except ValueError:
-                        region.coordinates_upper = [None,None,None]
+                        region.coordinates_upper = [None, None, None]
                         keep_reading2 = False
                         break
 
@@ -7458,11 +7542,13 @@ class pdata(object):
                     elif not all(x is None for x in region.coordinates_lower):
                         outfile.write('  COORDINATES\n')
 
-                        lower = [x for x in region.coordinates_lower if x is not None]
-                        upper = [x for x in region.coordinates_upper if x is not None]
+                        lower = [
+                            x for x in region.coordinates_lower if x is not None]
+                        upper = [
+                            x for x in region.coordinates_upper if x is not None]
 
-                        lower_line = ' '.join(list(map(strD,lower)))
-                        upper_line = ' '.join(list(map(strD,upper)))
+                        lower_line = ' '.join(list(map(strD, lower)))
+                        upper_line = ' '.join(list(map(strD, upper)))
 
                         if lower_line != '':
                             outfile.write('    ' + lower_line + '\n')
@@ -7996,7 +8082,8 @@ class pdata(object):
                 outfile.write('  /\n')
 
                 if flow.interpolation:
-                    outfile.write('  INTERPOLATION %s\n' % flow.interpolation.upper())
+                    outfile.write('  INTERPOLATION %s\n' %
+                                  flow.interpolation.upper())
 
                 if flow.cyclic:
                     outfile.write('  CYCLIC\n')
@@ -8009,7 +8096,7 @@ class pdata(object):
                             outfile.write(' FILE ')
                         if flow.datum_type == 'dataset':
                             outfile.write(' DATASET ')
-                        outfile.write(flow.datum+'\n')
+                        outfile.write(flow.datum + '\n')
                     elif flow.datum_type == 'list':
                         outfile.write(' LIST\n')
                         if flow.datum_time_unit is not None:
@@ -8018,7 +8105,7 @@ class pdata(object):
                                           flow.datum_time_unit + '\n')
                         if flow.datum_data_unit is not None:
                             outfile.write('    ')
-                            outfile.write('DATA_UNITS ' + 
+                            outfile.write('DATA_UNITS ' +
                                           flow.datum_data_unit + '\n')
                         for val in flow.datum:
                             outfile.write('      ')
@@ -8041,8 +8128,8 @@ class pdata(object):
                     outfile.write('  GRADIENT\n')
 
                     if flow.gradient[0].lower() == 'file':
-                        outfile.write('    ' + flow.gradient_type.upper() + 
-                          ' ' + ' '.join(flow.gradient))
+                        outfile.write('    ' + flow.gradient_type.upper() +
+                                      ' ' + ' '.join(flow.gradient))
                     else:
                         outfile.write('    ' + flow.gradient_type.upper() +
                                       ' ' + str(flow.gradient[0]) + ' ' + str(
@@ -8063,8 +8150,8 @@ class pdata(object):
                             for flow_val in a_flow.valuelist:
                                 outfile.write(' ' + strD(flow_val))
                         if a_flow.unit:
-                                outfile.write(
-                                    ' ' + a_flow.unit)
+                            outfile.write(
+                                ' ' + a_flow.unit)
                         outfile.write('\n')
                     elif a_flow.list:
                         outfile.write(
@@ -8552,7 +8639,7 @@ class pdata(object):
                     subline = get_next_line(infile).strip().split()
                     subkey = subline[0]
 
-                    if subkey in ['/','end']:
+                    if subkey in ['/', 'end']:
                         break
                     else:
                         chem.immobile_species_list.append(subkey)
@@ -8729,7 +8816,8 @@ class pdata(object):
                                     # while (PREFACTOR_SPECIES has not been
                                     # closed)...
                                     while True:
-                                        prefspec_line = get_next_line(infile) # get next line
+                                        prefspec_line = get_next_line(
+                                            infile)  # get next line
 
                                         if prefspec_line.strip() in ['/', 'end']:
                                             break
@@ -8778,15 +8866,16 @@ class pdata(object):
                     subkey = subline.split()[0].lower()
 
                     if subkey == 'reaction':
-                        general_reaction.reaction = subline.strip().split(' ',1)[1]
+                        general_reaction.reaction = subline.strip().split(' ', 1)[
+                            1]
                     elif subkey == 'forward_rate':
                         general_reaction.forward_rate = floatD(
-                          subline.split()[-1])
+                            subline.split()[-1])
                     elif subkey == 'backward_rate':
                         general_reaction.backward_rate = floatD(
-                          subline.split()[-1])
+                            subline.split()[-1])
 
-                    if subline.strip() in ['/','end']:
+                    if subline.strip() in ['/', 'end']:
                         break
 
             elif key == 'sorption':
@@ -8813,18 +8902,20 @@ class pdata(object):
                                 while True:
                                     catline = get_next_line(infile).split()
                                     catkey = catline[0].lower()
-                                    if catkey.lower() in ['/','end']:
+                                    if catkey.lower() in ['/', 'end']:
                                         break
                                     else:
                                         cat_name = catline[0]
                                         cat_val = floatD(catline[1])
-                                        cat_ref = True if len(catline) >= 3 else False
+                                        cat_ref = True if len(
+                                            catline) >= 3 else False
 
-                                        irxn.add_cation(name=cat_name,value=cat_val,reference=cat_ref)
-                            if subsubkey.lower() in ['/','end']:
+                                        irxn.add_cation(
+                                            name=cat_name, value=cat_val, reference=cat_ref)
+                            if subsubkey.lower() in ['/', 'end']:
                                 break
 
-                    if subkey.lower() in ['/','end']:
+                    if subkey.lower() in ['/', 'end']:
                         break
             elif key == 'immobile_decay_reaction':
                 id_rxn = chem.add_immobile_decay_reaction()
@@ -8838,7 +8929,7 @@ class pdata(object):
                         id_rxn.rate_constant = floatD(subline[-1])
                     elif subkey == 'half_life':
                         id_rxn.half_life = floatD(subline[-1])
-                    elif subkey in ['/','end']:
+                    elif subkey in ['/', 'end']:
                         break
 
             elif key == 'radioactive_decay_reaction':
@@ -8851,11 +8942,11 @@ class pdata(object):
                         rad_rxn.reaction = ' '.join(subline[1:])
                     elif subkey == 'rate_constant':
                         rad_rxn.rate_constant = floatD(subline[1]) if len(subline) <= 2 \
-                                                else [floatD(subline[1]),subline[2]]
+                            else [floatD(subline[1]), subline[2]]
                     elif subkey == 'half_life':
                         rad_rxn.half_life = floatD(subline[1]) if len(subline) <= 2 \
-                                            else [floatD(subline[1]),subline[2]]
-                    elif subkey in ['/','end']:
+                            else [floatD(subline[1]), subline[2]]
+                    elif subkey in ['/', 'end']:
                         break
 
             elif key == 'microbial_reaction':
@@ -8879,10 +8970,12 @@ class pdata(object):
                             if subsubkey == 'species_name':
                                 monod.species_name = subsubline[1]
                             elif subsubkey == 'half_saturation_constant':
-                                monod.half_saturation_constant = floatD(subsubline[1])
+                                monod.half_saturation_constant = floatD(
+                                    subsubline[1])
                             elif subsubkey == 'threshold_concentration':
-                                monod.threshold_concentration = floatD(subsubline[1])
-                            elif subsubkey in ['/','end']:
+                                monod.threshold_concentration = floatD(
+                                    subsubline[1])
+                            elif subsubkey in ['/', 'end']:
                                 break
 
                     elif subkey == 'inhibition':
@@ -8896,8 +8989,9 @@ class pdata(object):
                             elif subsubkey == 'type':
                                 inhibit.inhibition_type = subsubline[1]
                             elif subsubkey == 'inhibition_constant':
-                                inhibit.inhibition_constant = floatD(subsubline[1])
-                            elif subsubkey in ['/','end']:
+                                inhibit.inhibition_constant = floatD(
+                                    subsubline[1])
+                            elif subsubkey in ['/', 'end']:
                                 break
 
                     elif subkey == 'biomass':
@@ -8910,10 +9004,10 @@ class pdata(object):
                                 biomass.species_name = subsubline[1]
                             elif subsubkey == 'yield':
                                 biomass.biomass_yield = floatD(subsubline[1])
-                            elif subsubkey in ['/','end']:
+                            elif subsubkey in ['/', 'end']:
                                 break
 
-                    elif subkey in ['/','end']:
+                    elif subkey in ['/', 'end']:
                         break
 
             elif key == 'database':
@@ -9061,7 +9155,8 @@ class pdata(object):
 
         if c.immobile_species_list:
             outfile.write('  IMMOBILE_SPECIES\n')
-            outfile.write(''.join(['    %s\n' % b for b in c.immobile_species_list]))
+            outfile.write(
+                ''.join(['    %s\n' % b for b in c.immobile_species_list]))
             outfile.write('  /\n')
 
         if c.immobile_decay_reaction:
@@ -9175,11 +9270,14 @@ class pdata(object):
         if c.general_reaction is not None:
             outfile.write('  GENERAL_REACTION\n')
             if c.general_reaction.reaction is not None:
-                outfile.write('    REACTION '+c.general_reaction.reaction+'\n')
+                outfile.write('    REACTION ' +
+                              c.general_reaction.reaction + '\n')
             if c.general_reaction.forward_rate is not None:
-                outfile.write('    FORWARD_RATE '+strD(c.general_reaction.forward_rate)+'\n')
+                outfile.write('    FORWARD_RATE ' +
+                              strD(c.general_reaction.forward_rate) + '\n')
             if c.general_reaction.backward_rate is not None:
-                outfile.write('    BACKWARD_RATE '+strD(c.general_reaction.backward_rate)+'\n')
+                outfile.write('    BACKWARD_RATE ' +
+                              strD(c.general_reaction.backward_rate) + '\n')
             outfile.write('  /\n')
 
         if c.sorption is not None:
@@ -9187,18 +9285,21 @@ class pdata(object):
             if c.sorption.ion_exchange_rxn is not None:
                 outfile.write('    ION_EXCHANGE_RXN\n')
                 if c.sorption.ion_exchange_rxn.mineral is not None:
-                    outfile.write('      MINERAL %s\n' % c.sorption.ion_exchange_rxn.mineral)
+                    outfile.write('      MINERAL %s\n' %
+                                  c.sorption.ion_exchange_rxn.mineral)
                 if c.sorption.ion_exchange_rxn.cec is not None:
-                    if isinstance(c.sorption.ion_exchange_rxn.cec,list):
+                    if isinstance(c.sorption.ion_exchange_rxn.cec, list):
                         outfile.write('      CEC %s %s\n' % (strD(c.sorption.ion_exchange_rxn.cec[0]),
-                                                                 c.sorption.ion_exchange_rxn.cec[1]))
+                                                             c.sorption.ion_exchange_rxn.cec[1]))
                     else:
-                        outfile.write('      CEC %s \n' % strD(c.sorption.ion_exchange_rxn.cec))
+                        outfile.write('      CEC %s \n' %
+                                      strD(c.sorption.ion_exchange_rxn.cec))
                 if c.sorption.ion_exchange_rxn.cations is not None:
                     outfile.write('      CATIONS\n')
                     for cat in c.sorption.ion_exchange_rxn.cations:
                         is_ref = 'REFERENCE' if cat.reference == True else ''
-                        outfile.write('        %s %s %s\n' % (cat.name.ljust(8),cat.value,is_ref))
+                        outfile.write('        %s %s %s\n' %
+                                      (cat.name.ljust(8), cat.value, is_ref))
                     outfile.write('      /\n')
                 outfile.write('    /\n')
             outfile.write('  /\n')
@@ -9259,7 +9360,7 @@ class pdata(object):
         keep_reading = True
 
         while keep_reading:  # Read through all cards
-            line = get_next_line(infile) # get next line
+            line = get_next_line(infile)  # get next line
             key = line.split()[0].lower()  # take first key word
 
             if key == 'type':

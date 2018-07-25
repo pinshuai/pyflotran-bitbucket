@@ -1761,9 +1761,9 @@ class poutput(Frozen):
                  permeability=False, porosity=False,
                  velocities=False, velocity_at_center=False,
                  velocity_at_face=False, mass_balance=False,
-                 variables_list=None, snapshot_file=poutput_file(),
-                 observation_file=poutput_file(),
-                 mass_balance_file=poutput_file(),
+                 variables_list=None, snapshot_file=None,
+                 observation_file=None,
+                 mass_balance_file=None,
                  time_units=None):
 
         if time_list is None:
@@ -1778,6 +1778,15 @@ class poutput(Frozen):
             variables_list = []
         if periodic_timestep is None:
             periodic_timestep = []
+
+        if observation_file is None:
+            observation_file = poutput_file()
+
+        if snapshot_file is None:
+            snapshot_file = poutput_file()
+
+        if mass_balance_file is None:
+            mass_balance_file = poutput_file()
 
         self.time_list = time_list
         self.print_column_ids = print_column_ids
@@ -1799,6 +1808,7 @@ class poutput(Frozen):
         self.mass_balance_file = mass_balance_file
         self.snapshot_file = snapshot_file
         self.time_units = time_units
+
         self._freeze()
 
 

@@ -9,10 +9,10 @@ from pdflt import *
 import math
 import shutil
 import matplotlib as mpl
+mpl.use('Agg')
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-mpl.use('Agg')
 
 """ Class for pyflotran data """
 

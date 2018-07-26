@@ -2699,9 +2699,6 @@ class pchemistry(Frozen):
                               ), 'REACTION must be a string'
             assert isinstance(rate_constant, (float, int, type(
                 None))), 'RATE_CONSTANT must be a float'
-            #assert isinstance(monod,(pmicrobial_reaction.monod,type(None))), 'MONOD must be of type pmicrobial_reaction.monod'
-            #assert isinstance(inhibition,(pmicrobial_reaction.inhibition,type(None))), 'INHIBITION must be of type pmicrobial_reaction.inhibition'
-            #assert isinstance(biomass,(pmicrobial_reaction.biomass,type(None))), 'BIOMASS must be of type pmicrobial_reaction.biomass'
 
             if monod is None:
                 monod = []
@@ -2789,21 +2786,21 @@ class pchemistry(Frozen):
     def add_radioactive_decay_reaction(self, reaction=None,
                                        rate_constant=None,
                                        half_life=None):
-        rad_rxn = pchemistry.pradioactive_decay_reaction(
-            reaction=reaction, rate_constant=rate_constant, half_life=half_life)
+        rad_rxn = pchemistry.pradioactive_decay_reaction(reaction=reaction,
+                               rate_constant=rate_constant, half_life=half_life)
         self.radioactive_decay_reaction.append(rad_rxn)
         return rad_rxn
 
     def add_microbial_reaction(self, reaction=None, rate_constant=None,
-                               monod_species_name=None, monod_half_saturation_constant=None, monod_threshold_concentration=None,
-                               inhibition_species_name=None, inhibition_type=None, inhibition_constant=None,
+                               monod_species_name=None,
+                               monod_half_saturation_constant=None,
+                               monod_threshold_concentration=None,
+                               inhibition_species_name=None,
+                               inhibition_type=None, inhibition_constant=None,
                                biomass_species_name=None, biomass_yield=None):
 
-        microbe = pchemistry.pmicrobial_reaction(
-            reaction=reaction, rate_constant=rate_constant)
-        # microbe.add_monod(species_name=monod_species_name,half_saturation_constant=monod_half_saturation_constant,threshold_concentration=monod_threshold_concentration)
-        # microbe.add_biomass(species_name=biomass_species_name,biomass_yield=biomass_yield)
-        # microbe.add_inhibition(species_name=inhibition_species_name,inhibition_type=inhibition_type,inhibition_constant=inhibition_constant)
+        microbe = pchemistry.pmicrobial_reaction(reaction=reaction,
+                                                rate_constant=rate_constant)
         self.microbial_reaction.append(microbe)
         return microbe
 
@@ -2811,22 +2808,27 @@ class pchemistry(Frozen):
         '''
         Specifies parameters for sorption reactions.
 
-        :param ion_exchange_rxn: Sorption defined through ion exchange reactions.
+        :param ion_exchange_rxn: Sorption defined through ion exchange reactions
         :type ion_exchange_rxn: class pchemistry.psorption.pion_exchange_rxn
-        :param isotherm_reactions: Sorption reactions defined by isotherms (e.g. linear, Langmuir, Freundlich).
+        :param isotherm_reactions: Sorption reactions defined by isotherms (e.g.
+        linear, Langmuir, Freundlich).
         :type isotherm_reactions: class pchemistry.psorption.pisotherm_reactions
-        :param surface_complexion_rxn: Opens surface complexation reaction block.
-        :type surface_complexion_rxn: class pchemistry.psorption.psurface_complexion_rxn
+        :param surface_complexion_rxn: Opens surface complexation reaction block
+        :type surface_complexion_rxn: psorption.psurface_complexion_rxn
         '''
 
-        def __init__(self, ion_exchange_rxn=None, isotherm_reactions=None, surface_complexation_rxn=None):
+        def __init__(self, ion_exchange_rxn=None, isotherm_reactions=None,
+                    surface_complexation_rxn=None):
 
-            assert isinstance(ion_exchange_rxn, (pchemistry.psorption.pion_exchange_rxn, type(
-                None))), 'Must be an instance of pion_exchange_rxn'
-            assert isinstance(isotherm_reactions, (pchemistry.psorption.pisotherm_reactions, type(
-                None))), 'Must be an instance of pisotherm_reactions'
-            assert isinstance(surface_complexation_rxn, (pchemistry.psorption.psurface_complexation_rxn, type(
-                None))), 'Must be an instance of psurface_complexation_rxn'
+            assert isinstance(ion_exchange_rxn,\
+              (pchemistry.psorption.pion_exchange_rxn,type(None))),\
+              'Must be an instance of pion_exchange_rxn'
+            assert isinstance(isotherm_reactions,\
+              (pchemistry.psorption.pisotherm_reactions, type(None))),\
+              'Must be an instance of pisotherm_reactions'
+            assert isinstance(surface_complexation_rxn,\
+              (pchemistry.psorption.psurface_complexation_rxn, type(None))),\
+              'Must be an instance of psurface_complexation_rxn'
 
             self.ion_exchange_rxn = ion_exchange_rxn
             self.isotherm_reactions = isotherm_reactions
@@ -2836,47 +2838,62 @@ class pchemistry(Frozen):
             '''
             Add an ION_EXCHANGE_RXN block to SORPTION.
 
-            :param cec: Cation exchange capacity in (1) equivalents per volume of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume [eq/m^3_bulk]
+            :param cec: Cation exchange capacity in (1) equivalents per volume
+            of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume
+            [eq/m^3_bulk]
             :type cec: float
-            :param cations: Opens the CATIONS block for listing cations participating in the reaction.
+            :param cations: Opens the CATIONS block for listing cations 
+            participating in the reaction.
             :type cations: list of <pchemistry.psorption.pion_exchange_rxn.cation>
             :param mineral: Name of the mineral to which the cations sorb.
             :type mineral: str
             '''
 
             self.ion_exchange_rxn = pchemistry.psorption.pion_exchange_rxn(
-                cec=cec, cations=cations, mineral=mineral)
+              cec=cec, cations=cations, mineral=mineral)
             return self.ion_exchange_rxn
 
-        def add_isotherm_reactions(self, name=None, distribution_coefficient=None, ir_type=None,
-                                   langmuir_b=None, freundlich_n=None, kd_mineral_name=None):
+        def add_isotherm_reactions(self, name=None,
+                                   distribution_coefficient=None, ir_type=None,
+                                   langmuir_b=None, freundlich_n=None,
+                                   kd_mineral_name=None):
             '''
-            Specifies parameters for a sorption reaction defined by an isotherm (e.g. linear, Langmuir, Freundlich).
+            Specifies parameters for a sorption reaction defined by an isotherm
+            (e.g. linear, Langmuir, Freundlich).
 
             :param name: Name of primary species that sorbs.
             :type name: str
-            :param distribution_coefficient: The value of K_D [kg_water / m^3_bulk].
+            :param distribution_coefficient: The value of K_D.
             :type distribution_coefficient: float
-            :param ir_type: Type of isotherm, where the options for <string> include: ['linear','langmuir','freundlich']
+            :param ir_type: Type of isotherm, one of:
+            ['linear','langmuir','freundlich']
             :type ir_type: str
-            :param langmuir_b: b coefficient for Langmuir isotherm. Automatically sets the ir_type to langmuir.
+            :param langmuir_b: b coefficient for Langmuir isotherm.
+            Automatically sets the ir_type to langmuir.
             :type langmuir_b: float
-            :param freundlich_n: n exponent in Freundlich isotherm. Automatically sets the ir_type to Freundlich.
+            :param freundlich_n: n exponent in Freundlich isotherm.
+            Automatically sets the ir_type to Freundlich.
             :type freundlich_n: float
-            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation for more information.
+            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation
+            for more information.
             :type kd_mineral_name: str
             '''
             self.isotherm_reactions = pchemistry.psorption.pisotherm_reactions(
                 name=name,
                 distribution_coefficient=distribution_coefficient,
-                ir_type=ir_type, langmuir_b=langmuir_b, freundlich_n=freundlich_n,
+                ir_type=ir_type, langmuir_b=langmuir_b,
+                freundlich_n=freundlich_n,
                 kd_mineral_name=kd_mineral_name)
             return self.isotherm_reactions
 
-        def add_surface_complexation_rxn(self, sorption_type=None, complex_kinetics=None,
-                                         rates=None, site_fraction=None, mineral=None, multirate_scale_factor=None,
-                                         colloid=None, rock_density=None, site=None, complexes=None):
-            self.surface_complexation_rxn = pchemistry.psorption.psurface_complexation_rxn(
+        def add_surface_complexation_rxn(self, sorption_type=None,
+                                         complex_kinetics=None,rates=None,
+                                         site_fraction=None, mineral=None,
+                                         multirate_scale_factor=None,
+                                         colloid=None, rock_density=None,
+                                         site=None, complexes=None):
+            self.surface_complexation_rxn = \
+            pchemistry.psorption.psurface_complexation_rxn(
                 sorption_type=sorption_type,
                 complex_kinetics=complex_kinetics, rates=rates,
                 site_fraction=site_fraction,
@@ -2889,10 +2906,13 @@ class pchemistry(Frozen):
             '''
             Add an ION_EXCHANGE_RXN block to SORPTION.
 
-            :param cec: Cation exchange capacity in (1) equivalents per volume of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume [eq/m^3_bulk]
+            :param cec: Cation exchange capacity in (1) equivalents per volume
+            of mineral [eq/m^3_mineral] or (2) equivalents per bulk volume
+            [eq/m^3_bulk]
             :type cec: float
-            :param cations: Opens the CATIONS block for listing cations participating in the reaction.
-            :type cations: list of <pchemistry.psorption.pion_exchange_rxn.cation>
+            :param cations: Opens the CATIONS block for listing cations
+            participating in the reaction.
+            :type cations: list <pchemistry.psorption.pion_exchange_rxn.cation>
             :param mineral: Name of the mineral to which the cations sorb.
             :type mineral: str
             '''
@@ -2919,17 +2939,18 @@ class pchemistry(Frozen):
                 :type name: str
                 :param value: Associated selectivity coefficient
                 :type value: float
-                :param reference: Single reference cation with selectivity coeff. of 1 relative to other cations in rxn
+                :param reference: Single reference cation with selectivity
+                coeff. of 1 relative to other cations in rxn
                 :type reference: bool
                 '''
 
                 def __init__(self, name=None, value=None, reference=False):
-                    assert isinstance(name, (str, type(None))
-                                      ), 'cation.name must be a string'
-                    assert isinstance(value, (int, float, type(
-                        None))), 'cation.value must be a number'
-                    assert isinstance(
-                        reference, bool), 'cation.reference must be a boolean'
+                    assert isinstance(name, (str, type(None))),\
+                    'cation.name must be a string'
+                    assert isinstance(value, (int, float, type(None))),\
+                    'cation.value must be a number'
+                    assert isinstance(reference, bool),\
+                    'cation.reference must be a boolean'
 
                     self.name = name
                     self.value = value
@@ -2946,24 +2967,30 @@ class pchemistry(Frozen):
 
         class pisotherm_reactions(Frozen):
             '''
-            Specifies parameters for a sorption reaction defined by an isotherm (e.g. linear, Langmuir, Freundlich).
+            Specifies parameters for a sorption reaction defined by an isotherm
+            (e.g. linear, Langmuir, Freundlich).
 
             :param name: Name of primary species that sorbs.
             :type name: str
-            :param distribution_coefficient: The value of K_D [kg_water / m^3_bulk].
+            :param distribution_coefficient: The value of K_D.
             :type distribution_coefficient: float
-            :param ir_type: Type of isotherm, where the options for <string> include: ['linear','langmuir','freundlich']
+            :param ir_type: Type of isotherm, where the options for <string>
+            include: ['linear','langmuir','freundlich']
             :type ir_type: str
-            :param langmuir_b: b coefficient for Langmuir isotherm. Automatically sets the ir_type to langmuir.
+            :param langmuir_b: b coefficient for Langmuir isotherm.
+            Automatically sets the ir_type to langmuir.
             :type langmuir_b: float
-            :param freundlich_n: n exponent in Freundlich isotherm. Automatically sets the ir_type to Freundlich.
+            :param freundlich_n: n exponent in Freundlich isotherm.
+            Automatically sets the ir_type to Freundlich.
             :type freundlich_n: float
-            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation for more information.
+            :param kd_mineral_name: Name of mineral. See PFLOTRAN documentation
+            for more information.
             :type kd_mineral_name: str
             '''
 
-            def __init__(self, name=None, distribution_coefficient=None, ir_type=None,
-                         langmuir_b=None, freundlich_n=None, kd_mineral_name=None):
+            def __init__(self,name=None,distribution_coefficient=None,
+                          ir_type=None,langmuir_b=None,freundlich_n=None,
+                          kd_mineral_name=None):
 
                 self.name = name
                 self.distribution_coefficient = distribution_coefficient
@@ -2976,44 +3003,57 @@ class pchemistry(Frozen):
             '''
             Specifies parameters for a surface complexation reaction.
 
-            :param sorption_type: One of: ['equilibrium','multirate_kinetic','kinetic']
+            :param sorption_type: One of:
+            ['equilibrium','multirate_kinetic','kinetic']
             :type sorption_type: str
-            :param complex_kinetics: Opens a block specifying forward and backward rate constants
+            :param complex_kinetics: Opens a block specifying forward and
+            backward rate constants
             CLASS TYPE
             :type complex_kinetics: <UNDEFINED>
             :param rates: Specific kinetic rates associated with SITE_FRACTIONs.
             :type rates: list <float>
-            :param site_fraction: Specifies site fractions associated with RATES for multirate kinetic sorption.
+            :param site_fraction: Specifies site fractions associated with RATES
+            for multirate kinetic sorption.
             :type site_fraction: list <float>
-            :param mineral: The name of the mineral with which the sorption site density is associated
+            :param mineral: The name of the mineral with which the sorption site
+            density is associated
             :type mineral: str
-            :param multirate_scale_factor: Floating point number that scales all rate constants for multirate kinetic sorption.
+            :param multirate_scale_factor: Floating point number that scales all
+            rate constants for multirate kinetic sorption.
             :type multirate_scale_factor: float
-            :param colloid: Name of the colloid associated with surface complexation reaction
+            :param colloid: Name of the colloid associated with surface
+            complexation reaction
             :type colloid: str
-            :param rock_density: a flag which allows the calculation of surface site concentration based on rock density
+            :param rock_density: a flag which allows the calculation of surface
+            site concentration based on rock density
             :type rock_density: bool
             :param site: name of site and site density [mol/m^3]
             :type site: list [str,float]
-            :param complexes: opens a block listing the names of surface complexes associated with the surface complexation reaction and the surface site.
+            :param complexes: opens a block listing the names of surface
+            complexes associated with the surface complexation reaction and the
+            surface site.
             :type complexes: CLASS CLASS?????????
             '''
 
-            def __init__(self, sorption_type=None, complex_kinetics=None,
-                         rates=None, site_fraction=None, mineral=None, multirate_scale_factor=None,
-                         colloid=None, rock_density=None, site=None, complexes=None):
+            def __init__(self,sorption_type=None,complex_kinetics=None,
+                         rates=None,site_fraction=None,mineral=None,
+                         multirate_scale_factor=None,colloid=None,
+                         rock_density=None,site=None,complexes=None):
 
                 PyFLOTRAN_ERROR('Functionality not yet implemented!')
 
-    def add_sorption(self, ion_exchange_rxn=None, isotherm_reactions=None, surface_complexation_rxn=None):
+    def add_sorption(self, ion_exchange_rxn=None, isotherm_reactions=None,
+                     surface_complexation_rxn=None):
         '''
         Adds a SORPTION block to CHEMISTRY.
-        Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and add_surface_complexation_rxn
+        Use member functions add_ion_exchange_rxn, add_isotherm_reactions, and
+        add_surface_complexation_rxn
         to fill out the SORPTION block.
         '''
 
-        self.sorption = pchemistry.psorption(
-            ion_exchange_rxn=ion_exchange_rxn, isotherm_reactions=isotherm_reactions, surface_complexation_rxn=surface_complexation_rxn)
+        self.sorption = pchemistry.psorption(ion_exchange_rxn=ion_exchange_rxn,
+          isotherm_reactions=isotherm_reactions,
+          surface_complexation_rxn=surface_complexation_rxn)
         return self.sorption
 
     class pgeneral_reaction(Frozen):
@@ -3024,25 +3064,29 @@ class pchemistry(Frozen):
         Example:
 
           >>> chem.add_general_reaction(reaction='Tracer <-> Tracer2',
-                                        forward_rate=1.7584e-7,backward_rate=0.0)
+                                      forward_rate=1.7584e-7,backward_rate=0.0)
 
-        :param reaction: Reaction equation. The forward rate is applied to the reaction quotient
-        of species on the left side of the reaction. The reverse or backward rate is applied to the right side.
+        :param reaction: Reaction equation. The forward rate is applied to the
+        reaction quotient
+        of species on the left side of the reaction. The reverse or backward
+        rate is applied to the right side.
         :type reaction: str
-        :param forward_rate: Rate constant for nth-order forward reaction [kg-water(n-1)/mol(n-1) -sec]
+        :param forward_rate: Rate constant for nth-order forward reaction
+        [kg-water(n-1)/mol(n-1) -sec]
         :type forward_rate: float or int
-        :param backward_rate: Rate constant for nth-order reverse reaction [kg-water(n-1)/mol(n-1) -sec]
+        :param backward_rate: Rate constant for nth-order reverse reaction
+        [kg-water(n-1)/mol(n-1) -sec]
         :type backward_rate: float or int
         '''
 
-        def __init__(self, reaction=None, forward_rate=None, backward_rate=None):
+        def __init__(self,reaction=None,forward_rate=None,backward_rate=None):
 
-            assert isinstance(reaction, (str, type(None))
-                              ), 'chem.general_reaction.reaction must be a string'
-            assert isinstance(forward_rate, (int, float, type(
-                None))), 'chem.general_reaction.forward_rate must be a float or int'
-            assert isinstance(backward_rate, (int, float, type(
-                None))), 'chem.general_reaction.backward_rate must be a float or int'
+            assert isinstance(reaction, (str, type(None))),\
+            'chem.general_reaction.reaction must be a string'
+            assert isinstance(forward_rate, (int, float, type(None))),\
+            'chem.general_reaction.forward_rate must be a float or int'
+            assert isinstance(backward_rate, (int, float, type(None))),\
+            'chem.general_reaction.backward_rate must be a float or int'
 
             self.reaction = reaction
             self.forward_rate = forward_rate
@@ -3050,7 +3094,8 @@ class pchemistry(Frozen):
 
             self._freeze()
 
-    def add_general_reaction(self, reaction=None, forward_rate=None, backward_rate=None):
+    def add_general_reaction(self,reaction=None,forward_rate=None,
+                             backward_rate=None):
         '''
         CHEMISTRY: GENERAL_REACTION
         Specifies parameters for general forward/reverse kinetic reaction.
@@ -3058,14 +3103,18 @@ class pchemistry(Frozen):
         Example:
 
           >>> chem.add_general_reaction(reaction='Tracer <-> Tracer2',
-                                        forward_rate=1.7584e-7,backward_rate=0.0)
+                                      forward_rate=1.7584e-7,backward_rate=0.0)
 
-        :param reaction: Reaction equation. The forward rate is applied to the reaction quotient
-        of species on the left side of the reaction. The reverse or backward rate is applied to the right side.
+        :param reaction: Reaction equation. The forward rate is applied to the
+        reaction quotient
+        of species on the left side of the reaction. The reverse or backward
+        rate is applied to the right side.
         :type reaction: str
-        :param forward_rate: Rate constant for nth-order forward reaction [kg-water(n-1)/mol(n-1) -sec]
+        :param forward_rate: Rate constant for nth-order forward reaction 
+        [kg-water(n-1)/mol(n-1) -sec]
         :type forward_rate: float or int
-        :param backward_rate: Rate constant for nth-order reverse reaction [kg-water(n-1)/mol(n-1) -sec]
+        :param backward_rate: Rate constant for nth-order reverse reaction
+        [kg-water(n-1)/mol(n-1) -sec]
         :type backward_rate: float or int
 
         Returns:
@@ -3074,12 +3123,12 @@ class pchemistry(Frozen):
         :type self.general_reaction: pchemistry_general_reaction
         '''
 
-        assert isinstance(reaction, (str, type(None))
-                          ), 'chem.general_reaction.reaction must be a string'
-        assert isinstance(forward_rate, (int, float, type(
-            None))), 'chem.general_reaction.forward_rate must be a float or int'
-        assert isinstance(backward_rate, (int, float, type(
-            None))), 'chem.general_reaction.backward_rate must be a float or int'
+        assert isinstance(reaction, (str, type(None))),\
+        'chem.general_reaction.reaction must be a string'
+        assert isinstance(forward_rate, (int, float, type(None))),\
+        'chem.general_reaction.forward_rate must be a float or int'
+        assert isinstance(backward_rate, (int, float, type(None))),\
+        'chem.general_reaction.backward_rate must be a float or int'
 
         self.general_reaction = pchemistry.pgeneral_reaction()
         self.general_reaction.reaction = reaction
@@ -3104,31 +3153,37 @@ class pchemistry_m_kinetic(Frozen):
 
     class prefactor(Frozen):
         """
-        Class of pchemistry_m_kinetic. Contains PREFACTOR parameters for a MINERAL_KINETIC object.
+        Class of pchemistry_m_kinetic. Contains PREFACTOR parameters for a
+        MINERAL_KINETIC object.
 
         :param rate_constant: Kinetic rate constant [mol/m2/sec].
         :type rate_constant: [float, str]
         :param activation_energy: Activation energy for rate constant k_{ml}
         :type activation_energy: float
-        :param pf_species: One or more PREFACTOR_SPECIES objects assigned to this PREFACTOR instance
-        :type pf_species: list containing pchemistry_m_kinetic.prefactor_species objects
+        :param pf_species: One or more PREFACTOR_SPECIES objects assigned to
+        this PREFACTOR instance
+        :type pf_species: list containing pchemistry_m_kinetic.prefactor_species
+        objects
         """
 
-        def __init__(self, rate_constant=None, activation_energy=None, pf_species=None):
+        def __init__(self,rate_constant=None,activation_energy=None,
+                     pf_species=None):
 
             # Ensure the types are correct
-            assert isinstance(activation_energy, (int, long, float, type(
-                None))), 'ACTIVATION_ENERGY must be a float'
-            assert isinstance(rate_constant, (list, tuple, type(
-                None))), 'RATE_CONSTANT must be a list of [float,string]'
-            assert isinstance(pf_species, (list, pchemistry_m_kinetic.prefactor_species, type(
-                None))), 'PREFACTOR_SPECIES must be a list or instance of pchemistry_m_kinetic.prefactor.prefactor_species'
+            assert isinstance(activation_energy, (int,long,float,type(None))),\
+            'ACTIVATION_ENERGY must be a float'
+            assert isinstance(rate_constant, (list, tuple, type(None))),\
+            'RATE_CONSTANT must be a list of [float,string]'
+            assert isinstance(pf_species, (list,\
+              pchemistry_m_kinetic.prefactor_species,type(None))),\
+            'PREFACTOR_SPECIES must be a list or instance of '+\
+            'pchemistry_m_kinetic.prefactor.prefactor_species'
 
             # Assign class parameters
             self.rate_constant = rate_constant
             self.activation_energy = activation_energy
-            self.pf_species = [prefactor_species] if isinstance(
-                pf_species, pchemistry_m_kinetic.prefactor_species) else pf_species
+            self.pf_species = [prefactor_species] if isinstance(pf_species,\
+              pchemistry_m_kinetic.prefactor_species) else pf_species
 
             if self.pf_species is None:
                 self.pf_species = []
@@ -3138,17 +3193,20 @@ class pchemistry_m_kinetic(Frozen):
             # Freeze
             self._freeze()
 
-        def add_species(self, name, alpha=None, beta=None, attenuation_coef=None):
+        def add_species(self,name,alpha=None,beta=None,attenuation_coef=None):
             """
             Add a PREFACTOR_SPECIES instance to a PREFACTOR object.
 
             :param name: Prefactor species name
             :type name: str
-            :param alpha: a_{jl}^{m} in mineral precipitation-dissolution reaction equation
+            :param alpha: a_{jl}^{m} in mineral precipitation-dissolution
+            reaction equation
             :type alpha: float
-            :param beta: B_{jl}^{m} in mineral precipitation-dissolution reaction equation
+            :param beta: B_{jl}^{m} in mineral precipitation-dissolution
+            reaction equation
             :type beta: float
-            :param attenuation_coef: K_{jl} in mineral precipitation-dissolution reaction equation
+            :param attenuation_coef: K_{jl} in mineral precipitation-dissolution
+            reaction equation
             :type attenuation_coef: float
             """
 
@@ -3159,8 +3217,8 @@ class pchemistry_m_kinetic(Frozen):
             assert isinstance(attenuation_coef, (int, long, float, type(
                 None))), 'ATTENUATION_COEF must be a float'
 
-            pf_spec = pchemistry_m_kinetic.prefactor_species(
-                name=name, alpha=alpha, beta=beta, attenuation_coef=attenuation_coef)
+            pf_spec = pchemistry_m_kinetic.prefactor_species(name=name,
+              alpha=alpha,beta=beta,attenuation_coef=attenuation_coef)
             self.pf_species.append(pf_spec)
             return pf_spec
 
@@ -3171,15 +3229,18 @@ class pchemistry_m_kinetic(Frozen):
 
         :param name: Prefactor species name
         :type name: str
-        :param alpha: a_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :param alpha: a_{jl}^{m} in mineral precipitation-dissolution reaction
+        equation
         :type alpha: float
-        :param beta: B_{jl}^{m} in mineral precipitation-dissolution reaction equation
+        :param beta: B_{jl}^{m} in mineral precipitation-dissolution reaction
+        equation
         :type beta: float
-        :param attenuation_coef: K_{jl} in mineral precipitation-dissolution reaction equation
+        :param attenuation_coef: K_{jl} in mineral precipitation-dissolution
+        reaction equation
         :type attenuation_coef: float
         """
 
-        def __init__(self, name=None, alpha=None, beta=None, attenuation_coef=None):
+        def __init__(self,name=None,alpha=None,beta=None,attenuation_coef=None):
             self.name = name
             self.alpha = alpha
             self.beta = beta
@@ -3188,24 +3249,27 @@ class pchemistry_m_kinetic(Frozen):
     def __init__(self, name=None, rate_constant_list=None,
                  activation_energy=None, affinity_threshold=None,
                  rate_limiter=None, irreversible=None,
-                 surface_area_porosity_power=None, surface_area_vol_frac_power=None,
+                 surface_area_porosity_power=None,
+                 surface_area_vol_frac_power=None,
                  prefactors=None):
 
         # Verify correct input types
-        assert isinstance(affinity_threshold, (int, long, float, type(
-            None))), 'AFFINITY_THRESHOLD must be a float'
-        assert isinstance(rate_constant_list, (list, tuple, type(
-            None))), 'RATE_CONSTANT must be a list of [float,string]'
-        assert isinstance(rate_limiter, (int, long, float,
-                                         type(None))), 'RATE_LIMITER must be a float'
-        assert isinstance(irreversible, (bool, type(None))
-                          ), 'IRREVERSIBLE must be a boolean'
-        assert isinstance(surface_area_porosity_power, (int, long, float, type(
-            None))), 'SURFACE_AREA_POROSITY_POWER must be a float'
-        assert isinstance(surface_area_vol_frac_power, (int, long, float, type(
-            None))), 'SURFACE_AREA_VOL_FRAC_POWER must be a float'
-        assert isinstance(prefactors, (list, self.prefactor, type(
-            None))), 'PREFACTOR must be a list or instance of pchemistry_m_kinetic.prefactor'
+        assert isinstance(affinity_threshold, (int, long, float, type(None))),\
+        'AFFINITY_THRESHOLD must be a float'
+        assert isinstance(rate_constant_list, (list, tuple, type(None))),\
+        'RATE_CONSTANT must be a list of [float,string]'
+        assert isinstance(rate_limiter, (int, long, float,type(None))),\
+        'RATE_LIMITER must be a float'
+        assert isinstance(irreversible, (bool, type(None))),\
+        'IRREVERSIBLE must be a boolean'
+        assert isinstance(surface_area_porosity_power, \
+          (int, long, float, type(None))),\
+          'SURFACE_AREA_POROSITY_POWER must be a float'
+        assert isinstance(surface_area_vol_frac_power, \
+          (int, long, float, type(None))), \
+          'SURFACE_AREA_VOL_FRAC_POWER must be a float'
+        assert isinstance(prefactors, (list, self.prefactor, type(None))),\
+          'PREFACTOR must be a list or instance of pchemistry_m_kinetic.prefactor'
 
         # Construct MINERAL_KINETICS object
         if rate_constant_list is None:
@@ -3230,7 +3294,8 @@ class pchemistry_m_kinetic(Frozen):
         # Freeze
         self._freeze()
 
-    def add_prefactor(self, rate_constant=None, activation_energy=None, pf_species=None):
+    def add_prefactor(self, rate_constant=None, activation_energy=None,
+                      pf_species=None):
         """
         Add a new PREFACTOR instance to MINERAL_KINETICS object
 
@@ -3238,11 +3303,13 @@ class pchemistry_m_kinetic(Frozen):
         :type rate_constant: [float, str]
         :param activation_energy: Activation energy for rate constant k_{ml}
         :type activation_energy: float
-        :param pf_species: One or more PREFACTOR_SPECIES objects assigned to this PREFACTOR instance
-        :type pf_species: list containing pchemistry_m_kinetic.prefactor_species objects
+        :param pf_species: One or more PREFACTOR_SPECIES objects assigned to
+        this PREFACTOR instance
+        :type pf_species: list containing pchemistry_m_kinetic.prefactor_species
+        objects
         """
-        pf_instance = self.prefactor(
-            rate_constant=rate_constant, activation_energy=activation_energy, pf_species=pf_species)
+        pf_instance = self.prefactor(rate_constant=rate_constant,
+                      activation_energy=activation_energy,pf_species=pf_species)
         self.prefactors.append(pf_instance)
         return pf_instance
 
@@ -3301,7 +3368,8 @@ class pchemistry_m_kinetic(Frozen):
         ----------------------------------------
         '''.format(self.name, self.rate_constant_list, self.activation_energy,
                    self.affinity_threshold, self.rate_limiter, self.irreversible,
-                   self.surface_area_porosity_power, self.surface_area_vol_frac_power,
+                   self.surface_area_porosity_power,
+                   self.surface_area_vol_frac_power,
                    prefrac_str)
         print(meta)
 
@@ -3637,7 +3705,8 @@ class peos(Frozen):
     :param fluid_enthalpy: Specifies option for fluid viscosity.
      "Constant" is currently supported.
     :type fluid_enthalpy: list
-    :param density_params: an optional explicit key/value pairing of density parameters
+    :param density_params: an optional explicit key/value pairing of
+    density parameters
     :type density_params: dict{str,float}
     """
 
@@ -4899,12 +4968,12 @@ class pdata(object):
                         outfile.write('  DENSITY LINEAR\n')
                         for dkey in eos.density_params.keys():
                             outfile.write('    %s %s\n' % (dkey.upper(),
-                                                           strD(eos.density_params[dkey])))
+                                          strD(eos.density_params[dkey])))
                         outfile.write('  /\n')
                     else:
-                        raise PyFLOTRAN_ERROR('eos.fluid_density: \'' +
-                                              str(eos.fluid_density) +
-                                              '\' has incorrect keyword or incorrect length')
+                        err = 'eos.fluid_density: \''+str(eos.fluid_density)+\
+                                  '\' has incorrect keyword or incorrect length'
+                        raise PyFLOTRAN_ERROR(err)
 
                 if eos.fluid_viscosity:
                     if eos.fluid_viscosity[0].upper() == 'CONSTANT' and \
@@ -4919,7 +4988,8 @@ class pdata(object):
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_viscosity: \'' +
                                               strD(eos.fluid_viscosity) +
-                                              '\' has incorrect keyword or incorrect length')
+                                              '\' has incorrect keyword or '+ \
+                                              'incorrect length')
 
                 if eos.fluid_enthalpy:
                     if eos.fluid_enthalpy[0].upper() == 'CONSTANT' and \
@@ -4939,26 +5009,28 @@ class pdata(object):
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_enthalpy: \'' +
                                               strD(eos.fluid_enthalpy) +
-                                              '\' has incorrect keyword or incorrect length')
+                                              '\' has incorrect keyword or '+\
+                                              'incorrect length')
                 if eos.fluid_henrys_constant:
                     if eos.fluid_henrys_constant[0].upper() == 'CONSTANT' and \
                             len(eos.fluid_henrys_constant) == 2:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[
-                                          0].upper() + ' '
-                                      + strD(eos.fluid_henrys_constant[1]) + '\n')
+                                      eos.fluid_henrys_constant[0].upper() + \
+                                      ' ' + strD(eos.fluid_henrys_constant[1]) \
+                                      + '\n')
                     elif eos.fluid_henrys_constant[0].upper() == 'DEFAULT' and \
                             len(eos.fluid_henrys_constant) == 1:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[0].upper() + '\n')
+                                      eos.fluid_henrys_constant[0].upper()+'\n')
                     elif eos.fluid_henrys_constant[0].upper() == 'DUANMAO' and \
                             len(eos.fluid_henrys_constant) == 1:
                         outfile.write('  HENRYS_CONSTANT ' +
-                                      eos.fluid_henrys_constant[0].upper() + '\n')
+                                      eos.fluid_henrys_constant[0].upper()+'\n')
                     else:
                         raise PyFLOTRAN_ERROR('eos.fluid_henrys_constant: \'' +
                                               strD(eos.fluid_henrys_constant) +
-                                              '\' has incorrect keyword or incorrect length')
+                                              '\' has incorrect keyword or ' + \
+                                              'incorrect length')
                 if eos.fluid_formula_weight:
                     outfile.write('  FORMULA_WEIGHT ' +
                                   strD(eos.fluid_formula_weight) + '\n')
@@ -5076,7 +5148,7 @@ class pdata(object):
                             elif key1 in ['/', 'end']:
                                 keep_reading_2 = False
                         # else:
-                        # raise PyFLOTRAN_ERROR('flow tran coupling type missing!')
+                        # raise PyFLOTRAN_ERROR('coupling type missing!')
                         key_bank.append(key)
                     elif key == 'geomechanics_subsurface':
                         simulation.geomechanics_subsurface = self.splitter(
@@ -5105,19 +5177,19 @@ class pdata(object):
                     # take first key word
                     key = line.strip().split()[0].lower()
                     if 'times' in key:
-                        simulation.checkpoint.time_unit = line.strip().split()[
-                            1]
+                        simulation.checkpoint.time_unit = \
+                          line.strip().split()[1]
                         for val in line.strip().split()[2:]:
                             simulation.checkpoint.time_list.append(floatD(val))
                     elif 'periodic' in key:
                         if 'timestep' in line.strip().split()[1].lower():
-                            simulation.checkpoint.periodic_timestep = line.strip().split()[
-                                2]
+                            simulation.checkpoint.periodic_timestep = \
+                              line.strip().split()[2]
                         else:
-                            simulation.checkpoint.periodic_time = line.strip().split()[
-                                3]
-                            simulation.checkpoint.periodic_time_unit = line.strip().split()[
-                                2]
+                            simulation.checkpoint.periodic_time = \
+                              line.strip().split()[3]
+                            simulation.checkpoint.periodic_time_unit = \
+                              line.strip().split()[2]
                     elif 'format' in key:
                         simulation.checkpoint.format = line.strip().split()[1]
                     elif key in ['/', 'end']:
@@ -5367,7 +5439,7 @@ class pdata(object):
 
             if key == 'type':
                 grid.type = line.strip().split()[1].lower()
-                if grid.type in ['unstructured_explicit', 'unstructured_implicit']:
+                if grid.type in ['unstructured_explicit','unstructured_implicit']:
                     grid.filename = self.splitter(line)
             elif key == 'bounds':
                 keep_reading_2 = True
@@ -5465,7 +5537,9 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('grid.symmetry_type: \'' +
                                           grid.symmetry_type +
                                           '\' not currently supported')
-            elif len(grid.dx) != 0:  # DXYZ is only written if no bounds are provided
+
+            # DXYZ is only written if no bounds are provided
+            elif len(grid.dx) != 0:  
                 outfile.write('  DXYZ\n')
                 if grid.symmetry_type == 'cartesian' or \
                         grid.symmetry_type == '':  # cartesian, DXYZ grid
@@ -5485,13 +5559,16 @@ class pdata(object):
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
                     outfile.write('  /\n')
-                elif grid.symmetry_type == 'cylindrical':  # cylindrical, DXYZ grid
+                # cylindrical, DXYZ grid
+                elif grid.symmetry_type == 'cylindrical':  
                     for j in range(len(grid.dx)):  # for x or r
                         outfile.write('    ' + strD(grid.dx[j]))
                         if j % 5 == 4 and j < len(grid.dx) - 1:
                             outfile.write('   ' + '\\' + '\n')
                     outfile.write('\n')
-                    if len(grid.dy) == 1:  # for y coordinate (only 1 value allowed)
+
+                    # for y coordinate (only 1 value allowed)
+                    if len(grid.dy) == 1:  
                         outfile.write('    ' + strD(grid.dy[0]))
                         outfile.write('\n')
                     else:
@@ -5855,14 +5932,16 @@ class pdata(object):
                 outfile.write('  /\n')
 
             if prop.soil_compressibility_function:
-                if prop.soil_compressibility_function.upper() in allowed_soil_compressibility_functions:
+                if prop.soil_compressibility_function.upper() in \
+                allowed_soil_compressibility_functions:
                     outfile.write('  SOIL_COMPRESSIBILITY_FUNCTION ' +
                                   prop.soil_compressibility_function + '\n')
                 else:
                     raise PyFLOTRAN_ERROR(
                         'PyFLOTRAN ERROR: soil_compressibility_function ' +
                         prop.soil_compressibility_function + ' is invalid!' +
-                        ' Try one of ' + str(allowed_soil_compressibility_functions))
+                        ' Try one of ' + \
+                        str(allowed_soil_compressibility_functions))
 
             if prop.soil_compressibility:  # this is alpha
                 outfile.write('  SOIL_COMPRESSIBILITY ' +
@@ -5877,7 +5956,8 @@ class pdata(object):
 
             if prop.compressibility_function:
                 # if lsolver.name.lower() in solver_names_allowed:
-                if prop.compressibility_function.lower() in allowed_compressibility_functions:
+                if prop.compressibility_function.lower() in \
+                allowed_compressibility_functions:
                     outfile.write('  GEOMECHANICS_SUBSURFACE_PROPS\n')
                     outfile.write('    COMPRESSIBILITY_FUNCTION ' +
                                   prop.compressibility_function + '\n')
@@ -6461,16 +6541,18 @@ class pdata(object):
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
-                            output.snapshot_file.format = line1.strip().split()[
-                                1].lower()
+                            output.snapshot_file.format = \
+                            line1.strip().split()[1].lower()
                         elif len(line1.strip().split()) == 3:
+                            output.snapshot_file.format = \
+                            ' '.join(line1.strip().split()[1:3]).lower()
+                        elif len(line1.strip().split()) > 3 and \
+                        'times_per_file' in [val.lower() for val in \
+                        line1.strip().split()[1:]]:
                             output.snapshot_file.format = ' '.join(
                                 line1.strip().split()[1:3]).lower()
-                        elif len(line1.strip().split()) > 3 and 'times_per_file' in [val.lower() for val in line1.strip().split()[1:]]:
-                            output.snapshot_file.format = ' '.join(
-                                line1.strip().split()[1:3]).lower()
-                            output.snapshot_file.times_per_file = line1.strip().split()[
-                                4]
+                            output.snapshot_file.times_per_file = \
+                            line1.strip().split()[4]
                     elif key1 == 'no_print_initial':
                         output.snapshot_file.print_initial = False
                     elif key1 == 'no_print_final':
@@ -6483,8 +6565,7 @@ class pdata(object):
                             if key2 in ['/', 'end']:
                                 keep_reading2 = False
                             elif key2 in output_variables_allowed:
-                                output.snapshot_file.variables_list.append(
-                                    key2)
+                                output.snapshot_file.variables_list.append(key2)
                     elif key1 == 'times':
                         unit = line1.strip().split()[1].lower()
                         if unit in time_units_allowed:
@@ -6501,24 +6582,24 @@ class pdata(object):
                             # 2nd from last word.
                             output.snapshot_file.periodic_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_time_unit = self.splitter(
-                                line1)  # last word
+                            output.snapshot_file.periodic_time_unit = \
+                              self.splitter(line1)  # last word
                         elif tstring == 'timestep':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_timestep = int(
-                                self.splitter(line1))
+                            output.snapshot_file.periodic_timestep = \
+                              int(self.splitter(line1))
                     elif key1 == 'periodic_observation':
                         tstring = line1.strip().split()[
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.snapshot_file.periodic_observation_time = floatD(
-                                line1.split()[-2])
-                            output.snapshot_file.periodic_observation_time_unit = self.splitter(
-                                line1)  # last word
+                            output.snapshot_file.periodic_observation_time = \
+                              floatD(line1.split()[-2])
+                            output.snapshot_file.periodic_observation_time_unit = \
+                              self.splitter(line1)  # last word
                         elif tstring == 'timestep':
-                            output.snapshot_file.periodic_observation_timestep = int(
-                                self.splitter(line1))
+                            output.snapshot_file.periodic_observation_timestep = \
+                              int(self.splitter(line1))
                     elif key1 == 'extend_hdf5_time_format':
                         output.snapshot_file.extend_hdf5_time_format
                     elif key1 in ['/', 'end']:
@@ -6530,16 +6611,17 @@ class pdata(object):
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
-                            output.observation_file.format = line1.strip().split()[
-                                1].lower()
+                            output.observation_file.format = \
+                              line1.strip().split()[1].lower()
                         elif len(line1.strip().split()) == 3:
-                            output.observation_file.format = line1.strip().split()[
-                                1:2].lower()
-                        elif len(line1.strip().split()) > 3 and 'times_per_file' in line1.strip().split()[1:]:
-                            output.observation_file.format = line1.strip().split()[
-                                1:2].lower()
-                            output.observation_file.times_per_file = line1.strip().split()[
-                                4]
+                            output.observation_file.format = \
+                              line1.strip().split()[1:2].lower()
+                        elif len(line1.strip().split()) > 3 and \
+                        'times_per_file' in line1.strip().split()[1:]:
+                            output.observation_file.format = \
+                              line1.strip().split()[1:2].lower()
+                            output.observation_file.times_per_file = \
+                              line1.strip().split()[4]
                     elif key1 == 'no_print_initial':
                         output.observation_file.print_initial = False
                     elif key1 == 'no_print_final':
@@ -6571,8 +6653,8 @@ class pdata(object):
                             # 2nd from last word.
                             output.observation_file.periodic_time = floatD(
                                 line1.split()[-2])
-                            output.observation_file.periodic_time_unit = self.splitter(
-                                line1)  # last word
+                            output.observation_file.periodic_time_unit = \
+                              self.splitter(line1)  # last word
                         elif tstring == 'timestep':
                             # 2nd from last word.
                             output.observation_file.periodic_timestep = int(
@@ -6582,8 +6664,8 @@ class pdata(object):
                             1].lower()  # Read the 2nd word
                         if tstring == 'time':
                             # 2nd from last word.
-                            output.observation_file.periodic_observation_time = floatD(
-                                line1.split()[-2])
+                            output.observation_file.periodic_observation_time = \
+                              floatD(line1.split()[-2])
                             output.observation_file.periodic_observation_time_unit = self.splitter(
                                 line1)  # last word
                         elif tstring == 'timestep':

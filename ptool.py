@@ -257,7 +257,7 @@ def perror(string):
 
 def pyflotran_print(s):
     if not pyflotran_print.silent:
-        print s
+        print(s)
 
 
 # -- FUNCTIONS AND CLASSES FOR INTERNAL USE --
@@ -311,7 +311,7 @@ class ppath(object):
             return
         # check if absoulte or relative specification
         path = value.split(slash)[:-1]
-        path = string.join(path, slash)
+        path = slash.join(path)
 
         absolute = False
         if WINDOWS and path[1] == ':':
@@ -345,16 +345,16 @@ def save_name(save='', variable='', time=0., node=0):
     if save:
         save = save.split('.')
         if len(save) == 1:
-            print 'No extension specified, default to .png'
+            print('No extension specified, default to .png')
             ext = 'png'
         elif len(save) > 2:
-            print 'Too many dots!'
+            print('Too many dots!')
             return
         else:
             if save[1] in ['png', 'eps', 'pdf']:
                 ext = save[1]
             else:
-                print 'Unrecognized extension'
+                print('Unrecognized extension')
                 return
         save_fname = save[0] + '.' + ext
     else:

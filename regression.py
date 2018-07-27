@@ -30,12 +30,18 @@ write_fail_files = []
 regression_pass_files = []
 regression_fail_files = []
 
+def decode(byteseq):
+    if isinstance(byteseq,bytes):
+        return byteseq.decode('ascii')
+    else:
+        return byteseq
 
 def check_file(cmd):
     process = subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = process.communicate()
+    out = decode(out)
     files = out.split('\n')
     return files
 
@@ -70,22 +76,26 @@ def compare_regression_tests(file1, file2):
     os.chdir(os.path.dirname(file1))
     out, err = run_popen(
         pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file1)
+
+    out = decode(out)
+    err = decode(err)
+
     # print out, err
     if 'ERROR' in out:
-        print 'Did not run: ' + file1
+        print('Did not run: ' + file1)
     os.chdir(os.path.dirname(file2))
     out, err = run_popen(
         pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file2)
     # print out, err
     if 'ERROR' in out:
-        print 'Did not run: ' + file2
+        print('Did not run: ' + file2)
     else:
         reg_file1 = file1.replace('.', ' ').split()[0] + '.regression'
         reg_file2 = file2.replace('.', ' ').split()[0] + '.regression'
         #out, err = run_popen('diff ' + reg_file1 + ' ' + reg_file2)
         # print out, err
         if not filecmp.cmp(reg_file1, reg_file2):
-            print 'Difference seen in regression files' + reg_file1 + ' and ' + reg_file2
+            print('Difference seen in regression files' + reg_file1 + ' and ' + reg_file2)
             regression_fail_files.append(file1)
         else:
             regression_pass_files.append(file1)
@@ -96,16 +106,16 @@ def read_and_write(file):
     try:
         dat = pdata(file)
         dir_name = os.path.dirname(file)
-        print ('Successfully read file: ' + file)
+        print('Successfully read file: ' + file)
         try:
             new_file = dir_name + '/' + file.replace('/', ' ').split()[-1]
             new_file = new_file.replace('.', ' ').split()[0] + '_pyflotran.in'
-            print new_file
+            print(new_file)
             dat.write(new_file)
-            print ('  Successfully wrote file: ' + file)
+            print('  Successfully wrote file: ' + file)
             success_files.append(file)
         except:
-            print ('  Error in writing: ' + file)
+            print('  Error in writing: ' + file)
             write_fail_files.append(file)
     except:
         print('Error in reading: ' + file)
@@ -153,6 +163,9 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
 
         out, err = run_popen(
             pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file)
+
+        out = decode(out)
+        err = decode(err)
 
         if 'ERROR' in out:
             print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
@@ -216,6 +229,9 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
 
     # Compare JSON files
     out, err = run_popen(json_diff_dir+' tmp_dump1.json tmp_dump2.json')
+
+    out = decode(out)
+    err = decode(err)
 
     # Remove JSON files
     os.remove('tmp_dump1.json')
@@ -307,7 +323,7 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
         else:
             fail_list.append(file)
 
-        os.remove(tmp_file)
+        #os.remove(tmp_file)
 
     print("Number of successful regressions:   %d" % len(success_list))
     print("Number of failed regressions:       %d" % len(fail_list))
@@ -322,10 +338,10 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
     return debug_dict
 
 def cleanup():
-    files = check_file('find ' + pflotran_dir +
+    files = check_file('find ' + pflotran_dir + \
                        '/regression_tests/ -type f -name "*pyflotran.in"')
     for file in files:
-        print file
+        print(file)
         run_popen('rm -f ' + file)
 
 def validation(files):
@@ -337,16 +353,16 @@ def validation(files):
                 read_and_write(file)
 
     # print results
-    print 'Successful files:'
-    print success_files
-    print 'Read fail files:'
-    print read_fail_files
-    print 'Write fail files:'
-    print write_fail_files
+    print('Successful files:')
+    print(success_files)
+    print('Read fail files:')
+    print(read_fail_files)
+    print('Write fail files:')
+    print(write_fail_files)
 
-    print 'Number of successful files: ' + str(len(success_files))
-    print 'Number of read fail files: ' + str(len(read_fail_files))
-    print 'Number of write fail files: ' + str(len(write_fail_files))
+    print('Number of successful files: ' + str(len(success_files)))
+    print('Number of read fail files: ' + str(len(read_fail_files)))
+    print('Number of write fail files: ' + str(len(write_fail_files)))
 
 
 # Array of multiline literals for use in argparse descriptions.
@@ -368,7 +384,7 @@ if (__name__ == '__main__'):
 
     cleanup()
 
-    files = check_file('find ' + pflotran_dir +
+    files = check_file('find ' + pflotran_dir + \
                        '/regression_tests/ -type f -name "*.in"')
 
     # Parse arguments

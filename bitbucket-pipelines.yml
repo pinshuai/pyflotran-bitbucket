@@ -1,0 +1,13 @@
+image: python:3.5.1
+pipelines:
+  default:
+    - step:
+        script:
+          - export PyFLOTRAN_DIR=`pwd`
+          - git clone https://bitbucket.org/pflotran/pflotran.git
+          - cd pflotran/
+          - ./.bitbucket-pipeline/install-linux.sh
+          - ./.bitbucket-pipeline/pflotran-build.sh
+          - cd $PyFLOTRAN_DIR
+          - python --version
+          - python regression.py -a

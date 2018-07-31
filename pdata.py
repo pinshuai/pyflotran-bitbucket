@@ -5034,6 +5034,14 @@ class pdata(object):
                 if eos.fluid_formula_weight:
                     outfile.write('  FORMULA_WEIGHT ' +
                                   strD(eos.fluid_formula_weight) + '\n')
+
+                if eos.fluid_test:
+                    for ftest in eos.fluid_test:
+                        fstr = ' '.join(map(strD,ftest[:4])) + ' ' + \
+                               ' '.join(map(str,map(int,ftest[4:6]))) + ' ' + \
+                               ' '.join(ftest[6:])
+
+                        outfile.write('  TEST ' + fstr + '\n')
                 outfile.write('END\n\n')
             else:
                 raise PyFLOTRAN_ERROR('eos.fluid_name: \'' + eos.fluid_name +

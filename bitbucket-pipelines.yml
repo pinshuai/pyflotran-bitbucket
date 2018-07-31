@@ -5,10 +5,13 @@ pipelines:
         name: Build and test
         script:
           - export PyFLOTRAN_DIR=`pwd`
+          - export CMAKE_BUILD=1; export PETSC_MASTER=0
           - git clone https://bitbucket.org/pflotran/pflotran.git
           - cd pflotran/
-          - ./.bitbucket-pipeline/install-linux.sh
-          - ./.bitbucket-pipeline/pflotran-build.sh
+          - sh ./.travis/install-$TRAVIS_OS_NAME-deps.sh
+          - ./.travis/install-petsc.sh
+          - ./.travis/install-petsc.sh
+          - ./.travis/pflotran-build.sh
           - cd $PyFLOTRAN_DIR
           - python --version
           - python regression.py -a

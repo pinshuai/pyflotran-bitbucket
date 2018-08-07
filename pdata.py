@@ -2783,7 +2783,7 @@ class pchemistry(Frozen):
         self.immobile_decay_reaction.append(idr_rxn)
         return idr_rxn
 
-    def add_radioactive_decay_reaction(self, reaction=None,
+    def add_radioactive_decay_reaction(self,reaction=None,
                                        rate_constant=None,
                                        half_life=None):
         rad_rxn = pchemistry.pradioactive_decay_reaction(reaction=reaction,
@@ -2791,13 +2791,13 @@ class pchemistry(Frozen):
         self.radioactive_decay_reaction.append(rad_rxn)
         return rad_rxn
 
-    def add_microbial_reaction(self, reaction=None, rate_constant=None,
+    def add_microbial_reaction(self,reaction=None,rate_constant=None,
                                monod_species_name=None,
                                monod_half_saturation_constant=None,
                                monod_threshold_concentration=None,
                                inhibition_species_name=None,
-                               inhibition_type=None, inhibition_constant=None,
-                               biomass_species_name=None, biomass_yield=None):
+                               inhibition_type=None,inhibition_constant=None,
+                               biomass_species_name=None,biomass_yield=None):
 
         microbe = pchemistry.pmicrobial_reaction(reaction=reaction,
                                                 rate_constant=rate_constant)
@@ -2823,16 +2823,79 @@ class pchemistry(Frozen):
             assert isinstance(ion_exchange_rxn,\
               (pchemistry.psorption.pion_exchange_rxn,type(None))),\
               'Must be an instance of pion_exchange_rxn'
-            assert isinstance(isotherm_reactions,\
-              (pchemistry.psorption.pisotherm_reactions, type(None))),\
-              'Must be an instance of pisotherm_reactions'
+            #assert isinstance(isotherm_reactions,\
+            #  (pchemistry.psorption.pisotherm_reactions, type(None))),\
+            #  'Must be an instance of pisotherm_reactions'
             assert isinstance(surface_complexation_rxn,\
               (pchemistry.psorption.psurface_complexation_rxn, type(None))),\
               'Must be an instance of psurface_complexation_rxn'
 
+            if isotherm_reactions is None:
+                isotherm_reactions = []
+
             self.ion_exchange_rxn = ion_exchange_rxn
             self.isotherm_reactions = isotherm_reactions
             self.surface_complexation_rxn = surface_complexation_rxn
+
+        def _write(self,outfile):
+
+            outfile.write('  SORPTION\n')
+
+            if self.ion_exchange_rxn is not None:
+                outfile.write('    ION_EXCHANGE_RXN\n')
+                if self.ion_exchange_rxn.mineral is not None:
+                    outfile.write('      MINERAL %s\n' %
+                                  self.ion_exchange_rxn.mineral)
+                if self.ion_exchange_rxn.cec is not None:
+                    if isinstance(self.ion_exchange_rxn.cec, list):
+                        outfile.write('      CEC %s %s\n' % \
+                                     (strD(self.ion_exchange_rxn.cec[0]),
+                                      self.ion_exchange_rxn.cec[1]))
+                    else:
+                        outfile.write('      CEC %s \n' %
+                                      strD(self.ion_exchange_rxn.cec))
+                if self.ion_exchange_rxn.cations is not None:
+                    outfile.write('      CATIONS\n')
+                    for cat in self.ion_exchange_rxn.cations:
+                        is_ref = 'REFERENCE' if cat.reference == True else ''
+                        outfile.write('        %s %s %s\n' %
+                                      (cat.name.ljust(8), cat.value, is_ref))
+                    outfile.write('      /\n')
+                outfile.write('    /\n')
+
+
+            if self.isotherm_reactions is not None:
+                outfile.write('    ISOTHERM_REACTIONS\n')
+                for i_rxn in self.isotherm_reactions:
+                    outfile.write('      %s\n' % i_rxn.name)
+
+                    if i_rxn.ir_type is not None:
+                        outfile.write('        TYPE %s\n' % i_rxn.ir_type)
+
+                    if i_rxn.distribution_coefficient is not None:
+                        outfile.write('        DISTRIBUTION_COEFFICIENT %s\n' %\
+                                      strD(i_rxn.distribution_coefficient))
+
+                    if i_rxn.langmuir_b is not None:
+                        outfile.write('        LANGMUIR_B %s\n' % \
+                                      strD(i_rxn.langmuir_b))
+
+                    if i_rxn.freundlich_n is not None:
+                        outfile.write('        FREUNDLICH_N %s\n' % \
+                                      strD(i_rxn.freundlich_n))
+
+                    if i_rxn.kd_mineral_name is not None:
+                        outfile.write('        KD_MINERAL_NAME %s\n' % \
+                                      i_rxn.kd_mineral_name)
+
+                    outfile.write('      /\n')
+                outfile.write('    /\n')
+
+            if self.surface_complexation_rxn is not None:
+                pass
+
+            outfile.write('  /\n')
+
 
         def add_ion_exchange_rxn(self, cec=None, cations=None, mineral=None):
             '''
@@ -2878,13 +2941,16 @@ class pchemistry(Frozen):
             for more information.
             :type kd_mineral_name: str
             '''
-            self.isotherm_reactions = pchemistry.psorption.pisotherm_reactions(
+            i_rxn = pchemistry.psorption.pisotherm_reactions(
                 name=name,
                 distribution_coefficient=distribution_coefficient,
                 ir_type=ir_type, langmuir_b=langmuir_b,
                 freundlich_n=freundlich_n,
-                kd_mineral_name=kd_mineral_name)
-            return self.isotherm_reactions
+                kd_mineral_name=kd_mineral_name
+                )
+
+            self.isotherm_reactions.append(i_rxn)
+            return i_rxn
 
         def add_surface_complexation_rxn(self, sorption_type=None,
                                          complex_kinetics=None,rates=None,
@@ -2919,10 +2985,10 @@ class pchemistry(Frozen):
 
             def __init__(self, cec=None, cations=None, mineral=None):
 
-                assert isinstance(cec, (int, float, type(None))
-                                  ), 'ion_exchange_rxn.cec must be a number'
-                assert isinstance(mineral, (str, type(None))
-                                  ), 'ion_exchange_rxn.mineral must be a string'
+                assert isinstance(cec, (int, float, type(None))), \
+                                'ion_exchange_rxn.cec must be a number'
+                assert isinstance(mineral, (str, type(None))), \
+                                'ion_exchange_rxn.mineral must be a string'
 
                 if cations is None:
                     cations = []
@@ -9042,9 +9108,42 @@ class pdata(object):
                                             name=cat_name, value=cat_val, reference=cat_ref)
                             if subsubkey.lower() in ['/', 'end']:
                                 break
+                    elif subkey == 'isotherm_reactions':
+
+                        while True:
+                            subsubline = get_next_line(infile)
+                            subsubkey = subsubline.split()[0]
+
+                            if subsubkey.lower() in ['/','end']:
+                                break
+                            else:
+                                i_rxn = sorb.add_isotherm_reactions()
+                                i_rxn.name = subsubkey
+
+                                while True:
+                                    iline = get_next_line(infile)
+                                    ikey = iline.split()[0].lower()
+
+                                    if ikey in ['/','end']:
+                                        break
+                                    elif ikey == 'type':
+                                        i_rxn.ir_type = iline.split()[-1]
+                                    elif ikey == 'distribution_coefficient':
+                                        i_rxn.distribution_coefficient = \
+                                              floatD(iline.split()[-1])
+                                    elif 'langmuir_b':
+                                        i_rxn.langmuir_b = \
+                                              floatD(iline.split()[-1])
+                                    elif 'freundlich_n':
+                                        i_rxn.freundlich_n = \
+                                              floatD(iline.split()[-1])
+                                    elif 'kd_mineral_name':
+                                        i_rxn.kd_mineral_name = \
+                                              iline.split()[-1]
 
                     if subkey.lower() in ['/', 'end']:
                         break
+
             elif key == 'immobile_decay_reaction':
                 id_rxn = chem.add_immobile_decay_reaction()
                 while True:
@@ -9409,28 +9508,7 @@ class pdata(object):
             outfile.write('  /\n')
 
         if c.sorption is not None:
-            outfile.write('  SORPTION\n')
-            if c.sorption.ion_exchange_rxn is not None:
-                outfile.write('    ION_EXCHANGE_RXN\n')
-                if c.sorption.ion_exchange_rxn.mineral is not None:
-                    outfile.write('      MINERAL %s\n' %
-                                  c.sorption.ion_exchange_rxn.mineral)
-                if c.sorption.ion_exchange_rxn.cec is not None:
-                    if isinstance(c.sorption.ion_exchange_rxn.cec, list):
-                        outfile.write('      CEC %s %s\n' % (strD(c.sorption.ion_exchange_rxn.cec[0]),
-                                                             c.sorption.ion_exchange_rxn.cec[1]))
-                    else:
-                        outfile.write('      CEC %s \n' %
-                                      strD(c.sorption.ion_exchange_rxn.cec))
-                if c.sorption.ion_exchange_rxn.cations is not None:
-                    outfile.write('      CATIONS\n')
-                    for cat in c.sorption.ion_exchange_rxn.cations:
-                        is_ref = 'REFERENCE' if cat.reference == True else ''
-                        outfile.write('        %s %s %s\n' %
-                                      (cat.name.ljust(8), cat.value, is_ref))
-                    outfile.write('      /\n')
-                outfile.write('    /\n')
-            outfile.write('  /\n')
+            c.sorption._write(outfile)
 
         if c.database:
             outfile.write('  DATABASE ' + c.database + '\n')

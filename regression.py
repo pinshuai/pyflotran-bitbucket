@@ -185,11 +185,14 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
 
         # Capture the regression file written out
         capture_idx = out.find(capture)
+
         if capture_idx == -1:
             os.chdir(current_dir)
             if debug_dict is not None:
                 debug_dict['failed']['pflotran_runtime'][file] = out
             print('\033[91mUNKNOWN ERROR\033[0m\n'+'-'*50)
+
+            if verbose: print(err)
             return False
 
         reg_file = out[capture_idx+len(capture)+1:out.find('\n',capture_idx)]

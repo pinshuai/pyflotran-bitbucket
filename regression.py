@@ -168,6 +168,10 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         err = decode(err)
 
         if 'ERROR' in out:
+            #if 'Keyword "MAP_HDF5_DATASET_NAME" not recognized in dataset.':
+            #    print('hmm...old version of PFLO')
+            #    return True
+
             print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
                 out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
                 +'\n'+'-'*50)
@@ -190,16 +194,20 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             os.chdir(current_dir)
             if debug_dict is not None:
                 debug_dict['failed']['pflotran_runtime'][file] = out
-            print('\033[91mUNKNOWN ERROR\033[0m\n'+'-'*50)
+            print('\033[93mWARNING: Can\'t find PFLOTRAN regression file output\033[0m\n'+'-'*50)
 
             if verbose: print(err)
-            return False
+            #return False
+            return True
 
         reg_file = out[capture_idx+len(capture)+1:out.find('\n',capture_idx)]
         regression_out.append(open(reg_file).read())
 
     # Now, we want to store the regression output as a dictionary
     a = dict()
+
+    # Regession output to ignore in comparison
+    _ignore_keys = ['Time (seconds)','Newton Iterations','Solver Iterations']
 
     for (i,regression_file) in enumerate(regression_out):
         b = dict()
@@ -214,7 +222,7 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             else:
                 # Split lines in headers as [key,value]
                 parsed = list(map(str.strip,line.strip().split(':')))
-                if parsed[0] != 'Time (seconds)':
+                if parsed[0] not in _ignore_keys:
                     try:
                         b[key][parsed[0]] = round(float(parsed[1]),3)
                     except ValueError:
@@ -321,6 +329,9 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
         os.chdir(current_dir)
         status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir,debug_dict=debug_dict)
 
+        if status == False:
+            sys.exit(1)
+
         if status:
             success_list.append(file)
         else:
@@ -387,8 +398,16 @@ if (__name__ == '__main__'):
 
     cleanup()
 
-    files = check_file('find ' + pflotran_dir + \
+    files_all = check_file('find ' + pflotran_dir + \
                        '/regression_tests/ -type f -name "*.in"')
+
+    files = []
+    for file in files_all:
+        if file != '':
+            # print file
+            if file.replace('/', ' ').split()[-1] in tests_list:
+                files.append(file)
+
 
     # Parse arguments
     parser = argparse.ArgumentParser(description=arg_help[0])
@@ -396,6 +415,9 @@ if (__name__ == '__main__'):
     parser.add_argument('-r','--regression', action='store_true', help=arg_help[2])
     parser.add_argument('-v','--validation', action='store_true', help=arg_help[3])
     parser.add_argument('-s','--single', type=str, help=arg_help[4])
+
+    #debug - delete
+    parser.add_argument('-rw','--readwrite',type=str)
 
     args = parser.parse_args()
 
@@ -408,6 +430,9 @@ if (__name__ == '__main__'):
         validation(files)
     elif args.single is not None:
         regression_validation([args.single],verbose=True)
+    elif args.readwrite is not None:
+        tmp_file = os.path.join(os.path.dirname(args.readwrite),'temp.in')
+        pdata(args.readwrite).write(tmp_file)
     else:
         parser.print_help()
 

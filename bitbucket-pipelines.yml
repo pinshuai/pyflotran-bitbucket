@@ -5,5 +5,6 @@ pipelines:
         name: Build and test
         script:
           - export PyFLOTRAN_DIR=`pwd`
+          - export PFLOTRAN_DIR='nil'
           - python setup.py install
           - python regression.py -v

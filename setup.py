@@ -7,5 +7,5 @@ setup(name='pyflotran',
       author='Satish Karra',
       author_email='satkarra@lanl.gov',
       py_modules=['ptool', 'pdata', 'pdflt'],
-      install_requires=['numpy','matplotlib','pyvtk','pickle','h5py','json']
+      install_requires=['numpy','matplotlib','pyvtk','h5py']
       )

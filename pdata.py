@@ -10232,7 +10232,12 @@ class pdata(object):
                         break
                     elif subkey == 'vrepos':
                         _val = floatD(subline.split()[1])
-                        _unit = subline.split()[2]
+
+                        try:
+                            _unit = subline.split()[2]
+                        except IndexError:
+                            _unit = None
+
                         inv.vrepos = Coeff(_val,unit=_unit)
                     elif subkey == 'solids':
                         while True:
@@ -10298,7 +10303,7 @@ class pdata(object):
         if wss.brucitec is not None:
             outfile.write('  BRUCITEC %s\n' % strD(wss.brucitec))
         if wss.bruciteh is not None:
-            outfile.write('  BRUCITEH %s\n' % strD(wss.brucitec))
+            outfile.write('  BRUCITEH %s\n' % strD(wss.bruciteh))
         if wss.hymagcon is not None:
             outfile.write('  HYMAGCON %s\n' % strD(wss.hymagcon))
         if wss.sat_wick is not None:

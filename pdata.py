@@ -95,7 +95,8 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis', 'general', 'th', 'thc',
-                      'toil_ims', 'todd_longstaff', 'solvent_tl']
+                      'toil_ims', 'todd_longstaff', 'solvent_tl',
+                      'wipp_flow']
 
 # checkpoint - allowed formats
 checkpoint_formats_allowed = ['hdf5', 'binary']
@@ -115,6 +116,8 @@ output_formats_allowed = ['TECPLOT BLOCK', 'TECPLOT POINT', 'HDF5',
                           'HDF5 MULTIPLE_FILES', 'MAD', 'VTK']
 
 velocity_units_allowed = ['m/s', 'm/yr', 'cm/s', 'cm/yr', 'm/y']
+
+pvt_types_allowed = ['pvds','pvdg','pvco','pvdo']
 
 output_variables_allowed = ['permeability',
                             'permeability_x',
@@ -310,7 +313,8 @@ cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
          'geomechanics_boundary_condition', 'geomechanics_strata',
          'geomechanics_time', 'geomechanics_material_property',
          'geomechanics_output', 'eos', 'integral_flux', 'ufd_decay',
-         'ufd_biosphere', 'source_sink_sandbox']
+         'ufd_biosphere', 'source_sink_sandbox', 'waste_form_general',
+         'wipp_source_sink']
 
 headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'simulation', 'regression',
@@ -328,7 +332,8 @@ headers = ['co2 database path', 'uniform velocity', 'nonuniform velocity',
            'geomechanics condition', 'geomechanics boundary condition',
            'geomechanics strata', 'geomechanics time',
            'geomechanics material property', 'geomechanics output', 'eos',
-           'integral_flux', 'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox']
+           'integral_flux', 'ufd decay', 'ufd biosphere', 'source_sink_sandbox',
+           'waste form general','wipp source sink']
 
 read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'simulation', 'regression',
@@ -346,7 +351,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'geomechanics_material_property', 'geomechanics_output',
               'eos','specified_velocity','reference_liquid_density',
               'minimum_hydrostatic_pressure','update_flow_permeability',
-              'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox']
+              'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
+              'waste_form_general','wipp_source_sink']
 
 headers = dict(zip(cards, headers))
 
@@ -370,8 +376,10 @@ class Coeff():
             _tmp = ' '.join(strD(_x) for _x in self._value)
         else:
             _tmp = strD(self._value)
-            
-        return '%s %s' % (_tmp,self._unit)
+        
+        if self._unit:
+            return '%s %s' % (_tmp,self._unit)
+        return '%s' % (_tmp)
     
     def __add__(self,other):
         
@@ -566,7 +574,7 @@ class pmaterial(Frozen):
                  permeability_min_scale_factor='',
                  longitudinal_dispersivity='', transverse_dispersivity_h='',
                  transverse_dispersivity_v='',
-                 secondary_continuum='', anisotropic=False,
+                 secondary_continuum='',
                  soil_compressibility_function='',
                  soil_reference_pressure=None,
                  soil_compressibility=None, compressibility_function='',
@@ -584,7 +592,8 @@ class pmaterial(Frozen):
                  heat_capacity='', heat_capacity_unit='',
                  perm_factor=None,
                  tortuosity_function_of_porosity=None,
-                 inactive=False):
+                 inactive=False,permeability_anisotropic=None,
+                 permeability_isotropic=None):
 
         if permeability is None:
             permeability = []
@@ -603,11 +612,12 @@ class pmaterial(Frozen):
         self.permeability_power = permeability_power
         self.permeability_critical_porosity = permeability_critical_porosity
         self.permeability_min_scale_factor = permeability_min_scale_factor
+        self.permeability_isotropic = permeability_isotropic
+        self.permeability_anisotropic = permeability_anisotropic
         self.longitudinal_dispersivity = longitudinal_dispersivity
         self.transverse_dispersivity_h = transverse_dispersivity_h
         self.transverse_dispersivity_v = transverse_dispersivity_v
         self.secondary_continuum = secondary_continuum
-        self.anisotropic = anisotropic
         self.soil_compressibility_function = soil_compressibility_function
         self.soil_reference_pressure = soil_reference_pressure
         self.soil_compressibility = soil_compressibility
@@ -1572,6 +1582,78 @@ class prestart(Frozen):
         self.time_value = time_value  # float
         self._freeze()
 
+class pwipp_source_sink(Frozen):
+    def __init__(self,brucitec=None,bruciteh=None,hymagcon=None,sat_wick=None,
+                 salt_percent=None,gratmici=None,gratmich=None,corrmco2=None,
+                 humcorr=None,asdrum=None,alpharxn=None,socmin=None,
+                 biogenfc=None,probdeg=None,stoichiometric_matrix=None,
+                 inventory=None,waste_panel=None):
+
+        if waste_panel is None:
+            waste_panel = []
+
+        if inventory is None:
+            inventory = []
+
+        if stoichiometric_matrix is None:
+            stoichiometric_matrix = []
+
+        self.brucitec = brucitec
+        self.bruciteh = bruciteh
+        self.hymagcon = hymagcon
+        self.sat_wick = sat_wick
+        self.salt_percent = salt_percent
+        self.gratmici = gratmici
+        self.gratmich = gratmich
+        self.corrmco2 = corrmco2
+        self.humcorr = humcorr
+        self.asdrum = asdrum
+        self.alpharxn = alpharxn
+        self.socmin = socmin
+        self.biogenfc = biogenfc
+        self.probdeg = probdeg
+        self.stoichiometric_matrix = stoichiometric_matrix
+        self.inventory = inventory
+        self.waste_panel = waste_panel
+        self._freeze()
+
+    class inventory(Frozen):
+        def __init__(self,name=None,vrepos=None,solids=None,aqueous=None):
+
+            if solids is None:
+                solids = []
+
+            if aqueous is None:
+                aqueous = []
+
+            self.name = name
+            self.vrepos = vrepos
+            self.solids = solids
+            self.aqueous = aqueous
+            self._freeze()
+
+        class solid(Frozen):
+            def __init__(self,name=None,value=None):
+                self.name = name
+                self.value = value
+                self._freeze()
+
+        class aqueous(Frozen):
+            def __init__(self,name=None,value=None):
+                self.name = name
+                self.value = value
+                self._freeze()
+
+    class waste_panel(Frozen):
+        def __init__(self,name=None,region=None,inventory=None,
+                     scale_by_volume=None):
+            self.name = name
+            self.region = region
+            self.inventory = inventory
+            self.scale_by_volume = scale_by_volume
+            self._freeze()
+
+
 class psource_sink_sandbox(Frozen):
     def __init__(self,mass_rate_downregulated=None):
         self.mass_rate_downregulated = mass_rate_downregulated
@@ -1856,7 +1938,11 @@ class psimulation(Frozen):
                  multiple_continuum=False,numerical_jacobian=False,
                  analytical_jacobian=False,
                  ufd_decay=None,ufd_biosphere=None,
-                 auxiliary=None):
+                 auxiliary=None,
+                 inline_surface_region=None,inline_surface_mannings_coeff=None,
+                 waste_form=None,harmonic_permeability_only=None,
+                 do_not_scale_jacobian=False,gas_component_formula_weight=None,
+                 options=None):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -1883,6 +1969,10 @@ class psimulation(Frozen):
         self.ufd_decay = ufd_decay
         self.ufd_biosphere = ufd_biosphere
         self.auxiliary = auxiliary
+        self.inline_surface_region = inline_surface_region
+        self.inline_surface_mannings_coeff = inline_surface_mannings_coeff
+        self.waste_form = waste_form
+        self.options = options
         self._freeze()
 
     class auxiliary(Frozen):
@@ -1901,6 +1991,146 @@ class psimulation(Frozen):
                 _val = strD(self.species[1])
                 outfile.write('      SPECIES %s %s\n' % (_name,_val))
             outfile.write('    /\n')
+
+    class options(Frozen):
+        '''
+        Class to store simulation options.
+        '''
+        def __init__(self,isothermal=False,inline_surface_region=None,
+                     inline_surface_mannings_coeff=None,
+                     max_pressure_change=None,max_concentration_change=None,
+                     max_temperature_change=None,max_saturation_change=None,
+                     max_cfl=None,numerical_derivatives=None,
+                     pressure_dampening_factor=None,freezing=False,
+                     ice_model=None,multiple_continuum=False,
+                     numerical_jacobian=False,analytical_jacobian=False,
+                     harmonic_permeability_only=False,
+                     do_not_scale_jacobian=False,
+                     gas_component_formula_weight=None,
+                     liquid_residual_infinity_tol=None,
+                     gas_residual_infinity_tol=None,
+                     max_allow_rel_liq_pres_chang_ni=None,
+                     gas_sat_thresh_force_extra_ni=None,
+                     gas_sat_thresh_force_ts_cut=None,
+                     max_allow_gas_sat_change_ts=None,
+                     gas_sat_change_ts_governor=None,
+                     gas_sat_gov_switch_abs_to_rel=None,
+                     min_liq_pres_force_ts_cut=None,
+                     max_allow_liq_pres_change_ts=None,
+                     liq_pres_change_ts_governor=None):
+
+            self.isothermal = isothermal
+            self.inline_surface_region = inline_surface_region
+            self.inline_surface_mannings_coeff = inline_surface_mannings_coeff
+            self.max_pressure_change = max_pressure_change
+            self.max_concentration_change = max_concentration_change
+            self.max_temperature_change = max_temperature_change
+            self.max_saturation_change = max_saturation_change
+            self.max_cfl = max_cfl
+            self.numerical_derivatives = numerical_derivatives
+            self.pressure_dampening_factor = pressure_dampening_factor
+            self.freezing = freezing
+            self.ice_model = ice_model
+            self.multiple_continuum = multiple_continuum
+            self.numerical_jacobian = numerical_jacobian
+            self.analytical_jacobian = analytical_jacobian
+            self.harmonic_permeability_only = harmonic_permeability_only
+            self.do_not_scale_jacobian = do_not_scale_jacobian
+            self.gas_component_formula_weight = gas_component_formula_weight
+            self.liquid_residual_infinity_tol = liquid_residual_infinity_tol
+            self.gas_residual_infinity_tol = gas_residual_infinity_tol
+            self.max_allow_rel_liq_pres_chang_ni = max_allow_rel_liq_pres_chang_ni
+            self.gas_sat_thresh_force_extra_ni = gas_sat_thresh_force_extra_ni
+            self.gas_sat_thresh_force_ts_cut = gas_sat_thresh_force_ts_cut
+            self.max_allow_gas_sat_change_ts = max_allow_gas_sat_change_ts
+            self.gas_sat_change_ts_governor = gas_sat_change_ts_governor
+            self.gas_sat_gov_switch_abs_to_rel = gas_sat_gov_switch_abs_to_rel
+            self.min_liq_pres_force_ts_cut = min_liq_pres_force_ts_cut
+            self.max_allow_liq_pres_change_ts = max_allow_liq_pres_change_ts
+            self.liq_pres_change_ts_governor = liq_pres_change_ts_governor
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('      OPTIONS\n')
+            if self.isothermal:
+                outfile.write('        ISOTHERMAL\n')
+            if self.inline_surface_region:
+                _val = self.inline_surface_region
+                outfile.write('        INLINE_SURFACE_REGION %s\n' % _val)
+            if self.inline_surface_mannings_coeff:
+                _val = strD(self.inline_surface_mannings_coeff)
+                outfile.write('        INLINE_SURFACE_MANNINGS_COEFF %s\n' % _val)
+            if self.max_pressure_change:
+                _val = strD(self.max_pressure_change)
+                outfile.write('        MAX_PRESSURE_CHANGE %s\n' % _val)
+            if self.max_concentration_change:
+                _val = strD(self.max_concentration_change)
+                outfile.write('        MAX_CONCENTRATION_CHANGE %s\n' % _val)
+            if self.max_temperature_change:
+                _val = strD(self.max_temperature_change)
+                outfile.write('        MAX_TEMPERATURE_CHANGE %s\n' % _val)
+            if self.max_saturation_change:
+                _val = strD(self.max_saturation_change)
+                outfile.write('        MAX_SATURATION_CHANGE %s\n' % _val)
+            if self.max_cfl:
+                outfile.write('        MAX_CFL ' + strD(self.max_cfl) + '\n')
+            if self.numerical_derivatives:
+                _val = strD(self.numerical_derivatives)
+                outfile.write('        NUMERICAL_DERIVATIVES %s\n' % _val)
+            if self.pressure_dampening_factor:
+                _val = strD(self.pressure_dampening_factor)
+                outfile.write('        PRESSURE_DAMPENING_FACTOR %s\n' % _val)
+            if self.freezing:
+                outfile.write('        FREEZING\n')
+            if self.ice_model:
+                outfile.write('        ICE_MODEL %s\n' % self.ice_model)
+            if self.multiple_continuum:
+                outfile.write('        MULTIPLE_CONTINUUM\n')
+            if self.numerical_jacobian:
+                outfile.write('        NUMERICAL_JACOBIAN\n')
+            if self.analytical_jacobian:
+                outfile.write('        ANALYTICAL_JACOBIAN\n')
+            if self.harmonic_permeability_only:
+                outfile.write('        HARMONIC_PERMEABILITY_ONLY\n')
+            if self.do_not_scale_jacobian:
+                outfile.write('        DO_NOT_SCALE_JACOBIAN\n')
+            if self.gas_component_formula_weight:
+                _val = strD(self.gas_component_formula_weight)
+                outfile.write('        GAS_COMPONENT_FORMULA_WEIGHT %s\n' % _val)
+            if self.liquid_residual_infinity_tol:
+                _val = strD(self.liquid_residual_infinity_tol)
+                outfile.write('        LIQUID_RESIDUAL_INFINITY_TOL %s\n' % _val)
+            if self.gas_residual_infinity_tol:
+                _val = strD(self.gas_residual_infinity_tol)
+                outfile.write('        GAS_RESIDUAL_INFINITY_TOL %s\n' % _val)
+            if self.max_allow_rel_liq_pres_chang_ni:
+                _val = strD(self.max_allow_rel_liq_pres_chang_ni)
+                outfile.write('        MAX_ALLOW_REL_LIQ_PRES_CHANG_NI %s\n' % _val)
+            if self.gas_sat_thresh_force_extra_ni:
+                _val = strD(self.gas_sat_thresh_force_extra_ni)
+                outfile.write('        GAS_SAT_THRESH_FORCE_EXTRA_NI %s\n' % _val)
+            if self.gas_sat_thresh_force_ts_cut:
+                _val = strD(self.gas_sat_thresh_force_ts_cut)
+                outfile.write('        GAS_SAT_THRESH_FORCE_TS_CUT %s\n' % _val)
+            if self.max_allow_gas_sat_change_ts:
+                _val = strD(self.max_allow_gas_sat_change_ts)
+                outfile.write('        MAX_ALLOW_GAS_SAT_CHANGE_TS %s\n' % _val)
+            if self.gas_sat_change_ts_governor:
+                _val = strD(self.gas_sat_change_ts_governor)
+                outfile.write('        GAS_SAT_CHANGE_TS_GOVERNOR %s\n' % _val)
+            if self.gas_sat_gov_switch_abs_to_rel:
+                _val = strD(self.gas_sat_gov_switch_abs_to_rel)
+                outfile.write('        GAS_SAT_GOV_SWITCH_ABS_TO_REL %s\n' % _val)
+            if self.min_liq_pres_force_ts_cut:
+                _val = strD(self.min_liq_pres_force_ts_cut)
+                outfile.write('        MIN_LIQ_PRES_FORCE_TS_CUT %s\n' % _val)
+            if self.max_allow_liq_pres_change_ts:
+                _val = strD(self.max_allow_liq_pres_change_ts)
+                outfile.write('        MAX_ALLOW_LIQ_PRES_CHANGE_TS %s\n' % _val)
+            if self.liq_pres_change_ts_governor:
+                _val = strD(self.liq_pres_change_ts_governor)
+                outfile.write('        LIQ_PRES_CHANGE_TS_GOVERNOR %s\n' % _val)
+            outfile.write('      /\n')
 
 class pregression(Frozen):
     """
@@ -2308,6 +2538,80 @@ class ppoint(Frozen):
         self.name = name.lower()
         self.coordinate = coordinate
         self._freeze()
+
+
+class pwaste_form_general(Frozen):
+    def __init__(self,print_mass_balance=False,implicit_solution=False,
+                 waste_form=None,mechanism=None):
+
+        if waste_form is None:
+            waste_form = []
+
+        if mechanism is None:
+            mechanism = []
+
+        self.print_mass_balance = print_mass_balance
+        self.implicit_solution = implicit_solution
+        self.waste_form = waste_form
+        self.mechanism = mechanism
+
+    class mechanism(Frozen):
+        def __init__(self,name=None,mech_type=None,specific_surface_area=None,
+                     matrix_density=None,kienzler_dissolution=None,
+                     canister_degradation_mode=None,vitality_log10_mean=None,
+                     vitality_log10_stdev=None,vitality_upper_truncation=None,
+                     canister_material_constant=None,k0=None,species=None,
+                     k_long=None,nu=None,ea=None,q=None,k=None,v=None,ph=None,
+                     dissolution_rate=None,fractional_dissolution_rate=None,
+                     fractional_dissolution_rate_vi=None):
+
+            if species is None:
+                species = []
+
+            self.name = name
+            self.mech_type = mech_type
+            self.specific_surface_area = specific_surface_area
+            self.matrix_density = matrix_density
+            self.kienzler_dissolution = kienzler_dissolution
+            self.canister_degradation_mode = canister_degradation_mode
+            self.vitality_log10_mean = vitality_log10_mean
+            self.vitality_log10_stdev = vitality_log10_stdev
+            self.vitality_upper_truncation = vitality_upper_truncation
+            self.canister_material_constant = canister_material_constant
+            self.k0 = k0
+            self.species = species
+            self.k_long = k_long
+            self.nu = nu
+            self.ea = ea
+            self.q = q
+            self.k = k
+            self.v = v
+            self.ph = ph
+            self.dissolution_rate = dissolution_rate
+            self.fractional_dissolution_rate = fractional_dissolution_rate
+            self.fractional_dissolution_rate_vi = fractional_dissolution_rate_vi
+
+    class waste_form(Frozen):
+        def __init__(self,coordinate=None,exposure_factor=None,volume=None,
+                     mechanism_name=None,canister_vitality_rate=None,
+                     canister_breach_time=None,decay_start_time=None):
+            self.coordinate = coordinate
+            self.exposure_factor = exposure_factor
+            self.volume = volume
+            self.mechanism_name = mechanism_name
+            self.canister_vitality_rate = canister_vitality_rate
+            self.canister_breach_time = canister_breach_time
+            self.decay_start_time = decay_start_time
+
+    def add_mechanism(self,**kwargs):
+        mech = pwaste_form_general.mechanism(**kwargs)
+        self.mechanism.append(mech)
+        return mech
+
+    def add_waste_form(self,**kwargs):
+        wf = pwaste_form_general.waste_form(**kwargs)
+        self.waste_form.append(wf)
+        return wf
 
 
 class pcharacteristic_curves(Frozen):
@@ -4302,6 +4606,22 @@ class peos(Frozen):
         self.density_params = density_params
         self._freeze()
 
+    class pvt(Frozen):
+        def __init__(self,pvt_type=None,pressure_units=None,rs_units=None,
+                     fvf_units=None,viscosity_units=None,
+                     compressibility_units=None,temperature_data=None):
+            
+            if temperature_data is None:
+                temperature_data = []
+
+            self.pvt_type = pvt_type
+            self.pressure_units = pressure_units
+            self.rs_units = rs_units
+            self.fvf_units = fvf_units
+            self.viscosity_units = viscosity_units
+            self.temperature_data = temperature_data
+            self.compressibility_units = compressibility_units
+
 
 class prks(Frozen):
     """
@@ -4396,6 +4716,8 @@ class pdata(object):
         self.eoslist = []
         self.ufd_decay = None
         self.ufd_biosphere = None
+        self.waste_form_general = None
+        self.wipp_source_sink = None
 
         # run object
         self._path = ppath(parent=self)
@@ -4761,7 +5083,9 @@ class pdata(object):
                             self._read_update_flow_permeability,
                             self._read_ufd_decay,
                             self._read_ufd_biosphere,
-                            self._read_source_sink_sandbox],
+                            self._read_source_sink_sandbox,
+                            self._read_waste_form_general,
+                            self._read_wipp_source_sink],
                            ))
 
         # associate each card name with
@@ -5158,11 +5482,17 @@ class pdata(object):
         if self.simulation.simulation_type.lower() == 'geomechanics_subsurface':
             self._write_geomechanics(outfile)
 
+        if self.waste_form_general:
+            self._write_wasteform_general(outfile)
+
         if self.ufd_decay:
             self._write_ufd_decay(outfile)
 
         if self.ufd_biosphere:
             self._write_ufd_biosphere(outfile)
+
+        if self.wipp_source_sink:
+            self._write_wipp_source_sink(outfile)
 
         outfile.close()
 
@@ -5498,7 +5828,6 @@ class pdata(object):
 
         while keep_reading:  # read through all cards
             line = get_next_line(infile)  # get next line
-            print(line)
             key = line.strip().split()[0].lower()  # take first keyword
 
             if key == 'density':
@@ -5606,10 +5935,55 @@ class pdata(object):
                     if len(line.strip().split()) > 2:
                         for val in line.strip().split()[2:]:
                             eos.fluid_henrys_constant.append(floatD(val))
+            elif key in pvt_types_allowed:
+                pvt = peos.pvt(pvt_type=key)
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey == 'data_units':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key == 'pressure':
+                                pvt.pressure_units = self.splitter(_line)
+                            elif _key == 'rs':
+                                pvt.rs_units = self.splitter(_line)
+                            elif _key == 'fvf':
+                                pvt.fvf_units = self.splitter(_line)
+                            elif _key == 'viscosity':
+                                pvt.viscosity_units = self.splitter(_line)
+                            elif _key == 'compressibility':
+                                pvt.compressibility_units = self.splitter(_line)
+                            elif _key in ['/','end']:
+                                break
+                    elif subkey == 'data':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key == 'temperature':
+                                while True:
+                                    _line2 = get_next_line(infile)
+                                    _key2 = _line2.strip().split()[0].lower()
+                                    if _key2 in ['/','end']:
+                                        break
+                                    else:
+                                        pvt.temperature_data.append(\
+                                                         _line2.strip().split())
+                            elif _key in ['/','end']:
+                                break
+                    elif subkey in ['/','end']:
+                        break
+                    else:
+                        raise PyFLOTRAN_ERROR('unknown key...')
+
             elif key == 'formula_weight':
-                if eos.fluid_name not in ['gas','oil']:
+                if eos.fluid_name not in ['gas','oil','solvent']:
                     raise PyFLOTRAN_ERROR(
                         'formula_weight can only be set for fluid set to gas!')
+
                 eos.fluid_formula_weight = floatD(line.strip().split()[1])
             elif key in ['/', 'end']:
                 keep_reading = False
@@ -5909,45 +6283,94 @@ class pdata(object):
                             if key1 == 'mode':
                                 simulation.mode = self.splitter(line).lower()
                             elif key1 == 'options':
+                                opt = psimulation.options()
                                 keep_reading_2 = True
                                 while keep_reading_2:
                                     line = get_next_line(infile)
                                     key2 = line.strip().split()[0].lower()
                                     if key2 == 'isothermal':
-                                        simulation.isothermal = True
+                                        opt.isothermal = True
+                                    elif key2 == 'inline_surface_region':
+                                        opt.inline_surface_region = \
+                                            self.splitter(line)
+                                    elif key2 == 'inline_surface_mannings_coeff':
+                                        opt.inline_surface_mannings_coeff = \
+                                            floatD(self.splitter(line))
                                     elif key2 == 'max_pressure_change':
-                                        simulation.max_pressure_change =\
+                                        opt.max_pressure_change = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_concentration_change':
-                                        simulation.max_concentration_change =\
+                                        opt.max_concentration_change = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_temperature_change':
-                                        simulation.max_temperature_change =\
+                                        opt.max_temperature_change = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_saturation_change':
-                                        simulation.max_saturation_change =\
+                                        opt.max_saturation_change = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_cfl':
-                                        simulation.max_cfl =\
+                                        opt.max_cfl = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'numerical_derivatives':
-                                        simulation.numerical_derivatives =\
+                                        opt.numerical_derivatives = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'pressure_dampening_factor':
-                                        simulation.pressure_dampening_factor =\
+                                        opt.pressure_dampening_factor = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'freezing':
-                                        simulation.freezing = True
+                                        opt.freezing = True
                                     elif key2 == 'ice_model':
-                                        simulation.ice_model = self.splitter(line)
+                                        opt.ice_model = self.splitter(line)
                                     elif key2 == 'multiple_continuum':
-                                        simulation.multiple_continuum = True
+                                        opt.multiple_continuum = True
                                     elif key2 == 'numerical_jacobian':
-                                        simulation.numerical_jacobian = True
+                                        opt.numerical_jacobian = True
                                     elif key2 == 'analytical_jacobian':
-                                        simulation.analytical_jacobian = True
+                                        opt.analytical_jacobian = True
+                                    elif key2 == 'harmonic_permeability_only':
+                                        opt.harmonic_permeability_only \
+                                        = True
+                                    elif key2 == 'do_not_scale_jacobian':
+                                        opt.do_not_scale_jacobian = True
+                                    elif key2 == 'gas_component_formula_weight':
+                                        opt.gas_component_formula_weight \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'liquid_residual_infinity_tol':
+                                        opt.liquid_residual_infinity_tol \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'gas_residual_infinity_tol':
+                                        opt.gas_residual_infinity_tol \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'max_allow_rel_liq_pres_chang_ni':
+                                        opt.max_allow_rel_liq_pres_chang_ni \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'gas_sat_thresh_force_extra_ni':
+                                        opt.gas_sat_thresh_force_extra_ni \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'gas_sat_thresh_force_ts_cut':
+                                        opt.gas_sat_thresh_force_ts_cut \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'max_allow_gas_sat_change_ts':
+                                        opt.max_allow_gas_sat_change_ts \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'gas_sat_change_ts_governor':
+                                        opt.gas_sat_change_ts_governor \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'gas_sat_gov_switch_abs_to_rel':
+                                        opt.gas_sat_gov_switch_abs_to_rel \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'min_liq_pres_force_ts_cut':
+                                        opt.min_liq_pres_force_ts_cut \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'max_allow_liq_pres_change_ts':
+                                        opt.max_allow_liq_pres_change_ts \
+                                        = floatD(self.splitter(line))
+                                    elif key2 == 'liq_pres_change_ts_governor':
+                                        opt.liq_pres_change_ts_governor \
+                                        = floatD(self.splitter(line))
                                     elif key2 in ['/', 'end']:
                                         keep_reading_2 = False
+                                simulation.options = opt
                             elif key1 in ['/', 'end']:
                                 keep_reading_1 = False
                         key_bank.append(key)
@@ -5982,6 +6405,13 @@ class pdata(object):
                                 _value = floatD(subline.split()[2])
                                 simulation.auxiliary.species = [_name,_value]
                             elif subkey in ['/','end']:
+                                break
+
+                    elif key == 'waste_form':
+                        simulation.waste_form = self.splitter(line)
+                        while True:
+                            subline = get_next_line(infile).strip().lower()
+                            if subline in ['/','end']:
                                 break
 
                     elif key == 'ufd_decay':
@@ -6052,6 +6482,7 @@ class pdata(object):
         self._header(outfile, headers['simulation'])
         simulation = self.simulation
         # Write out simulation header
+
         outfile.write('SIMULATION' + '\n')
         if simulation.simulation_type.lower() in simulation_types_allowed:
             outfile.write('  SIMULATION_TYPE ' +
@@ -6069,51 +6500,19 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode.upper() + '\n')
-                if simulation.isothermal or \
-                        simulation.max_concentration_change or \
-                        simulation.max_pressure_change \
-                        or simulation.max_saturation_change or \
-                        simulation.max_temperature_change or \
-                        simulation.max_cfl or \
-                        simulation.pressure_dampening_factor or \
-                        simulation.numerical_derivatives:
-                    outfile.write('      OPTIONS\n')
-                    if simulation.numerical_jacobian:
-                        outfile.write('        NUMERICAL_JACOBIAN\n')
-                    if simulation.analytical_jacobian:
-                        outfile.write('        ANALYTICAL_JACOBIAN\n')
-                    if simulation.isothermal:
-                        outfile.write('        ISOTHERMAL\n')
-                    if simulation.max_pressure_change:
-                        outfile.write('        MAX_PRESSURE_CHANGE ' +
-                                      strD(simulation.max_pressure_change) +
-                                      '\n')
-                    if simulation.max_saturation_change:
-                        outfile.write('        MAX_SATURATION_CHANGE ' +
-                                      strD(simulation.max_saturation_change) +
-                                      '\n')
-                    if simulation.max_concentration_change:
-                        outfile.write('        MAX_CONCENTRATION_CHANGE ' +
-                                      strD(simulation.max_concentration_change)
-                                      + '\n')
-                    if simulation.max_temperature_change:
-                        outfile.write('        MAX_TEMPERATURE_CHANGE ' +
-                                      strD(simulation.max_temperature_change)
-                                      + '\n')
-                    if simulation.multiple_continuum:
-                        outfile.write('        MULTIPLE_CONTINUUM\n')
-                    if simulation.max_cfl:
-                        outfile.write('        MAX_CFL ' +
-                                      strD(simulation.max_cfl) + '\n')
-                    if simulation.pressure_dampening_factor:
-                        outfile.write('        PRESSURE_DAMPENING_FACTOR ' +
-                                      strD(simulation.pressure_dampening_factor)
-                                      + '\n')
-                    if simulation.numerical_derivatives:
-                        outfile.write('        NUMERICAL_DERIVATIVES ' +
-                                      strD(simulation.numerical_derivatives) +
-                                      '\n')
-                    outfile.write('      /\n')
+
+                if simulation.options:
+                    simulation.options._write(outfile)
+
+                if simulation.waste_form:
+                    outfile.write('  WASTE_FORM %s\n' % simulation.waste_form)
+                    outfile.write('  /\n')
+                if simulation.ufd_decay:
+                    outfile.write('  UFD_DECAY %s\n' % simulation.ufd_decay)
+                    outfile.write('  /\n')
+                if simulation.ufd_biosphere:
+                    outfile.write('  UFD_BIOSPHERE %s\n' % simulation.ufd_biosphere)
+                    outfile.write('  /\n')
             else:
                 print('       valid simulation.mode:', mode_names_allowed, '\n')
                 raise PyFLOTRAN_ERROR(
@@ -6139,44 +6538,8 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode + '\n')
-                if simulation.isothermal or \
-                        simulation.max_concentration_change or \
-                        simulation.max_pressure_change \
-                        or simulation.max_saturation_change \
-                        or simulation.numerical_jacobian \
-                        or simulation.multiple_continuum:
-                    outfile.write('      OPTIONS\n')
-                    if simulation.numerical_jacobian:
-                        outfile.write('        NUMERICAL_JACOBIAN\n')
-                    if simulation.analytical_jacobian:
-                        outfile.write('        ANALYTICAL_JACOBIAN\n')
-                    if simulation.multiple_continuum:
-                        outfile.write('        MULTIPLE_CONTINUUM\n')
-                    if simulation.freezing:
-                        outfile.write('        FREEZING\n')
-                    if simulation.isothermal:
-                        outfile.write('        ISOTHERMAL\n')
-                    if simulation.ice_model:
-                        outfile.write('        ICE_MODEL %s\n' % \
-                                      simulation.ice_model)
-                    if simulation.max_pressure_change:
-                        outfile.write('        MAX_PRESSURE_CHANGE ' +
-                                      strD(simulation.max_pressure_change) +
-                                      '\n')
-                    if simulation.max_saturation_change:
-                        outfile.write('        MAX_SATURATION_CHANGE ' +
-                                      strD(simulation.max_saturation_change) +
-                                      '\n')
-                    if simulation.max_concentration_change:
-                        outfile.write('        MAX_CONCENTRATION_CHANGE ' +
-                                      strD(simulation.
-                                           max_concentration_change) +
-                                      '\n')
-                    if simulation.max_temperature_change:
-                        outfile.write('        MAX_TEMPERATURE_CHANGE ' +
-                                      strD(simulation.max_temperature_change) +
-                                      '\n')
-                    outfile.write('      /\n')
+                if simulation.options:
+                    simulation.options._write(outfile)
             else:
                 print('simulation.mode: \'' +
                       simulation.mode + '\' is invalid!')
@@ -6590,6 +6953,8 @@ class pdata(object):
         np_permeability_critical_porosity = p.permeability_critical_porosity
         np_permeability_power = p.permeability_power
         np_permeability_min_scale_factor = p.permeability_min_scale_factor
+        np_perm_iso = False
+        np_perm_aniso = False
         np_longitudinal_dispersivity = p.longitudinal_dispersivity
         np_transverse_dispersivity_h = p.transverse_dispersivity_h
         np_transverse_dispersivity_v = p.transverse_dispersivity_v
@@ -6683,6 +7048,10 @@ class pdata(object):
                             np_permeability.append(pdbase(self.splitter(line)))
                         else:
                             np_permeability.append(floatD(self.splitter(line)))
+                    elif key == 'isotropic':
+                        np_perm_iso = True
+                    elif key == 'anisotropic':
+                        np_perm_aniso = True                        
                     elif key == 'dataset':
                         np_permeability.append(self.splitter(line))
                     elif key in ['/', 'end']:
@@ -6740,6 +7109,8 @@ class pdata(object):
                              cond_wet=np_cond_wet, saturation=np_saturation,
                              permeability=np_permeability,
                              permeability_power=np_permeability_power,
+                             permeability_isotropic=np_perm_iso,
+                             permeability_anisotropic=np_perm_aniso,
                              permeability_critical_porosity=np_permeability_critical_porosity,
                              permeability_min_scale_factor=np_permeability_min_scale_factor,
                              longitudinal_dispersivity=np_longitudinal_dispersivity,
@@ -6869,8 +7240,11 @@ class pdata(object):
                                   strD(prop.permeability[1]) + '\n')
                     outfile.write('    PERM_Z ' +
                                   strD(prop.permeability[2]) + '\n')
-                if prop.anisotropic:
+                if prop.permeability_anisotropic:
                     outfile.write('    ANISOTROPIC\n')
+                if prop.permeability_isotropic:
+                    outfile.write('    ISOTROPIC\n')                    
+
                 outfile.write('  /\n')
 
             if prop.perm_factor:
@@ -8516,6 +8890,234 @@ class pdata(object):
 
             outfile.write('END\n\n')
 
+    def _read_waste_form_general(self,infile):
+
+        wfg = pwaste_form_general()
+
+        while True:
+            line = get_next_line(infile)
+            key = line.strip().split()[0].lower()
+
+            if key in ['/','end','end_waste_form_general']:
+                break
+            elif key == 'print_mass_balance':
+                wfg.print_mass_balance = True
+            elif key == 'implicit_solution':
+                wfg.implicit_solution = True
+            elif key == 'mechanism':
+                mech = wfg.add_mechanism(mech_type=self.splitter(line))
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey in ['/','end']:
+                        break
+                    elif subkey == 'name':
+                        mech.name = self.splitter(subline)
+                    elif subkey == 'specific_surface_area':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.specific_surface_area = Coeff(_val,unit=_unit)
+                    elif subkey == 'matrix_density':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.matrix_density = Coeff(_val,unit=_unit)
+                    elif subkey == 'kienzler_dissolution':
+                        mech.kienzler_dissolution = True
+                    elif subkey == 'canister_degradation_model':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key in ['/','end']:
+                                break
+                            elif _key == 'vitality_log10_mean':
+                                mech.vitality_log10_mean = \
+                                            floatD(self.splitter(_line))
+                            elif _key == 'vitality_log10_stdev':
+                                mech.vitality_log10_stdev = \
+                                            floatD(self.splitter(_line))
+                            elif _key == 'vitality_upper_truncation':
+                                mech.vitality_upper_truncation = \
+                                            floatD(self.splitter(_line))
+                            elif _key == 'canister_material_constant':
+                                mech.canister_material_constant = \
+                                            floatD(self.splitter(_line))
+
+                    elif subkey == 'k0':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.k0 = Coeff(_val,unit=_unit)
+                    elif subkey == 'species':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key in ['/','end']:
+                                break
+                            else:
+                                spec = []
+                                for (i,e) in enumerate(_line.split()):
+                                    if i not in [0,5]:
+                                        spec.append(floatD(e))
+                                    else:
+                                        spec.append(e)
+                                mech.species.append(spec)
+                    elif subkey == 'k_long':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.k_long = Coeff(_val,unit=_unit)
+                    elif subkey == 'nu':
+                        mech.nu = floatD(self.splitter(subline))
+                    elif subkey == 'ea':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.ea = Coeff(_val,unit=_unit)
+                    elif subkey == 'q':
+                        _val = self.splitter(subline).lower()
+                        mech.q = _val \
+                               if _val == 'as_calculated' else floatD(_val)
+                    elif subkey == 'k':
+                        mech.k = floatD(self.splitter(subline))
+                    elif subkey == 'v':
+                        mech.v = floatD(self.splitter(subline))
+                    elif subkey == 'ph':
+                        _val = self.splitter(subline).lower()
+                        mech.ph = _val \
+                               if _val == 'as_calculated' else floatD(_val)
+                    elif subkey == 'dissolution_rate':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.dissolution_rate = Coeff(_val,unit=_unit)
+                    elif subkey == 'fractional_dissolution_rate':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.fractional_dissolution_rate = Coeff(_val,unit=_unit)
+                    elif subkey == 'fractional_dissolution_rate_vi':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.fractional_dissolution_rate_vi = Coeff(_val,unit=_unit)
+                    elif subkey == 'specific_surface_area':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        mech.specific_surface_area = Coeff(_val,unit=_unit)
+
+            elif key == 'waste_form':
+                wf = wfg.add_waste_form()
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey in ['/','end']:
+                        break
+                    elif subkey == 'coordinate':
+                        _data = subline.strip().split()[1:]
+                        _data = [floatD(x) for x in _data]
+                        wf.coordinate = _data
+                    elif subkey == 'exposure_factor':
+                        wf.exposure_factor = floatD(self.splitter(subline))
+                    elif subkey == 'volume':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        wf.volume = Coeff(_val,unit=_unit)
+                    elif subkey == 'mechanism_name':
+                        wf.mechanism_name = self.splitter(subline)
+                    elif subkey == 'canister_vitality_rate':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        wf.canister_vitality_rate = Coeff(_val,unit=_unit)
+                    elif subkey == 'cansiter_breach_time':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        wf.cansiter_breach_time = Coeff(_val,unit=_unit)
+                    elif subkey == 'decay_start_time':
+                        _val = floatD(subline.strip().split()[1])
+                        _unit = subline.strip().split()[2]
+                        wf.decay_start_time = Coeff(_val,unit=_unit)
+        
+        self.waste_form_general = wfg
+
+    def _write_wasteform_general(self,outfile):
+        self._header(outfile, headers['waste_form_general'])
+        
+        outfile.write('WASTE_FORM_GENERAL\n')
+        wf = self.waste_form_general
+
+        if wf.print_mass_balance:
+            outfile.write('  PRINT_MASS_BALANCE\n')
+
+        if wf.implicit_solution:
+            outfile.write('  IMPLICIT_SOLUTION\n')
+
+        for mech in wf.mechanism:
+            outfile.write('    MECHANISM %s\n' % mech.name)
+            outfile.write('      NAME %s\n' % mech.name)
+            outfile.write('      SPECIFIC_SURFACE_AREA %s\n' % mech.specific_surface_area)
+
+            if mech.fractional_dissolution_rate:
+                outfile.write('      FRACTIONAL_DISSOLUTION_RATE %s\n' % mech.fractional_dissolution_rate)
+            if mech.matrix_density:
+                outfile.write('      MATRIX_DENSITY %s\n' % mech.matrix_density)
+            if mech.kienzler_dissolution:
+                outfile.write('      KIENZLER_DISSOLUTION\n')
+
+            if mech.species:
+                outfile.write('      SPECIES\n')
+                for spec in mech.species:
+                    _str = spec
+                    _str[1:5] = [strD(x) for x in _str[1:5]]
+                    _str = [x.ljust(10) for x in _str]
+                    outfile.write('        '+' '.join(_str)+'\n')
+                outfile.write('      /\n')
+
+            canister_bool = mech.vitality_log10_mean is not None \
+                            or mech.vitality_log10_stdev is not None \
+                            or mech.canister_material_constant is not None \
+                            or mech.vitality_upper_truncation is not None
+
+            if canister_bool:
+                outfile.write('      CANISTER_DEGRADATION_MODEL\n')
+
+                if mech.vitality_log10_mean:
+                    outfile.write('        VITALITY_LOG10_MEAN %s\n' % strD(mech.vitality_log10_mean))
+
+                if mech.vitality_log10_stdev:
+                    outfile.write('        VITALITY_LOG10_STDEV %s\n' % strD(mech.vitality_log10_stdev))
+
+                if mech.vitality_upper_truncation is not None:
+                    outfile.write('        VITALITY_UPPER_TRUNCATION %s\n' % strD(mech.vitality_upper_truncation))
+
+                if mech.canister_material_constant:
+                    outfile.write('        CANISTER_MATERIAL_CONSTANT %s\n' % strD(mech.canister_material_constant))
+
+                outfile.write('      /\n')
+
+            outfile.write('    /\n')
+
+        for waste in wf.waste_form:
+            outfile.write('    WASTE_FORM\n')
+
+            if waste.coordinate:
+                _coords = ' '.join([strD(x) for x in waste.coordinate])
+                outfile.write('      COORDINATE %s\n' % _coords)
+
+            if waste.exposure_factor:
+                outfile.write('      EXPOSURE_FACTOR %s\n' % strD(waste.exposure_factor))
+
+            if waste.volume:
+                outfile.write('      VOLUME %s\n' % str(waste.volume))
+
+            if waste.mechanism_name:
+                outfile.write('      MECHANISM_NAME %s\n' % waste.mechanism_name)
+
+            if waste.canister_vitality_rate:
+                outfile.write('      CANISTER_VITALITY_RATE %s\n' % str(waste.canister_vitality_rate))
+
+            outfile.write('    /\n')
+
+        outfile.write('END_WASTE_FORM_GENERAL\n')
+
+
     def _read_region(self, infile, line):
 
         region = pregion()
@@ -9569,6 +10171,198 @@ class pdata(object):
                 ss.mass_rate_downregulated._write(outfile)
             outfile.write('END\n')
 
+    def _read_wipp_source_sink(self,infile):
+
+        wss = pwipp_source_sink()
+
+        while True:
+            line = get_next_line(infile)
+            key = line.strip().split()[0].lower()
+
+            if key in ['/','end','end_wipp_source_sink']:
+                break
+            elif key == 'brucitec':
+                wss.brucitec = floatD(self.splitter(line))
+            elif key == 'bruciteh':
+                wss.bruciteh = floatD(self.splitter(line))
+            elif key == 'hymagcon':
+                wss.hymagcon = floatD(self.splitter(line))
+            elif key == 'sat_wick':
+                wss.sat_wick = floatD(self.splitter(line))
+            elif key == 'salt_percent':
+                wss.salt_percent = floatD(self.splitter(line))
+            elif key == 'gratmici':
+                wss.gratmici = floatD(self.splitter(line))
+            elif key == 'gratmich':
+                wss.gratmich = floatD(self.splitter(line))
+            elif key == 'corrmco2':
+                wss.corrmco2 = floatD(self.splitter(line))
+            elif key == 'humcorr':
+                wss.humcorr = floatD(self.splitter(line))
+            elif key == 'asdrum':
+                wss.asdrum = floatD(self.splitter(line))
+            elif key == 'alpharxn':
+                wss.alpharxn = floatD(self.splitter(line))
+            elif key == 'socmin':
+                wss.socmin = floatD(self.splitter(line))
+            elif key == 'biogenfc':
+                wss.biogenfc = floatD(self.splitter(line))
+            elif key == 'probdeg':
+                wss.probdeg = floatD(self.splitter(line))
+            elif key == 'stoichiometric_matrix':
+                sm = []
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey in ['/','end']:
+                        break
+                    else:
+                        sm.append([floatD(x) for x in subline.split()])
+
+                wss.stoichiometric_matrix = sm
+
+            elif key == 'inventory':
+                inv = pwipp_source_sink.inventory(name=self.splitter(line))
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey in ['/','end']:
+                        break
+                    elif subkey == 'vrepos':
+                        _val = floatD(subline.split()[1])
+                        _unit = subline.split()[2]
+                        inv.vrepos = Coeff(_val,unit=_unit)
+                    elif subkey == 'solids':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key in ['/','end']:
+                                break
+                            else:
+
+                                try:
+                                    name,val,unit = _line.strip().split()
+                                except ValueError:
+                                    name,val = _line.strip().split()
+                                    unit = None
+
+                                val = floatD(val)
+                                _solid = pwipp_source_sink.inventory.solid()
+                                _solid.name = name
+                                _solid.value = Coeff(val,unit=unit)
+                                inv.solids.append(_solid)
+                    elif subkey == 'aqueous':
+                        while True:
+                            _line = get_next_line(infile)
+                            _key = _line.strip().split()[0].lower()
+
+                            if _key in ['/','end']:
+                                break
+                            else:
+                                aq = pwipp_source_sink.inventory.aqueous()
+                                aq.name, aq.value = _line.strip().split()
+                                aq.value = floatD(aq.value)
+                                inv.aqueous.append(aq)
+
+                wss.inventory.append(inv)
+
+            elif key == 'waste_panel':
+                wp = pwipp_source_sink.waste_panel(name=self.splitter(line))
+                while True:
+                    subline = get_next_line(infile)
+                    subkey = subline.strip().split()[0].lower()
+
+                    if subkey in ['/','end']:
+                        break
+                    elif subkey == 'region':
+                        wp.region = self.splitter(subline)
+                    elif subkey == 'inventory':
+                        wp.inventory = self.splitter(subline)
+                    elif subkey == 'scale_by_volume':
+                        _bool = self.splitter(subline).lower()
+                        wp.scale_by_volume = True if 'yes' in _bool else False
+
+                wss.waste_panel.append(wp)
+
+        self.wipp_source_sink = wss
+
+    def _write_wipp_source_sink(self,outfile):
+
+        wss = self.wipp_source_sink
+        #self._header(outfile, headers['wipp source sink'])
+
+        outfile.write('WIPP_SOURCE_SINK\n')
+        if wss.brucitec is not None:
+            outfile.write('  BRUCITEC %s\n' % strD(wss.brucitec))
+        if wss.bruciteh is not None:
+            outfile.write('  BRUCITEH %s\n' % strD(wss.brucitec))
+        if wss.hymagcon is not None:
+            outfile.write('  HYMAGCON %s\n' % strD(wss.hymagcon))
+        if wss.sat_wick is not None:
+            outfile.write('  SAT_WICK %s\n' % strD(wss.sat_wick))
+        if wss.salt_percent is not None:
+            outfile.write('  SALT_PERCENT %s\n' % strD(wss.salt_percent))
+        if wss.gratmici is not None:
+            outfile.write('  GRATMICI %s\n' % strD(wss.gratmici))
+        if wss.gratmich is not None:
+            outfile.write('  GRATMICH %s\n' % strD(wss.gratmich))
+        if wss.corrmco2 is not None:
+            outfile.write('  CORRMCO2 %s\n' % strD(wss.corrmco2))
+        if wss.humcorr is not None:
+            outfile.write('  HUMCORR %s\n' % strD(wss.humcorr))
+        if wss.asdrum is not None:
+            outfile.write('  ASDRUM %s\n' % strD(wss.asdrum))
+        if wss.alpharxn is not None:
+            outfile.write('  ALPHARXN %s\n' % strD(wss.alpharxn))
+        if wss.socmin is not None:
+            outfile.write('  SOCMIN %s\n' % strD(wss.socmin))
+        if wss.biogenfc is not None:
+            outfile.write('  BIOGENFC %s\n' % strD(wss.biogenfc))
+        if wss.probdeg is not None:
+            outfile.write('  PROBDEG %s\n' % strD(wss.probdeg))
+        if wss.stoichiometric_matrix:
+
+            _text = ''
+            for row in wss.stoichiometric_matrix:
+                _text += '    '+' '.join([strD(x).ljust(10) for x in row]) + '\n'
+            outfile.write('\n  STOICHIOMETRIC_MATRIX\n' + _text + '  END\n')
+
+        for inv in wss.inventory:
+            outfile.write('\n  INVENTORY %s\n' % inv.name)
+            outfile.write('    VREPOS %s\n' % inv.vrepos)
+
+            if inv.solids:
+                outfile.write('    SOLIDS\n')
+                for solid in inv.solids:
+                    outfile.write('      %s %s\n' % (solid.name,solid.value))
+                outfile.write('    END\n')
+
+            if inv.aqueous:
+                outfile.write('    AQUEOUS\n')
+                for aq in inv.aqueous:
+                    outfile.write('      %s %s\n' % (aq.name,aq.value))
+                outfile.write('    END\n')
+
+            outfile.write('  END\n')
+
+        for wp in wss.waste_panel:
+            outfile.write('\n  WASTE_PANEL %s\n' % wp.name)
+
+            if wp.region:
+                outfile.write('    REGION %s\n' % wp.region)
+            if wp.inventory:
+                outfile.write('    INVENTORY %s\n' % wp.inventory)
+            if wp.scale_by_volume:
+                _bool = 'YES' if wp.scale_by_volume == True else 'NO'
+                outfile.write('    SCALE_BY_VOLUME %s\n' % _bool)
+
+            outfile.write('  END\n')
+
+        outfile.write('END_WIPP_SOURCE_SINK\n')
+
     def _delete_strata(self, strata=pstrata()):
         self.strata_list.remove(strata)
 
@@ -9700,7 +10494,7 @@ class pdata(object):
                         break
                 ufd.isotopes.append(iso)
             elif key == 'implicit_solution':
-                self.implicit_solution = True
+                ufd.implicit_solution = True
             elif key in ['/','end']:
                 break
 
@@ -9709,6 +10503,7 @@ class pdata(object):
     def _write_ufd_decay(self, outfile):
         self._header(outfile, headers['ufd_decay'])
         ufd = self.ufd_decay
+
         outfile.write('UFD_DECAY\n')
         if ufd.implicit_solution:
             outfile.write('  IMPLICIT SOLUTION\n')
@@ -9811,7 +10606,7 @@ class pdata(object):
         self.ufd_biosphere = ufd
 
     def _write_ufd_biosphere(self,outfile):
-        self._header(outfile, headers['ufd_decay'])
+        self._header(outfile, headers['ufd_biosphere'])
         ufd = self.ufd_biosphere
 
         outfile.write('UFD_BIOSPHERE\n')

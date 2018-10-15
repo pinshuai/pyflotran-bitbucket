@@ -70,6 +70,38 @@ def read_and_write_with_error(file):
     new_file = file.replace('/', ' ').split()[-1]
     dat.write(new_file)
 
+def check_keywords(f1,f2):
+    with open(f1,'r') as f:
+        f1 = f.read().lower().split('\n')
+
+    with open(f2,'r') as f:
+        f2 = f.read().lower().split('\n')
+
+    a = []
+    for line in f1:
+        line = line.strip()
+        if len(line) > 1:
+            if line[0] != "#" and line[0] != "!":
+                a.append(line.split()[0])
+    f1 = a
+
+    a = []
+    for line in f2:
+        line = line.strip()
+        if len(line) > 1:
+            if line[0] != "#" and line[0] != "!":
+               a.append(line.split()[0])
+
+    f2 = a
+
+    for (i,line1) in enumerate(f1):
+        if len(line1) <= 1:
+            continue
+        elif line1[0] == "#":
+            continue
+        else:
+            if line1 not in f2 and not ('.' in line1 and 'd' in line1):
+                print("%d : %s" % (i,line1))
 
 def compare_regression_tests(file1, file2):
     current_dir = os.getcwd()
@@ -168,9 +200,9 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         err = decode(err)
 
         if 'ERROR' in out:
-            #if 'Keyword "MAP_HDF5_DATASET_NAME" not recognized in dataset.':
-            #    print('hmm...old version of PFLO')
-            #    return True
+            if 'Keyword "MAP_HDF5_DATASET_NAME" not recognized in dataset.':
+                print('hmm...old version of PFLO')
+                return True
 
             print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
                 out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
@@ -252,6 +284,7 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         print(' | '.join(list(map(os.path.basename,[file1,file2]))) + \
             '\n'.join([out,err,'-'*50]))
 
+
     if out == '' and err == '':
         print('\033[92mPASSED\033[0m\n'+'-'*50)
         if debug_dict is not None:
@@ -294,7 +327,7 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
     # Check that json-diff exists.
     if not os.path.isfile(json_diff_dir):
         print('ERROR: json-diff.js not found.\n'+
-            'To install, run\n\n    npm install json-diff\n')
+              'To install, run\n\n    npm install json-diff\n')
         sys.exit()
 
     fail_list = []
@@ -392,7 +425,8 @@ from a PyFLOTRAN generated input file.''',
 '''Run both validation and regression tests.''',
 '''Run *only* the comparative regression analysis.''',
 '''Run *only* the PyFLOTRAN I/O validation.''',
-'''Run a comparative regression analysis on a single PFLOTRAN input file.''']
+'''Run a comparative regression analysis on a single PFLOTRAN input file.''',
+'''Compare read and written PFLOTRAN input files for missing keywords.''']
 
 if (__name__ == '__main__'):
 
@@ -415,6 +449,7 @@ if (__name__ == '__main__'):
     parser.add_argument('-r','--regression', action='store_true', help=arg_help[2])
     parser.add_argument('-v','--validation', action='store_true', help=arg_help[3])
     parser.add_argument('-s','--single', type=str, help=arg_help[4])
+    parser.add_argument('-d','--diff',type=str, help=arg_help[5])
 
     #debug - delete
     parser.add_argument('-rw','--readwrite',type=str)
@@ -430,6 +465,11 @@ if (__name__ == '__main__'):
         validation(files)
     elif args.single is not None:
         regression_validation([args.single],verbose=True)
+    elif args.diff is not None:
+        tmp_file = os.path.join(os.path.dirname(args.diff),'temp.in')
+        pdata(args.diff).write(tmp_file)
+        print('Missing keywords:')
+        check_keywords(args.diff,tmp_file)
     elif args.readwrite is not None:
         tmp_file = os.path.join(os.path.dirname(args.readwrite),'temp.in')
         pdata(args.readwrite).write(tmp_file)

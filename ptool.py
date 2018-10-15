@@ -58,8 +58,8 @@ def powspace(x0, x1, N=10, power=1):
         return (x1 - x0) ** (1 - power) * np.linspace(0, x1 - x0, N) ** \
             power + x0
     elif power < 0:
-        return np.sort(x1 - ((x1 - x0) ** (1 - abs(power)) *
-                             np.linspace(0, x1 - x0, N) ** abs(power)))
+        return np.sort(x1 - ((x1 - x0) ** (1 - abs(power)) * \
+                       np.linspace(0, x1 - x0, N) ** abs(power)))
 
 
 def del_extra_slash(path):

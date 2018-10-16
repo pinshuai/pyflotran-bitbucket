@@ -5,6 +5,7 @@ pipelines:
         name: PyFLOTRAN DevOps
         script:
           - export PyFLOTRAN_DIR=`pwd`
+          - apt-get update && apt-get install -y gfortran gcc
           - git clone https://bitbucket.org/petsc/petsc petsc
           - cd petsc; git checkout v3.10.2
           - ./configure --CFLAGS='-O3' --CXXFLAGS='-O3' --FFLAGS='-O3' --with-debugging=no --download-mpich=yes --download-hdf5=yes --download-fblaslapack=yes --download-metis=yes --download-parmetis=yes --download-cmake=yes

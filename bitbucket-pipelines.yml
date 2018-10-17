@@ -10,10 +10,10 @@ pipelines:
           - cd petsc; git checkout v3.10.2
           - ./configure --CFLAGS='-O3' --CXXFLAGS='-O3' --FFLAGS='-O3' --with-debugging=no --download-mpich=yes --download-hdf5=yes --download-fblaslapack=yes --download-metis=yes --download-parmetis=yes --download-cmake=yes
           - export PETSC_DIR=`pwd`
-          - export PETSC_ARCH=gnu-c-debug
+          - export PETSC_ARCH=arch-linux2-c-opt
           - cd $PETSC_DIR; make all; cd $PyFLOTRAN_DIR
           - git clone https://bitbucket.org/pflotran/pflotran
-          - cd pflotran/src/pflotran;make pflotran
+          - cd pflotran/src/pflotran; make pflotran
           - export PFLOTRAN_DIR=`pwd`; cd $PyFLOTRAN_DIR
           - python setup.py install
           - python regression.py -v

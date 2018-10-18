@@ -96,7 +96,7 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis', 'general', 'th', 'thc',
                       'toil_ims', 'todd_longstaff', 'solvent_tl',
-                      'wipp_flow']
+                      'wipp_flow', 'richards_ts']
 
 # checkpoint - allowed formats
 checkpoint_formats_allowed = ['hdf5', 'binary']

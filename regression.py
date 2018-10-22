@@ -1,4 +1,5 @@
 from pdata import *
+from ptool import decode
 import subprocess
 import shlex
 import os
@@ -29,12 +30,6 @@ read_fail_files = []
 write_fail_files = []
 regression_pass_files = []
 regression_fail_files = []
-
-def decode(byteseq):
-    if isinstance(byteseq,bytes):
-        return byteseq.decode('ascii')
-    else:
-        return byteseq
 
 def check_file(cmd):
     process = subprocess.Popen(

@@ -4767,8 +4767,13 @@ class pdata(object):
         """
 
         # set up and check path to executable
+
         exe_path = ppath()
-        exe_path.filename = pflotran_dir + '/src/pflotran/pflotran'
+
+        if exe != pdflt().pflotran_path:
+            exe_path.filename = exe
+        else:
+            exe_path.filename = pflotran_dir + '/src/pflotran/pflotran'
 
         # if can't find the executable, halt
         if not os.path.isfile(exe_path.full_path):
@@ -4808,7 +4813,7 @@ class pdata(object):
                 cmd.split(' '), shell=False, stdout=subprocess.PIPE,
                 stderr=sys.stderr)
             while True:
-                out = process.stdout.read(1)
+                out = decode(process.stdout.read(1))
                 if ('ERROR' or 'WARNING') in out:
                     raise PyFLOTRAN_ERROR(out)
 

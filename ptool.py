@@ -16,6 +16,11 @@ else:
 
 dflt = pdflt()
 
+def decode(byteseq):
+    if isinstance(byteseq,bytes):
+        return byteseq.decode('ascii')
+    else:
+        return byteseq
 
 class Frozen(object):
     """

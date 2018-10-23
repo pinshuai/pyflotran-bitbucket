@@ -3196,6 +3196,8 @@ class pchemistry(Frozen):
             immobile_decay_reaction = []
         if immobile_species_list is None:
             immobile_species_list = []
+        if general_reaction is None:
+            general_reaction = []
 
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
@@ -3993,12 +3995,14 @@ class pchemistry(Frozen):
         assert isinstance(backward_rate, (int, float, type(None))),\
         'chem.general_reaction.backward_rate must be a float or int'
 
-        self.general_reaction = pchemistry.pgeneral_reaction()
-        self.general_reaction.reaction = reaction
-        self.general_reaction.forward_rate = forward_rate
-        self.general_reaction.backward_rate = backward_rate
+        gr = pchemistry.pgeneral_reaction()
+        gr.reaction = reaction
+        gr.forward_rate = forward_rate
+        gr.backward_rate = backward_rate
 
-        return self.general_reaction
+        self.general_reaction.append(gr)
+
+        return gr
 
 
 class pchemistry_m_kinetic(Frozen):
@@ -11507,17 +11511,14 @@ class pdata(object):
             outfile.write('  /\n')  # Close MINERAL_K
 
         # Write out the GENERAL_REACTION block if it exists
-        if c.general_reaction is not None:
+        for gr in c.general_reaction:
             outfile.write('  GENERAL_REACTION\n')
-            if c.general_reaction.reaction is not None:
-                outfile.write('    REACTION ' +
-                              c.general_reaction.reaction + '\n')
-            if c.general_reaction.forward_rate is not None:
-                outfile.write('    FORWARD_RATE ' +
-                              strD(c.general_reaction.forward_rate) + '\n')
-            if c.general_reaction.backward_rate is not None:
-                outfile.write('    BACKWARD_RATE ' +
-                              strD(c.general_reaction.backward_rate) + '\n')
+            if gr.reaction is not None:
+                outfile.write('    REACTION ' + gr.reaction + '\n')
+            if gr.forward_rate is not None:
+                outfile.write('    FORWARD_RATE %s\n' % strD(gr.forward_rate))
+            if gr.backward_rate is not None:
+                outfile.write('    BACKWARD_RATE %s\n' % strD(gr.backward_rate))
             outfile.write('  /\n')
 
         if c.sorption is not None:

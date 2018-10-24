@@ -195,9 +195,6 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         err = decode(err)
 
         if 'ERROR' in out:
-            if 'Keyword "MAP_HDF5_DATASET_NAME" not recognized in dataset.':
-                print('hmm...old version of PFLO')
-                return True
 
             print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
                 out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]

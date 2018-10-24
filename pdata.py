@@ -2017,7 +2017,8 @@ class psimulation(Frozen):
                      gas_sat_gov_switch_abs_to_rel=None,
                      min_liq_pres_force_ts_cut=None,
                      max_allow_liq_pres_change_ts=None,
-                     liq_pres_change_ts_governor=None):
+                     liq_pres_change_ts_governor=None,
+                     arithmetic_gas_diffusive_density=False):
 
             self.isothermal = isothermal
             self.inline_surface_region = inline_surface_region
@@ -2048,6 +2049,7 @@ class psimulation(Frozen):
             self.min_liq_pres_force_ts_cut = min_liq_pres_force_ts_cut
             self.max_allow_liq_pres_change_ts = max_allow_liq_pres_change_ts
             self.liq_pres_change_ts_governor = liq_pres_change_ts_governor
+            self.arithmetic_gas_diffusive_density = arithmetic_gas_diffusive_density
             self._freeze()
 
         def _write(self,outfile):
@@ -2130,6 +2132,8 @@ class psimulation(Frozen):
             if self.liq_pres_change_ts_governor:
                 _val = strD(self.liq_pres_change_ts_governor)
                 outfile.write('        LIQ_PRES_CHANGE_TS_GOVERNOR %s\n' % _val)
+            if self.arithmetic_gas_diffusive_density:
+                outfile.write('        ARITHMETIC_GAS_DIFFUSIVE_DENSITY\n')
             outfile.write('      /\n')
 
 class pregression(Frozen):
@@ -6377,6 +6381,9 @@ class pdata(object):
                                     elif key2 == 'liq_pres_change_ts_governor':
                                         opt.liq_pres_change_ts_governor \
                                         = floatD(self.splitter(line))
+                                    elif key2 == 'arithmetic_gas_diffusive_density':
+                                        opt.arithmetic_gas_diffusive_density \
+                                        = True
                                     elif key2 in ['/', 'end']:
                                         keep_reading_2 = False
                                 simulation.options = opt
@@ -9388,14 +9395,10 @@ class pdata(object):
                             for var in flow.varlist:  # var represents
                                 # a pflow_variable object
                                 if tstring2name.lower() == var.name.lower():
-                                    if line[0] == ':' or line[0] == '#' \
-                                            or line[0] == '/':
-                                        pass  # ignore a commented line
-                                    # line[0] == '/' is a temporary fix
-                                    elif tstring2[0].lower() == 'time_units':
-                                        var.time_unit_type = tstring2[1]
+                                    if tstring2[0].lower() == 'time_units':
+                                        var.time_unit_type = ' '.join(tstring2[1:])
                                     elif tstring2[0].lower() == 'data_units':
-                                        var.data_unit_type = tstring2[1]
+                                        var.data_unit_type = ' '.join(tstring2[1:])
                                     elif line.split()[0].lower() in ['/', 'end']:
                                         keep_reading_list = False
                                     else:
@@ -9403,12 +9406,11 @@ class pdata(object):
                                         tvarlist.time_unit_value = floatD(
                                             tstring2[0])
                                         tvarlist.data_unit_value_list = []
-                                        tvarlist.data_unit_value_list.append(
-                                            floatD(tstring2[1]))
+                                        tvarlist.data_unit_value_list.\
+                                                    append(floatD(tstring2[1]))
                                         if len(tstring2) > 2:
-                                            tvarlist. \
-                                                data_unit_value_list.append(
-                                                    floatD(tstring2[2]))
+                                            tvarlist.data_unit_value_list.extend(\
+                                              [floatD(x) for x in tstring2[2:]])
                                         var.list.append(tvarlist)
                             if line.split()[0] in ['/', 'end']:
                                 keep_reading_list = False
@@ -9875,6 +9877,7 @@ class pdata(object):
                         if a_flow.data_unit_type:
                             outfile.write('      DATA_UNITS ' +
                                           a_flow.data_unit_type + '\n')
+
                         for k in a_flow.list:
                             outfile.write('        ' + strD(k.time_unit_value))
                             for p in range(len(k.data_unit_value_list)):

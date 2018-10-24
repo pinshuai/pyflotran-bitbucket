@@ -5796,7 +5796,7 @@ class pdata(object):
         outfile.write('UPDATE_FLOW_PERMEABILITY\n')
 
     def _read_reference_liquid_density(self,infile,line):
-        _split = line.strip().split()
+        _split = filter_comment(line).strip().split()
         _value = floatD(_split[1])
 
         try:
@@ -5811,7 +5811,7 @@ class pdata(object):
         outfile.write('REFERENCE_LIQUID_DENSITY %s\n' % _value)
 
     def _read_minimum_hydrostatic_pressure(self,infile,line):
-        _split = line.strip().split()
+        _split = filter_comment(line).strip().split()
         _value = floatD(_split[1])
 
         try:
@@ -6253,7 +6253,7 @@ class pdata(object):
 
     def _read_nonuniform_velocity(self, infile, line):
         filename = ''
-        tstring = line.split()
+        tstring = filter_comment(line).split()
         filename = tstring[1]
 
         new_nonuniform_velocity = pnonuniform_velocity(filename)

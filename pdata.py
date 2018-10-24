@@ -709,7 +709,8 @@ class pmaterial(Frozen):
     class secondary_continuum(Frozen):
         def __init__(self,continuum_type=None,log_grid_spacing=False,
                      radius=None,num_cells=None,outer_spacing=None,
-                     epsilon=None,temperature=None,porosity=None):
+                     epsilon=None,temperature=None,porosity=None,
+                     length=None,area=None,diffusion_coefficient=None):
 
             self.continuum_type = continuum_type
             self.log_grid_spacing = log_grid_spacing
@@ -719,13 +720,20 @@ class pmaterial(Frozen):
             self.epsilon = epsilon
             self.temperature = temperature
             self.porosity = porosity
+            self.length = length
+            self.area = area
+            self.diffusion_coefficient = diffusion_coefficient
 
         def _write(self,outfile):
             outfile.write('  SECONDARY_CONTINUUM\n')
             if self.continuum_type:
-                outfile.write('    CONTINUUM_TYPE %s\n' % self.continuum_type)
+                outfile.write('    TYPE %s\n' % self.continuum_type)
             if self.log_grid_spacing:
                 outfile.write('    LOG_GRID_SPACING\n')
+            if self.length:
+                outfile.write('    LENGTH %s\n' % strD(self.length))
+            if self.area:
+                outfile.write('    AREA %s\n' % strD(self.area))
             if self.radius:
                 outfile.write('    RADIUS %s\n' % strD(self.radius))
             if self.num_cells:
@@ -736,6 +744,9 @@ class pmaterial(Frozen):
                 outfile.write('    EPSILON %s\n' % strD(self.epsilon))
             if self.temperature:
                 outfile.write('    TEMPERATURE %s\n' % strD(self.temperature))
+            if self.diffusion_coefficient:
+                outfile.write('    DIFFUSION_COEFFICIENT %s\n' % \
+                  strD(self.diffusion_coefficient))
             if self.porosity:
                 outfile.write('    POROSITY %s\n' % strD(self.porosity))
             outfile.write('  /\n')
@@ -2250,7 +2261,7 @@ class pnsolver(Frozen):
     def __init__(self, name='', atol=None, rtol=None, stol=None, dtol=None,
                  itol=None, max_it=None, max_f=None, itol_update=None,
                  matrix_type=None, preconditioner_matrix_type=None,
-                 no_infinity_norm=False):
+                 no_infinity_norm=False,max_norm=None,itol_sec=None):
         self.name = name  # Indicates Flow or Tran for Transport
         self.atol = atol
         self.rtol = rtol
@@ -2259,6 +2270,8 @@ class pnsolver(Frozen):
         self.itol = itol
         self.max_it = max_it
         self.max_f = max_f
+        self.max_norm = max_norm
+        self.itol_sec = itol_sec
         self.itol_update = itol_update
         self.matrix_type = matrix_type
         self.preconditioner_matrix_type = preconditioner_matrix_type
@@ -6401,6 +6414,8 @@ class pdata(object):
                             elif key1 == 'max_volume_fraction_change':
                                 simulation.max_volume_fraction_change =\
                                     floatD(self.splitter(line1))
+                            elif key1 == 'multiple_continuum':
+                                simulation.multiple_continuum = True
                             elif key1 == 'itol_relative_update':
                                 simulation.itol_relative_update = \
                                     floatD(self.splitter(line1))
@@ -6572,6 +6587,8 @@ class pdata(object):
             if simulation.itol_relative_update:
                 outfile.write('      ITOL_RELATIVE_UPDATE %s\n' % \
                               strD(simulation.itol_relative_update))
+            if simulation.multiple_continuum:
+                outfile.write('      MULTIPLE_CONTINUUM\n')
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
@@ -6927,19 +6944,19 @@ class pdata(object):
         if self.timestepper_transport:
             outfile.write('TIMESTEPPER ' +
                           self.timestepper_transport.ts_mode.upper() + '\n')
-            if self.timestepper_transport.ts_acceleration:
+            if self.timestepper_transport.ts_acceleration is not None:
                 outfile.write('  ' + 'TS_ACCELERATION ' +
                               str(self.timestepper_transport.ts_acceleration) +
                               '\n')
-            if self.timestepper_transport.num_steps_after_cut:
+            if self.timestepper_transport.num_steps_after_cut is not None:
                 outfile.write('  ' + 'NUM_STEPS_AFTER_CUT ' +
                               str(self.timestepper_transport.
                                   num_steps_after_cut) + '\n')
-            if self.timestepper_transport.max_ts_cuts:
+            if self.timestepper_transport.max_ts_cuts is not None:
                 outfile.write('  ' + 'MAX_TS_CUTS ' +
                               str(self.timestepper_transport.max_ts_cuts) +
                               '\n')
-            if self.timestepper_transport.max_steps:
+            if self.timestepper_transport.max_steps is not None:
                 outfile.write('  ' + 'MAX_STEPS ' +
                               str(self.timestepper_transport.max_steps) +
                               '\n')
@@ -7097,6 +7114,12 @@ class pdata(object):
                         _sc.continuum_type = self.splitter(subline)
                     elif subkey == 'log_grid_spacing':
                         _sc.log_grid_spacing = True
+                    elif subkey == 'length':
+                        _sc.length = floatD(self.splitter(subline))
+                    elif subkey == 'area':
+                        _sc.area = floatD(self.splitter(subline))
+                    elif subkey == 'diffusion_coefficient':
+                        _sc.diffusion_coefficient = floatD(self.splitter(subline))
                     elif subkey == 'radius':
                         _sc.radius = floatD(self.splitter(subline))
                     elif subkey == 'num_cells':
@@ -7732,12 +7755,16 @@ class pdata(object):
                 nsolver.dtol = floatD(self.splitter(line))
             elif key == 'itol':
                 nsolver.itol = floatD(self.splitter(line))
+            elif key == 'itol_sec':
+                nsolver.itol_sec = floatD(self.splitter(line))
             elif key == 'itol_update':
                 nsolver.itol_update = floatD(self.splitter(line))
             elif key == 'maxit':
                 nsolver.max_it = int(self.splitter(line))
             elif key == 'maxf':
                 nsolver.max_f = int(self.splitter(line))
+            elif key == 'max_norm':
+                nsolver.max_norm = int(floatD(self.splitter(line)))
             elif key == 'matrix_type':
                 nsolver.matrix_type = self.splitter(line)
             elif key == 'preconditioner_matrix_type':
@@ -7794,6 +7821,10 @@ class pdata(object):
             if nsolver.itol_update:
                 outfile.write('  ITOL_UPDATE ' +
                               strD(nsolver.itol_update) + '\n')
+            if nsolver.itol_sec:
+                outfile.write('  ITOL_SEC %s\n' % nsolver.itol_sec)
+            if nsolver.max_norm:
+                outfile.write('  MAX_NORM %s\n' % strD(nsolver.max_norm))
             if nsolver.max_it:
                 outfile.write('  MAXIT ' + str(nsolver.max_it) + '\n')
             if nsolver.max_f:
@@ -9271,6 +9302,10 @@ class pdata(object):
                 observation.velocity = True
             elif key == 'at_cell_center':
                 observation.at_cell_center = True
+            elif key == 'secondary_concentration':
+                observation.secondary_concentration = True
+            elif key == 'secondary_mineral_volfrac':
+                observation.secondary_mineral_volfrac = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -9312,13 +9347,12 @@ class pdata(object):
                 outfile.write('  AT_CELL_CENTER\n')
             if observation.velocity:
                 outfile.write('  VELOCITY\n')
-            if self.multiple_continuum:
-                if observation.secondary_temperature:
-                    outfile.write('  SECONDARY_TEMPERATURE\n')
-                if observation.secondary_concentration:
-                    outfile.write('  SECONDARY_CONCENTRATION\n')
-                if observation.secondary_mineral_volfrac:
-                    outfile.write('  SECONDARY_MINERAL_VOLFRAC\n')
+            if observation.secondary_temperature:
+                outfile.write('  SECONDARY_TEMPERATURE\n')
+            if observation.secondary_concentration:
+                outfile.write('  SECONDARY_CONCENTRATION\n')
+            if observation.secondary_mineral_volfrac:
+                outfile.write('  SECONDARY_MINERAL_VOLFRAC\n')
             outfile.write('END\n\n')
 
     def _read_flow(self, infile, line):

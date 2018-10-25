@@ -11208,12 +11208,22 @@ class pdata(object):
                             elif _key == 'complex_kinetics':
                                 pass
                             elif _key == 'site_fraction':
-                                _values = get_next_line(infile)
-                                _values = [floatD(x) for x in _values]
+
+                                if len(_line.split()) > 2:
+                                    _values = ' '.join(_line.split()[1:])
+                                else:
+                                    _values = get_next_line(infile)
+
+                                _values = [floatD(x) for x in _values.split()]
                                 scr.site_fraction = _values
                             elif key == 'rates':
-                                _values = get_next_line(infile)
-                                _values = [floatD(x) for x in _values]
+
+                                if len(_line.split()) > 2:
+                                    _values = ' '.join(_line.split()[1:])
+                                else:
+                                    _values = get_next_line(infile)
+
+                                _values = [floatD(x) for x in _values.split()]
                                 scr.rates = _values
                             elif _key in ['/','end']:
                                 break

@@ -157,7 +157,7 @@ def read_and_write(file):
         print('Error in reading: ' + file)
         read_fail_files.append(file)
 
-def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=None):
+def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=None, check_integrity=False):
     '''
     Performs regression tests with native input file vs. PyFLOTRAN input file.
     Constructs a dictionary from the regression output file, and uses
@@ -193,7 +193,7 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
     regression_out = []
 
     # First, we are going to capture the regression output
-    for file in [file1,file2]:
+    for (i,file) in enumerate([file1,file2]):
         # Change directory to first file
         os.chdir(os.path.dirname(file))
 
@@ -211,6 +211,10 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             os.chdir(current_dir)
             if debug_dict is not None:
                 debug_dict['failed']['pflotran_runtime'][file] = out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
+
+            if check_integrity and i == 0:
+                print('\033[93mWARNING: Corrupted original regression test file\033[0m\n'+'-'*50)
+                return True
             return False
 
         elif 'ERROR' in err:
@@ -218,6 +222,10 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             os.chdir(current_dir)
             if debug_dict is not None:
                 debug_dict['failed']['pflotran_runtime'][file] = err
+
+            if check_integrity and i == 0:
+                print('\033[93mWARNING: Corrupted original regression test file\033[0m\n'+'-'*50)
+                return True
             return False
 
         # Capture the regression file written out
@@ -230,6 +238,12 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             print('\033[93mWARNING: Can\'t find PFLOTRAN regression file output\033[0m\n'+'-'*50)
 
             if verbose: print(err)
+
+            if check_integrity and i == 0:
+                print('\033[93mWARNING: Corrupted original regression test file\033[0m\n'+'-'*50)
+                return True
+            return False
+
             #return False
             return True
 
@@ -361,10 +375,11 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
             continue
 
         os.chdir(current_dir)
-        status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir,debug_dict=debug_dict)
+        status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir,debug_dict=debug_dict,check_integrity=True)
 
         if status == False:
-            sys.exit(1)
+            pass
+            #sys.exit(1)
 
         if status:
             success_list.append(file)

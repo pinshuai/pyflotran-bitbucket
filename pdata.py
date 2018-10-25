@@ -3187,7 +3187,8 @@ class pchemistry(Frozen):
                  no_checkpoint_act_coefs=False, general_reaction=None,
                  sorption=None,
                  immobile_decay_reaction=None, radioactive_decay_reaction=None,
-                 microbial_reaction=None, immobile_species_list=None):
+                 microbial_reaction=None, immobile_species_list=None,
+                 redox_species_list=None):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -3215,6 +3216,8 @@ class pchemistry(Frozen):
             immobile_species_list = []
         if general_reaction is None:
             general_reaction = []
+        if redox_species_list is None:
+            redox_species_list = []
 
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
@@ -3248,6 +3251,7 @@ class pchemistry(Frozen):
         self.radioactive_decay_reaction = radioactive_decay_reaction
         self.immobile_decay_reaction = immobile_decay_reaction
         self.immobile_species_list = immobile_species_list
+        self.redox_species_list = redox_species_list
 
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
@@ -6498,7 +6502,13 @@ class pdata(object):
                             simulation.checkpoint.periodic_time_unit = \
                               line.strip().split()[2]
                     elif 'format' in key:
-                        simulation.checkpoint.format = line.strip().split()[1]
+                        if simulation.checkpoint.format is None:
+                            simulation.checkpoint.format = line.strip().split()[1]
+                        elif isinstance(simulation.checkpoint.format,str):
+                            simulation.checkpoint.format = \
+                            [simulation.checkpoint.format,line.strip().split()[1]]
+                        elif isinstance(simulation.checkpoint.format,list):
+                            simulation.checkpoint.format.append(line.strip().split()[1])
                     elif key in ['/', 'end']:
                         keep_reading = False
             elif key0 in ['/', 'end']:
@@ -10705,9 +10715,16 @@ class pdata(object):
             outfile.write(strD(checkpoint.periodic_timestep))
             outfile.write('\n')
         if checkpoint.format is not None:
-            outfile.write('    FORMAT ')
-            outfile.write(checkpoint.format.upper())
-            outfile.write('\n')
+
+            if isinstance(checkpoint.format,list):
+                _form = ''.join(['    FORMAT %s\n' % x.upper() \
+                                for x in checkpoint.format])
+                outfile.write(_form)
+            else:
+                outfile.write('    FORMAT ')
+                outfile.write(checkpoint.format.upper())
+                outfile.write('\n')
+
         outfile.write('  /\n')
 
     def _write_restart(self, outfile):
@@ -10825,6 +10842,12 @@ class pdata(object):
                     if line.strip() in ['/', 'end']:
                         break
                     chem.primary_species_list.append(line.strip())
+            elif key == 'redox_species':
+                while True:
+                    line = get_next_line(infile)
+                    if line.strip() in ['/', 'end']:
+                        break
+                    chem.redox_species_list.append(line.strip())
             elif key == 'skip':
                 keep_reading_1 = True
                 while keep_reading_1:
@@ -11393,6 +11416,12 @@ class pdata(object):
             outfile.write('  SECONDARY_SPECIES\n')
             for s in c.secondary_species_list:  # s = secondary_specie
                 outfile.write('    ' + s + '\n')
+            outfile.write('  /\n')
+
+        if c.redox_species_list:
+            outfile.write('  REDOX_SPECIES\n')
+            for r in c.redox_species_list:
+                outfile.write('    %s\n' % r)
             outfile.write('  /\n')
 
         if not isinstance(c.gas_species_list, list):

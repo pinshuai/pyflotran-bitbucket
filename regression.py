@@ -66,6 +66,8 @@ def read_and_write_with_error(file):
     dat.write(new_file)
 
 def check_keywords(f1,f2):
+    from ptool import floatD
+
     with open(f1,'r') as f:
         f1 = f.read().lower().split('\n')
 
@@ -89,13 +91,20 @@ def check_keywords(f1,f2):
 
     f2 = a
 
+    skip = False
     for (i,line1) in enumerate(f1):
-        if len(line1) <= 1:
+        if skip == True:
+            if line1 == 'noskip':
+                skip = False
+        elif len(line1) <= 1:
             continue
         elif line1[0] == "#":
             continue
         else:
-            if line1 not in f2 and not ('.' in line1 and 'd' in line1):
+
+            if line1 == 'skip':
+                skip = True
+            elif line1 not in f2 and not ('.' in line1 and 'd' in line1):
                 print("%d : %s" % (i,line1))
 
 def compare_regression_tests(file1, file2):

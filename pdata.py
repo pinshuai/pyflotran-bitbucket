@@ -593,7 +593,10 @@ class pmaterial(Frozen):
                  perm_factor=None,
                  tortuosity_function_of_porosity=None,
                  inactive=False,permeability_anisotropic=None,
-                 permeability_isotropic=None):
+                 permeability_isotropic=None,
+                 thermal_cond_exponent=None,
+                 thermal_conductivity_frozen=None,
+                 thermal_cond_exponent_frozen=None):
 
         if permeability is None:
             permeability = []
@@ -625,6 +628,9 @@ class pmaterial(Frozen):
         self.perm_factor = perm_factor
         self.tortuosity_function_of_porosity = tortuosity_function_of_porosity
         self.inactive = inactive
+        self.thermal_cond_exponent = thermal_cond_exponent
+        self.thermal_conductivity_frozen = thermal_conductivity_frozen
+        self.thermal_cond_exponent_frozen = thermal_cond_exponent_frozen
 
         if bandis_A is None:
             bandis_A = []
@@ -2855,7 +2861,7 @@ class pflow(Frozen):
                  varlist=None, gradient=None, pm='',
                  gradient_type='', datum_data_unit=None,
                  interpolation=None, cyclic=False,
-                 units=None):
+                 units=None,pressure=None):
 
         if datum is None:
             datum = []
@@ -2884,6 +2890,7 @@ class pflow(Frozen):
         self.cyclic = cyclic
         self.interpolation = interpolation
         self.units = units
+        self.pressure = pressure
         self._freeze()
 
 
@@ -3568,15 +3575,12 @@ class pchemistry(Frozen):
             assert isinstance(ion_exchange_rxn,\
               (pchemistry.psorption.pion_exchange_rxn,type(None))),\
               'Must be an instance of pion_exchange_rxn'
-            #assert isinstance(isotherm_reactions,\
-            #  (pchemistry.psorption.pisotherm_reactions, type(None))),\
-            #  'Must be an instance of pisotherm_reactions'
-            assert isinstance(surface_complexation_rxn,\
-              (pchemistry.psorption.psurface_complexation_rxn, type(None))),\
-              'Must be an instance of psurface_complexation_rxn'
 
             if isotherm_reactions is None:
                 isotherm_reactions = []
+
+            if surface_complexation_rxn is None:
+                surface_complexation_rxn = []
 
             self.ion_exchange_rxn = ion_exchange_rxn
             self.isotherm_reactions = isotherm_reactions
@@ -3641,8 +3645,8 @@ class pchemistry(Frozen):
                     outfile.write('      /\n')
                 outfile.write('    /\n')
 
-            if self.surface_complexation_rxn is not None:
-                self.surface_complexation_rxn.write(outfile)
+            for scrxn in self.surface_complexation_rxn:
+                scrxn.write(outfile)
 
             outfile.write('  /\n')
 
@@ -3707,15 +3711,17 @@ class pchemistry(Frozen):
                                          multirate_scale_factor=None,
                                          colloid=None, rock_density=None,
                                          site=None, complexes=None):
-            self.surface_complexation_rxn = \
-            pchemistry.psorption.psurface_complexation_rxn(
+            scrxn = pchemistry.psorption.psurface_complexation_rxn(
                 sorption_type=sorption_type,
                 complex_kinetics=complex_kinetics, rates=rates,
                 site_fraction=site_fraction,
                 mineral=mineral, multirate_scale_factor=multirate_scale_factor,
                 colloid=colloid, rock_density=rock_density,
-                site=site, complexes=complexes)
-            return self.surface_complexation_rxn
+                site=site, complexes=complexes
+                )
+
+            self.surface_complexation_rxn.append(scrxn)
+            return scrxn
 
         class pion_exchange_rxn(Frozen):
             '''
@@ -4321,22 +4327,32 @@ class pconstraint(Frozen):
     """
 
     def __init__(self, name='', concentration_list=None, mineral_list=None,
-                 secondary_continuum=False,free_ion_guess_list=None):
+                 secondary_continuum=False,free_ion_guess_list=None,
+                 immobile_list=None):
         if concentration_list is None:
             concentration_list = []
         if mineral_list is None:
             mineral_list = []
         if free_ion_guess_list is None:
             free_ion_guess_list = []
+        if immobile_list is None:
+            immobile_list = []
         self.name = name.lower()
         # Composed of pconstraint_concentration objects
         self.concentration_list = concentration_list
         self.mineral_list = mineral_list  # list of minerals
         self.secondary_continuum = secondary_continuum
         self.free_ion_guess_list = free_ion_guess_list
+        self.immobile_list = immobile_list
         self._freeze()
 
     class pfree_ion(Frozen):
+        def __init__(self,name,value):
+            self.name = name
+            self.value = value
+            self._freeze()
+
+    class pimmobile(Frozen):
         def __init__(self,name,value):
             self.name = name
             self.value = value
@@ -7008,6 +7024,9 @@ class pdata(object):
         np_density_unit = p.density_unit
         np_cond_dry_unit = p.cond_dry_unit
         np_cond_wet_unit = p.cond_wet_unit
+        np_cond_exponent = None
+        np_cond_frozen = None
+        np_cond_exponent_frozen = None
 
         _perm_factor = None
         np_tortuosity_fnc_of_porosity = None
@@ -7059,6 +7078,12 @@ class pdata(object):
                 if len(line.strip().split()[1:]) > 1:
                     np_cond_dry_unit = line.strip().split()[2]
                 np_cond_dry = floatD(line.strip().split()[1])
+            elif key == 'thermal_cond_exponent':
+                np_cond_exponent = floatD(self.splitter(line))
+            elif key == 'thermal_conductivity_frozen':
+                np_cond_frozen = floatD(self.splitter(line))
+            elif key == 'thermal_cond_exponent_frozen':
+                np_cond_exponent_frozen = floatD(self.splitter(line))
             elif key == 'thermal_conductivity_wet':
                 if len(line.strip().split()[1:]) > 1:
                     np_cond_wet_unit = line.strip().split()[2]
@@ -7177,7 +7202,10 @@ class pdata(object):
                              inactive=_inactive,
                              soil_compressibility_function=soil_comp_func,
                              soil_compressibility=soil_comp,
-                             secondary_continuum=_sc)
+                             secondary_continuum=_sc,
+                             thermal_cond_exponent=np_cond_exponent,
+                             thermal_conductivity_frozen=np_cond_frozen,
+                             thermal_cond_exponent_frozen=np_cond_exponent_frozen)
 
         self.add(new_prop)
 
@@ -7254,6 +7282,15 @@ class pdata(object):
                 if prop.cond_wet_unit:
                     outfile.write(' ' + prop.cond_wet_unit)
                 outfile.write('\n')
+            if prop.thermal_cond_exponent:
+                outfile.write('  THERMAL_COND_EXPONENT %s\n' % \
+                  strD(prop.thermal_cond_exponent))
+            if prop.thermal_conductivity_frozen:
+                outfile.write('  THERMAL_CONDUCTIVITY_FROZEN %s\n' % \
+                  strD(prop.thermal_conductivity_frozen))
+            if prop.thermal_cond_exponent_frozen:
+                outfile.write('  THERMAL_COND_EXPONENT_FROZEN %s\n' % \
+                  strD(prop.thermal_cond_exponent_frozen))
             if prop.saturation:
                 outfile.write('  SATURATION_FUNCTION ' +
                               prop.saturation + '\n')
@@ -9555,6 +9592,13 @@ class pdata(object):
                         raise PyFLOTRAN_ERROR('Incorrect gradient type!')
             elif key == 'interpolation':
                 flow.interpolation = line.split()[1].lower()
+
+            elif key == 'pressure':
+                try:
+                    flow.pressure = floatD(self.splitter(line))
+                except ValueError:
+                    flow.pressure = ' '.join(line.split()[1:])
+
             elif key == 'units':
                 flow.units = ''.join(line.split()[1:]).split(',')
             # Detect if there is carriage return after '/' or 'end' to end loop
@@ -9846,6 +9890,12 @@ class pdata(object):
                 if flow.interpolation:
                     outfile.write('  INTERPOLATION %s\n' %
                                   flow.interpolation.upper())
+
+                if flow.pressure:
+                    if isinstance(flow.pressure,(int,float)):
+                        outfile.write('  PRESSURE %s\n' % strD(flow.pressure))
+                    else:
+                        outfile.write('  PRESSURE %s\n' % flow.pressure)
 
                 if flow.cyclic:
                     outfile.write('  CYCLIC\n')
@@ -10755,7 +10805,7 @@ class pdata(object):
     def _read_dataset(self, infile, line):
         dataset = pdataset()
         keep_reading = True
-        dataset.dataset_name = self.splitter(line)
+        dataset.dataset_name = ' '.join(line.split()[1:])
         while keep_reading:  # Read through all cards
             line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first  key word
@@ -10770,7 +10820,7 @@ class pdata(object):
             elif key == 'map_hdf5_dataset_name':
                 dataset.map_hdf5_dataset_name = self.splitter(line)
             elif key == 'max_buffer_size':
-                dataset.max_buffer_size = floatD(self.splitter(line))
+                dataset.max_buffer_size = int(floatD(self.splitter(line)))
             elif key == 'realization_dependent':
                 dataset.realization_dependent = True
             elif key in ['/', 'end']:
@@ -11816,7 +11866,7 @@ class pdata(object):
                         concentrations.pspecies = tstring[0]
                         concentrations.value = floatD(tstring[1])
                         concentrations.constraint = tstring[2]
-                        concentrations.element = tstring[3]
+                        concentrations.element = ' '.join(tstring[3:])
                     except IndexError:
                         # No assigning is done if a value doesn't exist while
                         # being read in.
@@ -11875,6 +11925,22 @@ class pdata(object):
                         pass
 
                     constraint.mineral_list.append(mineral)
+
+            elif key == 'immobile':
+                while True:
+                    line = get_next_line(infile)
+                    tstring = line.split()
+
+                    if line.strip().lower() in ['/','end']:
+                        break
+
+                    assert len(tstring) == 2,'IMMOBILE missing parameters'
+
+                    _name = tstring[0]
+                    _value = floatD(tstring[1])
+                    _imm = pconstraint.pimmobile(_name,_value)
+
+                    constraint.immobile_list.append(_imm)
 
             elif key in ['/', 'end']:
                 keep_reading = False
@@ -12008,6 +12074,12 @@ class pdata(object):
                 outfile.write('  FREE_ION_GUESS\n')
                 for ion in c.free_ion_guess_list:
                     outfile.write('    %s %s\n' % (ion.name,strD(ion.value)))
+                outfile.write('  /\n')
+
+            if c.immobile_list:
+                outfile.write('  IMMOBILE\n')
+                for imm in c.immobile_list:
+                    outfile.write('    %s %s\n' % (imm.name,strD(imm.value)))
                 outfile.write('  /\n')
 
             if c.mineral_list:

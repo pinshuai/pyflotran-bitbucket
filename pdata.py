@@ -2938,7 +2938,7 @@ class pflow_variable(Frozen):
 
     def __init__(self, name='', type=None, valuelist=None, unit='',
                  time_unit_type='', data_unit_type='', plist=None,
-                 subtype=None):
+                 subtype=None, interpolation=''):
         if valuelist is None:
             valuelist = []
         if plist is None:
@@ -2955,6 +2955,7 @@ class pflow_variable(Frozen):
         # Rate)
         self.time_unit_type = time_unit_type  # e.g., 'y'
         self.data_unit_type = data_unit_type  # e.g., 'kg/s'
+        self.interpolation = interpolation
         self.list = plist  # Holds a plist of pflow_variable_lists objects
         self.subtype = subtype  # This is for rate subtypes
         self._freeze()
@@ -9480,6 +9481,8 @@ class pdata(object):
                                         var.data_unit_type = ' '.join(tstring2[1:])
                                     elif line.split()[0].lower() in ['/', 'end']:
                                         keep_reading_list = False
+                                    elif tstring2[0].lower() == 'interpolation':
+                                        var.interpolation = ' '.join(tstring2[1:])
                                     else:
                                         tvarlist = pflow_variable_list()
                                         tvarlist.time_unit_value = floatD(
@@ -9969,7 +9972,9 @@ class pdata(object):
                         if a_flow.data_unit_type:
                             outfile.write('      DATA_UNITS ' +
                                           a_flow.data_unit_type + '\n')
-
+                        if a_flow.interpolation:
+                            outfile.write('      INTERPOLATION ' +
+                                          a_flow.interpolation + '\n')
                         for k in a_flow.list:
                             outfile.write('        ' + strD(k.time_unit_value))
                             for p in range(len(k.data_unit_value_list)):

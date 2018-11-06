@@ -3710,6 +3710,7 @@ class pchemistry(Frozen):
                                          multirate_scale_factor=None,
                                          colloid=None, rock_density=None,
                                          site=None, complexes=None):
+
             scrxn = pchemistry.psorption.psurface_complexation_rxn(
                 sorption_type=sorption_type,
                 complex_kinetics=complex_kinetics, rates=rates,
@@ -6233,16 +6234,12 @@ class pdata(object):
                         elif subkey == 'data_units':
                             spec_vel.data_units = subline.split()[-1]
                         elif subkey == 'interpolation':
-                            spec_vel.data_units = subline.split()[-1].lower()
+                            spec_vel.interpolation = subline.split()[-1].lower()
                         elif subkey in ['/','end']:
                             break
                         else:
-                            _raw = line.split()[1:]
-                            for x in _raw:
-                                try:
-                                    _data.append(floatD(x))
-                                except ValueError:
-                                    _data.append(x)
+                            _raw = [floatD(x) for x in subline.split()]
+                            _data.append(_raw)
 
                         spec_vel.dataset = _data
                 else:
@@ -6265,7 +6262,6 @@ class pdata(object):
     def _write_specified_velocity(self,outfile):
         _spec_vel = self.specified_velocity
         _uniform = 'YES' if _spec_vel.uniform == True else 'NO'
-        _dataset = ' '.join([strD(x) for x in _spec_vel.dataset])
 
         outfile.write('SPECIFIED_VELOCITY\n')
         outfile.write('  UNIFORM? %s\n' % _uniform)
@@ -6281,10 +6277,12 @@ class pdata(object):
             if _spec_vel.data_units:
                 outfile.write('    DATA_UNITS %s\n' % _spec_vel.data_units)
             if _spec_vel.interpolation:
-                outfile.write('    INTERPOLATION %s\n' % _spec_vel.interpolation)
-            outfile.write('    %s\n' % _dataset)
+                outfile.write('    INTERPOLATION %s\n' % _spec_vel.interpolation.upper())
+            outfile.write('\n'.join(['    '+' '.join([strD(c) for c in b]) \
+                          for b in _spec_vel.dataset])+'\n')
             outfile.write('  /\n')
         else:
+            _dataset = ' '.join([strD(x) for x in _spec_vel.dataset])
             outfile.write('  DATASET %s\n' % _dataset)
         outfile.write('END\n')
 

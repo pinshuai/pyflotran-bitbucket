@@ -3885,32 +3885,32 @@ class pchemistry(Frozen):
                 outfile.write('    SURFACE_COMPLEXATION_RXN\n')
                 if self.multirate_kinetic:
                     outfile.write('      MULTIRATE_KINETIC\n')
+                #if self.equilibrium:
+                #    outfile.write('      EQUILIBRIUM\n')
                 if self.site_fraction:
-                    outfile.write('      SITE_FRACTION \\\n')
+                    outfile.write('      SITE_FRACTION ')
                     _v = self.site_fraction
-                    s = ""
-                    for i in range(0,len(_v),5):
-                        if (i+4 < len(_v)):
-                            s += ' '.join([str(x) for x in _v[i:i+4]])+" \\\n"
-                        else:
-                            s += ' '.join([str(x) for x in _v[i:]])+"\n"
-                    outfile.write(s)
+                    _a = [_v[i:i+4] for i in range(0,len(_v),4)]
+                    s = ' \\\n        '.join([' '.join([str(c) for c in b]) \
+                                                               for b in _a])
+                    outfile.write(s+'\n')
                 if self.rates:
-                    outfile.write('      RATES \\\n')
+                    outfile.write('      RATES ')
                     _v = self.rates
-                    s = ""
-                    for i in range(0,len(_v),5):
-                        if (i+4 < len(_v)):
-                            s += ' '.join([str(x) for x in _v[i:i+4]])+"\\\n"
-                        else:
-                            s += ' '.join([str(x) for x in _v[i:]])+"\n"
-                    outfile.write(s)
+                    _a = [_v[i:i+4] for i in range(0,len(_v),4)]
+                    s = ' \\\n        '.join([' '.join([str(c) for c in b]) \
+                                                               for b in _a])
+                    outfile.write(s+'\n')
                 if self.multirate_scale_factor:
                     outfile.write('      MULTIRATE_SCALE_FACTOR %s\n' % strD(self.multirate_scale_factor))
                 if self.mineral:
                     outfile.write('      MINERAL %s\n' % self.mineral)
+                if self.colloid:
+                    outfile.write('      COLLOID %s\n' % self.colloid)
                 if self.site:
                     outfile.write('      SITE %s %s\n' % (self.site[0],strD(self.site[1])))
+                if self.rock_density:
+                    outfile.write('      ROCK_DENSITY\n')
                 if self.complexes:
                     outfile.write('      COMPLEXES\n')
                     for _complex in self.complexes:
@@ -11234,6 +11234,7 @@ class pdata(object):
                                                   _coeff
                     elif subkey == 'surface_complexation_rxn':
                         scr = sorb.add_surface_complexation_rxn()
+
                         while True:
                             _line = get_next_line(infile)
                             _key = _line.strip().lower().split()[0]
@@ -11244,8 +11245,17 @@ class pdata(object):
                                 scr.multirate_kinetic = True
                             elif _key == 'kinetic':
                                 scr.kinetic = True
+                            elif _key == 'colloid':
+                                pass
+                            elif _key == 'multirate_scale_factor':
+                                scr.multirate_scale_factor = \
+                                     floatD(self.splitter(_line))
                             elif _key == 'mineral':
                                 scr.mineral = self.splitter(_line)
+                            elif _key == 'colloid':
+                                scr.colloid = self.splitter(_line)
+                            elif _key == 'rock_density':
+                                scr.rock_density = True
                             elif _key == 'site':
                                 _name = _line.split()[1]
                                 _value = floatD(_line.split()[2])
@@ -11269,7 +11279,8 @@ class pdata(object):
 
                                 _values = [floatD(x) for x in _values.split()]
                                 scr.site_fraction = _values
-                            elif key == 'rates':
+
+                            elif _key == 'rates':
 
                                 if len(_line.split()) > 2:
                                     _values = ' '.join(_line.split()[1:])

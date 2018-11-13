@@ -3705,7 +3705,7 @@ class pchemistry(Frozen):
             self.isotherm_reactions.append(i_rxn)
             return i_rxn
 
-        def add_surface_complexation_rxn(self, sorption_type=None,
+        def add_surface_complexation_rxn(self,
                                          complex_kinetics=None,rates=None,
                                          site_fraction=None, mineral=None,
                                          multirate_scale_factor=None,
@@ -3713,7 +3713,6 @@ class pchemistry(Frozen):
                                          site=None, complexes=None):
 
             scrxn = pchemistry.psorption.psurface_complexation_rxn(
-                sorption_type=sorption_type,
                 complex_kinetics=complex_kinetics, rates=rates,
                 site_fraction=site_fraction,
                 mineral=mineral, multirate_scale_factor=multirate_scale_factor,
@@ -3825,9 +3824,6 @@ class pchemistry(Frozen):
             '''
             Specifies parameters for a surface complexation reaction.
 
-            :param sorption_type: One of:
-            ['equilibrium','multirate_kinetic','kinetic']
-            :type sorption_type: str
             :param complex_kinetics: Opens a block specifying forward and
             backward rate constants
             CLASS TYPE
@@ -3857,7 +3853,7 @@ class pchemistry(Frozen):
             :type complexes: 
             '''
 
-            def __init__(self,sorption_type=None,complex_kinetics=None,
+            def __init__(self,complex_kinetics=None,
                          rates=None,site_fraction=None,mineral=None,
                          multirate_scale_factor=None,colloid=None,
                          rock_density=None,site=None,complexes=None,
@@ -3866,8 +3862,6 @@ class pchemistry(Frozen):
                 if complexes is None:
                     complexes = []
 
-                #PyFLOTRAN_ERROR('Functionality not yet implemented!')
-                self.sorption_type = sorption_type
                 self.complex_kinetics = complex_kinetics
                 self.rates = rates
                 self.site_fraction = site_fraction
@@ -3885,8 +3879,8 @@ class pchemistry(Frozen):
                 outfile.write('    SURFACE_COMPLEXATION_RXN\n')
                 if self.multirate_kinetic:
                     outfile.write('      MULTIRATE_KINETIC\n')
-                #if self.equilibrium:
-                #    outfile.write('      EQUILIBRIUM\n')
+                if self.equilibrium:
+                    outfile.write('      EQUILIBRIUM\n')
                 if self.site_fraction:
                     outfile.write('      SITE_FRACTION ')
                     _v = self.site_fraction
@@ -3916,6 +3910,15 @@ class pchemistry(Frozen):
                     for _complex in self.complexes:
                         outfile.write('        %s\n' % _complex)
                     outfile.write('      /\n')
+                if self.complex_kinetics:
+                    outfile.write('      COMPLEX_KINETICS\n')
+                    if self.complex_kinetics.forward_rate_constant:
+                        outfile.write('        FORWARD_RATE_CONSTANT %s\n' % \
+                        strD(self.complex_kinetics.forward_rate_constant))
+                    if self.complex_kinetics.backward_rate_constant:
+                        outfile.write('        BACKWARD_RATE_CONSTANT %s\n' % \
+                        strD(self.complex_kinetics.backward_rate_constant))
+                    outfile.write('      /\n')
                 outfile.write('    /\n')
 
             class complex_kinetics(Frozen):
@@ -3935,6 +3938,12 @@ class pchemistry(Frozen):
                         outfile.write('      FORWARD_RATE_CONSTANT %s\n' % strD(self.backward_rate_constant))
 
                     outfile.write('    /\n')
+
+            def add_complex_kinetics(self,**kwargs):
+                ck = pchemistry.psorption.\
+                     psurface_complexation_rxn.complex_kinetics(**kwargs)
+                self.complex_kinetics = ck
+                return ck
 
     def add_sorption(self, ion_exchange_rxn=None, isotherm_reactions=None,
                      surface_complexation_rxn=None):
@@ -11269,7 +11278,20 @@ class pdata(object):
                                     else:
                                         scr.complexes.append(c_line)
                             elif _key == 'complex_kinetics':
-                                pass
+                                ck = scr.add_complex_kinetics()
+                                while True:
+                                    ck_line = get_next_line(infile).strip()
+                                    ck_key = ck_line.split()[0].lower()
+
+                                    if ck_key in ['/','end']:
+                                        break
+                                    elif ck_key == 'forward_rate_constant':
+                                        ck.forward_rate_constant = \
+                                          floatD(self.splitter(ck_line))
+                                    elif ck_key == 'backward_rate_constant':
+                                        ck.backward_rate_constant = \
+                                          floatD(self.splitter(ck_line))
+
                             elif _key == 'site_fraction':
 
                                 if len(_line.split()) > 2:

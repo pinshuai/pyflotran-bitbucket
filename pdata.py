@@ -352,7 +352,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'eos','specified_velocity','reference_liquid_density',
               'minimum_hydrostatic_pressure','update_flow_permeability',
               'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
-              'waste_form_general','wipp_source_sink']
+              'waste_form_general','wipp_source_sink','reference_saturation']
 
 headers = dict(zip(cards, headers))
 
@@ -3197,7 +3197,8 @@ class pchemistry(Frozen):
                  immobile_decay_reaction=None, radioactive_decay_reaction=None,
                  microbial_reaction=None, immobile_species_list=None,
                  redox_species_list=None,
-                 reaction_sandbox=None):
+                 reaction_sandbox=None,aqueous_diffusion_coefficients=None,
+                 gas_diffusion_coefficients=None):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -3227,6 +3228,10 @@ class pchemistry(Frozen):
             general_reaction = []
         if redox_species_list is None:
             redox_species_list = []
+        if gas_diffusion_coefficients is None:
+            gas_diffusion_coefficients = []
+        if aqueous_diffusion_coefficients is None:
+            aqueous_diffusion_coefficients = []
 
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
@@ -3262,6 +3267,8 @@ class pchemistry(Frozen):
         self.immobile_species_list = immobile_species_list
         self.redox_species_list = redox_species_list
         self.reaction_sandbox = reaction_sandbox
+        self.aqueous_diffusion_coefficients = aqueous_diffusion_coefficients
+        self.gas_diffusion_coefficients = gas_diffusion_coefficients
 
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
@@ -4947,6 +4954,7 @@ class pdata(object):
         self.ufd_biosphere = None
         self.waste_form_general = None
         self.wipp_source_sink = None
+        self.reference_saturation = None
 
         # run object
         self._path = ppath(parent=self)
@@ -5319,7 +5327,8 @@ class pdata(object):
                             self._read_ufd_biosphere,
                             self._read_source_sink_sandbox,
                             self._read_waste_form_general,
-                            self._read_wipp_source_sink],
+                            self._read_wipp_source_sink,
+                            self._read_reference_saturation],
                            ))
 
         # associate each card name with
@@ -5492,7 +5501,8 @@ class pdata(object):
                                 'strata', 'geomechanics_material_property',
                                 'geomechanics_output',
                                 'eos','reference_liquid_density',
-                                'minimum_hydrostatic_pressure']:
+                                'minimum_hydrostatic_pressure',
+                                'reference_saturation']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -5692,6 +5702,9 @@ class pdata(object):
 
         if self.source_sink_sandbox_list:
             self._write_source_sink_sandbox(outfile)
+
+        if self.reference_saturation:
+            self._write_reference_saturation(outfile)
 
         if self.strata_list:
             self._write_strata(outfile)
@@ -10663,6 +10676,13 @@ class pdata(object):
 
         outfile.write('END_WIPP_SOURCE_SINK\n')
 
+    def _read_reference_saturation(self,infile,line):
+        self.reference_saturation = floatD(self.splitter(line))
+
+    def _write_reference_saturation(self,outfile):
+        outfile.write('REFERENCE_SATURATION %s\n' % \
+          strD(self.reference_saturation))
+
     def _delete_strata(self, strata=pstrata()):
         self.strata_list.remove(strata)
 
@@ -11336,6 +11356,42 @@ class pdata(object):
 
                     if subline.strip() in ['/', 'end']:
                         break
+            elif key == 'gas_diffusion_coefficients':
+                while True:
+                    _line = get_next_line(infile).strip().split()
+
+                    if _line[0].lower() in ['/','end']:
+                        break
+                    else:
+                        _val = floatD(_line[1])
+
+                        try:
+                            _unit = _line[2]
+                        except IndexError:
+                            _unit = None
+
+                        _data = Coeff(_val,unit=_unit)
+
+                        chem.gas_diffusion_coefficients.append([_line[0],_data])
+
+
+            elif key == 'aqueous_diffusion_coefficients':
+                while True:
+                    _line = get_next_line(infile).strip().split()
+
+                    if _line[0].lower() in ['/','end']:
+                        break
+                    else:
+                        _val = floatD(_line[1])
+
+                        try:
+                            _unit = _line[2]
+                        except IndexError:
+                            _unit = None
+
+                        _data = Coeff(_val,unit=_unit)
+
+                        chem.aqueous_diffusion_coefficients.append([_line[0],_data])
 
             elif key == 'reaction_sandbox':
                 sand = pchemistry.reaction_sandbox()
@@ -11860,6 +11916,18 @@ class pdata(object):
         if not isinstance(c.m_kinetics_list, list):
             raise PyFLOTRAN_ERROR('A list needs to be passed ' +
                                   'to m_kinetics_list!')
+
+        if c.aqueous_diffusion_coefficients:
+            outfile.write('  AQUEOUS_DIFFUSION_COEFFICIENTS\n')
+            for aq in c.aqueous_diffusion_coefficients:
+                outfile.write('    %s %s\n' % (aq[0],aq[1]))
+            outfile.write('  /\n')
+
+        if c.gas_diffusion_coefficients:
+            outfile.write('  GAS_DIFFUSION_COEFFICIENTS\n')
+            for gd in c.gas_diffusion_coefficients:
+                outfile.write('    %s %s\n' % (gd[0],gd[1]))
+            outfile.write('  /\n')
 
         if c.immobile_species_list:
             outfile.write('  IMMOBILE_SPECIES\n')

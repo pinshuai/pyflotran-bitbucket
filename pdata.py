@@ -3196,7 +3196,8 @@ class pchemistry(Frozen):
                  sorption=None,
                  immobile_decay_reaction=None, radioactive_decay_reaction=None,
                  microbial_reaction=None, immobile_species_list=None,
-                 redox_species_list=None):
+                 redox_species_list=None,
+                 reaction_sandbox=None):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -3260,6 +3261,7 @@ class pchemistry(Frozen):
         self.immobile_decay_reaction = immobile_decay_reaction
         self.immobile_species_list = immobile_species_list
         self.redox_species_list = redox_species_list
+        self.reaction_sandbox = reaction_sandbox
 
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
@@ -3271,6 +3273,181 @@ class pchemistry(Frozen):
         # incl. molarity/all, species and mineral names - string
         self.output_list = output_list
         self._freeze()
+
+    class reaction_sandbox(Frozen):
+        def __init__(self,clm_cn=None,cybernetic=None):
+            self.clm_cn = clm_cn
+            self.cybernetic = cybernetic
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  REACTION_SANDBOX\n')
+            if self.cybernetic:
+                self.cybernetic._write(outfile)
+            if self.clm_cn:
+                self.clm_cn._write(outfile)
+            outfile.write('  /\n')
+
+        def add_cybernetic(self,**kwargs):
+            '''
+            Adds and returns a CYBERNETIC card.
+            '''
+            cyb = pchemistry.reaction_sandbox.cybernetic(**kwargs)
+            self.cybernetic = cyb
+            return cyb
+
+        def add_clm_cn(self,**kwargs):
+            '''
+            Adds and returns a CLM-CN card.
+            '''
+            clm = pchemistry.reaction_sandbox.clm_cn(**kwargs)
+            self.clm_cn = clm
+            return clm
+
+        class cybernetic(Frozen):
+            '''
+            Cybernetic REACTION_SANDBOX class.
+            '''
+            def __init__(self,F1=None,F2=None,F3=None,K1=None,Ka1=None,Kd1=None,
+                         K2=None,Ka2=None,Kd2=None,K3=None,Ka3=None,Kd3=None,
+                         Kdeg=None,F_act=None,reference_temperature=None,
+                         activation_energy=None,
+                         store_consumption_production=False,
+                         carbon_consumption_species=None):
+
+                self.F1 = F1
+                self.F2 = F2
+                self.F3 = F3
+                self.K1 = K1
+                self.Ka1 = Ka1
+                self.Kd1 = Kd1
+                self.K2 = K2
+                self.Ka2 = Ka2
+                self.Kd2 = Kd2
+                self.K3 = K3
+                self.Ka3 = Ka3
+                self.Kd3 = Kd3
+                self.Kdeg = Kdeg
+                self.F_act = F_act
+                self.reference_temperature = reference_temperature
+                self.activation_energy = activation_energy
+                self.store_consumption_production = store_consumption_production
+                self.carbon_consumption_species = carbon_consumption_species
+
+                self._freeze()
+
+            def _write(self,outfile):
+                outfile.write('    CYBERNETIC\n')
+                if self.F1:
+                    outfile.write('      F1 %s\n' % self.F1)
+                if self.F2:
+                    outfile.write('      F2 %s\n' % self.F2)
+                if self.F3:
+                    outfile.write('      F3 %s\n' % self.F3)
+                if self.K1:
+                    outfile.write('      K1 %s\n' % self.K1)
+                if self.Ka1:
+                    outfile.write('      Ka1 %s\n' % self.Ka1)
+                if self.Kd1:
+                    outfile.write('      Kd1 %s\n' % self.Kd1)
+                if self.K2:
+                    outfile.write('      K2 %s\n' % self.K2)
+                if self.Ka2:
+                    outfile.write('      Ka2 %s\n' % self.Ka2)
+                if self.Kd2:
+                    outfile.write('      Kd2 %s\n' % self.Kd2)
+                if self.K3:
+                    outfile.write('      K3 %s\n' % self.K3)
+                if self.Ka3:
+                    outfile.write('      Ka3 %s\n' % self.Ka3)
+                if self.Kd3:
+                    outfile.write('      Kd3 %s\n' % self.Kd3)
+                if self.Kdeg:
+                    outfile.write('      Kdeg %s\n' % self.Kdeg)
+                if self.F_act:
+                    outfile.write('      F_act %s\n' % self.F_act)
+                if self.reference_temperature:
+                    outfile.write('      REFERENCE_TEMPERATURE %s\n' % \
+                      self.reference_temperature)
+                if self.activation_energy:
+                    outfile.write('      ACTIVATION_ENERGY %s\n' % \
+                      self.activation_energy)
+                if self.store_consumption_production:
+                    outfile.write('      STORE_CONSUMPTION_PRODUCTION\n')
+                if self.carbon_consumption_species:
+                    outfile.write('      CARBON_CONSUMPTION_SPECIES %s\n' % \
+                      self.carbon_consumption_species)
+                outfile.write('    /\n')
+
+        class clm_cn(Frozen):
+            def __init__(self,pools=None,reactions=None):
+
+                if reactions is None:
+                    reactions = []
+
+                if pools is None:
+                    pools = []
+
+                self.pools = pools
+                self.reactions = reactions
+                self._freeze()
+
+            def _write(self,outfile):
+                outfile.write('  CLM-CN\n')
+                if self.pools:
+                    outfile.write('    POOLS\n')
+                    for p in self.pools:
+                        _p = p[0] + ' ' + strD(p[1]) \
+                             if p[1] is not None else p[0]
+                        outfile.write('    %s\n' % _p)
+                    outfile.write('    /\n')
+                for rxn in self.reactions:
+                    rxn._write(outfile)
+                outfile.write('  /\n')
+
+            def add_reaction(self,**kwargs):
+                '''
+                Adds and returns a REACTION card to CLM-CN.
+                '''
+                rxn = pchemistry.reaction_sandbox.clm_cn.reaction(**kwargs)
+                self.reactions.append(rxn)
+                return rxn
+
+            def add_pool(self,species,ratio=None):
+                '''
+                Adds an SOM pool to CLM-CN block.
+                '''
+                self.pools.append([species,ratio])
+
+
+            class reaction(Frozen):
+                def __init__(self,upstream_pool=None,downstream_pool=None,
+                             turnover_time=None,rate_constant=None,
+                             respiration_fraction=None,n_inhibition=None):
+                    self.upstream_pool = upstream_pool
+                    self.downstream_pool = downstream_pool
+                    self.turnover_time = turnover_time
+                    self.rate_constant = rate_constant
+                    self.respiration_fraction = respiration_fraction
+                    self.n_inhibition = n_inhibition
+                    self._freeze()
+
+                def _write(self,outfile):
+                    outfile.write('    REACTION\n')
+                    if self.upstream_pool:
+                        outfile.write('      UPSTREAM_POOL %s\n' % self.upstream_pool)
+                    if self.downstream_pool:
+                        outfile.write('      DOWNSTREAM_POOL %s\n' % self.downstream_pool)
+                    if self.turnover_time:
+                        outfile.write('      TURNOVER_TIME %s\n' % self.turnover_time)
+                    if self.rate_constant:
+                        outfile.write('      RATE_CONSTANT %s\n' % self.rate_constant)
+                    if self.respiration_fraction:
+                        outfile.write('      RESPIRATION_FRACTION %s\n' % self.respiration_fraction)
+                    if self.n_inhibition:
+                        outfile.write('      N_INHIBITION %s\n' % self.n_inhibition)
+                    outfile.write('    /\n')
+
 
     class pimmobile_decay_reaction(Frozen):
         '''
@@ -11160,6 +11337,79 @@ class pdata(object):
                     if subline.strip() in ['/', 'end']:
                         break
 
+            elif key == 'reaction_sandbox':
+                sand = pchemistry.reaction_sandbox()
+
+                while True:
+                    _line = get_next_line(infile)
+                    _key = _line.strip().lower().split()[0]
+
+                    if _key in ['/','end']:
+                        break
+                    elif _key == 'clm-cn':
+                        pass
+                    elif _key == 'cybernetic':
+
+                        cyb = sand.add_cybernetic()
+
+                        while True:
+                            _line2 = get_next_line(infile)
+                            _key2 = _line2.strip().split()[0].lower()
+
+                            if _key2 in ['/','end']:
+                                break
+                            else:
+                                if _key2 not in ['store_consumption_production','carbon_consumption_species']:
+                                    _val = _line2.split()[1]
+
+                                    try:
+                                        _unit = _line2.split()[2]
+                                    except IndexError:
+                                        _unit = None
+
+                                    _data = Coeff(_val,unit=_unit)
+
+                                    if _key2 == 'f1':
+                                        cyb.F1 = _data
+                                    if _key2 == 'f2':
+                                        cyb.F2 = _data
+                                    if _key2 == 'f3':
+                                        cyb.F3 = _data
+                                    if _key2 == 'k1':
+                                        cyb.K1 = _data
+                                    if _key2 == 'ka1':
+                                        cyb.Ka1 = _data
+                                    if _key2 == 'kd1':
+                                        cyb.Kd1 = _data
+                                    if _key2 == 'k2':
+                                        cyb.K2 = _data
+                                    if _key2 == 'ka2':
+                                        cyb.Ka2 = _data
+                                    if _key2 == 'kd2':
+                                        cyb.Kd2 = _data
+                                    if _key2 == 'k3':
+                                        cyb.K3 = _data
+                                    if _key2 == 'ka3':
+                                        cyb.Ka3 = _data
+                                    if _key2 == 'kd3':
+                                        cyb.Kd3 = _data
+                                    if _key2 == 'kdeg':
+                                        cyb.Kdeg = _data
+                                    if _key2 == 'f_act':
+                                        cyb.F_act = _data
+                                    if _key2 == 'reference_temperature':
+                                        cyb.reference_temperature = _data
+                                    if _key2 == 'activation_energy':
+                                        cyb.activation_energy = _data
+
+                                else:
+                                    if _key2 == 'store_consumption_production':
+                                        cyb.store_consumption_production = True
+                                    elif _key2 == 'carbon_consumption_species':
+                                        cyb.carbon_consumption_species = _line2.split()[-1]
+
+                chem.reaction_sandbox = sand
+
             elif key == 'sorption':
                 sorb = chem.add_sorption()
                 while True:
@@ -11241,6 +11491,7 @@ class pdata(object):
                                         elif ikey == 'freundlich_n':
                                             i_rxn.freundlich_n = \
                                                   _coeff
+
                     elif subkey == 'surface_complexation_rxn':
                         scr = sorb.add_surface_complexation_rxn()
 
@@ -11576,6 +11827,9 @@ class pdata(object):
         if c.microbial_reaction:
             for mb_rxn in c.microbial_reaction:
                 mb_rxn._write(outfile)
+
+        if c.reaction_sandbox:
+            c.reaction_sandbox._write(outfile)
 
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')

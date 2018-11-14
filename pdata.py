@@ -11347,7 +11347,55 @@ class pdata(object):
                     if _key in ['/','end']:
                         break
                     elif _key == 'clm-cn':
-                        pass
+                        clm = sand.add_clm_cn()
+
+                        while True:
+                            _line2 = get_next_line(infile)
+                            _key2 = _line2.strip().split()[0].lower()
+
+                            if _key2 in ['/','end']:
+                                break
+                            elif _key2 == 'pools':
+                                while True:
+                                    _line3 = get_next_line(infile).split()
+
+                                    if _line3[0].lower() in ['/','end']:
+                                        break
+                                    else:
+                                        if len(_line3) > 1:
+                                            clm.add_pool(_line3[0],ratio=_line3[1])
+                                        else:
+                                            clm.add_pool(_line3[0])
+
+                            elif _key2 == 'reaction':
+                                rxn = clm.add_reaction()
+
+                                while True:
+                                    _line3 = get_next_line(infile)
+                                    _key3 = _line3.strip().split()[0].lower()
+
+                                    if _key3 == 'upstream_pool':
+                                        rxn.upstream_pool = self.splitter(_line3)
+                                    if _key3 == 'downstream_pool':
+                                        rxn.downstream_pool = self.splitter(_line3)
+                                    if _key3 == 'turnover_time':
+                                        _val = _line3.split()[1]
+                                        try:
+                                            _unit = _line3.split()[2]
+                                        except IndexError:
+                                            _unit = None
+                                        rxn.turnover_time = Coeff(_val,unit=_unit)
+                                    if _key3 == 'rate_constant':
+                                        _val = _line3.split()[1]
+                                        try:
+                                            _unit = _line3.split()[2]
+                                        except IndexError:
+                                            _unit = None
+                                        rxn.rate_constant = Coeff(_val,unit=_unit)
+                                    if _key3 == 'respiration_fraction':
+                                        rxn.respiration_fraction = floatD(self.splitter(_line3))
+                                    if _key3 == 'n_inhibition':
+                                        rxn.n_inhibition = floatD(self.splitter(_line3))
                     elif _key == 'cybernetic':
 
                         cyb = sand.add_cybernetic()

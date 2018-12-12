@@ -106,7 +106,7 @@ gradient_types_allowed = ['pressure', 'temperature']
 # grid - allowed strings
 grid_types_allowed = ['structured', 'unstructured_explicit',
                       'unstructured_implicit', 'unstructured',
-                      'unstructured_polyhedra']
+                      'unstructured_polyhedra','structured cylindrical']
 
 # cartesian is default in pflotran
 grid_symmetry_types_allowed = ['cartesian', 'cylindrical', 'spherical', '']
@@ -352,7 +352,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'eos','specified_velocity','reference_liquid_density',
               'minimum_hydrostatic_pressure','update_flow_permeability',
               'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
-              'waste_form_general','wipp_source_sink','reference_saturation']
+              'waste_form_general','wipp_source_sink','reference_saturation',
+              'reference_pressure']
 
 headers = dict(zip(cards, headers))
 
@@ -908,7 +909,7 @@ class pgrid(Frozen):
     def __init__(self, type='structured', symmetry_type='cartesian',
                  lower_bounds=None, upper_bounds=None,
                  origin=None, nxyz=None, dx=None, dy=None, dz=None,
-                 gravity=None, filename=''):
+                 gravity=None, filename='',upwind_fraction_method=None):
         if dx is None:
             if lower_bounds is None:
                 lower_bounds = [None, None, None]
@@ -940,6 +941,7 @@ class pgrid(Frozen):
         self.dz = dz
         self.gravity = gravity
         self.filename = filename
+        self.upwind_fraction_method = upwind_fraction_method
         self._nodelist = []
         self._celllist = []
         self._connectivity = []
@@ -2693,12 +2695,12 @@ class pcharacteristic_curves(Frozen):
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='default',
                  saturation_function_type='van_genuchten', sf_alpha=1.e-4,
-                 sf_m=0.5, sf_lambda=None,
+                 sf_m=None, sf_lambda=None,
                  sf_liquid_residual_saturation=0.1,
                  sf_gas_residual_saturation=None, max_capillary_pressure=None,
                  smooth='', power=None, default=False,
                  liquid_permeability_function_type='mualem_vg_liq',
-                 lpf_m=0.1, lpf_lambda=None,
+                 lpf_m=None, lpf_lambda=None,
                  lpf_liquid_residual_saturation=0.1,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
@@ -2861,7 +2863,8 @@ class pflow(Frozen):
                  varlist=None, gradient=None, pm='',
                  gradient_type='', datum_data_unit=None,
                  interpolation=None, cyclic=False,
-                 units=None,pressure=None):
+                 units=None,pressure=None,conductance=None,
+                 temperature=None,flux=None):
 
         if datum is None:
             datum = []
@@ -2891,6 +2894,9 @@ class pflow(Frozen):
         self.interpolation = interpolation
         self.units = units
         self.pressure = pressure
+        self.conductance = conductance
+        self.temperature = temperature
+        self.flux = flux
         self._freeze()
 
 
@@ -3198,7 +3204,8 @@ class pchemistry(Frozen):
                  microbial_reaction=None, immobile_species_list=None,
                  redox_species_list=None,
                  reaction_sandbox=None,aqueous_diffusion_coefficients=None,
-                 gas_diffusion_coefficients=None):
+                 gas_diffusion_coefficients=None,
+                 decoupled_eq_reactions_list=None):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -3232,6 +3239,8 @@ class pchemistry(Frozen):
             gas_diffusion_coefficients = []
         if aqueous_diffusion_coefficients is None:
             aqueous_diffusion_coefficients = []
+        if decoupled_eq_reactions_list is None:
+            decoupled_eq_reactions_list = []
 
         # primary_species (eg. 'A(aq') - string
         self.primary_species_list = primary_species_list
@@ -3269,6 +3278,7 @@ class pchemistry(Frozen):
         self.reaction_sandbox = reaction_sandbox
         self.aqueous_diffusion_coefficients = aqueous_diffusion_coefficients
         self.gas_diffusion_coefficients = gas_diffusion_coefficients
+        self.decoupled_eq_reactions_list = decoupled_eq_reactions_list
 
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
@@ -4490,7 +4500,7 @@ class ptransport(Frozen):
     """
 
     def __init__(self, name='', tran_type='', constraint_list_value=None,
-                 constraint_list_type=None, time_units=''):
+                 constraint_list_type=None, time_units='',constraint=None):
         if constraint_list_value is None:
             constraint_list_value = []
         if constraint_list_type is None:
@@ -4500,7 +4510,83 @@ class ptransport(Frozen):
         self.constraint_list_value = constraint_list_value
         self.constraint_list_type = constraint_list_type
         self.time_units = time_units
+        self.constraint = constraint
         self._freeze()
+
+    class constraint(Frozen):
+        def __init__(self,name=None,fig_list=None,min_list=None,conc_list=None):
+            if fig_list is None:
+                fig_list = []
+            if min_list is None:
+                min_list = []
+            if conc_list is None:
+                conc_list = []
+
+            self.name = name
+            self.fig_list = fig_list
+            self.min_list = min_list
+            self.conc_list = conc_list
+
+        def add_free_ion_guess(self,name=None,guess=None):
+            fig = ptransport.free_ion_guess_list(name=name,guess=guess)
+            self.fig_list.append(fig)
+
+        def add_concentration(self,name=None,concentration=None,ctype=None,cspecies=None):
+            con = ptransport.concentration(name=name,concentration=concentration,ctype=ctype,cspecies=cspecies)
+            self.conc_list.append(con)
+
+        def add_mineral(self,name=None,vol_fraction=None,ss_area=None,units=None):
+            fmin = ptransport.mineral(name=name,vol_fraction=vol_fraction,ss_area=ss_area,units=units)
+            self.min_list.append(fmin)
+
+        def write(self,outfile):
+            outfile.write('  CONSTRAINT %s\n' % self.name)
+
+            if self.conc_list:
+                outfile.write('    CONCENTRATIONS\n')
+                for c in self.conc_list:
+                    spec = '' if c.cspecies is None else c.cspecies
+                    outfile.write('      %s %s %s %s\n' %
+                      (c.name,strD(c.concentration),c.ctype,spec))
+                outfile.write('    /\n')
+
+            if self.fig_list:
+                outfile.write('    FREE_ION_GUESS\n')
+                for f in self.fig_list:
+                    outfile.write('      %s %s\n' % (f.name,strD(f.guess)))
+                outfile.write('    /\n')
+
+            if self.min_list:
+                outfile.write('    MINERALS\n')
+                for m in self.min_list:
+                    unit = '' if m.unit is None else m.unit
+                    outfile.write('      %s %s %s %s\n' %
+                      (m.name,strD(m.vol_fraction),strD(m.ss_area),unit))
+                outfile.write('    /\n')
+
+            outfile.write('  /\n')
+                    
+
+
+    class free_ion_guess(Frozen):
+        def __init__(self,name=None,guess=None):
+            self.name = name
+            self.guess = guess
+            self._freeze()
+    class concentration(Frozen):
+        def __init__(self,name=None,concentration=None,ctype=None,cspecies=None):
+            self.name = name
+            self.concentration = concentration
+            self.ctype = ctype
+            self.cspecies = cspecies
+            self._freeze()
+    class mineral(Frozen):
+        def __init__(self,name=None,vol_fraction=None,ss_area=None,units=None):
+            self.name = name
+            self.vol_fraction = vol_fraction
+            self.ss_area = ss_area
+            self.units = units
+            self._freeze()
 
 
 class pconstraint(Frozen):
@@ -4955,6 +5041,7 @@ class pdata(object):
         self.waste_form_general = None
         self.wipp_source_sink = None
         self.reference_saturation = None
+        self.reference_pressure = None
 
         # run object
         self._path = ppath(parent=self)
@@ -5328,7 +5415,8 @@ class pdata(object):
                             self._read_source_sink_sandbox,
                             self._read_waste_form_general,
                             self._read_wipp_source_sink,
-                            self._read_reference_saturation],
+                            self._read_reference_saturation,
+                            self._read_reference_pressure],
                            ))
 
         # associate each card name with
@@ -5502,7 +5590,8 @@ class pdata(object):
                                 'geomechanics_output',
                                 'eos','reference_liquid_density',
                                 'minimum_hydrostatic_pressure',
-                                'reference_saturation']:
+                                'reference_saturation',
+                                'reference_pressure']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -5705,6 +5794,9 @@ class pdata(object):
 
         if self.reference_saturation:
             self._write_reference_saturation(outfile)
+
+        if self.reference_pressure:
+            self._write_reference_pressure(outfile)
 
         if self.strata_list:
             self._write_strata(outfile)
@@ -6935,7 +7027,7 @@ class pdata(object):
             key = line.strip().split()[0].lower()  # take first keyword
 
             if key == 'type':
-                grid.type = line.strip().split()[1].lower()
+                grid.type = ' '.join(line.strip().split()[1:]).lower()
                 if grid.type in ['unstructured_explicit','unstructured_implicit']:
                     grid.filename = self.splitter(line)
             elif key == 'bounds':
@@ -6964,6 +7056,8 @@ class pdata(object):
                 grid.gravity.append(floatD(line.split()[1]))
                 grid.gravity.append(floatD(line.split()[2]))
                 grid.gravity.append(floatD(line.split()[3]))
+            elif key == 'upwind_fraction_method':
+                grid.upwind_fraction_method = self.splitter(line)
             elif key == 'dxyz':
                 if bounds_key:
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
@@ -6989,11 +7083,11 @@ class pdata(object):
         self._header(outfile, headers['grid'])
         grid = self.grid
         outfile.write('GRID\n')
-        if grid.type not in grid_types_allowed:
+        if grid.type.split()[0] not in grid_types_allowed:
             print('       valid grid.types:', grid_types_allowed)
             raise PyFLOTRAN_ERROR(
                 'grid.type: \'' + grid.type + '\' is invalid!')
-        if grid.type == 'structured':
+        if grid.type == 'structured' or grid.type == 'structured cylindrical':
             outfile.write('  TYPE ' + grid.type)
             if grid.symmetry_type not in grid_symmetry_types_allowed:
                 print('    valid grid.symmetry_types:', \
@@ -7095,6 +7189,8 @@ class pdata(object):
             outfile.write('\n')
         else:
             outfile.write('  TYPE ' + grid.type + ' ' + grid.filename + '\n')
+            if grid.upwind_fraction_method:
+                outfile.write('  UPWIND_FRACTION_METHOD ' + grid.upwind_fraction_method + '\n')
         if grid.origin:
             outfile.write('  ORIGIN' + ' ')
             for i in range(3):
@@ -9601,6 +9697,13 @@ class pdata(object):
             outfile.write('END\n\n')
 
     def _read_flow(self, infile, line):
+        '''
+        TODO: Cleanup this function and the write function.
+        While it is a clever way of parsing valid variables from files,
+        it is tough to scale. Particularily, for (i) non-conforming 
+        values (i.e. TEMPERATURE DATASET temp) and (ii) for variables
+        contained in both TYPE and in the flow condition blocks.
+        '''
         flow = pflow()
         flow.datum = []
         flow.varlist = []
@@ -9695,6 +9798,14 @@ class pdata(object):
                                         var.list.append(tvarlist)
                             if line.split()[0] in ['/', 'end']:
                                 keep_reading_list = False
+
+                    elif tstring2name.lower() == 'pressure':
+                        flow.pressure = ' '.join(tstring2)
+                    elif tstring2name.lower() == 'temperature':
+                        flow.temperature = ' '.join(tstring2)
+                    elif tstring2name.lower() == 'flux':
+                        unit = tstring2[1] if len(tstring2) > 1 else None
+                        flow.flux = Coeff(floatD(tstring2[0]),unit=unit)
                     else:
                         # for each single variable in a pflow_variable object,
                         # check all pflow_variable object by name to
@@ -9718,6 +9829,8 @@ class pdata(object):
                 flow.sync_timestep_with_update = True
             elif key == 'cyclic':
                 flow.cyclic = True
+            elif key == 'conductance':
+                flow.conductance = floatD(self.splitter(line))
             elif key == 'datum':
                 # Assign file_name with list of d_dx, d_dy, d_dz values.
                 subkey = line.strip().split()[1].lower()
@@ -9752,7 +9865,7 @@ class pdata(object):
                             flow.datum.append(temp_list)
                 elif subkey == 'dataset':
                     flow.datum_type = 'dataset'
-                    flow.datum = line.split()[1]
+                    flow.datum = line.split()[-1]
                 else:
                     temp_list = [floatD(line.split()[1]), 
                                  floatD(line.split()[2]),
@@ -10094,6 +10207,21 @@ class pdata(object):
                     else:
                         outfile.write('  PRESSURE %s\n' % flow.pressure)
 
+                if flow.conductance is not None:
+                    if isinstance(flow.conductance,(int,float)):
+                        outfile.write('  CONDUCTANCE %s\n' % strD(flow.conductance))
+                    else:
+                        outfile.write('  CONDUCTANCE %s\n' % flow.conductance)
+
+                if flow.temperature is not None:
+                    if isinstance(flow.temperature,(int,float)):
+                        outfile.write('  TEMPERATURE %s\n' % strD(flow.temperature))
+                    else:
+                        outfile.write('  TEMPERATURE %s\n' % flow.temperature)
+
+                if flow.flux is not None:
+                    outfile.write('  FLUX %s\n' % flow.flux)
+
                 if flow.cyclic:
                     outfile.write('  CYCLIC\n')
 
@@ -10138,7 +10266,7 @@ class pdata(object):
 
                     if flow.gradient[0].lower() == 'file':
                         outfile.write('    ' + flow.gradient_type.upper() +
-                                      ' ' + ' '.join(flow.gradient))
+                                      ' ' + ' '.join(flow.gradient) + '\n')
                     else:
                         outfile.write('    ' + flow.gradient_type.upper() +
                                       ' ' + str(flow.gradient[0]) + ' ' + str(
@@ -10683,6 +10811,15 @@ class pdata(object):
         outfile.write('REFERENCE_SATURATION %s\n' % \
           strD(self.reference_saturation))
 
+    def _read_reference_pressure(self,infile,line):
+        rp = line.split()[1:]
+        unit = rp[1] if len(rp) > 1 else None
+        self.reference_pressure = Coeff(floatD(rp[0]),unit=unit)
+
+    def _write_reference_pressure(self,outfile):
+        outfile.write('REFERENCE_PRESSURE %s\n' % \
+          strD(self.reference_pressure))
+
     def _delete_strata(self, strata=pstrata()):
         self.strata_list.remove(strata)
 
@@ -11131,6 +11268,15 @@ class pdata(object):
                     if line.strip() in ['/', 'end']:
                         break
                     chem.secondary_species_list.append(line.strip())
+            elif key == 'decoupled_equilibrium_reactions':
+                while True:
+                    line = get_next_line(infile).strip()
+                    lkey = line.split()[0].lower()
+
+                    if lkey in ['/','end']:
+                        break
+                    else:
+                        chem.decoupled_eq_reactions_list.append(line)
             elif key == 'gas_species':
                 while True:
                     line = get_next_line(infile)
@@ -11950,6 +12096,12 @@ class pdata(object):
         if c.reaction_sandbox:
             c.reaction_sandbox._write(outfile)
 
+        if c.decoupled_eq_reactions_list:
+            outfile.write('  DECOUPLED_EQUILIBRIUM_REACTIONS\n')
+            for r in c.decoupled_eq_reactions_list:
+                outfile.write('    %s\n' % r)
+            outfile.write('  /\n')
+
         if c.m_kinetics_list:
             outfile.write('  MINERAL_KINETICS\n')
             for mk in c.m_kinetics_list:  # mk = mineral_kinetics
@@ -12111,6 +12263,7 @@ class pdata(object):
         np_constraint_list_value = []
         np_constraint_list_type = []
         np_time_units = ''
+        p_con = None
 
         keep_reading = True
 
@@ -12124,6 +12277,56 @@ class pdata(object):
                     np_type = self.splitter(line)  # take last word
             elif key == 'time_units':
                 np_time_units = self.splitter(line)
+            elif key == 'constraint':
+                p_con = ptransport.constraint()
+                p_con.name = self.splitter(line)
+
+                while True:
+                    lline = get_next_line(infile)
+                    lkey = lline.split()[0].lower()
+
+                    if lkey == 'concentrations':
+                        while True:
+                            kline = get_next_line(infile)
+                            kkey = kline.split()[0].lower()
+
+                            if kkey in ['/','end']:
+                                break
+                            else:
+                                conc = kline.split()
+
+                                if len(conc) == 3: conc.append(None)
+                                p_con.add_concentration(name=conc[0],
+                                  concentration=floatD(conc[1]),
+                                  ctype=conc[2],cspecies=conc[3])
+                    elif lkey == 'free_ion_guess':
+                        while True:
+                            kline = get_next_line(infile)
+                            kkey = kline.split()[0].lower()
+
+                            if kkey in ['/','end']:
+                                break
+                            else:
+                                fion = kline.split()
+                                p_conc.add_free_ion_guess(name=fion[0],
+                                  guess=floatD(fion[1]))
+                    elif lkey == 'minerals':
+                        while True:
+                            kline = get_next_line(infile)
+                            kkey = kline.split()[0].lower()
+
+                            if kkey in ['/','end']:
+                                break
+                            else:
+                                fmin = kline.split()
+                                if len(fmin) == 3: fmin.append(None)
+                                p_conc.add_mineral(name=fmin[0],
+                                  vol_fraction=floatD(fmin[1]),
+                                  ss_area=floatD(fmin[2]),
+                                  units=fmin[3])
+                    elif lkey in ['/','end']:
+                        break
+
             elif key == 'constraint_list':
                 keep_reading_2 = True
                 line = get_next_line(infile)
@@ -12154,7 +12357,8 @@ class pdata(object):
 
         # Create an empty transport condition and assign the values read in
         new_transport = ptransport(np_name, np_type, np_constraint_list_value,
-                                   np_constraint_list_type, np_time_units)
+                                   np_constraint_list_type, np_time_units,
+                                   constraint=p_con)
         self.add(new_transport)
 
     # Adds a transport object.
@@ -12234,7 +12438,10 @@ class pdata(object):
                                       'should be' +
                                       'in list format, be equal in length, ' +
                                       'and have at least one value.\n')
+
             outfile.write('\n  /\n')  # END FOR CONSTRAINT_LIST
+            if t.constraint:
+                t.constraint.write(outfile)
             outfile.write('END\n\n')  # END FOR TRANSPORT_CONDITION
 
     def _read_constraint(self, infile, line):

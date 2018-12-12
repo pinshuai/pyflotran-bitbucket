@@ -75,11 +75,13 @@ def check_keywords(f1,f2):
         f2 = f.read().lower().split('\n')
 
     a = []
-    for line in f1:
+    ln = []
+    for (i,line) in enumerate(f1):
         line = line.strip()
         if len(line) > 1:
             if line[0] != "#" and line[0] != "!":
                 a.append(line.split()[0])
+                ln.append(i+1)
     f1 = a
 
     a = []
@@ -105,7 +107,7 @@ def check_keywords(f1,f2):
             if line1 == 'skip':
                 skip = True
             elif line1 not in f2 and not ('.' in line1 and 'd' in line1):
-                print("%d : %s" % (i,line1))
+                print("%d : %s" % (ln[i],line1))
 
 def compare_regression_tests(file1, file2):
     current_dir = os.getcwd()

@@ -7,6 +7,7 @@ import filecmp
 import pickle
 import json
 import argparse
+from glob import glob
 
 PYFLOTRAN_RF_ERROR   = 15 # Read fail error
 PYFLOTRAN_WF_ERROR   = 16 # Write fail error
@@ -22,6 +23,11 @@ except KeyError:
 
 regression_tests_filename = 'regression_input_filenames.pickle'
 
+try:
+    pflotran_testlog = glob(pflotran_dir + '/regression_tests/pflotran-tests-*')[-1]
+except IndexError:
+    pflotran_testlog = ''
+
 with open(regression_tests_filename, 'rb') as f:
     tests_list = pickle.load(f)
 
@@ -32,16 +38,45 @@ regression_pass_files = []
 regression_fail_files = []
 
 def check_file(cmd):
-    process = subprocess.Popen(
-        shlex.split(cmd), stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+    process = subprocess.Popen(shlex.split(cmd),
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+
     out, err = process.communicate()
-    out = decode(out)
-    files = out.split('\n')
-    return files
+    return decode(out).split('\n')
+
+def get_test_command(fname):
+    '''
+    Gets shell command to use on a test case, parsed from
+    regression_tests testlog.
+    '''
+
+    with open(fname,'r') as f:
+        file = f.read().split('\n')
+
+    cmds = {}
+    current_key = None
+
+    for line in file:
+        if '...' in line and not 'passed' in line:
+            current_key = line.split('...')[0]
+            cmds[current_key] = ''
+        else:
+            if current_key is not None and '-' in line and 'src' in line:
+                line = line.strip()
+
+                # Strip -input_prefix from command
+                if '-input_prefix' in line:
+                    _pre = line.split()
+                    _idx = _pre.index('-input_prefix')
+                    line = ' '.join(_pre[:_idx] + _pre[_idx+2:])
+                cmds[current_key] = line
+
+    return cmds
 
 
 def run_popen(cmd):
+    print(cmd)
     process = subprocess.Popen(
         shlex.split(cmd), stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
@@ -159,7 +194,7 @@ def read_and_write(file):
         print('Error in reading: ' + file)
         read_fail_files.append(file)
 
-def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=None, check_integrity=False):
+def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=None, check_integrity=False, cmd=None):
     '''
     Performs regression tests with native input file vs. PyFLOTRAN input file.
     Constructs a dictionary from the regression output file, and uses
@@ -199,8 +234,10 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         # Change directory to first file
         os.chdir(os.path.dirname(file))
 
-        out, err = run_popen(
-            pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file)
+        if cmd is None or cmd.strip() == '':
+            out, err = run_popen(pflotran_dir + '/src/pflotran/pflotran -pflotranin ' + file)
+        else:
+            out, err = run_popen('%s -pflotranin %s' % (cmd,file))
 
         out = decode(out)
         err = decode(err)
@@ -210,6 +247,7 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
             print('\033[91mPFLOTRAN RUNTIME ERROR: \033[0m'+
                 out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
                 +'\n'+'-'*50)
+
             os.chdir(current_dir)
             if debug_dict is not None:
                 debug_dict['failed']['pflotran_runtime'][file] = out[out.find('ERROR'):out.find('\n',out.find('ERROR'))]
@@ -361,6 +399,11 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
         }
     }
 
+    try:
+        cmds = get_test_command(pflotran_testlog)
+    except IOError:
+        cmds = {}
+
     # Iterate over each file...
     for file in file_list:
         # Try reading
@@ -376,8 +419,16 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
             debug_dict['failed']['pyflotran_runtime'][file] = e
             continue
 
+        file_prefix = file.split('/')[-1].split('.')[0]
+        if file_prefix in cmds.keys():
+            cmd = cmds[file_prefix]
+
         os.chdir(current_dir)
-        status = regression_diff(file,tmp_file,verbose=verbose,json_diff_dir=json_diff_dir,debug_dict=debug_dict,check_integrity=True)
+        status = regression_diff(file,tmp_file,verbose=verbose,
+                                 json_diff_dir=json_diff_dir,
+                                 debug_dict=debug_dict,
+                                 check_integrity=True,
+                                 cmd=cmd)
 
         if status == False:
             pass

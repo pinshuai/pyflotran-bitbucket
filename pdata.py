@@ -6011,7 +6011,7 @@ class pdata(object):
         if self.simulation.subsurface_flow or \
                 self.simulation.subsurface_transport:
             self._write_subsurface_simulation_begin(outfile)
-            
+
         if self.co2_database:
             self._write_co2_database(outfile)
 
@@ -6191,6 +6191,19 @@ class pdata(object):
         if self.simulation.subsurface_flow or \
                 self.simulation.subsurface_transport:
             self._write_subsurface_simulation_end(outfile)
+
+
+        # -----------------------------------------------
+
+        if self.simulation.surface_subsurface:
+            self._write_surface_subsurface_begin(outfile)
+
+            if self.surface_flow:
+                self._write_surface_flow(outfile)
+
+            self._write_surface_subsurface_end(outfile)
+
+        # -----------------------------------------------
 
         if self.simulation.simulation_type == 'hydroquake':
             self._write_hydroquake(outfile)

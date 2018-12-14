@@ -234,9 +234,13 @@ def strD_matrix(data,columns=5,width=15,indent=0):
 
     Useful for writing to DATA blocks.
     """
+
+    if len(data) <= columns:
+        return ' '.join([strD(x).ljust(width) for x in data]) + '\n'
+
     s = ''
     for (i,v) in enumerate(data,1):
-        s += str(v).ljust(width)
+        s += strD(v).ljust(width) + ' '
         if not i % columns:
             s += '\\ \n'
     return ' '*indent + s[:-2].replace('\n','\n%s' % (' '*indent)) + '\n'

@@ -221,6 +221,26 @@ def get_next_line(infile):
             if not line.strip()[0] in ['#','!']:
                 return filter_comment(line)
 
+def get_key(line):
+    """
+    Returns the card key used in file parsing.
+    """
+    return line.strip().split()[0].lower()
+
+def strD_matrix(data,columns=5,width=15,indent=0):
+    """
+    Converts a 1D vector or list to a string matrix of a defined
+    amount of columns.
+
+    Useful for writing to DATA blocks.
+    """
+    s = ''
+    for (i,v) in enumerate(data,1):
+        s += str(v).ljust(width)
+        if not i % columns:
+            s += '\\ \n'
+    return ' '*indent + s[:-2].replace('\n','\n%s' % (' '*indent)) + '\n'
+
 def filter_comment(line):
     """
     Returns a line with any trailing comment removed.

@@ -96,7 +96,8 @@ simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis', 'general', 'th', 'thc',
                       'toil_ims', 'todd_longstaff', 'solvent_tl',
-                      'wipp_flow', 'richards_ts']
+                      'wipp_flow', 'richards_ts', 'black_oil',
+                      'towg_immiscible']
 
 # checkpoint - allowed formats
 checkpoint_formats_allowed = ['hdf5', 'binary']
@@ -228,7 +229,9 @@ flow_condition_type_names_allowed = ['PRESSURE', 'RATE', 'FLUX', 'TEMPERATURE',
                                      'LIQUID_PRESSURE', 'GAS_PRESSURE',
                                      'LIQUID_SATURATION', 'GAS_SATURATION',
                                      'MOLE_FRACTION', 'RELATIVE_HUMIDITY',
-                                     'LIQUID_FLUX', 'GAS_FLUX', 'ENERGY_FLUX']
+                                     'LIQUID_FLUX', 'GAS_FLUX', 'ENERGY_FLUX',
+                                     'OIL_SATURATION','OIL_PRESSURE',
+                                     'BUBBLE_POINT', 'SOLVENT_SATURATION']
 
 geomech_condition_type_names_allowed = ['DISPLACEMENT_X', 'DISPLACEMENT_Y',
                                         'DISPLACEMENT_Z', 'FORCE_X', 'FORCE_Y',
@@ -353,7 +356,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'minimum_hydrostatic_pressure','update_flow_permeability',
               'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
               'waste_form_general','wipp_source_sink','reference_saturation',
-              'reference_pressure']
+              'reference_pressure','co2_database']
 
 headers = dict(zip(cards, headers))
 
@@ -597,7 +600,8 @@ class pmaterial(Frozen):
                  permeability_isotropic=None,
                  thermal_cond_exponent=None,
                  thermal_conductivity_frozen=None,
-                 thermal_cond_exponent_frozen=None):
+                 thermal_cond_exponent_frozen=None,
+                 bulk_compressibility=None):
 
         if permeability is None:
             permeability = []
@@ -632,6 +636,7 @@ class pmaterial(Frozen):
         self.thermal_cond_exponent = thermal_cond_exponent
         self.thermal_conductivity_frozen = thermal_conductivity_frozen
         self.thermal_cond_exponent_frozen = thermal_cond_exponent_frozen
+        self.bulk_compressibility = bulk_compressibility
 
         if bandis_A is None:
             bandis_A = []
@@ -744,7 +749,7 @@ class pmaterial(Frozen):
             if self.radius:
                 outfile.write('    RADIUS %s\n' % strD(self.radius))
             if self.num_cells:
-                outfile.write('    NUM_CELLS %s\n' % strD(self.num_cells))
+                outfile.write('    NUM_CELLS %s\n' % strD(int(self.num_cells)))
             if self.outer_spacing:
                 outfile.write('    OUTER_SPACING %s\n' % strD(self.outer_spacing))
             if self.epsilon:
@@ -837,7 +842,7 @@ class ptime(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, tf=[1.0, 'd'], dti=[1e-3, 'd'], dtf=[1.0, 'd'],
-                 steady_state=False, dtf_list=None):
+                 steady_state=False, dtf_list=None,dtm=None):
         if tf is None:
             tf = []
         if dti is None:
@@ -846,11 +851,14 @@ class ptime(Frozen):
             dtf = []
         if dtf_list is None:
             dtf_list = []
+        if dtm is None:
+            dtm = []
 
         self.tf = tf  # Final Time, 2nd parameter is unit, same for all other
         # variables except dtf_i
         self.dti = dti  # Initial Timestep Size
         self.dtf = dtf  # Maximum Timestep Size
+        self.dtm = dtm # Minimum Timestep size
         self.dtf_list = dtf_list  # Maximum Timestep Size using keyword 'at'
         # Lists (manually) are assigned to lists
         self.steady_state = steady_state
@@ -1961,7 +1969,7 @@ class psimulation(Frozen):
                  inline_surface_region=None,inline_surface_mannings_coeff=None,
                  waste_form=None,harmonic_permeability_only=None,
                  do_not_scale_jacobian=False,gas_component_formula_weight=None,
-                 options=None):
+                 options=None,surface_subsurface=None):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -1992,6 +2000,7 @@ class psimulation(Frozen):
         self.inline_surface_mannings_coeff = inline_surface_mannings_coeff
         self.waste_form = waste_form
         self.options = options
+        self.surface_subsurface = surface_subsurface
         self._freeze()
 
     class auxiliary(Frozen):
@@ -2037,7 +2046,8 @@ class psimulation(Frozen):
                      min_liq_pres_force_ts_cut=None,
                      max_allow_liq_pres_change_ts=None,
                      liq_pres_change_ts_governor=None,
-                     arithmetic_gas_diffusive_density=False):
+                     arithmetic_gas_diffusive_density=False,
+                     tl_omega=None,no_gas=False):
 
             self.isothermal = isothermal
             self.inline_surface_region = inline_surface_region
@@ -2069,6 +2079,9 @@ class psimulation(Frozen):
             self.max_allow_liq_pres_change_ts = max_allow_liq_pres_change_ts
             self.liq_pres_change_ts_governor = liq_pres_change_ts_governor
             self.arithmetic_gas_diffusive_density = arithmetic_gas_diffusive_density
+            self.maximum_pressure_change = max_pressure_change
+            self.tl_omega = tl_omega
+            self.no_gas = no_gas
             self._freeze()
 
         def _write(self,outfile):
@@ -2078,6 +2091,8 @@ class psimulation(Frozen):
             if self.inline_surface_region:
                 _val = self.inline_surface_region
                 outfile.write('        INLINE_SURFACE_REGION %s\n' % _val)
+            if self.no_gas:
+                outfile.write('        NO_GAS\n')
             if self.inline_surface_mannings_coeff:
                 _val = strD(self.inline_surface_mannings_coeff)
                 outfile.write('        INLINE_SURFACE_MANNINGS_COEFF %s\n' % _val)
@@ -2093,6 +2108,12 @@ class psimulation(Frozen):
             if self.max_saturation_change:
                 _val = strD(self.max_saturation_change)
                 outfile.write('        MAX_SATURATION_CHANGE %s\n' % _val)
+            if self.maximum_pressure_change:
+                _val = strD(self.maximum_pressure_change)
+                outfile.write('        MAXIMUM_PRESSURE_CHANGE %s\n' % _val)
+            if self.tl_omega is not None:
+                _val = strD(self.tl_omega)
+                outfile.write('        TL_OMEGA %s\n' % _val)
             if self.max_cfl:
                 outfile.write('        MAX_CFL ' + strD(self.max_cfl) + '\n')
             if self.numerical_derivatives:
@@ -2229,11 +2250,13 @@ class plsolver(Frozen):
     :type solver: str
     """
 
-    def __init__(self, name='', solver='', preconditioner='', ksp=''):
+    def __init__(self, name='', solver='', preconditioner='', ksp='',
+                 lu_zero_pivot=None):
         self.name = name  # TRAN, TRANSPORT / FLOW
         self.solver = solver  # Solver Type
         self.preconditioner = preconditioner
         self.ksp = ksp
+        self.lu_zero_pivot = lu_zero_pivot
         self._freeze()
 
 
@@ -2588,7 +2611,7 @@ class pwaste_form_general(Frozen):
                      canister_material_constant=None,k0=None,species=None,
                      k_long=None,nu=None,ea=None,q=None,k=None,v=None,ph=None,
                      dissolution_rate=None,fractional_dissolution_rate=None,
-                     fractional_dissolution_rate_vi=None):
+                     fractional_dissolution_rate_vi=None,burnup=None):
 
             if species is None:
                 species = []
@@ -2615,11 +2638,13 @@ class pwaste_form_general(Frozen):
             self.dissolution_rate = dissolution_rate
             self.fractional_dissolution_rate = fractional_dissolution_rate
             self.fractional_dissolution_rate_vi = fractional_dissolution_rate_vi
+            self.burnup = burnup
 
     class waste_form(Frozen):
         def __init__(self,coordinate=None,exposure_factor=None,volume=None,
                      mechanism_name=None,canister_vitality_rate=None,
-                     canister_breach_time=None,decay_start_time=None):
+                     canister_breach_time=None,decay_start_time=None,
+                     region=None):
             self.coordinate = coordinate
             self.exposure_factor = exposure_factor
             self.volume = volume
@@ -2627,6 +2652,8 @@ class pwaste_form_general(Frozen):
             self.canister_vitality_rate = canister_vitality_rate
             self.canister_breach_time = canister_breach_time
             self.decay_start_time = decay_start_time
+            self.region = region
+            self._freeze()
 
     def add_mechanism(self,**kwargs):
         mech = pwaste_form_general.mechanism(**kwargs)
@@ -2694,18 +2721,32 @@ class pcharacteristic_curves(Frozen):
 
     # definitions are put on one line to work better with rst/latex/sphinx.
     def __init__(self, name='default',
-                 saturation_function_type='van_genuchten', sf_alpha=1.e-4,
+                 saturation_function_type=None, sf_alpha=None,
                  sf_m=None, sf_lambda=None,
-                 sf_liquid_residual_saturation=0.1,
+                 sf_liquid_residual_saturation=None,
                  sf_gas_residual_saturation=None, max_capillary_pressure=None,
                  smooth='', power=None, default=False,
-                 liquid_permeability_function_type='mualem_vg_liq',
+                 liquid_permeability_function_type=None,
                  lpf_m=None, lpf_lambda=None,
-                 lpf_liquid_residual_saturation=0.1,
+                 lpf_liquid_residual_saturation=None,
                  gas_permeability_function_type=None, gpf_m=None,
                  gpf_lambda=None, gpf_liquid_residual_saturation=None,
                  gpf_gas_residual_saturation=None, phase=None,
-                 lpf_gas_residual_saturation=None):
+                 lpf_gas_residual_saturation=None,
+                 cap_pressure_list=None,perm_func_water=None,
+                 perm_func_gas=None,perm_func_oil=None,
+                 perm_func_hc=None,perm_func_owg_list=None,tables=None,
+                 pc_ow_table=None,krw_table=None,krow_table=None):
+
+        if cap_pressure_list is None:
+            cap_pressure_list = []
+
+        if perm_func_owg_list is None:
+            perm_func_owg_list = []
+
+        if tables is None:
+            tables = []
+
         self.name = name
         self.saturation_function_type = saturation_function_type
         self.sf_alpha = sf_alpha
@@ -2729,7 +2770,285 @@ class pcharacteristic_curves(Frozen):
         self.gpf_liquid_residual_saturation = gpf_liquid_residual_saturation
         self.gpf_gas_residual_saturation = gpf_gas_residual_saturation
         self.phase = phase
+        self.cap_pressure_list = cap_pressure_list
+        self.perm_func_water = perm_func_water
+        self.perm_func_gas = perm_func_gas
+        self.perm_func_oil = perm_func_oil
+        self.perm_func_hc = perm_func_hc
+        self.perm_func_owg_list = perm_func_owg_list
+        self.tables = tables
+        self.pc_ow_table = pc_ow_table
+        self.krw_table = krw_table
+        self.krow_table = krow_table
         self._freeze()
+
+    class table(Frozen):
+        '''
+        PERMEABILITY FUNCTION - WATER
+        '''
+        def __init__(self,name=None,pressure_units=None,external_file=None):
+            self.name = name
+            self.pressure_units = pressure_units
+            self.external_file = external_file
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  TABLE %s\n' % self.name)
+
+            if self.external_file is not None:
+                outfile.write('    EXTERNAL_FILE %s\n' % self.external_file)
+            if self.pressure_units is not None:
+                outfile.write('    PRESSURE_UNITS %s\n' % self.pressure_units)
+
+            outfile.write('  /\n')
+
+    class cap_pressure(Frozen):
+        '''
+        CAPILLARY PRESSURE
+        '''
+        def __init__(self,function_type=None,const_pressure=None,
+                      interface='og',m=None,max_capillary_pressure=None,
+                      water_res_sat=None,water_conn_sat=None,alpha=None,
+                      clambda=None,liq_res_sat=None):
+            self.function_type = function_type
+            self.const_pressure = const_pressure
+            self.interface = interface
+            self.water_res_sat = water_res_sat
+            self.water_conn_sat = water_conn_sat
+            self.m = m
+            self.max_capillary_pressure = max_capillary_pressure
+            self.alpha = alpha
+            self.clambda = clambda
+            self.liq_res_sat = liq_res_sat
+            self._freeze()
+
+        def _write(self,outfile):
+            interface = '_'+self.interface.upper() if \
+                        self.interface is not None else ''
+            outfile.write('  CAP_PRESSURE_FUNCTION%s %s\n' % \
+              (interface,self.function_type.upper()))
+            if self.const_pressure is not None:
+                outfile.write('    CONSTANT_PRESSURE %s\n' % \
+                  strD(self.const_pressure))
+            if self.m is not None:
+                outfile.write('    M %s\n' % strD(self.m))
+            if self.water_res_sat is not None:
+                outfile.write('    WATER_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.water_res_sat))
+            if self.water_conn_sat is not None:
+                outfile.write('    WATER_CONNATE_SATURATION %s\n' % \
+                  strD(self.water_conn_sat))
+            if self.max_capillary_pressure is not None:
+                outfile.write('    MAX_CAPILLARY_PRESSURE %s\n' % \
+                  strD(self.max_capillary_pressure))
+            if self.liq_res_sat is not None:
+                outfile.write('    LIQUID_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.liq_res_sat))
+            if self.alpha is not None:
+                outfile.write('    ALPHA %s\n' % strD(self.alpha))
+            if self.clambda is not None:
+                outfile.write('    LAMBDA %s\n' % strD(self.clambda))
+            outfile.write('  /\n')
+
+    class permeability_function_owg(Frozen):
+        '''
+        PERMEABILITY FUNCTION - OIL/WATER; OIL/GAS
+        '''
+        def __init__(self,function_type=None,oil_res_sat=None,
+                      interface='og',max_rel_perm=None,m=None,smooth=False):
+            self.function_type = function_type
+            self.oil_res_sat = oil_res_sat
+            self.interface = interface
+            self.max_rel_perm = max_rel_perm
+            self.m = m
+            self.smooth = smooth
+            self._freeze()
+
+        def _write(self,outfile):
+            interface = '_'+self.interface.upper() if \
+                        self.interface is not None else ''
+            outfile.write('  PERMEABILITY_FUNCTION%s %s\n' % \
+              (interface,self.function_type.upper()))
+            if self.m is not None:
+                outfile.write('    M %s\n' % strD(self.m))
+            if self.oil_res_sat is not None:
+                outfile.write('    OIL_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.oil_res_sat))
+            if self.max_rel_perm is not None:
+                outfile.write('    MAX_REL_PERM %s\n' % \
+                  strD(self.max_rel_perm))
+            if self.smooth:
+                outfile.write('    SMOOTH\n')
+            outfile.write('  /\n')
+
+    class permeability_function_wat(Frozen):
+        '''
+        PERMEABILITY FUNCTION - WATER
+        '''
+        def __init__(self,m=None,water_conn_sat=None,water_res_sat=None,\
+                     function_type=None,max_rel_perm=None,smooth=None):
+            self.m = m
+            self.water_conn_sat = water_conn_sat
+            self.water_res_sat = water_res_sat
+            self.function_type = function_type
+            self.max_rel_perm = max_rel_perm
+            self.smooth = smooth
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  PERMEABILITY_FUNCTION_WAT %s\n' % \
+              (self.function_type.upper()))
+
+            if self.m is not None:
+                outfile.write('    M %s\n' % strD(self.m))
+            if self.water_conn_sat is not None:
+                outfile.write('    WATER_CONNATE_SATURATION %s\n' % \
+                  strD(self.water_conn_sat))
+            if self.water_res_sat is not None:
+                outfile.write('    WATER_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.water_res_sat))
+            if self.max_rel_perm is not None:
+                outfile.write('    MAX_REL_PERM %s\n' % \
+                  strD(self.max_rel_perm))
+            if self.smooth:
+                outfile.write('    SMOOTH\n')
+
+            outfile.write('  /\n')
+
+    class permeability_function_hc(Frozen):
+        '''
+        PERMEABILITY FUNCTION - HYDROCARBON
+        '''
+        def __init__(self,m=None,res_sat=None,function_type=None):
+            self.m = m
+            self.res_sat = res_sat
+            self.function_type = function_type
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  PERMEABILITY_FUNCTION_HC %s\n' % \
+              (self.function_type.upper()))
+
+            if self.m is not None:
+                outfile.write('    M %s\n' % strD(self.m))
+            if self.res_sat is not None:
+                outfile.write('    HYDROCARBON_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.res_sat))
+
+            outfile.write('  /\n')
+
+    class permeability_function_gas(Frozen):
+        '''
+        PERMEABILITY FUNCTION - GAS
+        '''
+        def __init__(self,m=None,gas_conn_sat=None,gas_res_sat=None,\
+                     function_type=None,liq_res_sat=None):
+            self.m = m
+            self.gas_conn_sat = gas_conn_sat
+            self.gas_res_sat = gas_res_sat
+            self.function_type = function_type
+            self.liq_res_sat = liq_res_sat
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  PERMEABILITY_FUNCTION_GAS %s\n' % \
+              (self.function_type.upper()))
+
+            if self.m is not None:
+                outfile.write('    M %s\n' % strD(self.m))
+            if self.gas_conn_sat is not None:
+                outfile.write('    GAS_CONNATE_SATURATION %s\n' % \
+                  strD(self.gas_conn_sat))
+            if self.gas_res_sat is not None:
+                outfile.write('    GAS_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.gas_res_sat))
+            if self.liq_res_sat is not None:
+                outfile.write('    LIQUID_RESIDUAL_SATURATION %s\n' % \
+                  strD(self.liq_res_sat))
+
+            outfile.write('  /\n')
+
+    class permeability_function_oil(Frozen):
+        '''
+        PERMEABILITY FUNCTION - OIL
+        '''
+        def __init__(self,m_ow=None,m_og=None,res_sat_ow=None,res_sat_og=None,
+                     ftype_ow=None,ftype_og=None,function_type=None):
+            self.m_ow = m_ow
+            self.m_og = m_og
+
+            self.res_sat_ow = res_sat_ow
+            self.res_sat_og = res_sat_og
+
+            self.res_sat_ow = res_sat_ow
+            self.res_sat_og = res_sat_og
+
+            self.ftype_ow = ftype_ow
+            self.ftype_og = ftype_og
+
+            self.function_type = function_type
+            self._freeze()
+
+        def _write(self,outfile):
+
+            outfile.write('  PERMEABILITY_FUNCTION_OIL %s\n' % \
+              (self.function_type.upper()))
+
+            if self.ftype_ow:
+                outfile.write('    PERMEABILITY_FUNCTION_OW %s\n' % (self.ftype_ow.upper()))
+                if self.m_ow is not None:
+                    outfile.write('      M %s\n' % strD(self.m_ow))
+                if self.res_sat_ow is not None:
+                    outfile.write('      OIL_RESIDUAL_SATURATION %s\n' % \
+                      strD(self.res_sat_ow))
+                outfile.write('    /\n')
+
+            if self.ftype_og:
+                outfile.write('    PERMEABILITY_FUNCTION_OG %s\n' % (self.ftype_og.upper()))
+                if self.m_og is not None:
+                    outfile.write('      M %s\n' % strD(self.m_og))
+                if self.res_sat_og is not None:
+                    outfile.write('      OIL_RESIDUAL_SATURATION %s\n' % \
+                      strD(self.res_sat_og))
+                outfile.write('    /\n')
+
+            outfile.write('  /\n')
+
+    def add_table(self,**kwargs):
+        table = pcharacteristic_curves.table(**kwargs)
+        self.tables.append(table)
+        return table
+
+    def add_cap_pressure_function(self,**kwargs):
+        cp = pcharacteristic_curves.cap_pressure(**kwargs)
+        self.cap_pressure_list.append(cp)
+        return cp
+
+    def add_permeability_function(self,**kwargs):
+        po = pcharacteristic_curves.permeability_function_owg(**kwargs)
+        self.perm_func_owg_list.append(po)
+        return po
+
+    def set_permeability_function_wat(self,**kwargs):
+        pfw = pcharacteristic_curves.permeability_function_wat(**kwargs)
+        self.perm_func_water = pfw
+        return pfw
+
+    def set_permeability_function_hc(self,**kwargs):
+        pfh = pcharacteristic_curves.permeability_function_hc(**kwargs)
+        self.perm_func_hc = pfh
+        return pfh
+
+    def set_permeability_function_gas(self,**kwargs):
+        pfg = pcharacteristic_curves.permeability_function_gas(**kwargs)
+        self.perm_func_gas = pfg
+        return pfg
+
+    def set_permeability_function_oil(self,**kwargs):
+        pfo = pcharacteristic_curves.permeability_function_oil(**kwargs)
+        self.perm_func_oil = pfo
+        return pfo
+
 
 
 class pregion(Frozen):
@@ -2864,7 +3183,7 @@ class pflow(Frozen):
                  gradient_type='', datum_data_unit=None,
                  interpolation=None, cyclic=False,
                  units=None,pressure=None,conductance=None,
-                 temperature=None,flux=None):
+                 temperature=None,flux=None,owc=None):
 
         if datum is None:
             datum = []
@@ -2874,6 +3193,8 @@ class pflow(Frozen):
             gradient = []
         if units is None:
             units = []
+        if owc is None:
+            owc = []
         self.name = name.lower()  # Include initial, top, source
         self.units_list = units_list  # Specify type of units
         # to display such as
@@ -2897,6 +3218,7 @@ class pflow(Frozen):
         self.conductance = conductance
         self.temperature = temperature
         self.flux = flux
+        self.owc = owc
         self._freeze()
 
 
@@ -4908,7 +5230,9 @@ class peos(Frozen):
                  fluid_viscosity=None, fluid_enthalpy=None,
                  fluid_henrys_constant=None, fluid_test=None,
                  fluid_formula_weight=None, rks=None,
-                 density_params=None):
+                 density_params=None,surface_density=None,
+                 pvt=None,enthalpy_block=None,viscosity_linlog_interp=False,
+                 database=None,viscosity_block=None):
         if fluid_density is None:
             fluid_density = []
         if fluid_viscosity is None:
@@ -4926,12 +5250,19 @@ class peos(Frozen):
         self.fluid_formula_weight = fluid_formula_weight
         self.rks = rks
         self.density_params = density_params
+        self.surface_density = surface_density
+        self.pvt = pvt
+        self.enthalpy_block = enthalpy_block
+        self.viscosity_linlog_interp = viscosity_linlog_interp
+        self.database = database
+        self.viscosity_block = viscosity_block
         self._freeze()
 
     class pvt(Frozen):
         def __init__(self,pvt_type=None,pressure_units=None,rs_units=None,
                      fvf_units=None,viscosity_units=None,
-                     compressibility_units=None,temperature_data=None):
+                     compressibility_units=None,temperature_data=None,
+                     viscosibility_units=None,temperature_coeff=None):
             
             if temperature_data is None:
                 temperature_data = []
@@ -4941,8 +5272,48 @@ class peos(Frozen):
             self.rs_units = rs_units
             self.fvf_units = fvf_units
             self.viscosity_units = viscosity_units
+            self.temperature_coeff = temperature_coeff
             self.temperature_data = temperature_data
             self.compressibility_units = compressibility_units
+            self.viscosibility_units = viscosibility_units
+            self._freeze()
+
+    class enthalpy_block(Frozen):
+        def __init__(self,etype=None,temp_ref_values=None,temp_coefficients=None):
+            self.etype = etype
+            self.temp_ref_values = temp_ref_values
+            self.temp_coefficients = temp_coefficients
+            self._freeze()
+
+    class viscosity_block(Frozen):
+        def __init__(self,vtype='quadratic',reference_value=None,
+                     pres_ref_values=None,temp_ref_values=None,
+                     pres_coefficients=None,temp_coefficients=None):
+            self.vtype = vtype
+            self.reference_value = reference_value
+            self.pres_ref_values = pres_ref_values
+            self.temp_ref_values = temp_ref_values
+            self.pres_coefficients = pres_coefficients
+            self.temp_coefficients = temp_coefficients
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  VISCOSITY %s\n' % self.vtype.upper())
+            if self.reference_value:
+                outfile.write('    REFERENCE_VALUE %s\n' % strD(self.reference_value))
+            if self.pres_ref_values:
+                outfile.write('    PRES_REF_VALUES %s\n' % \
+                  ' '.join(list(map(strD,self.pres_ref_values))))
+            if self.temp_ref_values:
+                outfile.write('    TEMP_REF_VALUES %s\n' % \
+                  ' '.join(list(map(strD,self.temp_ref_values))))
+            if self.pres_coefficients:
+                outfile.write('    PRES_COEFFICIENTS %s\n' % \
+                  ' '.join(list(map(strD,self.pres_coefficients))))
+            if self.temp_coefficients:
+                outfile.write('    TEMP_COEFFICIENTS %s\n' % \
+                  ' '.join(list(map(strD,self.temp_coefficients))))
+            outfile.write('  /\n')
 
 
 class prks(Frozen):
@@ -5042,6 +5413,7 @@ class pdata(object):
         self.wipp_source_sink = None
         self.reference_saturation = None
         self.reference_pressure = None
+        self.co2_database = None
 
         # run object
         self._path = ppath(parent=self)
@@ -5416,7 +5788,8 @@ class pdata(object):
                             self._read_waste_form_general,
                             self._read_wipp_source_sink,
                             self._read_reference_saturation,
-                            self._read_reference_pressure],
+                            self._read_reference_pressure,
+                            self._read_co2_database],
                            ))
 
         # associate each card name with
@@ -5591,7 +5964,8 @@ class pdata(object):
                                 'eos','reference_liquid_density',
                                 'minimum_hydrostatic_pressure',
                                 'reference_saturation',
-                                'reference_pressure']:
+                                'reference_pressure',
+                                'co2_database']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -5637,6 +6011,9 @@ class pdata(object):
         if self.simulation.subsurface_flow or \
                 self.simulation.subsurface_transport:
             self._write_subsurface_simulation_begin(outfile)
+            
+        if self.co2_database:
+            self._write_co2_database(outfile)
 
         if self.regression.cells or self.regression.cells_per_process:
             self._write_regression(outfile)
@@ -6216,19 +6593,32 @@ class pdata(object):
                 enthalpy_type = line.strip().split()[1].lower()
 
                 if enthalpy_type in eos_enthalpy_types_allowed:
-                    eos.fluid_enthalpy.append(enthalpy_type)
 
                     if len(line.strip().split()) > 2:
+                        eos.fluid_enthalpy.append(enthalpy_type)
                         for val in line.strip().split()[2:]:
                             eos.fluid_enthalpy.append(floatD(val))
                     else:
                         if enthalpy_type in ['quadratic_temp']:
+                            eb = peos.enthalpy_block()
+                            eb.etype = enthalpy_type
+
                             while True:
                                 subline = get_next_line(infile)
                                 subkey = subline.strip().split()[0].lower()
 
                                 if subkey in ['/', 'end']:
                                     break
+                                elif subkey == 'temp_ref_values':
+                                    _data = subline.strip().split()[1:]
+                                    _data = list(map(floatD,_data))
+                                    eb.temp_ref_values = _data
+                                elif subkey == 'temp_coefficients':
+                                    _data = subline.strip().split()[1:]
+                                    _data = list(map(floatD,_data))
+                                    eb.temp_coefficients = _data
+
+                            eos.enthalpy_block = eb
 
                 else:
                     raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')
@@ -6236,16 +6626,35 @@ class pdata(object):
                 visc_type = line.strip().split()[1].lower()
                 if visc_type in eos_viscosity_types_allowed:
 
-                    eos.fluid_viscosity.append(visc_type)
                     if len(line.strip().split()) > 2:
+                        eos.fluid_viscosity.append(visc_type)
                         for val in line.strip().split()[2:]:
                             eos.fluid_viscosity.append(floatD(val))
                     elif visc_type == 'quadratic':
-                        print('WARNING: QUADRATIC not fully supported.')
+                        _visc = peos.viscosity_block(vtype='quadratic')
+
                         while True:
                             sline = get_next_line(infile).strip()
-                            if sline in ['/','end']:
+                            skey = get_key(sline)
+                            if skey in ['/','end']:
                                 break
+                            elif skey == 'reference_value':
+                                _visc.reference_value = \
+                                  floatD(self.splitter(sline))
+                            elif skey == 'pres_ref_values':
+                                _visc.pres_ref_values = \
+                                  list(map(floatD,sline.split()[1:]))
+                            elif skey == 'temp_ref_values':
+                                _visc.temp_ref_values = \
+                                  list(map(floatD,sline.split()[1:]))
+                            elif skey == 'pres_coefficients':
+                                _visc.pres_coefficients = \
+                                  list(map(floatD,sline.split()[1:]))
+                            elif skey == 'temp_coefficients':
+                                _visc.temp_coefficients = \
+                                  list(map(floatD,sline.split()[1:]))
+
+                        eos.viscosity_block = _visc
                 else:
                     _err = visc_type + ' not recognized as a valid ' + \
                            'viscosity type.\n'
@@ -6293,6 +6702,8 @@ class pdata(object):
                                 pvt.fvf_units = self.splitter(_line)
                             elif _key == 'viscosity':
                                 pvt.viscosity_units = self.splitter(_line)
+                            elif _key == 'viscosibility':
+                                pvt.viscosibility_units = self.splitter(_line)
                             elif _key == 'compressibility':
                                 pvt.compressibility_units = self.splitter(_line)
                             elif _key in ['/','end']:
@@ -6303,14 +6714,16 @@ class pdata(object):
                             _key = _line.strip().split()[0].lower()
 
                             if _key == 'temperature':
+                                pvt.temperature_coeff = floatD(_line.split()[-1])
                                 while True:
                                     _line2 = get_next_line(infile)
                                     _key2 = _line2.strip().split()[0].lower()
                                     if _key2 in ['/','end']:
                                         break
                                     else:
-                                        pvt.temperature_data.append(\
-                                                         _line2.strip().split())
+                                        _data = _line2.strip().split()
+                                        _data = list(map(floatD,_data))
+                                        pvt.temperature_data.append(_data)
                             elif _key in ['/','end']:
                                 break
                     elif subkey in ['/','end']:
@@ -6318,12 +6731,22 @@ class pdata(object):
                     else:
                         raise PyFLOTRAN_ERROR('unknown key...')
 
+                eos.pvt = pvt
+
+            elif key == 'viscosity_linlog_interpolation':
+                eos.viscosity_linlog_interp = True
+            elif key == 'database':
+                eos.database = self.splitter(line)
             elif key == 'formula_weight':
                 if eos.fluid_name not in ['gas','oil','solvent']:
                     raise PyFLOTRAN_ERROR(
                         'formula_weight can only be set for fluid set to gas!')
 
                 eos.fluid_formula_weight = floatD(line.strip().split()[1])
+            elif key == 'surface_density':
+                ll = line.split()[1:]
+                unit = ll[-1] if len(ll) > 1 else None
+                eos.surface_density = Coeff(ll[0],unit=unit)
             elif key in ['/', 'end']:
                 keep_reading = False
         self.add(eos)
@@ -6333,6 +6756,61 @@ class pdata(object):
         for eos in self.eoslist:
             if eos.fluid_name.lower() in eos_fluid_names_allowed:
                 outfile.write('EOS ' + eos.fluid_name.upper() + '\n')
+                if eos.fluid_formula_weight:
+                    outfile.write('  FORMULA_WEIGHT ' +
+                                  strD(eos.fluid_formula_weight) + '\n')
+
+                if eos.surface_density:
+                    outfile.write('  SURFACE_DENSITY %s\n'%eos.surface_density)
+
+                if eos.viscosity_linlog_interp:
+                    outfile.write('  VISCOSITY_LINLOG_INTERPOLATION\n')
+
+                if eos.database:
+                    outfile.write('  DATABASE %s\n' % eos.database)
+
+                if eos.pvt:
+                    p = eos.pvt
+                    has_units = p.pressure_units or p.rs_units or p.fvf_units \
+                                or p.viscosity_units or p.compressibility_units \
+                                or p.viscosibility_units
+
+                    has_data = p.temperature_data is not None
+
+                    outfile.write('  %s\n' % p.pvt_type.upper())
+
+                    if has_units:
+                        outfile.write('    DATA_UNITS\n')
+                        if p.pressure_units:
+                            outfile.write('      PRESSURE %s\n' % p.pressure_units)
+                        if p.rs_units:
+                            outfile.write('      RS %s\n' % p.rs_units)
+                        if p.fvf_units:
+                            outfile.write('      FVF %s\n' % p.fvf_units)
+                        if p.viscosity_units:
+                            outfile.write('      VISCOSITY %s\n' % p.viscosity_units)
+                        if p.viscosibility_units:
+                            outfile.write('      VISCOSIBILITY %s\n' % p.viscosibility_units)
+                        if p.compressibility_units:
+                            outfile.write('      COMPRESSIBILITY %s\n' % p.compressibility_units)
+                        outfile.write('    /\n')
+
+                    if has_data:
+                        outfile.write('    DATA\n')
+                        
+                        if p.temperature_data:
+                            outfile.write('      TEMPERATURE %s\n' % \
+                              (strD(p.temperature_coeff)))
+                            #_sm = strD_matrix(p.temperature_data,indent=8)
+                            _sm = '        '+'\n        '.join(\
+                              [' '.join([strD(x).ljust(10) for x in b])\
+                              for b in p.temperature_data])
+                            outfile.write(_sm+'\n')
+                            outfile.write('      /\n')
+                        outfile.write('    /\n')
+
+                    outfile.write('  /\n')
+
                 if eos.fluid_density:
                     if eos.fluid_density[0].upper() == 'RKS':
                         outfile.write('  DENSITY ' +
@@ -6466,9 +6944,21 @@ class pdata(object):
                                               strD(eos.fluid_henrys_constant) +
                                               '\' has incorrect keyword or ' + \
                                               'incorrect length')
-                if eos.fluid_formula_weight:
-                    outfile.write('  FORMULA_WEIGHT ' +
-                                  strD(eos.fluid_formula_weight) + '\n')
+
+                if eos.enthalpy_block:
+                    outfile.write('  ENTHALPY %s\n' % eos.enthalpy_block.etype.upper())
+                    if eos.enthalpy_block.temp_ref_values:
+                        _data = eos.enthalpy_block.temp_ref_values
+                        _data = '  '.join(list(map(strD,_data)))
+                        outfile.write('    TEMP_REF_VALUES %s\n' % _data)
+                    if eos.enthalpy_block.temp_coefficients:
+                        _data = eos.enthalpy_block.temp_coefficients
+                        _data = '  '.join(list(map(strD,_data)))
+                        outfile.write('    TEMP_COEFFICIENTS %s\n' % _data)
+                    outfile.write('  /\n')
+
+                if eos.viscosity_block:
+                    eos.viscosity_block._write(outfile)
 
                 if eos.fluid_test:
                     for ftest in eos.fluid_test:
@@ -6618,6 +7108,9 @@ class pdata(object):
                             key1 = line.strip().split()[0].lower()
                             if key1 == 'mode':
                                 simulation.mode = self.splitter(line).lower()
+                            elif key1 == 'surface_subsurface':
+                                simulation.surface_subsurface = \
+                                self.splitter(line)
                             elif key1 == 'options':
                                 opt = psimulation.options()
                                 keep_reading_2 = True
@@ -6626,6 +7119,8 @@ class pdata(object):
                                     key2 = line.strip().split()[0].lower()
                                     if key2 == 'isothermal':
                                         opt.isothermal = True
+                                    elif key2 == 'no_gas':
+                                        opt.no_gas = True
                                     elif key2 == 'inline_surface_region':
                                         opt.inline_surface_region = \
                                             self.splitter(line)
@@ -6643,6 +7138,12 @@ class pdata(object):
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_saturation_change':
                                         opt.max_saturation_change = \
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'maximum_pressure_change':
+                                        opt.maximum_pressure_change = \
+                                            floatD(self.splitter(line))
+                                    elif key2 == 'tl_omega':
+                                        opt.tl_omega = \
                                             floatD(self.splitter(line))
                                     elif key2 == 'max_cfl':
                                         opt.max_cfl = \
@@ -6752,8 +7253,12 @@ class pdata(object):
                         simulation.waste_form = self.splitter(line)
                         while True:
                             subline = get_next_line(infile).strip().lower()
-                            if subline in ['/','end']:
+                            subkey = get_key(subline)
+                            if subkey in ['/','end']:
                                 break
+                            elif subkey == 'type':
+                                simulation.waste_form = \
+                                [simulation.waste_form,self.splitter(subline)]
 
                     elif key == 'ufd_decay':
                         simulation.ufd_decay = self.splitter(line)
@@ -6851,15 +7356,6 @@ class pdata(object):
                 if simulation.options:
                     simulation.options._write(outfile)
 
-                if simulation.waste_form:
-                    outfile.write('  WASTE_FORM %s\n' % simulation.waste_form)
-                    outfile.write('  /\n')
-                if simulation.ufd_decay:
-                    outfile.write('  UFD_DECAY %s\n' % simulation.ufd_decay)
-                    outfile.write('  /\n')
-                if simulation.ufd_biosphere:
-                    outfile.write('  UFD_BIOSPHERE %s\n' % simulation.ufd_biosphere)
-                    outfile.write('  /\n')
             else:
                 print('       valid simulation.mode:', mode_names_allowed, '\n')
                 raise PyFLOTRAN_ERROR(
@@ -6876,6 +7372,24 @@ class pdata(object):
                               strD(simulation.max_volume_fraction_change) +
                               '\n')
             outfile.write('    / ' + '\n')
+
+            if simulation.waste_form:
+                if isinstance(simulation.waste_form,str):
+                    outfile.write('    WASTE_FORM %s\n' % simulation.waste_form)
+                    outfile.write('    /\n')
+                else:
+                    outfile.write('    WASTE_FORM %s\n' % \
+                      simulation.waste_form[0])
+                    outfile.write('      TYPE %s\n' % simulation.waste_form[1].upper())
+                    outfile.write('    /\n')
+
+            if simulation.ufd_decay:
+                outfile.write('  UFD_DECAY %s\n' % simulation.ufd_decay)
+                outfile.write('  /\n')
+            if simulation.ufd_biosphere:
+                outfile.write('  UFD_BIOSPHERE %s\n' % simulation.ufd_biosphere)
+                outfile.write('  /\n')
+
             if simulation.auxiliary:
                 simulation.auxiliary._write(outfile)
             outfile.write('  / ' + '\n')
@@ -6885,6 +7399,9 @@ class pdata(object):
                           simulation.subsurface_flow + '\n')
             if simulation.mode in mode_names_allowed:
                 outfile.write('      MODE ' + simulation.mode + '\n')
+                if simulation.surface_subsurface:
+                    outfile.write('      SURFACE_SUBSURFACE %s\n' % \
+                      simulation.surface_subsurface)
                 if simulation.options:
                     simulation.options._write(outfile)
             else:
@@ -6941,6 +7458,10 @@ class pdata(object):
     def _read_co2_database(self, infile, line):
         self.co2_database = del_extra_slash(self.splitter(line))
 
+    def _write_co2_database(self, outfile):
+        self._header(outfile, headers['co2_database'])
+        outfile.write('CO2_DATABASE ' + self.co2_database + '\n\n')
+
     def _write_overwrite_restart_flow(self, outfile):
         outfile.write('OVERWRITE_RESTART_FLOW_PARAMS' + '\n\n')
 
@@ -6965,10 +7486,6 @@ class pdata(object):
     def _write_reference_porosity(self, outfile):
         outfile.write('REFERENCE_POROSITY ' +
                       strD(self.reference_porosity) + '\n\n')
-
-    def _write_co2_database(self, outfile):
-        self._header(outfile, headers['co2_database'])
-        outfile.write('CO2_DATABASE ' + self.co2_database + '\n\n')
 
     def _write_multiple_continuum(self, outfile):
         self._header(outfile, headers['multiple_continuum'])
@@ -7018,7 +7535,7 @@ class pdata(object):
 
     def _read_grid(self, infile, line):
         grid = pgrid()  # assign defaults before reading in values
-        self.co2_database = ''
+        #self.co2_database = ''
 
         keep_reading = True
         bounds_key = False
@@ -7320,6 +7837,8 @@ class pdata(object):
         np_cond_exponent = None
         np_cond_frozen = None
         np_cond_exponent_frozen = None
+        soil_ref_p = None
+        np_bulk_comp = None
 
         _perm_factor = None
         np_tortuosity_fnc_of_porosity = None
@@ -7383,6 +7902,8 @@ class pdata(object):
                 np_cond_wet = floatD(line.strip().split()[1])
             elif key == 'saturation_function':
                 np_saturation = self.splitter(line)
+            elif key == 'bulk_compressibility':
+                np_bulk_comp = floatD(self.splitter(line))
             elif key == 'permeability_power':
                 np_permeability_power = self.splitter(line)
             elif key == 'permeability_critical_porosity':
@@ -7399,6 +7920,11 @@ class pdata(object):
                 soil_comp_func = self.splitter(line)
             elif key == 'soil_compressibility':
                 soil_comp = floatD(self.splitter(line))
+            elif key == 'soil_reference_pressure':
+                try:
+                    soil_ref_p = floatD(self.splitter(line))
+                except ValueError:
+                    soil_ref_p = self.splitter(line)
             elif key == 'permeability':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -7498,7 +8024,9 @@ class pdata(object):
                              secondary_continuum=_sc,
                              thermal_cond_exponent=np_cond_exponent,
                              thermal_conductivity_frozen=np_cond_frozen,
-                             thermal_cond_exponent_frozen=np_cond_exponent_frozen)
+                             thermal_cond_exponent_frozen=np_cond_exponent_frozen,
+                             soil_reference_pressure=soil_ref_p,
+                             bulk_compressibility=np_bulk_comp)
 
         self.add(new_prop)
 
@@ -7584,6 +8112,9 @@ class pdata(object):
             if prop.thermal_cond_exponent_frozen:
                 outfile.write('  THERMAL_COND_EXPONENT_FROZEN %s\n' % \
                   strD(prop.thermal_cond_exponent_frozen))
+            if prop.bulk_compressibility:
+                outfile.write('  BULK_COMPRESSIBILITY %s\n' % \
+                  strD(prop.bulk_compressibility))
             if prop.saturation:
                 outfile.write('  SATURATION_FUNCTION ' +
                               prop.saturation + '\n')
@@ -7658,8 +8189,13 @@ class pdata(object):
                               strD(prop.soil_compressibility) + '\n')
 
             if prop.soil_reference_pressure:  # this is alpha
-                outfile.write('  SOIL_REFERENCE_PRESSURE ' +
+                if isinstance(prop.soil_reference_pressure,(int,float)):
+                    outfile.write('  SOIL_REFERENCE_PRESSURE ' +
                               strD(prop.soil_reference_pressure) + '\n')
+                else:
+                    outfile.write('  SOIL_REFERENCE_PRESSURE ' +
+                              prop.soil_reference_pressure + '\n')
+
 
             #if prop.secondary_continuum:
             #    self._write_sec(prop.secondary_continuum, outfile)
@@ -7860,6 +8396,13 @@ class pdata(object):
                     time.dti.append(tstring[-1])
                 else:
                     time.dti.append(floatD(tstring[0]))
+            elif key == 'minimum_timestep_size':
+                tstring = line.split()[1:]
+                if len(tstring) == 2:
+                    time.dtm.append(floatD(tstring[0]))
+                    time.dtm.append(tstring[-1])
+                else:
+                    time.dtm.append(floatD(tstring[0]))
             elif key == 'maximum_timestep_size':
                 if 'at' not in line:
                     tstring = line.split()[1:]
@@ -7960,6 +8503,20 @@ class pdata(object):
                     'time.dtf (maximum timestep size) input is invalid.' +
                     'Format should be a list: [number, string]')
 
+        if time.dtm:
+            try:
+                outfile.write('  MINIMUM_TIMESTEP_SIZE ' + strD(time.dtm[0]))
+                if time.dtm[1].lower() in time_units_allowed:
+                    outfile.write(' ' + time.dtm[1] + '\n')
+                else:
+                    print('       valid time.units', time_units_allowed, '\n')
+                    raise PyFLOTRAN_ERROR(
+                        'time.dtm[1]: \'' + time.dtm[1] + '\' is invalid.')
+            except:
+                raise PyFLOTRAN_ERROR(
+                    'time.dtm (minimum timestep size) input is invalid.' +
+                    'Format should be a list: [number, string]')
+
         # Write more MAXIMUM_TIME_STEP_SIZE statements if applicable
         for dtf in time.dtf_list:
             outfile.write('  MAXIMUM_TIMESTEP_SIZE ')
@@ -8021,10 +8578,12 @@ class pdata(object):
 
             if key == 'solver':
                 lsolver.solver = self.splitter(line)  # Assign last word
-            if key == 'pc_type':
+            elif key == 'pc_type':
                 lsolver.preconditioner = self.splitter(line)
-            if key == 'ksp_type':
+            elif key == 'ksp_type':
                 lsolver.ksp = self.splitter(line)
+            elif key == 'lu_zero_pivot_tol':
+                lsolver.lu_zero_pivot = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -8070,6 +8629,9 @@ class pdata(object):
                               lsolver.preconditioner.upper() + '\n')
             if lsolver.ksp:
                 outfile.write('  KSP_TYPE ' + lsolver.ksp.upper() + '\n')
+            if lsolver.lu_zero_pivot is not None:
+                outfile.write('  LU_ZERO_PIVOT_TOL %s\n' % \
+                  strD(lsolver.lu_zero_pivot))
             outfile.write('END\n\n')
 
     def _read_nsolver(self, infile, line):
@@ -8494,9 +9056,8 @@ class pdata(object):
             for unit in output.time_list:
                 if unit[0].lower() in time_units_allowed:
                     prefix = '  TIMES ' + unit[0] + ' '
-                    coeffs = ' '.join([strD(ele) for ele in unit[1:]])
-
-                    outfile.write(prefix + coeffs + '\n')
+                    coeffs = strD_matrix(unit[1:],indent=2,width=7)
+                    outfile.write(prefix + coeffs)
                 else:
                     print('       valid time.units', time_units_allowed, '\n')
                     raise PyFLOTRAN_ERROR(
@@ -9128,8 +9689,167 @@ class pdata(object):
                             floatD(self.splitter(line))
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
+
+            # TODO: The below three should be linked to the table class
+            elif key == 'pc_ow_table':
+                characteristic_curves.pc_ow_table = self.splitter(line)
+            elif key == 'krw_table':
+                characteristic_curves.krw_table = self.splitter(line)
+            elif key == 'krow_table':
+                characteristic_curves.krow_table = self.splitter(line)
+            elif key == 'table':
+                pu = ef = None
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'pressure_units':
+                        pu = self.splitter(line)
+                    elif lkey == 'external_file':
+                        ef = self.splitter(line)
+                characteristic_curves.add_table(name=word,pressure_units=pu,
+                  external_file=ef)
+            elif key in ['cap_pressure_function_ow','cap_pressure_function_og']:
+                _cp = _alph = _max_cap_p = _m = _wr_sat = _wc_sat = _lam = None
+                _lrs = None
+                _if = key.split('_')[-1]
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'constant_pressure':
+                        _cp = floatD(self.splitter(line))
+                    elif lkey == 'alpha':
+                        _alph = floatD(self.splitter(line))
+                    elif lkey == 'water_connate_saturation':
+                        _wc_sat = floatD(self.splitter(line))
+                    elif lkey == 'water_residual_saturation':
+                        _wr_sat = floatD(self.splitter(line))
+                    elif lkey == 'm':
+                        _m = floatD(self.splitter(line))
+                    elif lkey == 'max_capillary_pressure':
+                        _max_cap_p = floatD(self.splitter(line))
+                    elif lkey == 'lambda':
+                        _lam = floatD(self.splitter(line))
+                    elif lkey == 'liquid_residual_saturation':
+                        _lrs = floatD(self.splitter(line))
+                characteristic_curves.add_cap_pressure_function(\
+                  function_type=word,const_pressure=_cp,interface=_if,
+                  m=_m,max_capillary_pressure=_max_cap_p,water_res_sat=_wr_sat,
+                  water_conn_sat=_wc_sat,alpha=_alph,clambda=_lam,
+                  liq_res_sat=_lrs)
+            elif key in ['permeability_function_ow','permeability_function_og']:
+                _rs = _rp = _m = _smooth = None
+                _if = key.split('_')[-1]
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'oil_residual_saturation':
+                        _rs = floatD(self.splitter(line))
+                    elif lkey == 'max_rel_perm':
+                        _rp = floatD(self.splitter(line))
+                    elif lkey == 'm':
+                        _m = floatD(self.splitter(line))
+                    elif lkey == 'smooth':
+                        _smooth = True
+                characteristic_curves.add_permeability_function(\
+                  function_type=word,oil_res_sat=_rs,interface=_if,
+                  max_rel_perm=_rp,m=_m,smooth=_smooth)
+            elif key == 'permeability_function_wat':
+                m = wat_conn_sat = wat_res_sat = mrel_perm = smooth = None
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'm':
+                        m = floatD(self.splitter(line))
+                    elif lkey == 'water_connate_saturation':
+                        wat_conn_sat = floatD(self.splitter(line))
+                    elif lkey == 'water_residual_saturation':
+                        wat_res_sat = floatD(self.splitter(line))
+                    elif lkey == 'max_rel_perm':
+                        mrel_perm = floatD(self.splitter(line))
+                    elif lkey == 'smooth':
+                        smooth = True
+                characteristic_curves.set_permeability_function_wat(function_type=word,m=m,water_conn_sat=wat_conn_sat,water_res_sat=wat_res_sat,max_rel_perm=mrel_perm,smooth=smooth)
+            elif key == 'permeability_function_hc':
+                m = res_sat = None
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'm':
+                        m = floatD(self.splitter(line))
+                    elif lkey == 'hydrocarbon_residual_saturation':
+                        res_sat = floatD(self.splitter(line))
+                characteristic_curves.set_permeability_function_hc(function_type=word,m=m,res_sat=res_sat)
+            elif key == 'permeability_function_gas':
+                m = conn_sat = res_sat = lrs = None
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'm':
+                        m = floatD(self.splitter(line))
+                    elif lkey == 'gas_connate_saturation':
+                        conn_sat = floatD(self.splitter(line))
+                    elif lkey == 'gas_residual_saturation':
+                        res_sat = floatD(self.splitter(line))
+                    elif lkey == 'liquid_residual_saturation':
+                        lrs = floatD(self.splitter(line))
+                characteristic_curves.set_permeability_function_gas(function_type=word,m=m,gas_conn_sat=conn_sat,gas_res_sat=res_sat,liq_res_sat=lrs)
+            elif key == 'permeability_function_oil':
+                m_ow = m_og = res_sat_ow = None
+                res_sat_og = ftype_ow = ftype_og = None
+                function_type = word
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'permeability_function_ow':
+                        ftype_ow = line.split()[-1]
+                        while True:
+                            line = get_next_line(infile)
+                            kkey = get_key(line)
+
+                            if kkey in ['/','end']:
+                                break
+                            elif kkey == 'm':
+                                m_ow = floatD(self.splitter(line))
+                            elif kkey == 'oil_residual_saturation':
+                                res_sat_ow = floatD(self.splitter(line))
+                    elif lkey == 'permeability_function_og':
+                        ftype_og = line.split()[-1]
+                        while True:
+                            line = get_next_line(infile)
+                            kkey = get_key(line)
+
+                            if kkey in ['/','end']:
+                                break
+                            elif kkey == 'm':
+                                m_og = floatD(self.splitter(line))
+                            elif kkey == 'oil_residual_saturation':
+                                res_sat_og = floatD(self.splitter(line))
+
+                characteristic_curves.set_permeability_function_oil(m_ow=m_ow,m_og=m_og,res_sat_ow=res_sat_ow,res_sat_og=res_sat_og,ftype_ow=ftype_ow,ftype_og=ftype_og,function_type=function_type)
             elif key in ['/', 'end']:
                 keep_reading = False
+
         self.add(characteristic_curves)
 
     # Adds a char object.
@@ -9164,6 +9884,30 @@ class pdata(object):
             # Write out characteristic curve properties that exist
             if char.name:
                 outfile.write('CHARACTERISTIC_CURVES ' + char.name + '\n')
+
+            if char.pc_ow_table:
+                outfile.write('  PC_OW_TABLE %s\n' % char.pc_ow_table)
+            if char.krw_table:
+                outfile.write('  KRW_TABLE %s\n' % char.krw_table)
+            if char.krow_table:
+                outfile.write('  KROW_TABLE %s\n' % char.krow_table)
+            if char.cap_pressure_list:
+                for c in char.cap_pressure_list:
+                    c._write(outfile)
+            if char.perm_func_owg_list:
+                for p in char.perm_func_owg_list:
+                    p._write(outfile)
+            if char.perm_func_water:
+                char.perm_func_water._write(outfile)
+            if char.perm_func_gas:
+                char.perm_func_gas._write(outfile)
+            if char.perm_func_oil:
+                char.perm_func_oil._write(outfile)
+            if char.perm_func_hc:
+                char.perm_func_hc._write(outfile)
+            for table in char.tables:
+                table._write(outfile)
+
             if char.default:
                 # This just prints the DEFAULT flag
                 outfile.write('  DEFAULT ' + '\n')
@@ -9312,6 +10056,10 @@ class pdata(object):
                         mech.matrix_density = Coeff(_val,unit=_unit)
                     elif subkey == 'kienzler_dissolution':
                         mech.kienzler_dissolution = True
+                    elif subkey == 'burnup':
+                        v = subline.strip().split()[1:]
+                        unit = v[1] if len(v) > 1 else None
+                        mech.burnup = Coeff(floatD(v[0]),unit=unit)
                     elif subkey == 'canister_degradation_model':
                         while True:
                             _line = get_next_line(infile)
@@ -9402,6 +10150,8 @@ class pdata(object):
                         _data = subline.strip().split()[1:]
                         _data = [floatD(x) for x in _data]
                         wf.coordinate = _data
+                    elif subkey == 'region':
+                        wf.region = self.splitter(subline)
                     elif subkey == 'exposure_factor':
                         wf.exposure_factor = floatD(self.splitter(subline))
                     elif subkey == 'volume':
@@ -9414,10 +10164,10 @@ class pdata(object):
                         _val = floatD(subline.strip().split()[1])
                         _unit = subline.strip().split()[2]
                         wf.canister_vitality_rate = Coeff(_val,unit=_unit)
-                    elif subkey == 'cansiter_breach_time':
+                    elif subkey == 'canister_breach_time':
                         _val = floatD(subline.strip().split()[1])
                         _unit = subline.strip().split()[2]
-                        wf.cansiter_breach_time = Coeff(_val,unit=_unit)
+                        wf.canister_breach_time = Coeff(_val,unit=_unit)
                     elif subkey == 'decay_start_time':
                         _val = floatD(subline.strip().split()[1])
                         _unit = subline.strip().split()[2]
@@ -9432,15 +10182,18 @@ class pdata(object):
         wf = self.waste_form_general
 
         if wf.print_mass_balance:
-            outfile.write('  PRINT_MASS_BALANCE\n')
+            outfile.write('    PRINT_MASS_BALANCE\n')
 
         if wf.implicit_solution:
-            outfile.write('  IMPLICIT_SOLUTION\n')
+            outfile.write('    IMPLICIT_SOLUTION\n')
 
         for mech in wf.mechanism:
-            outfile.write('    MECHANISM %s\n' % mech.name)
+            outfile.write('    MECHANISM %s\n' % mech.mech_type)
             outfile.write('      NAME %s\n' % mech.name)
-            outfile.write('      SPECIFIC_SURFACE_AREA %s\n' % mech.specific_surface_area)
+
+            if mech.specific_surface_area is not None:
+                outfile.write('      SPECIFIC_SURFACE_AREA %s\n' % \
+                  mech.specific_surface_area)
 
             if mech.fractional_dissolution_rate:
                 outfile.write('      FRACTIONAL_DISSOLUTION_RATE %s\n' % mech.fractional_dissolution_rate)
@@ -9448,6 +10201,24 @@ class pdata(object):
                 outfile.write('      MATRIX_DENSITY %s\n' % mech.matrix_density)
             if mech.kienzler_dissolution:
                 outfile.write('      KIENZLER_DISSOLUTION\n')
+            if mech.burnup:
+                outfile.write('      BURNUP %s\n' % mech.burnup)
+            if mech.k0 is not None:
+                outfile.write('      K0 %s\n' % mech.k0)
+            if mech.k_long is not None:
+                outfile.write('      K_LONG %s\n' % mech.k_long)
+            if mech.nu is not None:
+                outfile.write('      NU %s\n' % mech.nu)
+            if mech.ea is not None:
+                outfile.write('      EA %s\n' % mech.ea)
+            if mech.q is not None:
+                outfile.write('      Q %s\n' % mech.q)
+            if mech.k is not None:
+                outfile.write('      K %s\n' % mech.k)
+            if mech.v is not None:
+                outfile.write('      V %s\n' % mech.v)
+            if mech.ph is not None:
+                outfile.write('      PH %s\n' % mech.ph)
 
             if mech.species:
                 outfile.write('      SPECIES\n')
@@ -9489,6 +10260,9 @@ class pdata(object):
                 _coords = ' '.join([strD(x) for x in waste.coordinate])
                 outfile.write('      COORDINATE %s\n' % _coords)
 
+            if waste.region:
+                outfile.write('      REGION %s\n' % waste.region)
+
             if waste.exposure_factor:
                 outfile.write('      EXPOSURE_FACTOR %s\n' % strD(waste.exposure_factor))
 
@@ -9500,6 +10274,9 @@ class pdata(object):
 
             if waste.canister_vitality_rate:
                 outfile.write('      CANISTER_VITALITY_RATE %s\n' % str(waste.canister_vitality_rate))
+
+            if waste.canister_breach_time:
+                outfile.write('      CANISTER_BREACH_TIME %s\n' % str(waste.canister_breach_time))
 
             outfile.write('    /\n')
 
@@ -9513,7 +10290,7 @@ class pdata(object):
         region.coordinates_upper = [None] * 3
         if line.strip().split()[0].lower() == 'geomechanics_region':
             region.pm = 'geomechanics'
-        region.name = self.splitter(line).lower()
+        region.name = self.splitter(line)
 
         keep_reading = True
         while keep_reading:  # Read through all cards
@@ -9647,6 +10424,8 @@ class pdata(object):
                 observation.secondary_concentration = True
             elif key == 'secondary_mineral_volfrac':
                 observation.secondary_mineral_volfrac = True
+            elif key == 'secondary_temperature':
+                observation.secondary_temperature = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -9731,6 +10510,9 @@ class pdata(object):
                 # the varlist will execute
                 # This # indicates how many time a / or 'end'
                 # can be read before loop terminates.
+
+            elif key == 'owc':
+                flow.owc = map(floatD,line.split()[1:])
 
             elif key in [item.lower() for item in list(set(flow_condition_type_names_allowed).union(geomech_condition_type_names_allowed))]:
                 if end_count == 0:
@@ -9822,7 +10604,9 @@ class pdata(object):
                                     # If a string (e.g., C for temp.), assign
                                     # to unit
                                     except ValueError:
-                                        var.unit = substring
+                                        # Keep adding to handle multiple units
+                                        # I.e. m^3/day m^3/day m^3/day MW
+                                        var.unit += ' %s' % substring
             elif key == 'iphase':
                 flow.iphase = int(self.splitter(line))
             elif key == 'sync_timestep_with_update':
@@ -10159,6 +10943,52 @@ class pdata(object):
                         'flow.varlist.type: \'' + condition_type +
                         '\' is invalid.')
                 return 0
+            elif condition_name.upper() == 'OIL_PRESSURE':
+                if condition_type.lower() in gas_saturation_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print('       valid ' + \
+                          'flow_condition gas_saturation_types_allowed:', \
+                        gas_saturation_types_allowed, '\n')
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'OIL_SATURATION':
+                if condition_type.lower() in gas_saturation_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print('       valid ' + \
+                          'flow_condition gas_saturation_types_allowed:', \
+                        gas_saturation_types_allowed, '\n')
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+            elif condition_name.upper() == 'BUBBLE_POINT':
+                if condition_type.lower() in gas_saturation_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print('       valid ' + \
+                          'flow_condition gas_saturation_types_allowed:', \
+                        gas_saturation_types_allowed, '\n')
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+
+            elif condition_name.upper() == 'SOLVENT_SATURATION':
+                if condition_type.lower() in gas_saturation_types_allowed:
+                    outfile.write(condition_type.lower())
+                else:
+                    print('       valid ' + \
+                          'flow_condition gas_saturation_types_allowed:', \
+                        gas_saturation_types_allowed, '\n')
+                    raise PyFLOTRAN_ERROR(
+                        'flow.varlist.type: \'' + condition_type +
+                        '\' is invalid.')
+                return 0
+                
             else:
                 pass
                 # Error reporting for flow_condition.name is done elsewhere
@@ -10200,6 +11030,9 @@ class pdata(object):
                 if flow.interpolation:
                     outfile.write('  INTERPOLATION %s\n' %
                                   flow.interpolation.upper())
+
+                if flow.owc:
+                    outfile.write('  OWC %s\n' % ' '.join(list(map(strD,flow.owc))))
 
                 if flow.pressure:
                     if isinstance(flow.pressure,(int,float)):
@@ -10963,7 +11796,7 @@ class pdata(object):
 
         outfile.write('UFD_DECAY\n')
         if ufd.implicit_solution:
-            outfile.write('  IMPLICIT SOLUTION\n')
+            outfile.write('  IMPLICIT_SOLUTION\n')
         for element in ufd.elements:
             element._write(outfile)
         for isotope in ufd.isotopes:

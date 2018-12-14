@@ -1,6 +1,7 @@
 import pickle
 
-file = 'pflotran-tests-2018-09-06_12-06-42.testlog'
+#file = 'pflotran-tests-2018-09-06_12-06-42.testlog'
+file = 'pflotran-tests-2018-12-13_09-46-59.testlog'
 write_file = 'regression_input_filenames.pickle'
 
 count = 0

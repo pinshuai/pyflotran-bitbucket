@@ -21,6 +21,7 @@ except ImportError:
   PyFLOTRAN_WARNING("Could not import h5py. DBASE parsing is unsupported.")
   __h5_on__ = False
 
+
 """ Class for pyflotran data """
 
 """
@@ -88,10 +89,13 @@ else:
 # Multiple classes/key words - allowed strings
 time_units_allowed = ['s', 'sec', 'm', 'min', 'h', 'hr', 'd', 'day', 'w',
                       'week', 'mo', 'month', 'y', 'yr']
+
 solver_names_allowed = ['transport', 'tran', 'flow']  # newton and linear
+
 # simulation type - allowed strings
 simulation_types_allowed = ['subsurface', 'surface_subsurface', 'hydroquake',
                             'geomechanics_subsurface', 'hydrogeophysics']
+
 # mode - allowed strings
 mode_names_allowed = ['richards', 'mphase', 'mph', 'flash2', 'th no_freezing',
                       'th freezing', 'immis', 'general', 'th', 'thc',
@@ -195,7 +199,9 @@ characteristic_curves_saturation_function_types_allowed = list(set(
     characteristic_curves_saturation_function_types_allowed + lower_list))
 
 characteristic_curves_gas_permeability_function_types_allowed = [
-    'MUALEM_VG_GAS', 'BURDINE_BC_GAS']
+    'MUALEM_VG_GAS', 'BURDINE_BC_GAS', 'BRAGFLO_KRP4_GAS',
+    'BRAGFLO_KRP11_GAS', 'BRAGFLO_KRP12_GAS'
+    ]
 
 lower_list = [sat.lower() for sat in
               characteristic_curves_gas_permeability_function_types_allowed]
@@ -356,7 +362,8 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'minimum_hydrostatic_pressure','update_flow_permeability',
               'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
               'waste_form_general','wipp_source_sink','reference_saturation',
-              'reference_pressure','co2_database']
+              'reference_pressure','co2_database','klinkenberg_effect',
+              'creep_closure_table']
 
 headers = dict(zip(cards, headers))
 
@@ -601,7 +608,10 @@ class pmaterial(Frozen):
                  thermal_cond_exponent=None,
                  thermal_conductivity_frozen=None,
                  thermal_cond_exponent_frozen=None,
-                 bulk_compressibility=None):
+                 bulk_compressibility=None,
+                 vertical_anisotropy_ratio=None,
+                 perm_x_log10=None,perm_y_log10=None,perm_z_log10=None,
+                 creep_closure_table=None,wipp_fracture=None):
 
         if permeability is None:
             permeability = []
@@ -637,6 +647,11 @@ class pmaterial(Frozen):
         self.thermal_conductivity_frozen = thermal_conductivity_frozen
         self.thermal_cond_exponent_frozen = thermal_cond_exponent_frozen
         self.bulk_compressibility = bulk_compressibility
+        self.vertical_anisotropy_ratio = vertical_anisotropy_ratio
+        self.perm_x_log10 = perm_x_log10
+        self.perm_y_log10 = perm_y_log10
+        self.perm_z_log10 = perm_z_log10
+        self.creep_closure_table = creep_closure_table
 
         if bandis_A is None:
             bandis_A = []
@@ -708,6 +723,7 @@ class pmaterial(Frozen):
         self.specific_heat_unit = specific_heat_unit
         self.heat_capacity_unit = heat_capacity_unit
         self.heat_capacity = heat_capacity
+        self.wipp_fracture = wipp_fracture
         self._freeze()
 
     class perm_factor(Frozen):
@@ -717,6 +733,36 @@ class pmaterial(Frozen):
             self.max_pressure = max_pressure
             self.max_permfactor = max_permfactor
             self._freeze()
+
+    class wipp_fracture(Frozen):
+        def __init__(self,initiating_pressure=None,altered_pressure=None,
+                     maximum_fracture_porosity=None,fracture_exponent=None,
+                     alter_perm_x=None,
+                     alter_perm_y=None):
+            self.initiating_pressure = initiating_pressure
+            self.altered_pressure = altered_pressure
+            self.maximum_fracture_porosity = maximum_fracture_porosity
+            self.fracture_exponent = fracture_exponent
+            self.alter_perm_x = alter_perm_x
+            self.alter_perm_y = alter_perm_y
+            self._freeze()
+
+        def _write(self,outfile):
+            outfile.write('  WIPP-FRACTURE\n')
+
+            if self.initiating_pressure is not None:
+                outfile.write('    INITIATING_PRESSURE %s\n' % strD(self.initiating_pressure))
+            if self.altered_pressure is not None:
+                outfile.write('    ALTERED_PRESSURE %s\n' % strD(self.altered_pressure))
+            if self.maximum_fracture_porosity is not None:
+                outfile.write('    MAXIMUM_FRACTURE_POROSITY %s\n' % strD(self.maximum_fracture_porosity))
+            if self.fracture_exponent is not None:
+                outfile.write('    FRACTURE_EXPONENT %s\n' % strD(self.fracture_exponent))
+            if self.alter_perm_x:
+                outfile.write('    ALTER_PERM_X\n')
+            if self.alter_perm_y:
+                outfile.write('    ALTER_PERM_Y\n')
+            outfile.write('  /\n')
 
     class secondary_continuum(Frozen):
         def __init__(self,continuum_type=None,log_grid_spacing=False,
@@ -917,7 +963,8 @@ class pgrid(Frozen):
     def __init__(self, type='structured', symmetry_type='cartesian',
                  lower_bounds=None, upper_bounds=None,
                  origin=None, nxyz=None, dx=None, dy=None, dz=None,
-                 gravity=None, filename='',upwind_fraction_method=None):
+                 gravity=None, filename='',upwind_fraction_method=None,
+                 max_cells_sharing_a_vertex=None):
         if dx is None:
             if lower_bounds is None:
                 lower_bounds = [None, None, None]
@@ -950,6 +997,7 @@ class pgrid(Frozen):
         self.gravity = gravity
         self.filename = filename
         self.upwind_fraction_method = upwind_fraction_method
+        self.max_cells_sharing_a_vertex = max_cells_sharing_a_vertex
         self._nodelist = []
         self._celllist = []
         self._connectivity = []
@@ -1614,7 +1662,7 @@ class pwipp_source_sink(Frozen):
                  salt_percent=None,gratmici=None,gratmich=None,corrmco2=None,
                  humcorr=None,asdrum=None,alpharxn=None,socmin=None,
                  biogenfc=None,probdeg=None,stoichiometric_matrix=None,
-                 inventory=None,waste_panel=None):
+                 inventory=None,waste_panel=None,brucites=None):
 
         if waste_panel is None:
             waste_panel = []
@@ -1627,6 +1675,7 @@ class pwipp_source_sink(Frozen):
 
         self.brucitec = brucitec
         self.bruciteh = bruciteh
+        self.brucites = brucites
         self.hymagcon = hymagcon
         self.sat_wick = sat_wick
         self.salt_percent = salt_percent
@@ -1969,7 +2018,7 @@ class psimulation(Frozen):
                  inline_surface_region=None,inline_surface_mannings_coeff=None,
                  waste_form=None,harmonic_permeability_only=None,
                  do_not_scale_jacobian=False,gas_component_formula_weight=None,
-                 options=None,surface_subsurface=None):
+                 options=None,surface_subsurface=None,input_record_file=False):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -2001,6 +2050,7 @@ class psimulation(Frozen):
         self.waste_form = waste_form
         self.options = options
         self.surface_subsurface = surface_subsurface
+        self.input_record_file = input_record_file
         self._freeze()
 
     class auxiliary(Frozen):
@@ -2047,7 +2097,9 @@ class psimulation(Frozen):
                      max_allow_liq_pres_change_ts=None,
                      liq_pres_change_ts_governor=None,
                      arithmetic_gas_diffusive_density=False,
-                     tl_omega=None,no_gas=False):
+                     tl_omega=None,no_gas=False,immiscible=False,
+                     itol_scaled_residual=None,two_phase_energy_dof=None,
+                     max_allow_rel_gas_sat_change_ni=None):
 
             self.isothermal = isothermal
             self.inline_surface_region = inline_surface_region
@@ -2082,12 +2134,22 @@ class psimulation(Frozen):
             self.maximum_pressure_change = max_pressure_change
             self.tl_omega = tl_omega
             self.no_gas = no_gas
+            self.immiscible = immiscible
+            self.itol_scaled_residual = itol_scaled_residual
+            self.two_phase_energy_dof = two_phase_energy_dof
+            self.max_allow_rel_gas_sat_change_ni = max_allow_rel_gas_sat_change_ni
             self._freeze()
 
         def _write(self,outfile):
             outfile.write('      OPTIONS\n')
+            if self.itol_scaled_residual is not None:
+                outfile.write('        ITOL_SCALED_RESIDUAL %s\n' % \
+                  self.itol_scaled_residual)
             if self.isothermal:
                 outfile.write('        ISOTHERMAL\n')
+            if self.two_phase_energy_dof:
+                outfile.write('        TWO_PHASE_ENERGY_DOF %s\n' % \
+                  self.two_phase_energy_dof)
             if self.inline_surface_region:
                 _val = self.inline_surface_region
                 outfile.write('        INLINE_SURFACE_REGION %s\n' % _val)
@@ -2169,11 +2231,16 @@ class psimulation(Frozen):
             if self.max_allow_liq_pres_change_ts:
                 _val = strD(self.max_allow_liq_pres_change_ts)
                 outfile.write('        MAX_ALLOW_LIQ_PRES_CHANGE_TS %s\n' % _val)
+            if self.max_allow_rel_gas_sat_change_ni:
+                _val = strD(self.max_allow_rel_gas_sat_change_ni)
+                outfile.write('        MAX_ALLOW_REL_GAS_SAT_CHANGE_NI %s\n' % _val)
             if self.liq_pres_change_ts_governor:
                 _val = strD(self.liq_pres_change_ts_governor)
                 outfile.write('        LIQ_PRES_CHANGE_TS_GOVERNOR %s\n' % _val)
             if self.arithmetic_gas_diffusive_density:
                 outfile.write('        ARITHMETIC_GAS_DIFFUSIVE_DENSITY\n')
+            if self.immiscible:
+                outfile.write('        IMMISCIBLE\n')
             outfile.write('      /\n')
 
 class pregression(Frozen):
@@ -2224,7 +2291,14 @@ class ptimestepper(Frozen):
                  num_steps_after_cut=None, max_steps=None,
                  max_ts_cuts=None,
                  initialize_to_steady_state=False,
-                 run_as_steady_state=False):
+                 run_as_steady_state=False,
+                 max_ts_number=None,reduction_factor=None,
+                 maximum_growth_factor=None,
+                 max_consecutive_ts_cuts=None,dt_factor=None):
+
+        if dt_factor is None:
+            dt_factor = []
+
         self.ts_mode = ts_mode
         self.ts_acceleration = ts_acceleration
         self.num_steps_after_cut = num_steps_after_cut
@@ -2232,6 +2306,11 @@ class ptimestepper(Frozen):
         self.max_ts_cuts = max_ts_cuts
         self.initialize_to_steady_state = initialize_to_steady_state
         self.run_as_steady_state = run_as_steady_state
+        self.max_ts_number = max_ts_number
+        self.reduction_factor = reduction_factor
+        self.maximum_growth_factor = maximum_growth_factor
+        self.max_consecutive_ts_cuts = max_consecutive_ts_cuts
+        self.dt_factor = dt_factor
         self._freeze()
 
 
@@ -2292,7 +2371,8 @@ class pnsolver(Frozen):
     def __init__(self, name='', atol=None, rtol=None, stol=None, dtol=None,
                  itol=None, max_it=None, max_f=None, itol_update=None,
                  matrix_type=None, preconditioner_matrix_type=None,
-                 no_infinity_norm=False,max_norm=None,itol_sec=None):
+                 no_infinity_norm=False,max_norm=None,itol_sec=None,
+                 max_iters=None):
         self.name = name  # Indicates Flow or Tran for Transport
         self.atol = atol
         self.rtol = rtol
@@ -2307,6 +2387,7 @@ class pnsolver(Frozen):
         self.matrix_type = matrix_type
         self.preconditioner_matrix_type = preconditioner_matrix_type
         self.no_infinity_norm = False
+        self.max_iters = max_iters
         self._freeze()
 
 
@@ -2587,6 +2668,31 @@ class ppoint(Frozen):
         self.coordinate = coordinate
         self._freeze()
 
+class pklinkenberg_effect(Frozen):
+    '''
+    Introduces a permeability correction factor into the gas transport
+    equation to account for the Klinkenberg effect.
+
+    The correction factor is modeled as (1 + b * k^a / P_g)
+
+    :param a: Exponent for the (instrinsic, i.e. liquid-phase) permeability.
+    :type a: float
+    :param b: Constant that controls the pressure asymptote.
+    :type b: float
+    '''
+    def __init__(self,a=None,b=None):
+        self.a = a
+        self.b = b
+        self._freeze()
+
+class pcreep_closure_table(Frozen):
+    def __init__(self,name=None,filename=None,
+                 shutdown_pressure=None,time_closeoff=None):
+      self.name = name
+      self.filename = filename
+      self.shutdown_pressure = shutdown_pressure
+      self.time_closeoff = time_closeoff
+      self._freeze()
 
 class pwaste_form_general(Frozen):
     def __init__(self,print_mass_balance=False,implicit_solution=False,
@@ -2736,7 +2842,11 @@ class pcharacteristic_curves(Frozen):
                  cap_pressure_list=None,perm_func_water=None,
                  perm_func_gas=None,perm_func_oil=None,
                  perm_func_hc=None,perm_func_owg_list=None,tables=None,
-                 pc_ow_table=None,krw_table=None,krow_table=None):
+                 pc_ow_table=None,krw_table=None,krh_table=None,
+                 krow_table=None,krg_table=None,
+                 const_capillary_pressure=None,kpc=None,
+                 pct_a=None,pct_exp=None,s_min=None,s_effmin=None,kro=None,
+                 lpf_tolc=None,gpf_tolc=None):
 
         if cap_pressure_list is None:
             cap_pressure_list = []
@@ -2764,11 +2874,13 @@ class pcharacteristic_curves(Frozen):
         self.lpf_lambda = lpf_lambda
         self.lpf_gas_residual_saturation = lpf_gas_residual_saturation
         self.lpf_liquid_residual_saturation = lpf_liquid_residual_saturation
+        self.lpf_tolc = lpf_tolc
         self.gas_permeability_function_type = gas_permeability_function_type
         self.gpf_m = gpf_m
         self.gpf_lambda = gpf_lambda
         self.gpf_liquid_residual_saturation = gpf_liquid_residual_saturation
         self.gpf_gas_residual_saturation = gpf_gas_residual_saturation
+        self.gpf_tolc = gpf_tolc
         self.phase = phase
         self.cap_pressure_list = cap_pressure_list
         self.perm_func_water = perm_func_water
@@ -2779,7 +2891,16 @@ class pcharacteristic_curves(Frozen):
         self.tables = tables
         self.pc_ow_table = pc_ow_table
         self.krw_table = krw_table
+        self.krh_table = krh_table
         self.krow_table = krow_table
+        self.krg_table = krg_table
+        self.const_capillary_pressure = const_capillary_pressure
+        self.kpc = kpc
+        self.pct_a = pct_a
+        self.pct_exp = pct_exp
+        self.s_min = s_min
+        self.s_effmin = s_effmin
+        self.kro = kro
         self._freeze()
 
     class table(Frozen):
@@ -2801,6 +2922,23 @@ class pcharacteristic_curves(Frozen):
                 outfile.write('    PRESSURE_UNITS %s\n' % self.pressure_units)
 
             outfile.write('  /\n')
+
+    class kro(Frozen):
+      '''
+      KRO
+      '''
+      def __init__(self,ktype=None,kro_table=None):
+          self.ktype = ktype
+          self.kro_table = kro_table
+          self._freeze()
+
+      def _write(self,outfile):
+          outfile.write('  KRO %s\n' % self.ktype)
+
+          if self.kro_table:
+              outfile.write('    KRO_TABLE %s\n' % self.kro_table)
+
+          outfile.write('  /\n')
 
     class cap_pressure(Frozen):
         '''
@@ -3527,7 +3665,7 @@ class pchemistry(Frozen):
                  redox_species_list=None,
                  reaction_sandbox=None,aqueous_diffusion_coefficients=None,
                  gas_diffusion_coefficients=None,
-                 decoupled_eq_reactions_list=None):
+                 decoupled_eq_reactions_list=None,geothermal_hpt=False):
 
         if primary_species_list is None:
             primary_species_list = []
@@ -3601,6 +3739,7 @@ class pchemistry(Frozen):
         self.aqueous_diffusion_coefficients = aqueous_diffusion_coefficients
         self.gas_diffusion_coefficients = gas_diffusion_coefficients
         self.decoupled_eq_reactions_list = decoupled_eq_reactions_list
+        self.geothermal_hpt = geothermal_hpt
 
         if pflotran_dir:
             self.database = pflotran_dir + '/database/hanford.dat'
@@ -5241,6 +5380,8 @@ class peos(Frozen):
             fluid_enthalpy = []
         if fluid_test is None:
             fluid_test = []
+        if fluid_henrys_constant is None:
+            fluid_henrys_constant = []
         self.fluid_name = fluid_name
         self.fluid_density = fluid_density
         self.fluid_viscosity = fluid_viscosity
@@ -5335,13 +5476,16 @@ class prks(Frozen):
     """
 
     def __init__(self, hydrogen=None, tc=None, pc=None, ac=None,
-                 a=None, b=None):
+                 a=None, b=None, use_effective_props=False,
+                 use_cubic_root_sol=False):
         self.hydrogen = hydrogen
         self.tc = tc
         self.ac = ac
         self.pc = pc
         self.a = a
         self.b = b
+        self.use_cubic_root_sol = use_cubic_root_sol
+        self.use_effective_props = use_effective_props
         self._freeze()
 
 
@@ -5414,6 +5558,8 @@ class pdata(object):
         self.reference_saturation = None
         self.reference_pressure = None
         self.co2_database = None
+        self.klinkenberg_effect = None
+        self.creep_closure_table = None
 
         # run object
         self._path = ppath(parent=self)
@@ -5789,7 +5935,9 @@ class pdata(object):
                             self._read_wipp_source_sink,
                             self._read_reference_saturation,
                             self._read_reference_pressure,
-                            self._read_co2_database],
+                            self._read_co2_database,
+                            self._read_klinkenberg_effect,
+                            self._read_creep_closure_table],
                            ))
 
         # associate each card name with
@@ -5822,7 +5970,7 @@ class pdata(object):
                         exfile = line.split()[1]
                         expath = os.path.join(cwd, exfile)
                         filetxt += capture_external_file(expath)
-                    elif 'dbase_filename' in line.lower():
+                    elif 'dbase_filename' in line.lower() and __h5_on__:
                         ext = line.strip().split('.')[-1].lower()
                         _root_dir = os.path.dirname(cinfile)
                         _filepath = os.path.join(_root_dir,line.split()[-1])
@@ -5844,7 +5992,7 @@ class pdata(object):
                             except:
                                 pass
 
-                    elif 'dbase_value' in line.lower():
+                    elif 'dbase_value' in line.lower() and __h5_on__:
                         _key = line.split()[-1]
                         for _h5file in open_files:
                             if _key in _h5file.keys():
@@ -5965,7 +6113,7 @@ class pdata(object):
                                 'minimum_hydrostatic_pressure',
                                 'reference_saturation',
                                 'reference_pressure',
-                                'co2_database']:
+                                'co2_database','creep_closure_table']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6038,6 +6186,12 @@ class pdata(object):
 
         if self.eoslist:
             self._write_eos(outfile)
+
+        if self.klinkenberg_effect:
+            self._write_klinkenberg_effect(outfile)
+
+        if self.creep_closure_table:
+            self._write_creep_closure_table(outfile)
 
         if self.nonuniform_velocity.filename:
             self._write_nonuniform_velocity(outfile)
@@ -6582,6 +6736,10 @@ class pdata(object):
                                 eos.rks.a = floatD(line1.strip().split()[1])
                             elif key1 in ['omegab', 'b']:
                                 eos.rks.b = floatD(line1.strip().split()[1])
+                            elif key1 == 'use_effective_properties':
+                                eos.rks.use_effective_props = True
+                            elif key1 == 'use_cubic_root_solution':
+                                eos.rks.use_cubic_root_sol = True
                             elif key1 in ['/', 'end']:
                                 keep_reading1 = False
                     elif len(line.strip().split()) > 2:
@@ -6690,12 +6848,17 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR(
                         'henrys_constant can only be set for fluid set ' +
                         'to gas!')
-                henrys_type = line.strip().split()[1]
+                henrys_type = line.strip().split()[1].lower()
                 if henrys_type in eos_henrys_types_allowed:
                     eos.fluid_henrys_constant.append(henrys_type)
                     if len(line.strip().split()) > 2:
                         for val in line.strip().split()[2:]:
                             eos.fluid_henrys_constant.append(floatD(val))
+                    else:
+                        print('Unconforming read in EOS->HENRYS_CONSTANT')
+                else:
+                    print('Henry\'s Constant type: %s not recognized.' % \
+                      henrys_type)
             elif key in pvt_types_allowed:
                 pvt = peos.pvt(pvt_type=key)
                 while True:
@@ -6830,6 +6993,10 @@ class pdata(object):
                                       eos.fluid_density[0].upper() + '\n')
                         outfile.write('    ' +
                                       eos.rks.hydrogen.upper() + '\n')
+                        if eos.rks.use_effective_props:
+                            outfile.write('    USE_EFFECTIVE_PROPERTIES\n')
+                        if eos.rks.use_cubic_root_sol:
+                            outfile.write('    USE_CUBIC_ROOT_SOLUTION\n')
                         outfile.write('    TC ' +
                                       strD(eos.rks.tc) + '\n')
                         outfile.write('    PC ' +
@@ -7108,6 +7275,8 @@ class pdata(object):
             key0 = line.strip().split()[0].lower()  # take first key word
             if key0 == 'simulation_type':
                 simulation.simulation_type = self.splitter(line)
+            elif key0 == 'input_record_file':
+                simulation.input_record_file = True
             elif key0 == 'process_models':
                 keep_reading = True
                 while keep_reading:
@@ -7134,6 +7303,12 @@ class pdata(object):
                                         opt.isothermal = True
                                     elif key2 == 'no_gas':
                                         opt.no_gas = True
+                                    elif key2 == 'two_phase_energy_dof':
+                                        opt.two_phase_energy_dof = \
+                                        self.splitter(line)
+                                    elif key2 == 'itol_scaled_residual':
+                                        opt.itol_scaled_residual = \
+                                          floatD(self.splitter(line))
                                     elif key2 == 'inline_surface_region':
                                         opt.inline_surface_region = \
                                             self.splitter(line)
@@ -7191,6 +7366,9 @@ class pdata(object):
                                     elif key2 == 'gas_residual_infinity_tol':
                                         opt.gas_residual_infinity_tol \
                                         = floatD(self.splitter(line))
+                                    elif key2 == 'max_allow_rel_gas_sat_change_ni':
+                                        opt.max_allow_rel_gas_sat_change_ni \
+                                        = floatD(self.splitter(line))
                                     elif key2 == 'max_allow_rel_liq_pres_chang_ni':
                                         opt.max_allow_rel_liq_pres_chang_ni \
                                         = floatD(self.splitter(line))
@@ -7221,6 +7399,8 @@ class pdata(object):
                                     elif key2 == 'arithmetic_gas_diffusive_density':
                                         opt.arithmetic_gas_diffusive_density \
                                         = True
+                                    elif key2 == 'immiscible':
+                                        opt.immiscible = True
                                     elif key2 in ['/', 'end']:
                                         keep_reading_2 = False
                                 simulation.options = opt
@@ -7349,6 +7529,9 @@ class pdata(object):
         # Write out simulation header
 
         outfile.write('SIMULATION' + '\n')
+
+        if simulation.input_record_file:
+            outfile.write('  INPUT_RECORD_FILE\n')
         if simulation.simulation_type.lower() in simulation_types_allowed:
             outfile.write('  SIMULATION_TYPE ' +
                           simulation.simulation_type.upper() + '\n')
@@ -7504,6 +7687,62 @@ class pdata(object):
         self._header(outfile, headers['multiple_continuum'])
         outfile.write('MULTIPLE_CONTINUUM\n\n')
 
+    def _read_klinkenberg_effect(self,infile):
+        kl = pklinkenberg_effect()
+
+        while True:
+            line = get_next_line(infile)
+            key = get_key(line)
+
+            if key == 'a':
+                kl.a = floatD(self.splitter(line))
+            elif key == 'b':
+                kl.b = floatD(self.splitter(line))
+            elif key in ['/','end']:
+                break
+
+        self.klinkenberg_effect = kl
+
+    def _write_klinkenberg_effect(self,outfile):
+        kl = self.klinkenberg_effect
+
+        if kl.a is None or kl.b is None:
+            raise ValueError('pklinkenberg_effect:A and B must both be defined')
+
+        outfile.write('KLINKENBERG_EFFECT\n')
+        outfile.write('  A %s\n' % strD(kl.a))
+        outfile.write('  B %s\n' % strD(kl.b))
+        outfile.write('END\n')
+
+    def _read_creep_closure_table(self,infile,line):
+        cc = pcreep_closure_table(name=line.split()[-1])
+
+        while True:
+            line = get_next_line(infile)
+            key = get_key(line)
+
+            if key in ['/','end']:
+                break
+            elif key == 'filename':
+                cc.filename = self.splitter(line)
+            elif key == 'shutdown_pressure':
+                cc.shutdown_pressure = floatD(self.splitter(line))
+            elif key == 'time_closeoff':
+                cc.time_closeoff = floatD(self.splitter(line))
+
+        self.creep_closure_table = cc
+
+    def _write_creep_closure_table(self,outfile):
+        cc = self.creep_closure_table
+        outfile.write('CREEP_CLOSURE_TABLE %s\n' % cc.name)
+        if cc.filename:
+            outfile.write('  FILENAME %s\n' % cc.filename)
+        if cc.shutdown_pressure is not None:
+            outfile.write('  SHUTDOWN_PRESSURE %s\n' % strD(cc.shutdown_pressure))
+        if cc.time_closeoff is not None:
+            outfile.write('  TIME_CLOSEOFF %s\n' % strD(cc.time_closeoff))
+        outfile.write('END\n')
+
     def _read_regression(self, infile, line):
         regression = pregression()
         keep_reading = True
@@ -7588,6 +7827,8 @@ class pdata(object):
                 grid.gravity.append(floatD(line.split()[3]))
             elif key == 'upwind_fraction_method':
                 grid.upwind_fraction_method = self.splitter(line)
+            elif key == 'max_cells_sharing_a_vertex':
+                grid.max_cells_sharing_a_vertex = int(self.splitter(line))
             elif key == 'dxyz':
                 if bounds_key:
                     raise PyFLOTRAN_ERROR('specify either bounds of dxyz!')
@@ -7726,6 +7967,9 @@ class pdata(object):
             for i in range(3):
                 outfile.write(strD(grid.origin[i]) + ' ')
             outfile.write('\n')
+        if grid.max_cells_sharing_a_vertex:
+            outfile.write('  MAX_CELLS_SHARING_A_VERTEX %d\n' % \
+              grid.max_cells_sharing_a_vertex)
         if grid.gravity:
             outfile.write('  GRAVITY' + ' ')
             for i in range(3):
@@ -7755,6 +7999,17 @@ class pdata(object):
                 timestepper.initialize_to_steady_state = True
             elif key == 'run_as_steady_state':
                 timestepper.run_as_steady_state = True
+            elif key == 'maximum_number_of_timesteps':
+                timestepper.max_ts_number = int(self.splitter(line))
+            elif key == 'timestep_reduction_factor':
+                timestepper.reduction_factor = floatD(self.splitter(line))
+            elif key == 'timestep_maximum_growth_factor':
+                timestepper.maximum_growth_factor = floatD(self.splitter(line))
+            elif key == 'maximum_consecutive_ts_cuts':
+                timestepper.max_consecutive_ts_cuts = int(self.splitter(line))
+            elif key == 'dt_factor':
+                _values = list(map(floatD,line.split()[1:]))
+                timestepper.dt_factor = _values
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -7789,6 +8044,20 @@ class pdata(object):
                 outfile.write('  ' + 'INITIALIZE_TO_STEADY_STATE ' + '\n')
             if self.timestepper_flow.run_as_steady_state:
                 outfile.write('  ' + 'RUN_AS_STEADY_STATE ' + '\n')
+            if self.timestepper_flow.max_ts_number is not None:
+                outfile.write('  ' + 'MAXIMUM_NUMBER_OF_TIMESTEPS %d\n' % \
+                  self.timestepper_flow.max_ts_number)
+            if self.timestepper_flow.reduction_factor is not None:
+                outfile.write('  TIMESTEP_REDUCTION_FACTOR %s\n' % strD(\
+                  self.timestepper_flow.reduction_factor))
+            if self.timestepper_flow.maximum_growth_factor is not None:
+                outfile.write('  TIMESTEP_MAXIMUM_GROWTH_FACTOR %s\n' % strD(\
+                  self.timestepper_flow.maximum_growth_factor))
+            if self.timestepper_flow.max_consecutive_ts_cuts is not None:
+                outfile.write('  MAXIMUM_CONSECUTIVE_TS_CUTS %s\n' % str(self.timestepper_flow.max_consecutive_ts_cuts))
+            if self.timestepper_flow.dt_factor:
+                _value_str = ' '.join(strD(x) for x in self.timestepper_flow.dt_factor)
+                outfile.write('  DT_FACTOR %s\n' % _value_str)
             outfile.write('END\n\n')
 
         if self.timestepper_transport:
@@ -7852,6 +8121,10 @@ class pdata(object):
         np_cond_exponent_frozen = None
         soil_ref_p = None
         np_bulk_comp = None
+        np_v_anisotropy_ratio = None
+        np_perm_x = np_perm_y = np_perm_z = None
+        cc_table = None
+        w_frac = None
 
         _perm_factor = None
         np_tortuosity_fnc_of_porosity = None
@@ -7933,6 +8206,8 @@ class pdata(object):
                 soil_comp_func = self.splitter(line)
             elif key == 'soil_compressibility':
                 soil_comp = floatD(self.splitter(line))
+            elif key == 'creep_closure_table':
+                cc_table = self.splitter(line)
             elif key == 'soil_reference_pressure':
                 try:
                     soil_ref_p = floatD(self.splitter(line))
@@ -7955,6 +8230,14 @@ class pdata(object):
                         np_perm_aniso = True                        
                     elif key == 'dataset':
                         np_permeability.append(self.splitter(line))
+                    elif key == 'vertical_anisotropy_ratio':
+                        np_v_anisotropy_ratio = floatD(self.splitter(line))
+                    elif key == 'perm_x_log10':
+                        np_perm_x = floatD(self.splitter(line))
+                    elif key == 'perm_y_log10':
+                        np_perm_y = floatD(self.splitter(line))
+                    elif key == 'perm_z_log10':
+                        np_perm_z = floatD(self.splitter(line))
                     elif key in ['/', 'end']:
                         keep_reading_2 = False
             elif key == 'perm_factor':
@@ -7971,6 +8254,27 @@ class pdata(object):
                         _perm_factor.max_permfactor = floatD(self.splitter(line))
                     elif key in ['/','end']:
                         break
+            elif key == 'wipp-fracture':
+                w_frac = pmaterial.wipp_fracture()
+
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'initiating_pressure':
+                        w_frac.initiating_pressure = floatD(self.splitter(line))
+                    elif lkey == 'altered_pressure':
+                        w_frac.altered_pressure = floatD(self.splitter(line))
+                    elif lkey == 'maximum_fracture_porosity':
+                        w_frac.maximum_fracture_porosity = floatD(self.splitter(line))
+                    elif lkey == 'fracture_exponent':
+                        w_frac.fracture_exponent = floatD(self.splitter(line))
+                    elif lkey == 'alter_perm_x':
+                        w_frac.alter_perm_x = True
+                    elif lkey == 'alter_perm_y':
+                        w_frac.alter_perm_y = True
 
             elif key == 'secondary_continuum':
                 _sc = pmaterial.secondary_continuum()
@@ -8039,7 +8343,14 @@ class pdata(object):
                              thermal_conductivity_frozen=np_cond_frozen,
                              thermal_cond_exponent_frozen=np_cond_exponent_frozen,
                              soil_reference_pressure=soil_ref_p,
-                             bulk_compressibility=np_bulk_comp)
+                             bulk_compressibility=np_bulk_comp,
+                             vertical_anisotropy_ratio=np_v_anisotropy_ratio,
+                             perm_x_log10=np_perm_x,
+                             perm_y_log10=np_perm_y,
+                             perm_z_log10=np_perm_z,
+                             creep_closure_table=cc_table,
+                             wipp_fracture=w_frac
+                             )
 
         self.add(new_prop)
 
@@ -8070,7 +8381,7 @@ class pdata(object):
         for prop in self.proplist:
             if prop.name:
                 outfile.write('MATERIAL_PROPERTY ' + prop.name + '\n')
-            if prop.id:
+            if prop.id is not None:
                 outfile.write('  ID ' + str(prop.id) + '\n')
             if prop.inactive:
                 outfile.write('  INACTIVE\n')
@@ -8125,7 +8436,7 @@ class pdata(object):
             if prop.thermal_cond_exponent_frozen:
                 outfile.write('  THERMAL_COND_EXPONENT_FROZEN %s\n' % \
                   strD(prop.thermal_cond_exponent_frozen))
-            if prop.bulk_compressibility:
+            if prop.bulk_compressibility is not None:
                 outfile.write('  BULK_COMPRESSIBILITY %s\n' % \
                   strD(prop.bulk_compressibility))
             if prop.saturation:
@@ -8150,24 +8461,42 @@ class pdata(object):
                 outfile.write('  TRANSVERSE_DISPERSIVITY_V ' +
                               strD(prop.transverse_dispersivity_v) + '\n')
 
-            if prop.permeability:
+            if prop.creep_closure_table:
+                outfile.write('  CREEP_CLOSURE_TABLE %s\n' % prop.creep_closure_table)
+
+            if prop.permeability or prop.perm_x_log10:
                 outfile.write('  PERMEABILITY\n')
-                if type(prop.permeability[0]) is str:
-                    outfile.write('    DATASET ' + prop.permeability[0] + '\n')
-                elif len(prop.permeability) == 1:
-                    outfile.write('    PERM_ISO ' +
-                                  strD(prop.permeability[0]) + '\n')
-                else:
-                    outfile.write('    PERM_X ' +
-                                  strD(prop.permeability[0]) + '\n')
-                    outfile.write('    PERM_Y ' +
-                                  strD(prop.permeability[1]) + '\n')
-                    outfile.write('    PERM_Z ' +
-                                  strD(prop.permeability[2]) + '\n')
+
+                if prop.permeability:
+                    if type(prop.permeability[0]) is str:
+                        outfile.write('    DATASET ' + prop.permeability[0] + '\n')
+                    elif len(prop.permeability) == 1:
+                        outfile.write('    PERM_ISO ' +
+                                      strD(prop.permeability[0]) + '\n')
+                    else:
+                        outfile.write('    PERM_X ' +
+                                      strD(prop.permeability[0]) + '\n')
+                        outfile.write('    PERM_Y ' +
+                                      strD(prop.permeability[1]) + '\n')
+                        outfile.write('    PERM_Z ' +
+                                      strD(prop.permeability[2]) + '\n')
+
                 if prop.permeability_anisotropic:
                     outfile.write('    ANISOTROPIC\n')
                 if prop.permeability_isotropic:
-                    outfile.write('    ISOTROPIC\n')                    
+                    outfile.write('    ISOTROPIC\n')
+                if prop.vertical_anisotropy_ratio is not None:
+                    outfile.write('    VERTICAL_ANISOTROPY_RATIO %s\n' % strD(\
+                      prop.vertical_anisotropy_ratio))
+                if prop.perm_x_log10 is not None:
+                    outfile.write('    PERM_X_LOG10 %s\n' % strD(\
+                      prop.perm_x_log10))
+                if prop.perm_y_log10 is not None:
+                    outfile.write('    PERM_Y_LOG10 %s\n' % strD(\
+                      prop.perm_y_log10))
+                if prop.perm_z_log10 is not None:
+                    outfile.write('    PERM_Z_LOG10 %s\n' % strD(\
+                      prop.perm_z_log10))
 
                 outfile.write('  /\n')
 
@@ -8184,6 +8513,9 @@ class pdata(object):
 
             if prop.secondary_continuum:
                 prop.secondary_continuum._write(outfile)
+
+            if prop.wipp_fracture:
+                prop.wipp_fracture._write(outfile)
 
             if prop.soil_compressibility_function:
                 if prop.soil_compressibility_function.upper() in \
@@ -8206,7 +8538,7 @@ class pdata(object):
                     outfile.write('  SOIL_REFERENCE_PRESSURE ' +
                               strD(prop.soil_reference_pressure) + '\n')
                 else:
-                    outfile.write('  SOIL_REFERENCE_PRESSURE ' +
+                    outfile.write('  SOIL_REFERENCE_PRESSURE DATASET ' +
                               prop.soil_reference_pressure + '\n')
 
 
@@ -8416,6 +8748,8 @@ class pdata(object):
                     time.dtm.append(tstring[-1])
                 else:
                     time.dtm.append(floatD(tstring[0]))
+            elif key == 'steady_state':
+                time.steady_state = True
             elif key == 'maximum_timestep_size':
                 if 'at' not in line:
                     tstring = line.split()[1:]
@@ -8687,6 +9021,8 @@ class pdata(object):
                 nsolver.preconditioner_matrix_type = self.splitter(line)
             elif key == 'no_infinity_norm':
                 nsolver.no_infinity_norm = True
+            elif key == 'maximum_number_of_iterations':
+                nsolver.max_iters = int(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
         self.add(nsolver,overwrite=True)  # Assign
@@ -8751,8 +9087,11 @@ class pdata(object):
             if nsolver.preconditioner_matrix_type:
                 outfile.write('  PRECONDITIONER_MATRIX_TYPE ' +
                               nsolver.preconditioner_matrix_type.upper() + '\n')
-            if nsolver.no_infinity_norm == True:
+            if nsolver.no_infinity_norm:
                 outfile.write('  NO_INFINITY_NORM\n')
+            if nsolver.max_iters is not None:
+                outfile.write('  MAXIMUM_NUMBER_OF_ITERATIONS %s\n' % \
+                  str(nsolver.max_iters))
             outfile.write('END\n\n')
 
     def _read_output(self, infile):
@@ -9617,6 +9956,7 @@ class pdata(object):
                 continue
             key = line.strip().split()[0].lower()  # take first  key word
             word = line.strip().split()[-1].lower()
+
             if key == 'default':
                 characteristic_curves.default = True
             if key == 'saturation_function':
@@ -9634,6 +9974,20 @@ class pdata(object):
                     if key1 == 'alpha':
                         characteristic_curves.sf_alpha = \
                             floatD(self.splitter(line))
+                    elif key1 == 'kpc':
+                        characteristic_curves.kpc = int(self.splitter(line))
+                    elif key1 == 'pct_a':
+                        characteristic_curves.pct_a = \
+                        floatD(self.splitter(line))
+                    elif key1 == 'pct_exp':
+                        characteristic_curves.pct_exp = \
+                        floatD(self.splitter(line))
+                    elif key1 == 's_min':
+                        characteristic_curves.s_min = \
+                        floatD(self.splitter(line))
+                    elif key1 == 's_effmin':
+                        characteristic_curves.s_effmin = \
+                        floatD(self.splitter(line))
                     elif key1 == 'm':
                         characteristic_curves.sf_m = \
                             floatD(self.splitter(line))
@@ -9653,6 +10007,9 @@ class pdata(object):
                         characteristic_curves.smooth = True
                     elif key1 == 'power':
                         characteristic_curves.power = \
+                            floatD(self.splitter(line))
+                    elif key1 == 'constant_capillary_pressure':
+                        characteristic_curves.const_capillary_pressure = \
                             floatD(self.splitter(line))
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
@@ -9677,6 +10034,8 @@ class pdata(object):
                     elif key1 == 'lambda':
                         characteristic_curves.gpf_lambda = \
                             floatD(self.splitter(line))
+                    elif key1 == 'tolc':
+                        characteristic_curves.gpf_tolc = floatD(self.splitter(line))
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
             elif key == 'permeability_function' and 'gas' not in word:
@@ -9700,6 +10059,8 @@ class pdata(object):
                     elif key1 == 'lambda':
                         characteristic_curves.lpf_lambda = \
                             floatD(self.splitter(line))
+                    elif key1 == 'tolc':
+                        characteristic_curves.lpf_tolc = floatD(self.splitter(line))
                     elif key1 in ['/', 'end']:
                         keep_reading1 = False
 
@@ -9708,8 +10069,27 @@ class pdata(object):
                 characteristic_curves.pc_ow_table = self.splitter(line)
             elif key == 'krw_table':
                 characteristic_curves.krw_table = self.splitter(line)
+            elif key == 'krg_table':
+                characteristic_curves.krg_table = self.splitter(line)
+            elif key == 'krh_table':
+                characteristic_curves.krh_table = self.splitter(line)
             elif key == 'krow_table':
                 characteristic_curves.krow_table = self.splitter(line)
+            elif key == 'kro':
+
+                k = pcharacteristic_curves.kro(ktype=self.splitter(line))
+
+                while True:
+                    line = get_next_line(infile)
+                    lkey = get_key(line)
+
+                    if lkey in ['/','end']:
+                        break
+                    elif lkey == 'kro_table':
+                        k.kro_table = self.splitter(line)
+
+                characteristic_curves.kro = k
+
             elif key == 'table':
                 pu = ef = None
                 while True:
@@ -9902,8 +10282,15 @@ class pdata(object):
                 outfile.write('  PC_OW_TABLE %s\n' % char.pc_ow_table)
             if char.krw_table:
                 outfile.write('  KRW_TABLE %s\n' % char.krw_table)
+            if char.krh_table:
+                outfile.write('  KRH_TABLE %s\n' % char.krh_table)
+            if char.krg_table:
+                outfile.write('  KRG_TABLE %s\n' % char.krg_table)
             if char.krow_table:
                 outfile.write('  KROW_TABLE %s\n' % char.krow_table)
+            if char.kro:
+                char.kro._write(outfile)
+
             if char.cap_pressure_list:
                 for c in char.cap_pressure_list:
                     c._write(outfile)
@@ -9937,12 +10324,22 @@ class pdata(object):
                         raise PyFLOTRAN_ERROR(
                             'char.saturation_function_type: \'' +
                             char.saturation_function_type + '\' is invalid.')
-                    if char.sf_alpha:
-                        outfile.write('   ALPHA ' + strD(char.sf_alpha) +
-                                      '\n')
-                    if char.sf_m:
+
+                    if char.sf_alpha is not None:
+                        outfile.write('   ALPHA %s\n' % strD(char.sf_alpha))
+                    if char.kpc is not None:
+                        outfile.write('   KPC %s\n' % str(char.kpc))
+                    if char.pct_exp is not None:
+                        outfile.write('   PCT_EXP %s\n' % strD(char.pct_exp))
+                    if char.pct_a is not None:
+                        outfile.write('   PCT_A %s\n' % strD(char.pct_a))
+                    if char.s_min is not None:
+                        outfile.write('   S_MIN %s\n' % strD(char.s_min))
+                    if char.s_effmin is not None:
+                        outfile.write('   S_EFFMIN %s\n' % strD(char.s_effmin))
+                    if char.sf_m is not None:
                         outfile.write('   M ' + strD(char.sf_m) + '\n')
-                    if char.sf_lambda:
+                    if char.sf_lambda is not None:
                         outfile.write('   LAMBDA ' + strD(char.sf_lambda) +
                                       '\n')
                     if char.sf_liquid_residual_saturation or \
@@ -9962,6 +10359,11 @@ class pdata(object):
                     if char.smooth:
                         # This just prints the SMOOTH flag
                         outfile.write('   SMOOTH ' + '\n')
+
+                    if char.const_capillary_pressure is not None:
+                        outfile.write('   CONSTANT_CAPILLARY_PRESSURE %s\n' % \
+                          strD(char.const_capillary_pressure))
+
                     outfile.write('  / ' + '\n')
 
                 if char.power:
@@ -9984,11 +10386,15 @@ class pdata(object):
 
                     if char.lpf_m:
                         outfile.write('   M ' + strD(char.lpf_m) + '\n')
+                    if char.lpf_tolc is not None:
+                        outfile.write('   TOLC %s\n' % strD(char.lpf_tolc))
                     if char.lpf_lambda:
                         outfile.write(
                             '   LAMBDA ' + strD(char.lpf_lambda) + '\n')
-                    if char.lpf_liquid_residual_saturation or \
-                            char.lpf_liquid_residual_saturation == 0:
+                    if char.lpf_gas_residual_saturation is not None:
+                        outfile.write('   GAS_RESIDUAL_SATURATION %s\n' % \
+                          strD(char.lpf_gas_residual_saturation))
+                    if char.lpf_liquid_residual_saturation is not None:
                         outfile.write('   LIQUID_RESIDUAL_SATURATION ' +
                                       strD(
                                           char.lpf_liquid_residual_saturation) +
@@ -10001,6 +10407,12 @@ class pdata(object):
                             characteristic_curves_gas_permeability_function_types_allowed:
                         outfile.write('  PERMEABILITY_FUNCTION ' +
                                       char.gas_permeability_function_type.upper() + '\n')
+                    else:
+                        print('       valid  char.gas_permeability_function_types', \
+                            characteristic_curves_gas_permeability_function_types_allowed, '\n')
+                        raise PyFLOTRAN_ERROR(
+                            'char.gas_permeability_function_type: \'' +
+                            char.gas_permeability_function_type + '\' is invalid.')
 
                     if char.phase:
                         outfile.write('   PHASE GAS' + '\n')
@@ -10017,6 +10429,8 @@ class pdata(object):
 
                     if char.gpf_m:
                         outfile.write('   M ' + strD(char.gpf_m) + '\n')
+                    if char.gpf_tolc is not None:
+                        outfile.write('   TOLC %s\n' % strD(char.gpf_tolc))
                     if char.gpf_lambda:
                         outfile.write(
                             '   LAMBDA ' + strD(char.gpf_lambda) + '\n')
@@ -10380,7 +10794,7 @@ class pdata(object):
         for region in self.regionlist:
             if region.pm is '':
                 outfile.write('REGION ')
-                outfile.write(region.name.lower() + '\n')
+                outfile.write(region.name + '\n')
                 if region.filename:
                     outfile.write('  FILE ' + region.filename + '\n')
                 elif region.block:
@@ -10475,7 +10889,7 @@ class pdata(object):
         for observation in self.observation_list:
             outfile.write('OBSERVATION\n')
             if observation.region:
-                outfile.write('  REGION ' + observation.region.lower() + '\n')
+                outfile.write('  REGION ' + observation.region + '\n')
             if observation.at_cell_center:
                 outfile.write('  AT_CELL_CENTER\n')
             if observation.velocity:
@@ -11321,7 +11735,7 @@ class pdata(object):
                         outfile.write('  TRANSPORT_CONDITION ' +
                                       b.transport.lower() + '\n')
                     if b.region:
-                        outfile.write('  REGION ' + b.region.lower() + '\n')
+                        outfile.write('  REGION ' + b.region + '\n')
                     else:
                         raise PyFLOTRAN_ERROR(
                             'boundary_condition.region is required')
@@ -11467,6 +11881,8 @@ class pdata(object):
                 wss.brucitec = floatD(self.splitter(line))
             elif key == 'bruciteh':
                 wss.bruciteh = floatD(self.splitter(line))
+            elif key == 'brucites':
+                wss.brucites = floatD(self.splitter(line))
             elif key == 'hymagcon':
                 wss.hymagcon = floatD(self.splitter(line))
             elif key == 'sat_wick':
@@ -11584,6 +12000,8 @@ class pdata(object):
         outfile.write('WIPP_SOURCE_SINK\n')
         if wss.brucitec is not None:
             outfile.write('  BRUCITEC %s\n' % strD(wss.brucitec))
+        if wss.brucites is not None:
+            outfile.write('  BRUCITES %s\n' % strD(wss.brucites))
         if wss.bruciteh is not None:
             outfile.write('  BRUCITEH %s\n' % strD(wss.bruciteh))
         if wss.hymagcon is not None:
@@ -11701,22 +12119,19 @@ class pdata(object):
 
     # Adds a strata object.
     def _add_strata(self, strata=pstrata(), overwrite=False):
+
         # check if stratigraphy coupler already exists
         if isinstance(strata, pstrata):
             if strata.region in self.strata.keys():
-                if not overwrite:
+                if overwrite:
+                    self.delete(self.strata[strata.region])
+                else:
                     warning = 'WARNING: A strata with name \'' + \
                               str(strata.region) + \
-                              '\' already exists. strata will' + \
-                              'not be defined, use overwrite = True in' + \
-                              ' add() to overwrite the old strata.'
-                    print(warning,
-                    build_warnings.append(warning))
-                    return
-                else:
-                    self.delete(self.strata[strata.region])
+                              '\' already exists.'
+                    print(warning)
+                    build_warnings.append(warning)
 
-        if strata not in self.strata_list:
             self.strata_list.append(strata)
 
     def _write_strata(self, outfile):
@@ -12147,6 +12562,8 @@ class pdata(object):
                     if line.strip() in ['/', 'end']:
                         break
                     chem.active_gas_species_list.append(line.strip())
+            elif key == 'geothermal_hpt':
+                chem.geothermal_hpt = True
             elif key == 'minerals':
                 while True:
                     line = get_next_line(infile)
@@ -13061,6 +13478,8 @@ class pdata(object):
             outfile.write('  DATABASE ' + c.database + '\n')
         if c.log_formulation:
             outfile.write('  LOG_FORMULATION\n')
+        if c.geothermal_hpt:
+            outfile.write('  GEOTHERMAL_HPT\n')
         if c.activity_water:
             outfile.write('  ACTIVITY_WATER\n')
         if c.use_full_geochemistry:

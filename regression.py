@@ -76,10 +76,10 @@ def get_test_command(fname):
 
 
 def run_popen(cmd):
-    print(cmd)
-    process = subprocess.Popen(
-        shlex.split(cmd), stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+    process = subprocess.Popen(shlex.split(cmd),
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    
     out, err = process.communicate()
     return out, err
 

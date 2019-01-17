@@ -7797,8 +7797,11 @@ class pdata(object):
 
             if key == 'type':
                 grid.type = ' '.join(line.strip().split()[1:]).lower()
-                if grid.type in ['unstructured_explicit','unstructured_implicit']:
+                if grid.type.split()[0] in ['unstructured_explicit',
+                                            'unstructured_implicit']:
                     grid.filename = self.splitter(line)
+                    grid.type = ' '.join(grid.type.split()[:-1])
+
             elif key == 'bounds':
                 keep_reading_2 = True
                 while keep_reading_2:
@@ -7853,6 +7856,7 @@ class pdata(object):
     def _write_grid(self, outfile):
         self._header(outfile, headers['grid'])
         grid = self.grid
+
         outfile.write('GRID\n')
         if grid.type.split()[0] not in grid_types_allowed:
             print('       valid grid.types:', grid_types_allowed)

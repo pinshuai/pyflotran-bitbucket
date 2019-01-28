@@ -6795,6 +6795,7 @@ class pdata(object):
                     raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')
             elif key == 'viscosity':
                 visc_type = line.strip().split()[1].lower()
+
                 if visc_type in eos_viscosity_types_allowed:
 
                     if len(line.strip().split()) > 2:
@@ -6826,6 +6827,8 @@ class pdata(object):
                                   list(map(floatD,sline.split()[1:]))
 
                         eos.viscosity_block = _visc
+                    else:
+                        eos.fluid_viscosity.append(visc_type)
                 else:
                     _err = visc_type + ' not recognized as a valid ' + \
                            'viscosity type.\n'

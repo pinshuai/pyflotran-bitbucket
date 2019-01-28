@@ -7798,7 +7798,8 @@ class pdata(object):
             if key == 'type':
                 grid.type = ' '.join(line.strip().split()[1:]).lower()
                 if grid.type.split()[0] in ['unstructured_explicit',
-                                            'unstructured_implicit']:
+                                            'unstructured_implicit',
+                                            'unstructured']:
                     grid.filename = self.splitter(line)
                     grid.type = ' '.join(grid.type.split()[:-1])
 

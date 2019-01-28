@@ -21,6 +21,7 @@ except ImportError:
   PyFLOTRAN_WARNING("Could not import h5py. DBASE parsing is unsupported.")
   __h5_on__ = False
 
+_replace_external_file = False
 
 """ Class for pyflotran data """
 
@@ -5974,7 +5975,7 @@ class pdata(object):
 
             with open(cinfile, 'r') as child_file:
                 for line in child_file:
-                    if 'external_file' in line.lower():
+                    if 'external_file' in line.lower() and _replace_external_file:
                         exfile = line.split()[1]
                         expath = os.path.join(cwd, exfile)
                         filetxt += capture_external_file(expath)
@@ -6281,9 +6282,6 @@ class pdata(object):
 
         if self.fluidlist:
             self._write_fluid(outfile)
-        else:
-            PyFLOTRAN_WARNING(
-                'fluidlist is required, it is currently reading as empty!')
 
         if self.saturationlist:
             self._write_saturation(outfile)
@@ -10120,6 +10118,7 @@ class pdata(object):
                         pu = self.splitter(line)
                     elif lkey == 'external_file':
                         ef = self.splitter(line)
+
                 characteristic_curves.add_table(name=word,pressure_units=pu,
                   external_file=ef)
             elif key in ['cap_pressure_function_ow','cap_pressure_function_og']:
@@ -10814,7 +10813,7 @@ class pdata(object):
         for region in self.regionlist:
             if region.pm is '':
                 outfile.write('REGION ')
-                outfile.write(region.name + '\n')
+                outfile.write(region.name.lower() + '\n')
                 if region.filename:
                     outfile.write('  FILE ' + region.filename + '\n')
                 elif region.block:
@@ -11379,6 +11378,8 @@ class pdata(object):
                         'flow.varlist.type: \'' + condition_type +
                         '\' is invalid.')
                 return 0
+            elif condition_name.upper() == 'RELATIVE_HUMIDITY':
+                outfile.write(condition_type.lower())
             elif condition_name.upper() == 'GAS_FLUX':
                 if condition_type.lower() in gas_flux_types_allowed:
                     outfile.write(condition_type.lower())
@@ -11766,7 +11767,7 @@ class pdata(object):
                         outfile.write('  TRANSPORT_CONDITION ' +
                                       b.transport.lower() + '\n')
                     if b.region:
-                        outfile.write('  REGION ' + b.region + '\n')
+                        outfile.write('  REGION ' + b.region.lower() + '\n')
                     else:
                         raise PyFLOTRAN_ERROR(
                             'boundary_condition.region is required')

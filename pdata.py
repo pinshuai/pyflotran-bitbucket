@@ -363,7 +363,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'ufd_decay', 'ufd_biosphere', 'source_sink_sandbox',
               'waste_form_general','wipp_source_sink','reference_saturation',
               'reference_pressure','co2_database','klinkenberg_effect',
-              'creep_closure_table']
+              'creep_closure_table','secondary_constraint']
 
 headers = dict(zip(cards, headers))
 
@@ -3212,7 +3212,8 @@ class pregion(Frozen):
     """
 
     def __init__(self, name='', coordinates_lower=None, coordinates_upper=None,
-                 face=None, filename='', point_list=[], pm='', block=[]):
+                 face=None, filename='', point_list=[], pm='', block=[],
+                 cartesian_boundary=None):
         if coordinates_lower is None:
             coordinates_lower = [0.0, 0.0, 0.0]
         if coordinates_upper is None:
@@ -3222,6 +3223,7 @@ class pregion(Frozen):
         self.coordinates_upper = coordinates_upper  # 3D coordinates
         self.face = face
         self.point_list = []
+        self.cartesian_boundary = cartesian_boundary
         self.filename = filename
         self.pm = pm
         self.block = block
@@ -3272,13 +3274,17 @@ class pobservation(Frozen):
     def __init__(self, region=None, secondary_temperature=None,
                  secondary_concentration=None,
                  secondary_mineral_volfrac=None,
-                 velocity=None, at_cell_center=False):
+                 velocity=None, at_cell_center=False,
+                 secondary_mineral_rate=False,
+                 secondary_mineral_si=False):
         self.region = region
         self.secondary_temperature = secondary_temperature
         self.secondary_concentration = secondary_concentration
         self.secondary_mineral_volfrac = secondary_mineral_volfrac
         self.velocity = velocity
         self.at_cell_center = at_cell_center
+        self.secondary_mineral_rate = secondary_mineral_rate
+        self.secondary_mineral_si = secondary_mineral_si
         self._freeze()
 
 
@@ -5069,7 +5075,7 @@ class pconstraint(Frozen):
 
     def __init__(self, name='', concentration_list=None, mineral_list=None,
                  secondary_continuum=False,free_ion_guess_list=None,
-                 immobile_list=None):
+                 immobile_list=None,secondary_constraint=False):
         if concentration_list is None:
             concentration_list = []
         if mineral_list is None:
@@ -5085,6 +5091,7 @@ class pconstraint(Frozen):
         self.secondary_continuum = secondary_continuum
         self.free_ion_guess_list = free_ion_guess_list
         self.immobile_list = immobile_list
+        self.secondary_constraint = secondary_constraint
         self._freeze()
 
     class pfree_ion(Frozen):
@@ -5937,7 +5944,8 @@ class pdata(object):
                             self._read_reference_pressure,
                             self._read_co2_database,
                             self._read_klinkenberg_effect,
-                            self._read_creep_closure_table],
+                            self._read_creep_closure_table,
+                            self._read_constraint],
                            ))
 
         # associate each card name with
@@ -6113,7 +6121,8 @@ class pdata(object):
                                 'minimum_hydrostatic_pressure',
                                 'reference_saturation',
                                 'reference_pressure',
-                                'co2_database','creep_closure_table']:
+                                'co2_database','creep_closure_table',
+                                'secondary_constraint']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6991,6 +7000,7 @@ class pdata(object):
                     outfile.write('  /\n')
 
                 if eos.fluid_density:
+
                     if eos.fluid_density[0].upper() == 'RKS':
                         outfile.write('  DENSITY ' +
                                       eos.fluid_density[0].upper() + '\n')
@@ -7048,7 +7058,7 @@ class pdata(object):
                         tmp = ' '.join([strD(x) for x in eos.fluid_density[1:]])
                         outfile.write('  DENSITY BRAGFLO %s\n' % tmp)
                     elif eos.density_params is not None:
-                        outfile.write('  DENSITY LINEAR\n')
+                        outfile.write('  DENSITY %s\n' % eos.fluid_density[0].upper())
                         for dkey in eos.density_params.keys():
                             outfile.write('    %s %s\n' % (dkey.upper(),
                                           strD(eos.density_params[dkey])))
@@ -10766,6 +10776,8 @@ class pdata(object):
                 region.filename = line.strip().split()[1]
             elif key == 'block':
                 region.block = line.strip().split()[1:]
+            elif key == 'cartesian_boundary':
+                region.cartesian_boundary = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -10815,6 +10827,9 @@ class pdata(object):
                         outfile.write('  FACE ' + region.face.upper() + '\n')
                         # no if statement below to ensure 0's are accepted for
                         # coordinates
+                    if region.cartesian_boundary:
+                        outfile.write('  CARTESIAN_BOUNDARY %s\n' % 
+                          region.cartesian_boundary)
                     if region.point_list:
                         for point in region.point_list:
                             outfile.write('  COORDINATE ')
@@ -10861,6 +10876,10 @@ class pdata(object):
                 observation.secondary_mineral_volfrac = True
             elif key == 'secondary_temperature':
                 observation.secondary_temperature = True
+            elif key == 'secondary_mineral_rate':
+                observation.secondary_mineral_rate = True
+            elif key == 'secondary_mineral_si':
+                observation.secondary_mineral_si = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -10908,6 +10927,10 @@ class pdata(object):
                 outfile.write('  SECONDARY_CONCENTRATION\n')
             if observation.secondary_mineral_volfrac:
                 outfile.write('  SECONDARY_MINERAL_VOLFRAC\n')
+            if observation.secondary_mineral_rate:
+                outfile.write('  SECONDARY_MINERAL_RATE\n')
+            if observation.secondary_mineral_si:
+                outfile.write('  SECONDARY_MINERAL_SI\n')
             outfile.write('END\n\n')
 
     def _read_flow(self, infile, line):
@@ -13724,6 +13747,11 @@ class pdata(object):
         constraint.concentration_list = []
         constraint.mineral_list = []
 
+        if line.split()[0].lower() == 'secondary_constraint':
+            constraint.secondary_constraint = True
+        else:
+            constraint.secondary_constraint = False
+
         keep_reading = True
 
         while keep_reading:  # Read through all cards
@@ -13925,7 +13953,7 @@ class pdata(object):
         cl = self.constraint_list
 
         for c in cl:  # c = constraint, cl = constraint_list
-            if c.secondary_continuum:
+            if c.secondary_continuum or c.secondary_constraint:
                 outfile.write('SECONDARY_CONSTRAINT ')
             else:
                 outfile.write('CONSTRAINT ')

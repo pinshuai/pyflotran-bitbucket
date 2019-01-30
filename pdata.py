@@ -6913,6 +6913,7 @@ class pdata(object):
 
                             if _key == 'temperature':
                                 pvt.temperature_coeff = floatD(_line.split()[-1])
+                                pvt.temperature_data = []
                                 while True:
                                     _line2 = get_next_line(infile)
                                     _key2 = _line2.strip().split()[0].lower()
@@ -6922,6 +6923,7 @@ class pdata(object):
                                         _data = _line2.strip().split()
                                         _data = list(map(floatD,_data))
                                         pvt.temperature_data.append(_data)
+
                             elif _key in ['/','end']:
                                 break
                     elif subkey in ['/','end']:
@@ -6957,7 +6959,7 @@ class pdata(object):
 
                 if eos.database:
                     outfile.write('  DATABASE %s\n' % eos.database)
-                    
+
                 if eos.fluid_formula_weight:
                     outfile.write('  FORMULA_WEIGHT ' +
                                   strD(eos.fluid_formula_weight) + '\n')
@@ -7774,19 +7776,18 @@ class pdata(object):
             line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
 
-            if key == 'cells':
-                keep_reading_2 = True
-                cell_list = []
-                while keep_reading_2:
-                    for i in range(100):
-                        line1 = get_next_line(infile)
-                        if line1.strip().split()[0].lower() in ['/', 'end']:
-                            keep_reading_2 = False
-                            break
 
-                        # Convert however many ints exist on this line into
-                        # a list and extend
-                        cell_list.extend(list(map(int, line1.split())))
+            if key == 'cells':
+                cell_list = []
+
+                while True:
+                    line1 = get_next_line(infile)
+                    key1 = get_key(line1)
+
+                    if key1 in ['/','end']:
+                        break
+                    else:
+                        cell_list.append(list(map(int, line1.split())))
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
@@ -7805,7 +7806,7 @@ class pdata(object):
         if regression.cells and regression.cells[0] != '':
             outfile.write('  CELLS' + '\n')
             for cell in regression.cells:
-                outfile.write('    ' + str(cell) + '\n')
+                outfile.write('    '+' '.join(str(x) for x in cell) + '\n')
             outfile.write('  /' + '\n')
         outfile.write('END' + '\n\n')
 

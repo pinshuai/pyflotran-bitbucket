@@ -6984,9 +6984,6 @@ class pdata(object):
                 if eos.surface_density:
                     outfile.write('  SURFACE_DENSITY %s\n'%eos.surface_density)
 
-                if eos.viscosity_linlog_interp:
-                    outfile.write('  VISCOSITY_LINLOG_INTERPOLATION\n')
-
                 if eos.pvt:
                     p = eos.pvt
                     has_units = p.pressure_units or p.rs_units or p.fvf_units \
@@ -7182,6 +7179,9 @@ class pdata(object):
                         _data = '  '.join(list(map(strD,_data)))
                         outfile.write('    TEMP_COEFFICIENTS %s\n' % _data)
                     outfile.write('  /\n')
+
+                if eos.viscosity_linlog_interp:
+                    outfile.write('  VISCOSITY_LINLOG_INTERPOLATION\n')
 
                 if eos.viscosity_block:
                     eos.viscosity_block._write(outfile)
@@ -8076,8 +8076,14 @@ class pdata(object):
                 keep_reading = False
 
         if timestepper.ts_mode == 'flow':
+            if self.timestepper_flow is not None:
+                PyFLOTRAN_WARNING('TIMESTEPPER FLOW already exists')
+                return
             self.timestepper_flow = timestepper
         elif timestepper.ts_mode == 'transport':
+            if self.timestepper_transport is not None:
+                PyFLOTRAN_WARNING('TIMESTEPPER TRANSPORT already exists')
+                return
             self.timestepper_transport = timestepper
         else:
             PyFLOTRAN_WARNING('Unknown timestepping mode!')

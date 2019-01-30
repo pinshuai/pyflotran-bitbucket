@@ -305,7 +305,8 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
     a = dict()
 
     # Regession output to ignore in comparison
-    _ignore_keys = ['Time (seconds)','Newton Iterations','Solver Iterations']
+    _ignore_keys = ['Time (seconds)','Newton Iterations',
+                    'Solver Iterations','Time Steps']
 
     for (i,regression_file) in enumerate(regression_out):
         b = dict()

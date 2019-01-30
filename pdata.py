@@ -6954,6 +6954,10 @@ class pdata(object):
         for eos in self.eoslist:
             if eos.fluid_name.lower() in eos_fluid_names_allowed:
                 outfile.write('EOS ' + eos.fluid_name.upper() + '\n')
+
+                if eos.database:
+                    outfile.write('  DATABASE %s\n' % eos.database)
+                    
                 if eos.fluid_formula_weight:
                     outfile.write('  FORMULA_WEIGHT ' +
                                   strD(eos.fluid_formula_weight) + '\n')
@@ -6963,9 +6967,6 @@ class pdata(object):
 
                 if eos.viscosity_linlog_interp:
                     outfile.write('  VISCOSITY_LINLOG_INTERPOLATION\n')
-
-                if eos.database:
-                    outfile.write('  DATABASE %s\n' % eos.database)
 
                 if eos.pvt:
                     p = eos.pvt

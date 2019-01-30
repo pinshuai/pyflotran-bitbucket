@@ -8183,7 +8183,7 @@ class pdata(object):
                 _inactive = True
             elif key == 'tortuosity':
                 if line.split()[1].lower() == 'dataset':
-                    np_porosity = self.splitter(line)
+                    np_tortuosity = self.splitter(line)
                 else:
                     np_tortuosity = floatD(self.splitter(line))
             elif key == 'tortuosity_function_of_porosity':
@@ -8422,7 +8422,10 @@ class pdata(object):
                 else:
                     outfile.write('  POROSITY ' + strD(prop.porosity) + '\n')
             if prop.tortuosity:
-                outfile.write('  TORTUOSITY ' + strD(prop.tortuosity) + '\n')
+                if type(prop.tortuosity) is str:
+                    outfile.write('  TORTUOSITY DATASET %s\n' % prop.tortuosity)
+                else:
+                    outfile.write('  TORTUOSITY ' + strD(prop.tortuosity) + '\n')
             if prop.tortuosity_function_of_porosity:
                 outfile.write('  TORTUOSITY_FUNCTION_OF_POROSITY %s\n' % \
                               prop.tortuosity_function_of_porosity)

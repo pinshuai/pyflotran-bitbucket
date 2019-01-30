@@ -1901,7 +1901,7 @@ class pufd_biosphere(Frozen):
         def _write(self,outfile):
             outfile.write('  ERB_1A %s\n' % self.name)
             if self.region is not None:
-                outfile.write('    REGION %s\n' % self.region.lower())
+                outfile.write('    REGION %s\n' % self.region)
             if self.individual_consumption_rate is not None:
                 outfile.write('    INDIVIDUAL_CONSUMPTION_RATE %s\n' % \
                               str(self.individual_consumption_rate))
@@ -1923,7 +1923,7 @@ class pufd_biosphere(Frozen):
         def _write(self,outfile):
             outfile.write('  ERB_1B %s\n' % self.name)
             if self.region is not None:
-                outfile.write('    REGION %s\n' % self.region.lower())
+                outfile.write('    REGION %s\n' % self.region)
             if self.individual_consumption_rate is not None:
                 outfile.write('    INDIVIDUAL_CONSUMPTION_RATE %s\n' % \
                               str(self.individual_consumption_rate))
@@ -5519,7 +5519,7 @@ class pdata(object):
     """
 
     # definitions are put on one line to work better with rst/latex/sphinx.
-    def __init__(self, filename='', work_dir=''):
+    def __init__(self, filename='', work_dir='',replace_external_files=True):
         if pflotran_dir:
             self.co2_database = pflotran_dir + '/database/co2data0.dat'
         else:
@@ -5602,7 +5602,7 @@ class pdata(object):
             if temp_path.absolute_to_file != os.getcwd():
                 self.work_dir = temp_path.absolute_to_file
             self._path.filename = filename
-            self.read(filename)
+            self.read(filename,replace_external_files=replace_external_files)
         else:
             return
 
@@ -5897,7 +5897,7 @@ class pdata(object):
 
         return 0
 
-    def read(self, filename=''):
+    def read(self, filename='', replace_external_files=True):
         """
         Read a given PFLOTRAN input file. This method is useful for
         reading an existing a PFLOTRAN input deck and all
@@ -5972,7 +5972,7 @@ class pdata(object):
         skip_readline = False
         p_line = ''  # Memorizes the most recent line read in.
 
-        def capture_external_file(cinfile):
+        def capture_external_file(cinfile,replace_external_files=True):
             """
             Recursive function that is called with each capture of 
             EXTERNAL_FILE.
@@ -5992,7 +5992,9 @@ class pdata(object):
 
             with open(cinfile, 'r') as child_file:
                 for line in child_file:
-                    if 'external_file' in line.lower() and _replace_external_file:
+                    if 'external_file' in line.lower() \
+                        and replace_external_files:
+
                         exfile = line.split()[1]
                         expath = os.path.join(cwd, exfile)
                         filetxt += capture_external_file(expath)
@@ -6038,14 +6040,16 @@ class pdata(object):
             # Return the file contents
             return filetxt
 
-        def preprocess_file(pinfile, outfile='_pyflotran_preproc.in'):
+        def preprocess_file(pinfile, outfile='_pyflotran_preproc.in',
+                            replace_external_files=True):
             """
             Replaces all instances of EXTERNAL_FILE in a PFLOTRAN infile
             with the contents of that external file.
             """
 
             with open(outfile, 'w') as parent_file:
-                parent_file.write(capture_external_file(pinfile))
+                parent_file.write(capture_external_file(pinfile,
+                  replace_external_files=replace_external_files))
 
             return outfile
 
@@ -6071,7 +6075,8 @@ class pdata(object):
 
         if _should_preprocess:
             infile_name = preprocess_file(
-                self.filename, outfile='_pyflotran_preproc.in')
+                self.filename, outfile='_pyflotran_preproc.in',
+                replace_external_files=replace_external_files)
         else:
             infile_name = self.filename
 
@@ -10763,7 +10768,7 @@ class pdata(object):
                 outfile.write('      COORDINATE %s\n' % _coords)
 
             if waste.region:
-                outfile.write('      REGION %s\n' % waste.region.lower())
+                outfile.write('      REGION %s\n' % waste.region)
 
             if waste.exposure_factor:
                 outfile.write('      EXPOSURE_FACTOR %s\n' % strD(waste.exposure_factor))
@@ -10897,7 +10902,7 @@ class pdata(object):
         for region in self.regionlist:
             if region.pm is '':
                 outfile.write('REGION ')
-                outfile.write(region.name.lower() + '\n')
+                outfile.write(region.name + '\n')
                 if region.filename:
                     outfile.write('  FILE ' + region.filename + '\n')
                 elif region.block:
@@ -11001,7 +11006,7 @@ class pdata(object):
         for observation in self.observation_list:
             outfile.write('OBSERVATION\n')
             if observation.region:
-                outfile.write('  REGION ' + observation.region.lower() + '\n')
+                outfile.write('  REGION ' + observation.region + '\n')
             if observation.at_cell_center:
                 outfile.write('  AT_CELL_CENTER\n')
             if observation.velocity:
@@ -11771,7 +11776,7 @@ class pdata(object):
                     outfile.write('  TRANSPORT_CONDITION ' +
                                   b.transport.lower() + '\n')
                 if b.region:
-                    outfile.write('  REGION ' + b.region.lower() + '\n')
+                    outfile.write('  REGION ' + b.region + '\n')
                 else:
                     raise PyFLOTRAN_ERROR(
                         'initial_condition.region is required')
@@ -11861,7 +11866,7 @@ class pdata(object):
                         outfile.write('  TRANSPORT_CONDITION ' +
                                       b.transport.lower() + '\n')
                     if b.region:
-                        outfile.write('  REGION ' + b.region.lower() + '\n')
+                        outfile.write('  REGION ' + b.region + '\n')
                     else:
                         raise PyFLOTRAN_ERROR(
                             'boundary_condition.region is required')
@@ -11942,7 +11947,7 @@ class pdata(object):
                 outfile.write('  TRANSPORT_CONDITION ' +
                               b.transport.lower() + '\n')
             if b.region:
-                outfile.write('  REGION ' + b.region.lower() + '\n')
+                outfile.write('  REGION ' + b.region + '\n')
             else:
                 raise PyFLOTRAN_ERROR('source_sink.region is required')
             outfile.write('END\n\n')
@@ -12183,7 +12188,7 @@ class pdata(object):
             outfile.write('\n  WASTE_PANEL %s\n' % wp.name)
 
             if wp.region:
-                outfile.write('    REGION %s\n' % wp.region.lower())
+                outfile.write('    REGION %s\n' % wp.region)
             if wp.inventory:
                 outfile.write('    INVENTORY %s\n' % wp.inventory)
             if wp.scale_by_volume:
@@ -12269,7 +12274,7 @@ class pdata(object):
             if strata.pm == '':
                 outfile.write('STRATA\n')
                 if strata.region:
-                    outfile.write('  REGION ' + strata.region.lower() + '\n')
+                    outfile.write('  REGION ' + strata.region + '\n')
                 if strata.start_time:
                     _start = strata.start_time
                     _end = strata.final_time
@@ -14285,7 +14290,7 @@ class pdata(object):
                               b.geomech.lower() + '\n')
                 if b.region:
                     outfile.write('  GEOMECHANICS_REGION ' +
-                                  b.region.lower() + '\n')
+                                  b.region + '\n')
                 else:
                     raise PyFLOTRAN_ERROR(
                         'boundary_condition.region is required')
@@ -14300,7 +14305,7 @@ class pdata(object):
                 outfile.write('GEOMECHANICS_STRATA\n')
                 if strata.region:
                     outfile.write('  GEOMECHANICS_REGION ' +
-                                  strata.region.lower() + '\n')
+                                  strata.region + '\n')
                 else:
                     raise PyFLOTRAN_ERROR('strata.region is required')
                 if strata.material:

@@ -21,6 +21,13 @@ except KeyError:
           'directory and be defined in system environment variables.')
     sys.exit(1)
 
+# Files to set the EXTERNAL_FLAG to False
+table_files = ['tl_omega_1_cc_tables.in',
+               'tl4pr1_cc_tables_np2.in',
+               'TOWG_RCOL8_cc_table.in',
+               'bt4_cc_tables.in',
+               '1d_th_water_flood_ad_cc_tables.in']
+
 regression_tests_filename = 'regression_input_filenames.pickle'
 
 try:
@@ -414,7 +421,12 @@ def regression_validation(file_list,tmp_out="temp.in",verbose=False,json_diff_di
         try:
             print('\033[94m'+file+'\033[0m')
             tmp_file = os.path.join(os.path.dirname(file),tmp_out)
-            pdata(file).write(tmp_file)
+
+            _replace = True
+            if file.split('/')[-1] in table_files:
+                _replace = False
+
+            pdata(file,replace_external_files=_replace).write(tmp_file)
             print('\033[94m'+tmp_file+'\033[0m')
         except Exception as e:
             print('\033[91mPyFLOTRAN RUNTIME ERROR:\033[0m Could not parse \'%s\'' % file)

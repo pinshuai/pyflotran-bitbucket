@@ -21,7 +21,7 @@ except ImportError:
   PyFLOTRAN_WARNING("Could not import h5py. DBASE parsing is unsupported.")
   __h5_on__ = False
 
-_replace_external_file = False
+_replace_external_file = True
 
 """ Class for pyflotran data """
 
@@ -2596,9 +2596,13 @@ class pfluid(Frozen):
     :type: str
     """
 
-    def __init__(self, diffusion_coefficient=1.e-9, phase=''):
+    def __init__(self,diffusion_coefficient=None,phase='',
+                 gas_diffusion_coefficient=None,
+                 liq_diffusion_coefficient=None):
         self.diffusion_coefficient = diffusion_coefficient
         self.phase = phase
+        self.gas_diffusion_coefficient = gas_diffusion_coefficient
+        self.liq_diffusion_coefficient = liq_diffusion_coefficient
         self._freeze()
 
 
@@ -7864,11 +7868,23 @@ class pdata(object):
                 keep_reading_2 = True
                 while keep_reading_2:
                     line = get_next_line(infile)
-                    grid.dx = [floatD(val) for val in line.strip().split()]
+                    if '*' in line:
+                        grid.dx = line.strip().split()
+                    else:
+                        grid.dx = [floatD(val) for val in line.strip().split()]
+
                     line = get_next_line(infile)
-                    grid.dy = [floatD(val) for val in line.strip().split()]
+                    if '*' in line:
+                        grid.dy = line.strip().split()
+                    else:
+                        grid.dy = [floatD(val) for val in line.strip().split()]
+
                     line = get_next_line(infile)
-                    grid.dz = [floatD(val) for val in line.strip().split()]
+                    if '*' in line:
+                        grid.dz = line.strip().split()
+                    else:
+                        grid.dz = [floatD(val) for val in line.strip().split()]
+
                     line = get_next_line(infile)
                     if line.strip().split()[0].lower() not in ['/', 'end']:
                         raise PyFLOTRAN_ERROR(
@@ -8417,7 +8433,7 @@ class pdata(object):
                 outfile.write('  INACTIVE\n')
             if prop.characteristic_curves: #and self.simulation.subsurface_flow:
                 outfile.write('  CHARACTERISTIC_CURVES ' +
-                              prop.characteristic_curves + '\n')
+                              prop.characteristic_curves.lower() + '\n')
             if prop.porosity:
                 if type(prop.porosity) is str:
                     outfile.write('  POROSITY DATASET ' + prop.porosity + '\n')
@@ -9756,8 +9772,12 @@ class pdata(object):
             if key == 'diffusion_coefficient':
                 p.diffusion_coefficient = floatD(
                     self.splitter(line))  # Read last entry
-            if key == 'phase':
+            elif key == 'phase':
                 p.phase = self.splitter(line)
+            elif key == 'liquid_diffusion_coefficient':
+                p.liq_diffusion_coefficient = floatD(self.splitter(line))
+            elif key == 'gas_diffusion_coefficient':
+                p.gas_diffusion_coefficient = floatD(self.splitter(line))
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -9801,6 +9821,12 @@ class pdata(object):
                 outfile.write('  DIFFUSION_COEFFICIENT ' +
                               strD(fluid.diffusion_coefficient) +
                               '\n')  # Read last entry
+            if fluid.gas_diffusion_coefficient is not None:
+                outfile.write('  GAS_DIFFUSION_COEFFICIENT %s\n' % \
+                  strD(fluid.gas_diffusion_coefficient))
+            if fluid.liq_diffusion_coefficient is not None:
+                outfile.write('  LIQUID_DIFFUSION_COEFFICIENT %s\n' % \
+                  strD(fluid.liq_diffusion_coefficient))
             outfile.write('END\n\n')
 
     def _read_saturation(self, infile, line):
@@ -10722,7 +10748,7 @@ class pdata(object):
                 outfile.write('      COORDINATE %s\n' % _coords)
 
             if waste.region:
-                outfile.write('      REGION %s\n' % waste.region)
+                outfile.write('      REGION %s\n' % waste.region.lower())
 
             if waste.exposure_factor:
                 outfile.write('      EXPOSURE_FACTOR %s\n' % strD(waste.exposure_factor))
@@ -10960,7 +10986,7 @@ class pdata(object):
         for observation in self.observation_list:
             outfile.write('OBSERVATION\n')
             if observation.region:
-                outfile.write('  REGION ' + observation.region + '\n')
+                outfile.write('  REGION ' + observation.region.lower() + '\n')
             if observation.at_cell_center:
                 outfile.write('  AT_CELL_CENTER\n')
             if observation.velocity:
@@ -11094,21 +11120,27 @@ class pdata(object):
                         # for each single variable in a pflow_variable object,
                         # check all pflow_variable object by name to
                         # determine correct assignment
-                        for substring in tstring2:
-                            if substring in ['!']:
-                                break
-                            # Checks all values/types on this line
+
+                        if tstring2[0].lower() == 'dataset':
                             for var in flow.varlist:
-                                # var represents a pflow_variable object
                                 if tstring2name.lower() == var.name.lower():
-                                    try:
-                                        var.valuelist.append(floatD(substring))
-                                    # If a string (e.g., C for temp.), assign
-                                    # to unit
-                                    except ValueError:
-                                        # Keep adding to handle multiple units
-                                        # I.e. m^3/day m^3/day m^3/day MW
-                                        var.unit += ' %s' % substring
+                                    var.valuelist.append(tstring2[-1])
+                        else:
+                            for substring in tstring2:
+                                if substring in ['!']:
+                                    break
+                                # Checks all values/types on this line
+                                for var in flow.varlist:
+                                    # var represents a pflow_variable object
+                                    if tstring2name.lower() == var.name.lower():
+                                        try:
+                                            var.valuelist.append(floatD(substring))
+                                        # If a string (e.g., C for temp.), assign
+                                        # to unit
+                                        except ValueError:
+                                            # Keep adding to handle multiple units
+                                            # I.e. m^3/day m^3/day m^3/day MW
+                                            var.unit += ' %s' % substring
             elif key == 'iphase':
                 flow.iphase = int(self.splitter(line))
             elif key == 'sync_timestep_with_update':
@@ -12106,7 +12138,7 @@ class pdata(object):
         if wss.biogenfc is not None:
             outfile.write('  BIOGENFC %s\n' % strD(wss.biogenfc))
         if wss.probdeg is not None:
-            outfile.write('  PROBDEG %s\n' % strD(wss.probdeg))
+            outfile.write('  PROBDEG %s\n' % strD(int(wss.probdeg)))
         if wss.stoichiometric_matrix:
 
             _text = ''
@@ -12136,7 +12168,7 @@ class pdata(object):
             outfile.write('\n  WASTE_PANEL %s\n' % wp.name)
 
             if wp.region:
-                outfile.write('    REGION %s\n' % wp.region)
+                outfile.write('    REGION %s\n' % wp.region.lower())
             if wp.inventory:
                 outfile.write('    INVENTORY %s\n' % wp.inventory)
             if wp.scale_by_volume:

@@ -18,7 +18,13 @@ dflt = pdflt()
 
 def decode(byteseq):
     if isinstance(byteseq,bytes):
-        return byteseq.decode('ascii')
+        try:
+            return byteseq.decode('ascii')
+        except UnicodeDecodeError as e:
+            print(byteseq)
+            print('COULD NOT DECODE: ')
+            print(byteseq[e.start:e.end])
+            raise UnicodeDecodeError(e.encoding,e.object,e.start,e.end,e.reason)
     else:
         return byteseq
 

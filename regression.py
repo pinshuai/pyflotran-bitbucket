@@ -239,8 +239,12 @@ def regression_diff(file1, file2, verbose=False, json_diff_dir=None, debug_dict=
         else:
             out, err = run_popen('%s -pflotranin %s' % (cmd,file))
 
-        out = decode(out)
-        err = decode(err)
+        try:
+            out = decode(out)
+            err = decode(err)
+        except UnicodeDecodeError:
+            print('Could not decode')
+            return False
 
         if 'ERROR' in out:
 

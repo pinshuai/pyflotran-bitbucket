@@ -1832,13 +1832,14 @@ class pufd_decay(Frozen):
       :type daughter: list<str,float>
       '''
 
-      def __init__(self,name=None,element=None,decay_rate=None,daughter=None):
-          if daughter is None:
-              daughter = []
+      def __init__(self,name=None,element=None,
+                   decay_rate=None,daughters_list=None):
+          if daughters_list is None:
+              daughters_list = []
           self.name = name
           self.element = element
           self.decay_rate = decay_rate
-          self.daughter = daughter
+          self.daughters_list = daughters_list
           self._freeze()
 
       def _write(self,outfile):
@@ -1847,10 +1848,11 @@ class pufd_decay(Frozen):
               outfile.write('    ELEMENT %s\n' % self.element)
           if self.decay_rate is not None:
               outfile.write('    DECAY_RATE %s\n' % strD(self.decay_rate))
-          if self.daughter:
-              assert len(self.daughter) % 2 == 0, 'Missing values in Daughter'
-              outfile.write('    DAUGHTER %s %s\n' % (self.daughter[0],
-                                                    strD(self.daughter[1])))
+          
+          for daughter in self.daughters_list:
+              assert len(daughter) % 2 == 0, 'Missing values in Daughter'
+              outfile.write('    DAUGHTER %s %s\n' % (daughter[0],
+                                                      strD(daughter[1])))
           outfile.write('  /\n')
 
 class pufd_biosphere(Frozen):
@@ -5421,17 +5423,20 @@ class peos(Frozen):
         def __init__(self,pvt_type=None,pressure_units=None,rs_units=None,
                      fvf_units=None,viscosity_units=None,
                      compressibility_units=None,temperature_data=None,
-                     viscosibility_units=None,temperature_coeff=None):
+                     viscosibility_units=None,temperature_coeffs=None):
             
             if temperature_data is None:
                 temperature_data = []
+
+            if temperature_coeffs is None:
+                temperature_coeffs = []
 
             self.pvt_type = pvt_type
             self.pressure_units = pressure_units
             self.rs_units = rs_units
             self.fvf_units = fvf_units
             self.viscosity_units = viscosity_units
-            self.temperature_coeff = temperature_coeff
+            self.temperature_coeffs = temperature_coeffs
             self.temperature_data = temperature_data
             self.compressibility_units = compressibility_units
             self.viscosibility_units = viscosibility_units
@@ -6916,8 +6921,9 @@ class pdata(object):
                             _key = _line.strip().split()[0].lower()
 
                             if _key == 'temperature':
-                                pvt.temperature_coeff = floatD(_line.split()[-1])
-                                pvt.temperature_data = []
+
+                                pvt.temperature_coeffs.append(floatD(_line.split()[-1]))
+                                temp_data = []
                                 while True:
                                     _line2 = get_next_line(infile)
                                     _key2 = _line2.strip().split()[0].lower()
@@ -6926,10 +6932,12 @@ class pdata(object):
                                     else:
                                         _data = _line2.strip().split()
                                         _data = list(map(floatD,_data))
-                                        pvt.temperature_data.append(_data)
+                                        temp_data.append(_data)
+                                pvt.temperature_data.append(temp_data)
 
                             elif _key in ['/','end']:
                                 break
+
                     elif subkey in ['/','end']:
                         break
                     else:
@@ -7002,17 +7010,20 @@ class pdata(object):
 
                     if has_data:
                         outfile.write('    DATA\n')
-                        
-                        if p.temperature_data:
-                            outfile.write('      TEMPERATURE %s\n' % \
-                              (strD(p.temperature_coeff)))
-                            #_sm = strD_matrix(p.temperature_data,indent=8)
-                            _sm = '        '+'\n        '.join(\
-                              [' '.join([strD(x).ljust(10) for x in b])\
-                              for b in p.temperature_data])
-                            outfile.write(_sm+'\n')
-                            outfile.write('      /\n')
-                        outfile.write('    /\n')
+
+                        if p.temperature_coeffs:
+                            size_c = len(p.temperature_coeffs)
+
+                            for d in range(size_c):
+                                outfile.write('      TEMPERATURE %s\n' % \
+                                  (strD(p.temperature_coeffs[d])))
+                                
+                                _sm = '        '+'\n        '.join(\
+                                  [' '.join([strD(x).ljust(10) for x in b])\
+                                  for b in p.temperature_data[d]])
+                                outfile.write(_sm+'\n')
+                                outfile.write('      /\n')
+                            outfile.write('    /\n')
 
                     outfile.write('  /\n')
 
@@ -9261,14 +9272,18 @@ class pdata(object):
                         for val in line1.strip().split()[2:]:
                             output.snapshot_file.time_list.append(floatD(val))
                     elif key1 == 'periodic':
-                        tstring = line1.strip().split()[
-                            1].lower()  # Read the 2nd word
+                        tstring = line1.strip().split()[1].lower()
                         if tstring == 'time':
                             # 2nd from last word.
                             output.snapshot_file.periodic_time = floatD(
                                 line1.split()[-2])
-                            output.snapshot_file.periodic_time_unit = \
-                              self.splitter(line1)  # last word
+
+                            if len(line1.strip().split()[3:]) > 1:
+                                output.snapshot_file.periodic_time_unit = \
+                                  ' '.join(line1.strip().split()[3:])
+                            else:
+                                output.snapshot_file.periodic_time_unit = \
+                                  self.splitter(line1)
                         elif tstring == 'timestep':
                             # 2nd from last word.
                             output.snapshot_file.periodic_timestep = \
@@ -12318,7 +12333,7 @@ class pdata(object):
                     elif subkey == 'daughter':
                         _name = subline.split()[1]
                         _value = floatD(subline.split()[2])
-                        iso.daughter = [_name,_value]
+                        iso.daughters_list.append([_name,_value])
                     elif subkey in ['/','end']:
                         break
                 ufd.isotopes.append(iso)

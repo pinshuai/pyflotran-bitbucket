@@ -2103,7 +2103,9 @@ class psimulation(Frozen):
                      arithmetic_gas_diffusive_density=False,
                      tl_omega=None,no_gas=False,immiscible=False,
                      itol_scaled_residual=None,two_phase_energy_dof=None,
-                     max_allow_rel_gas_sat_change_ni=None):
+                     max_allow_rel_gas_sat_change_ni=None,
+                     no_creep_closure=False,
+                     no_fracture=False):
 
             self.isothermal = isothermal
             self.inline_surface_region = inline_surface_region
@@ -2142,6 +2144,8 @@ class psimulation(Frozen):
             self.itol_scaled_residual = itol_scaled_residual
             self.two_phase_energy_dof = two_phase_energy_dof
             self.max_allow_rel_gas_sat_change_ni = max_allow_rel_gas_sat_change_ni
+            self.no_creep_closure = no_creep_closure
+            self.no_fracture = no_fracture
             self._freeze()
 
         def _write(self,outfile):
@@ -2245,6 +2249,10 @@ class psimulation(Frozen):
                 outfile.write('        ARITHMETIC_GAS_DIFFUSIVE_DENSITY\n')
             if self.immiscible:
                 outfile.write('        IMMISCIBLE\n')
+            if self.no_fracture:
+                outfile.write('        NO_FRACTURE\n')
+            if self.no_creep_closure:
+                outfile.write('        NO_CREEP_CLOSURE\n')
             outfile.write('      /\n')
 
 class pregression(Frozen):
@@ -7445,6 +7453,10 @@ class pdata(object):
                                     elif key2 == 'arithmetic_gas_diffusive_density':
                                         opt.arithmetic_gas_diffusive_density \
                                         = True
+                                    elif key2 == 'no_fracture':
+                                        opt.no_fracture = True
+                                    elif key2 == 'no_creep_closure':
+                                        opt.no_creep_closure = True
                                     elif key2 == 'immiscible':
                                         opt.immiscible = True
                                     elif key2 in ['/', 'end']:

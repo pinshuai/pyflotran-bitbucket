@@ -6831,6 +6831,8 @@ class pdata(object):
                                     eb.temp_coefficients = _data
 
                             eos.enthalpy_block = eb
+                        else:
+                            eos.fluid_enthalpy.append(enthalpy_type)
 
                 else:
                     raise PyFLOTRAN_ERROR('Unknown EOS enthalpy type')
@@ -6979,6 +6981,7 @@ class pdata(object):
     def _write_eos(self, outfile):
         self._header(outfile, headers['eos'])
         for eos in self.eoslist:
+          
             if eos.fluid_name.lower() in eos_fluid_names_allowed:
                 outfile.write('EOS ' + eos.fluid_name.upper() + '\n')
 

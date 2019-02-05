@@ -2265,11 +2265,12 @@ class pregression(Frozen):
     :type cells_per_process: int
     """
 
-    def __init__(self, cells=None, cells_per_process=''):
+    def __init__(self, cells=None, cells_per_process='', all_cells=False):
         if cells is None:
             cells = []
         self.cells = cells
         self.cells_per_process = cells_per_process
+        self.all_cells = all_cells
         self._freeze()
 
 
@@ -6204,7 +6205,9 @@ class pdata(object):
         if self.co2_database:
             self._write_co2_database(outfile)
 
-        if self.regression.cells or self.regression.cells_per_process:
+        if self.regression.cells \
+        or self.regression.cells_per_process \
+        or self.regression.all_cells:
             self._write_regression(outfile)
 
         if self.uniform_velocity.value_list:
@@ -6981,7 +6984,7 @@ class pdata(object):
     def _write_eos(self, outfile):
         self._header(outfile, headers['eos'])
         for eos in self.eoslist:
-          
+
             if eos.fluid_name.lower() in eos_fluid_names_allowed:
                 outfile.write('EOS ' + eos.fluid_name.upper() + '\n')
 
@@ -7826,6 +7829,8 @@ class pdata(object):
                 regression.cells = cell_list
             elif key == 'cells_per_process':
                 regression.cells_per_process = self.splitter(line)
+            elif key == 'all_cells':
+                regression.all_cells = True
             elif key in ['/', 'end']:
                 keep_reading = False
 
@@ -7834,6 +7839,7 @@ class pdata(object):
     def _write_regression(self, outfile):
         self._header(outfile, headers['regression'])
         regression = self.regression
+
         outfile.write('REGRESSION' + '\n')
         if regression.cells_per_process:
             outfile.write('  CELLS_PER_PROCESS' + ' ' +
@@ -7843,6 +7849,8 @@ class pdata(object):
             for cell in regression.cells:
                 outfile.write('    '+' '.join(str(x) for x in cell) + '\n')
             outfile.write('  /' + '\n')
+        if regression.all_cells:
+            outfile.write('  ALL_CELLS\n')
         outfile.write('END' + '\n\n')
 
     def _read_grid(self, infile, line):

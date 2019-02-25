@@ -2463,6 +2463,8 @@ class poutput_file(Frozen):
             variables_list = []
         if total_mass_regions is None:
             total_mass_regions = []
+        if format is None:
+            format = []
 
         self.time_list = time_list
         self.format = format
@@ -9368,15 +9370,15 @@ class pdata(object):
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
-                            output.observation_file.format = \
-                              line1.strip().split()[1].lower()
+                            output.observation_file.format.extend(
+                              line1.strip().split()[1].lower())
                         elif len(line1.strip().split()) == 3:
-                            output.observation_file.format = \
-                              line1.strip().split()[1:2].lower()
+                            output.observation_file.format.extend(
+                              line1.strip().split()[1:2].lower())
                         elif len(line1.strip().split()) > 3 and \
                         'times_per_file' in line1.strip().split()[1:]:
-                            output.observation_file.format = \
-                              line1.strip().split()[1:2].lower()
+                            output.observation_file.format.extend(
+                              line1.strip().split()[1:2].lower())
                             output.observation_file.times_per_file = \
                               line1.strip().split()[4]
                     elif key1 == 'no_print_initial':
@@ -9658,7 +9660,7 @@ class pdata(object):
             outfile.write('  /\n')
         if output.snapshot_file:
             outfile.write('  SNAPSHOT_FILE\n')
-            if output.snapshot_file.format is not None:
+            if output.snapshot_file.format:
                 outfile.write('    FORMAT ')
                 for form in output.snapshot_file.format:
                     outfile.write(form.upper())
@@ -9721,7 +9723,7 @@ class pdata(object):
             outfile.write('  /\n')
         if output.observation_file:
             outfile.write('  OBSERVATION_FILE\n')
-            if output.observation_file.format is not None:
+            if output.observation_file.format:
                 raise PyFLOTRAN_ERROR(
                     'FORMAT cannot be specified with OBSERVATION_FILE')
             if output.observation_file.print_final is False:
@@ -9779,7 +9781,7 @@ class pdata(object):
             outfile.write('  /\n')
         if output.mass_balance_file:
             outfile.write('  MASS_BALANCE_FILE\n')
-            if output.mass_balance_file.format is not None:
+            if output.mass_balance_file.format:
                 raise PyFLOTRAN_ERROR(
                     'FORMAT cannot be specified with MASS_BALANCE_FILE')
             if output.mass_balance_file.print_final is False:

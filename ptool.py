@@ -108,7 +108,7 @@ def strD(number):
     """
     tstring = str(number)
     if 'e' in tstring:
-        return (str(number).replace('e', 'd'))
+        return ('%8.7e' % number).replace('e', 'd')
     else:
         return tstring
 

@@ -2463,8 +2463,6 @@ class poutput_file(Frozen):
             variables_list = []
         if total_mass_regions is None:
             total_mass_regions = []
-        if format is None:
-            format = []
 
         self.time_list = time_list
         self.format = format
@@ -5599,7 +5597,6 @@ class pdata(object):
         self.co2_database = None
         self.klinkenberg_effect = None
         self.creep_closure_table = None
-        self._write_ref_press_temp_in_subsurface = True
 
         # run object
         self._path = ppath(parent=self)
@@ -6198,13 +6195,6 @@ class pdata(object):
             self.filename = filename
         outfile = open(self.filename, 'w')
 
-        if not self._write_ref_press_temp_in_subsurface:
-            if self.reference_pressure:
-                self._write_reference_pressure(outfile)
-
-            if self.reference_temperature:
-                self._write_reference_temperature(outfile)
-
         # Presumes simulation.simulation_type is required
         if self.simulation.simulation_type:
             self._write_simulation(outfile)
@@ -6216,12 +6206,11 @@ class pdata(object):
                 self.simulation.subsurface_transport:
             self._write_subsurface_simulation_begin(outfile)
 
-        if self._write_ref_press_temp_in_subsurface:
-            if self.reference_pressure:
-                self._write_reference_pressure(outfile)
+        if self.reference_pressure:
+            self._write_reference_pressure(outfile)
 
-            if self.reference_temperature:
-                self._write_reference_temperature(outfile)
+        if self.reference_temperature:
+            self._write_reference_temperature(outfile)
 
         if self.co2_database:
             self._write_co2_database(outfile)
@@ -12273,14 +12262,6 @@ class pdata(object):
         rp = line.split()[1:]
         unit = rp[1] if len(rp) > 1 else None
         self.reference_pressure = Coeff(floatD(rp[0]),unit=unit)
-
-        subsurface_is_defined = self.simulation.subsurface_flow \
-                             or self.simulation.subsurface_transport
-
-        print(subsurface_is_defined)
-
-        if not subsurface_is_defined:
-            self._write_ref_press_temp_in_subsurface = False
 
     def _write_reference_pressure(self,outfile):
         outfile.write('REFERENCE_PRESSURE %s\n' % \

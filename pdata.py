@@ -966,7 +966,7 @@ class pgrid(Frozen):
                  lower_bounds=None, upper_bounds=None,
                  origin=None, nxyz=None, dx=None, dy=None, dz=None,
                  gravity=None, filename='',upwind_fraction_method=None,
-                 max_cells_sharing_a_vertex=None):
+                 max_cells_sharing_a_vertex=None,domain_filename=None):
         if dx is None:
             if lower_bounds is None:
                 lower_bounds = [None, None, None]
@@ -1000,6 +1000,7 @@ class pgrid(Frozen):
         self.filename = filename
         self.upwind_fraction_method = upwind_fraction_method
         self.max_cells_sharing_a_vertex = max_cells_sharing_a_vertex
+        self.domain_filename = domain_filename
         self._nodelist = []
         self._celllist = []
         self._connectivity = []
@@ -1654,9 +1655,10 @@ class prestart(Frozen):
     :type time_value: float
     """
 
-    def __init__(self, file_name='', time_value=None):
+    def __init__(self, file_name='', time_value=None,reset_to_time_zero=False):
         self.file_name = file_name  # restart.chk file name
         self.time_value = time_value  # float
+        self.reset_to_time_zero = reset_to_time_zero
         self._freeze()
 
 class pwipp_source_sink(Frozen):
@@ -2022,7 +2024,8 @@ class psimulation(Frozen):
                  inline_surface_region=None,inline_surface_mannings_coeff=None,
                  waste_form=None,harmonic_permeability_only=None,
                  do_not_scale_jacobian=False,gas_component_formula_weight=None,
-                 options=None,surface_subsurface=None,input_record_file=False):
+                 options=None,surface_subsurface=None,input_record_file=False,
+                 skip_restart=False):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -2055,6 +2058,7 @@ class psimulation(Frozen):
         self.options = options
         self.surface_subsurface = surface_subsurface
         self.input_record_file = input_record_file
+        self.skip_restart = skip_restart
         self._freeze()
 
     class auxiliary(Frozen):
@@ -2459,6 +2463,8 @@ class poutput_file(Frozen):
             variables_list = []
         if total_mass_regions is None:
             total_mass_regions = []
+        if format is None:
+            format = []
 
         self.time_list = time_list
         self.format = format
@@ -5593,6 +5599,7 @@ class pdata(object):
         self.co2_database = None
         self.klinkenberg_effect = None
         self.creep_closure_table = None
+        self._write_ref_press_temp_in_subsurface = True
 
         # run object
         self._path = ppath(parent=self)
@@ -6191,6 +6198,13 @@ class pdata(object):
             self.filename = filename
         outfile = open(self.filename, 'w')
 
+        if not self._write_ref_press_temp_in_subsurface:
+            if self.reference_pressure:
+                self._write_reference_pressure(outfile)
+
+            if self.reference_temperature:
+                self._write_reference_temperature(outfile)
+
         # Presumes simulation.simulation_type is required
         if self.simulation.simulation_type:
             self._write_simulation(outfile)
@@ -6201,6 +6215,13 @@ class pdata(object):
         if self.simulation.subsurface_flow or \
                 self.simulation.subsurface_transport:
             self._write_subsurface_simulation_begin(outfile)
+
+        if self._write_ref_press_temp_in_subsurface:
+            if self.reference_pressure:
+                self._write_reference_pressure(outfile)
+
+            if self.reference_temperature:
+                self._write_reference_temperature(outfile)
 
         if self.co2_database:
             self._write_co2_database(outfile)
@@ -6260,9 +6281,6 @@ class pdata(object):
 
         if self.isothermal:
             self._write_isothermal(outfile)
-
-        if self.reference_temperature:
-            self._write_reference_temperature(outfile)
 
         if self.reference_porosity:
             self._write_reference_porosity(outfile)
@@ -6366,9 +6384,6 @@ class pdata(object):
 
         if self.reference_saturation:
             self._write_reference_saturation(outfile)
-
-        if self.reference_pressure:
-            self._write_reference_pressure(outfile)
 
         if self.strata_list:
             self._write_strata(outfile)
@@ -7482,6 +7497,8 @@ class pdata(object):
                             elif key1 == 'max_volume_fraction_change':
                                 simulation.max_volume_fraction_change =\
                                     floatD(self.splitter(line1))
+                            elif key1 == 'skip_restart':
+                                simulation.skip_restart = True
                             elif key1 == 'multiple_continuum':
                                 simulation.multiple_continuum = True
                             elif key1 == 'itol_relative_update':
@@ -7539,8 +7556,17 @@ class pdata(object):
                 len_extract = len(extract)
                 simulation.restart = prestart()
                 if len_extract < 2:
-                    PyFLOTRAN_ERROR('At least restart filename needs to be'
-                                    ' specified')
+                    while True:
+                        _l = get_next_line(infile)
+                        _k = get_key(_l)
+
+                        if _k in ['/','end']:
+                            break
+                        elif _k == 'filename':
+                            simulation.restart.file_name = self.splitter(_l)
+                        elif _k == 'reset_to_time_zero':
+                            simulation.restart.reset_to_time_zero = True
+                    continue
                 else:
                     simulation.restart.file_name = extract[1]
 
@@ -7631,6 +7657,8 @@ class pdata(object):
                 outfile.write('      MAX_VOLUME_FRACTION_CHANGE ' +
                               strD(simulation.max_volume_fraction_change) +
                               '\n')
+            if simulation.skip_restart:
+                outfile.write('      SKIP_RESTART\n')
             outfile.write('    / ' + '\n')
 
             if simulation.waste_form:
@@ -7682,6 +7710,8 @@ class pdata(object):
                               strD(simulation.itol_relative_update))
             if simulation.multiple_continuum:
                 outfile.write('      MULTIPLE_CONTINUUM\n')
+            if simulation.skip_restart:
+                outfile.write('      SKIP_RESTART\n')
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
@@ -7930,6 +7960,8 @@ class pdata(object):
                             'dx dy dz -- all three are not specified!')
                     else:
                         keep_reading_2 = False
+            elif key == 'domain_filename':
+                grid.domain_filename = self.splitter(line)
             elif key in ['/', 'end']:
                 keep_reading = False
         self.grid = grid
@@ -8055,6 +8087,8 @@ class pdata(object):
         if grid.max_cells_sharing_a_vertex:
             outfile.write('  MAX_CELLS_SHARING_A_VERTEX %d\n' % \
               grid.max_cells_sharing_a_vertex)
+        if grid.domain_filename:
+            outfile.write('  DOMAIN_FILENAME %s\n' % grid.domain_filename)
         if grid.gravity:
             outfile.write('  GRAVITY' + ' ')
             for i in range(3):
@@ -8386,7 +8420,7 @@ class pdata(object):
                     elif subkey == 'radius':
                         _sc.radius = floatD(self.splitter(subline))
                     elif subkey == 'num_cells':
-                        _sc.num_cells = floatD(self.splitter(subline))
+                        _sc.num_cells = int(self.splitter(subline))
                     elif subkey == 'outer_spacing':
                         _sc.outer_spacing = floatD(self.splitter(subline))
                     elif subkey == 'epsilon':
@@ -12240,6 +12274,14 @@ class pdata(object):
         unit = rp[1] if len(rp) > 1 else None
         self.reference_pressure = Coeff(floatD(rp[0]),unit=unit)
 
+        subsurface_is_defined = self.simulation.subsurface_flow \
+                             or self.simulation.subsurface_transport
+
+        print(subsurface_is_defined)
+
+        if not subsurface_is_defined:
+            self._write_ref_press_temp_in_subsurface = False
+
     def _write_reference_pressure(self,outfile):
         outfile.write('REFERENCE_PRESSURE %s\n' % \
           strD(self.reference_pressure))
@@ -12546,23 +12588,34 @@ class pdata(object):
 
     def _write_restart(self, outfile):
         restart = self.simulation.restart
-        # write file name
-        outfile.write('  RESTART ' + str(restart.file_name) + ' ')
-        # Write time value
-        if restart.time_value:
-            try:
-                # error-checking
-                restart.time_value = floatD(restart.time_value)
 
-                # writing
-                outfile.write(strD(restart.time_value) + ' ')
-            except:
-                # writing
-                outfile.write(strD(restart.time_value) + ' ')
+        is_block = restart.reset_to_time_zero != False
 
-                raise PyFLOTRAN_ERROR('restart.time_value is not float.')
+        if is_block:
+            outfile.write('  RESTART\n')
+            if restart.file_name:
+                outfile.write('    FILENAME %s\n' % restart.file_name)
+            if restart.reset_to_time_zero:
+                outfile.write('    RESET_TO_TIME_ZERO\n')
+            outfile.write('  END\n')
+        else:
+            # write file name
+            outfile.write('  RESTART ' + str(restart.file_name) + ' ')
+            # Write time value
+            if restart.time_value:
+                try:
+                    # error-checking
+                    restart.time_value = floatD(restart.time_value)
 
-        outfile.write('\n')
+                    # writing
+                    outfile.write(strD(restart.time_value) + ' ')
+                except:
+                    # writing
+                    outfile.write(strD(restart.time_value) + ' ')
+
+                    raise PyFLOTRAN_ERROR('restart.time_value is not float.')
+
+            outfile.write('\n')
 
     def _read_dataset(self, infile, line):
         dataset = pdataset()

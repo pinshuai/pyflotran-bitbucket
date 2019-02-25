@@ -13,6 +13,7 @@ if WINDOWS:
 else:
     slash = '/'
 
+FULL_PRECISION = False
 
 dflt = pdflt()
 
@@ -107,7 +108,7 @@ def strD(number):
     """
     tstring = str(number)
     if 'e' in tstring:
-        return ('%8.3e' % number).replace('e', 'd')
+        return (str(number).replace('e', 'd'))
     else:
         return tstring
 

@@ -58,8 +58,8 @@ def get_test_command(fname):
     regression_tests testlog.
     '''
 
-    with open(fname,'r') as f:
-        file = f.read().split('\n')
+    with open(fname,'rb') as f:
+        file = f.read().decode(errors='replace').split('\n')
 
     cmds = {}
     current_key = None

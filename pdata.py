@@ -1981,50 +1981,31 @@ class psimulation(Frozen):
     :type mode: str
     :param flowtran_coupling: Specify the type for the flow transport coupling
     :type flowtran_coupling: str
-    :param isothermal: Turn on isothermal case
-    :type isothermal: bool
-    :param max_saturation_change: Set maximum saturation change in timestepping
-    :type max_saturation_change: float
-    :param max_temperature_change: Set maximum temperature change in
-     timestepping
-    :type max_temperature_change: float
-    :param max_pressure_change: Set maximum pressure change in
-     timestepping
-    :type max_pressure_change: float
-    :param max_concentration_change: Set maximum concentration
-     change in timestepping
-    :type max_concentration_change: float
-    :param max_cfl: Set maximum CFL number
-    :type max_cfl: float
-    :param numerical_derivatives: Turn this on if you want
-     numerical derivatives in Jacobian
-    :type numerical_derivatives: bool
-    :param pressure_dampening_factor: Specify the dampening factor value
-    :type pressure_dampening_factor: float
     :param max_volume_fraction_change: Specify the maximum volume fraction
      change
     :type max_volume_fraction_change: float
     """
 
-    def __init__(self, simulation_type='subsurface', subsurface_flow='flow',
-                 subsurface_transport='', mode='richards',
-                 flowtran_coupling='', geomechanics_subsurface='',
-                 isothermal='', max_pressure_change='',
-                 max_saturation_change='',
-                 max_temperature_change='', max_concentration_change='',
-                 max_cfl='', numerical_derivatives='',
-                 pressure_dampening_factor='',
-                 restart='', checkpoint='',
-                 max_volume_fraction_change='',freezing=False,
-                 ice_model=None,itol_relative_update=None,
-                 multiple_continuum=False,numerical_jacobian=False,
-                 analytical_jacobian=False,
+    def __init__(self,
+                 simulation_type='subsurface',
+                 subsurface_flow='flow',
+                 subsurface_transport='',
+                 mode='richards',
+                 flowtran_coupling='',
+                 geomechanics_subsurface='',
+                 restart='',
+                 checkpoint='',
+                 max_volume_fraction_change='',
+                 itol_relative_update=None,
+                 multiple_continuum=False,
                  ufd_decay=None,ufd_biosphere=None,
                  auxiliary=None,
-                 inline_surface_region=None,inline_surface_mannings_coeff=None,
-                 waste_form=None,harmonic_permeability_only=None,
-                 do_not_scale_jacobian=False,gas_component_formula_weight=None,
-                 options=None,surface_subsurface=None,input_record_file=False,
+                 waste_form=None,
+                 harmonic_permeability_only=None,
+                 gas_component_formula_weight=None,
+                 options=None,
+                 surface_subsurface=None,
+                 input_record_file=False,
                  skip_restart=False):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
@@ -2032,28 +2013,14 @@ class psimulation(Frozen):
         self.flowtran_coupling = flowtran_coupling
         self.geomechanics_subsurface = geomechanics_subsurface
         self.mode = mode
-        self.isothermal = isothermal
-        self.max_saturation_change = max_saturation_change
-        self.max_temperature_change = max_temperature_change
-        self.max_pressure_change = max_pressure_change
-        self.max_concentration_change = max_concentration_change
-        self.max_cfl = max_cfl
-        self.numerical_derivatives = numerical_derivatives
-        self.pressure_dampening_factor = pressure_dampening_factor
         self.restart = restart
         self.checkpoint = checkpoint
         self.max_volume_fraction_change = max_volume_fraction_change
-        self.freezing = freezing
-        self.ice_model = ice_model
         self.itol_relative_update = itol_relative_update
         self.multiple_continuum = multiple_continuum
-        self.numerical_jacobian = numerical_jacobian
-        self.analytical_jacobian = analytical_jacobian
         self.ufd_decay = ufd_decay
         self.ufd_biosphere = ufd_biosphere
-        self.auxiliary = auxiliary
-        self.inline_surface_region = inline_surface_region
-        self.inline_surface_mannings_coeff = inline_surface_mannings_coeff
+        self.auxiliary = auxiliary      
         self.waste_form = waste_form
         self.options = options
         self.surface_subsurface = surface_subsurface

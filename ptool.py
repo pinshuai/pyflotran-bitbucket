@@ -108,7 +108,10 @@ def strD(number):
     """
     tstring = str(number)
     if 'e' in tstring:
-        return ('%8.7e' % number).replace('e', 'd')
+        width = len(tstring[:tstring.find('e')])
+        if '.' in tstring:
+            width -= len(tstring[:tstring.find('.')])
+        return ('%.*e' % (width,number)).replace('e', 'd')
     else:
         return tstring
 

@@ -1998,7 +1998,8 @@ class psimulation(Frozen):
                  max_volume_fraction_change='',
                  itol_relative_update=None,
                  multiple_continuum=False,
-                 ufd_decay=None,ufd_biosphere=None,
+                 ufd_decay=None,
+                 ufd_biosphere=None,
                  auxiliary=None,
                  waste_form=None,
                  harmonic_permeability_only=None,
@@ -2006,7 +2007,8 @@ class psimulation(Frozen):
                  options=None,
                  surface_subsurface=None,
                  input_record_file=False,
-                 skip_restart=False):
+                 skip_restart=False,
+                 transport_numerical_jacobian=False):
         self.simulation_type = simulation_type
         self.subsurface_flow = subsurface_flow
         self.subsurface_transport = subsurface_transport
@@ -2026,6 +2028,7 @@ class psimulation(Frozen):
         self.surface_subsurface = surface_subsurface
         self.input_record_file = input_record_file
         self.skip_restart = skip_restart
+        self.transport_numerical_jacobian = transport_numerical_jacobian
         self._freeze()
 
     class auxiliary(Frozen):
@@ -4097,9 +4100,9 @@ class pchemistry(Frozen):
                 self.species_name = species_name
                 self.biomass_yield = biomass_yield
 
-        def __init__(self, reaction=None, rate_constant=None,
-                     monod=None, inhibition=None,
-                     biomass=None):
+        def __init__(self,reaction=None,rate_constant=None,
+                     monod=None,inhibition=None,
+                     biomass=None,activation_energy=None):
 
             assert isinstance(reaction, (str, type(None))
                               ), 'REACTION must be a string'
@@ -4118,6 +4121,7 @@ class pchemistry(Frozen):
             self.monod = monod
             self.inhibition = inhibition
             self.biomass = biomass
+            self.activation_energy = activation_energy
 
         def add_monod(self, species_name=None,
                       half_saturation_constant=None,
@@ -4150,6 +4154,10 @@ class pchemistry(Frozen):
             outfile.write('  MICROBIAL_REACTION\n')
             outfile.write('    REACTION %s\n' % self.reaction)
             outfile.write('    RATE_CONSTANT %s\n' % strD(self.rate_constant))
+
+            if self.activation_energy is not None:
+                outfile.write('    ACTIVATION_ENERGY %s\n' % \
+                  strD(self.activation_energy))
 
             if self.monod is not None:
                 for mon in self.monod:
@@ -7462,8 +7470,11 @@ class pdata(object):
                             elif key1 == 'itol_relative_update':
                                 simulation.itol_relative_update = \
                                     floatD(self.splitter(line1))
+                            elif key1 == 'numerical_jacobian':
+                                simulation.transport_numerical_jacobian = True
                             elif key1 in ['/', 'end']:
                                 keep_reading_2 = False
+
                         # else:
                         # raise PyFLOTRAN_ERROR('coupling type missing!')
                         key_bank.append(key)
@@ -7663,6 +7674,7 @@ class pdata(object):
             outfile.write('  PROCESS_MODELS' + '\n')
             outfile.write('    SUBSURFACE_TRANSPORT ' +
                           simulation.subsurface_transport + '\n')
+
             if simulation.itol_relative_update:
                 outfile.write('      ITOL_RELATIVE_UPDATE %s\n' % \
                               strD(simulation.itol_relative_update))
@@ -7673,6 +7685,8 @@ class pdata(object):
             if simulation.flowtran_coupling:
                 outfile.write(
                     '      ' + simulation.flowtran_coupling.upper() + '\n')
+            if simulation.transport_numerical_jacobian:
+                outfile.write('      NUMERICAL_JACOBIAN\n')
             if simulation.max_volume_fraction_change:
                 outfile.write('      MAX_VOLUME_FRACTION_CHANGE ' +
                               strD(simulation.max_volume_fraction_change) +
@@ -7855,6 +7869,7 @@ class pdata(object):
                 grid.type = ' '.join(line.strip().split()[1:]).lower()
                 if grid.type.split()[0] in ['unstructured_explicit',
                                             'unstructured_implicit',
+                                            'unstructured_polyhedra',
                                             'unstructured']:
                     grid.filename = self.splitter(line)
                     grid.type = ' '.join(grid.type.split()[:-1])
@@ -9191,6 +9206,7 @@ class pdata(object):
         while keep_reading:  # Read through all cards
             line = get_next_line(infile)
             key = line.strip().split()[0].lower()  # take first key word
+
             if key == 'times':
                 tstring = line.split()[1:]  # Turn into list, exempt 1st word
                 times = []
@@ -9211,8 +9227,8 @@ class pdata(object):
                 if tstring == 'time':
                     # 2nd from last word.
                     output.periodic_time.append(floatD(line.split()[-2]))
-                    output.periodic_time.append(
-                        self.splitter(line))  # last word
+                    # last word
+                    output.periodic_time.append(self.splitter(line))
                 elif tstring == 'timestep':
                     # 2nd from last word.
                     output.periodic_timestep = int(line.split()[-1])
@@ -9263,16 +9279,16 @@ class pdata(object):
                     key1 = line1.strip().split()[0].lower()
                     if key1 == 'format':
                         if len(line1.strip().split()) == 2:
-                            output.snapshot_file.format = \
-                            line1.strip().split()[1].lower()
+                            output.snapshot_file.format.append(
+                            line1.strip().split()[1].lower())
                         elif len(line1.strip().split()) == 3:
-                            output.snapshot_file.format = \
-                            ' '.join(line1.strip().split()[1:3]).lower()
+                            output.snapshot_file.format.append(
+                            ' '.join(line1.strip().split()[1:3]).lower())
                         elif len(line1.strip().split()) > 3 and \
                         'times_per_file' in [val.lower() for val in \
                         line1.strip().split()[1:]]:
-                            output.snapshot_file.format = ' '.join(
-                                line1.strip().split()[1:3]).lower()
+                            output.snapshot_file.format.append(' '.join(
+                                line1.strip().split()[1:3]).lower())
                             output.snapshot_file.times_per_file = \
                             line1.strip().split()[4]
                     elif key1 == 'no_print_initial':
@@ -9628,13 +9644,31 @@ class pdata(object):
         if output.snapshot_file:
             outfile.write('  SNAPSHOT_FILE\n')
             if output.snapshot_file.format:
-                outfile.write('    FORMAT ')
-                for form in output.snapshot_file.format:
-                    outfile.write(form.upper())
-                if output.snapshot_file.times_per_file is not None:
-                    outfile.write(' TIMES_PER_FILE ')
-                    outfile.write(str(output.snapshot_file.times_per_file))
-                outfile.write('\n')
+
+                if isinstance(output.snapshot_file.format,list):
+                    if output.snapshot_file.times_per_file is not None:
+                        t_per_file = output.snapshot_file.times_per_file
+                        if not isinstance(t_per_file,list):
+                            t_per_file = [t_per_file]
+                    else:
+                        t_per_file = []
+
+                    for (i,form) in enumerate(output.snapshot_file.format):
+                        outfile.write('    FORMAT %s' % form.upper())
+                        try:
+                            _tmp = str(t_per_file[i])
+                            outfile.write(' TIMES_PER_FILE ')
+                            outfile.write(_tmp)
+                        except:
+                            pass
+                        outfile.write('\n')
+                else:
+                    outfile.write('    FORMAT %s' % form.upper())
+                    if output.snapshot_file.times_per_file is not None:
+                        outfile.write(' TIMES_PER_FILE ')
+                        outfile.write(str(output.snapshot_file.times_per_file))
+                    outfile.write('\n')
+
             if output.snapshot_file.print_final is False:
                 outfile.write('    NO_PRINT_FINAL\n')
             if output.snapshot_file.print_initial is False:
@@ -13336,7 +13370,8 @@ class pdata(object):
                                 biomass.biomass_yield = floatD(subsubline[1])
                             elif subsubkey in ['/', 'end']:
                                 break
-
+                    elif subkey == 'activation_energy':
+                        bio_rxn.activation_energy = floatD(subline[-1])
                     elif subkey in ['/', 'end']:
                         break
 

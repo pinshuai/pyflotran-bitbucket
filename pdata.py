@@ -2079,7 +2079,8 @@ class psimulation(Frozen):
                      itol_scaled_residual=None,two_phase_energy_dof=None,
                      max_allow_rel_gas_sat_change_ni=None,
                      no_creep_closure=False,
-                     no_fracture=False):
+                     no_fracture=False,
+                     skip_restart=False):
 
             self.isothermal = isothermal
             self.inline_surface_region = inline_surface_region
@@ -2120,6 +2121,7 @@ class psimulation(Frozen):
             self.max_allow_rel_gas_sat_change_ni = max_allow_rel_gas_sat_change_ni
             self.no_creep_closure = no_creep_closure
             self.no_fracture = no_fracture
+            self.skip_restart = skip_restart
             self._freeze()
 
         def _write(self,outfile):
@@ -2160,6 +2162,8 @@ class psimulation(Frozen):
                 outfile.write('        TL_OMEGA %s\n' % _val)
             if self.max_cfl:
                 outfile.write('        MAX_CFL ' + strD(self.max_cfl) + '\n')
+            if self.skip_restart:
+                outfile.write('        SKIP_RESTART\n')
             if self.numerical_derivatives:
                 _val = strD(self.numerical_derivatives)
                 outfile.write('        NUMERICAL_DERIVATIVES %s\n' % _val)
@@ -2524,7 +2528,8 @@ class poutput(Frozen):
                  variables_list=None, snapshot_file=None,
                  observation_file=None,
                  mass_balance_file=None,
-                 time_units=None):
+                 time_units=None,
+                 print_primal_grid=False):
 
         if time_list is None:
             time_list = []
@@ -2568,6 +2573,7 @@ class poutput(Frozen):
         self.mass_balance_file = mass_balance_file
         self.snapshot_file = snapshot_file
         self.time_units = time_units
+        self.print_primal_grid = print_primal_grid
 
         self._freeze()
 
@@ -7377,6 +7383,8 @@ class pdata(object):
                                     elif key2 == 'max_cfl':
                                         opt.max_cfl = \
                                             floatD(self.splitter(line))
+                                    elif key2 == 'skip_restart':
+                                        opt.skip_restart = True
                                     elif key2 == 'numerical_derivatives':
                                         opt.numerical_derivatives = \
                                             floatD(self.splitter(line))
@@ -9259,6 +9267,8 @@ class pdata(object):
                 output.velocity_at_face = True
             elif key == 'mass_balance':
                 output.mass_balance = True
+            elif key == 'print_primal_grid':
+                output.print_primal_grid = True
             elif key == 'variables':
                 keep_reading_1 = True
                 while keep_reading_1:
@@ -9550,6 +9560,8 @@ class pdata(object):
                 raise PyFLOTRAN_ERROR(
                     'output.screen_periodic: \'' +
                     str(output.screen_periodic) + '\' is not int (integer).')
+        if output.print_primal_grid:
+            outfile.write('  PRINT_PRIMAL_GRID\n')
         if output.periodic_time:
             try:  # Error checking to ensure periodic_time is [float, str].
                 output.periodic_time[0] = floatD(output.periodic_time[0])

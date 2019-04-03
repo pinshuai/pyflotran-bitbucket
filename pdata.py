@@ -9675,6 +9675,7 @@ class pdata(object):
                             pass
                         outfile.write('\n')
                 else:
+                    form = output.snapshot_file.format
                     outfile.write('    FORMAT %s' % form.upper())
                     if output.snapshot_file.times_per_file is not None:
                         outfile.write(' TIMES_PER_FILE ')

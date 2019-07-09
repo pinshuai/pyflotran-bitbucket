@@ -365,7 +365,7 @@ read_cards = ['co2_database', 'uniform_velocity', 'nonuniform_velocity',
               'waste_form_general','wipp_source_sink','reference_saturation',
               'reference_pressure','co2_database','klinkenberg_effect',
               'creep_closure_table','secondary_constraint',
-              'rt_mass_transfer']
+              'rt_mass_transfer','flow_mass_transfer']
 
 headers = dict(zip(cards, headers))
 
@@ -3193,6 +3193,13 @@ class prt_mass_transfer(Frozen):
         self.dataset = dataset
         self._freeze()
 
+class pflow_mass_transfer(Frozen):
+    def __init__(self,name=None,idof=None,dataset=None):
+        self.name = name
+        self.idof = idof
+        self.dataset = dataset
+        self._freeze()
+
 class pregion(Frozen):
     """
     Class for specifying a PFLOTRAN region. Multiple region objects
@@ -5553,6 +5560,7 @@ class pdata(object):
         self.source_sink_list = []
         self.source_sink_sandbox_list = []
         self.rt_mass_transfer_list = []
+        self.flow_mass_transfer_list = []
         self.strata_list = []
         self.constraint_list = []
         self.filename = filename
@@ -5959,7 +5967,8 @@ class pdata(object):
                             self._read_klinkenberg_effect,
                             self._read_creep_closure_table,
                             self._read_constraint,
-                            self._read_rt_mass_transfer],
+                            self._read_rt_mass_transfer,
+                            self._read_flow_mass_transfer],
                            ))
 
         # associate each card name with
@@ -6142,7 +6151,8 @@ class pdata(object):
                                 'reference_pressure',
                                 'co2_database','creep_closure_table',
                                 'secondary_constraint',
-                                'rt_mass_transfer']:
+                                'rt_mass_transfer',
+                                'flow_mass_transfer']:
                         read_fn[card](infile, p_line)
                     else:
                         read_fn[card](infile)
@@ -6372,6 +6382,9 @@ class pdata(object):
 
         if self.rt_mass_transfer_list:
             self._write_rt_mass_transfer(outfile)
+
+        if self.flow_mass_transfer_list:
+            self._write_flow_mass_transfer(outfile)
 
         if self.simulation.subsurface_flow or \
                 self.simulation.subsurface_transport:
@@ -10875,9 +10888,36 @@ class pdata(object):
 
         self.rt_mass_transfer_list.append(rt)
 
+    def _read_flow_mass_transfer(self,infile,line):
+
+        rt = pflow_mass_transfer()
+        rt.name = self.splitter(line)
+
+        while True:
+            line = get_next_line(infile)
+            key = get_key(line)
+
+            if key in ['/','end']:
+                break
+            elif key == 'idof':
+                rt.idof = int(self.splitter(line))
+            elif key == 'dataset':
+                rt.dataset = self.splitter(line)
+
+        self.flow_mass_transfer_list.append(rt)
+
     def _write_rt_mass_transfer(self,outfile):
         for rt in self.rt_mass_transfer_list:
             outfile.write('RT_MASS_TRANSFER %s\n' % rt.name)
+            if rt.idof is not None:
+                outfile.write('  IDOF %d\n' % rt.idof)
+            if rt.dataset is not None:
+                outfile.write('  DATASET %s\n' % rt.dataset)
+            outfile.write('END\n')
+
+    def _write_flow_mass_transfer(self,outfile):
+        for rt in self.flow_mass_transfer_list:
+            outfile.write('FLOW_MASS_TRANSFER %s\n' % rt.name)
             if rt.idof is not None:
                 outfile.write('  IDOF %d\n' % rt.idof)
             if rt.dataset is not None:
